@@ -1,0 +1,96 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>eu.qualimaster</groupId>
+  <artifactId>PipelineDependencies</artifactId>
+  <version>0.2.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>PipelineDependencies</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <!-- List all infrastructure components that may be subject to individual dependencies. -->       
+
+  <dependencyManagement>
+    <dependencies>
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>AdaptationLayer</artifactId>
+         <version>0.2.0-SNAPSHOT</version>
+         <scope>provided</scope>
+       </dependency>              
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>MonitoringLayer</artifactId>
+         <version>0.2.0-SNAPSHOT</version>
+         <scope>provided</scope>
+       </dependency>              
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>CoordinationLayer</artifactId>
+         <version>0.2.0-SNAPSHOT</version>
+         <scope>provided</scope>
+       </dependency>
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>QualiMaster.Events</artifactId>
+         <version>0.2.0-SNAPSHOT</version>
+         <scope>provided</scope>
+       </dependency>
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>StormCommons</artifactId>
+         <version>0.2.0-SNAPSHOT</version>
+         <scope>provided</scope>
+       </dependency>              
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>DataManagementLayer</artifactId>
+         <version>0.2.0-SNAPSHOT</version>
+         <scope>provided</scope>
+       </dependency>
+       <dependency>
+         <groupId>de.uni_hildesheim.sse.easyProducer.runtime</groupId>
+         <artifactId>EASy.QualiMaster</artifactId>
+         <version>1.1.0-SNAPSHOT</version>
+       </dependency>
+
+       <!-- Testing -->       
+
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>AdaptationLayer</artifactId>
+         <version>0.2.0-SNAPSHOT</version>
+         <type>test-jar</type>
+         <scope>provided</scope>
+       </dependency>
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>MonitoringLayer</artifactId>
+         <version>0.2.0-SNAPSHOT</version>
+         <type>test-jar</type>
+         <scope>provided</scope>
+       </dependency>
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>CoordinationLayer</artifactId>
+         <version>0.2.0-SNAPSHOT</version>
+         <type>test-jar</type>
+         <scope>provided</scope>
+       </dependency>
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>QualiMaster.Events</artifactId>
+         <version>0.2.0-SNAPSHOT</version>
+         <type>test-jar</type>
+         <scope>provided</scope>
+       </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+</project>
