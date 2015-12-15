@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="InfrastructureDependencyManagement" default="deploy" basedir=".">
+
+	<target name="deploy">
+        <echo>###############################################</echo>
+        <echo>###  Deploying Infrastructure Dependencies  ###</echo>
+        <echo>###############################################</echo>
+        <ant dir="InfrastructureDependencies" antfile="build-jk.xml" />
+            
+        <echo>##########################################</echo>
+        <echo>###  Deploying Algorithm Dependencies  ###</echo>
+        <echo>##########################################</echo>
+        <ant dir="AlgorithmDependencies" antfile="build-jk.xml" />
+
+        <echo>#########################################</echo>
+        <echo>###  Deploying Pipeline Dependencies  ###</echo>
+        <echo>#########################################</echo>
+        <ant dir="PipelineDependencies" antfile="build-jk.xml" />
+
+        <echo>####################################################</echo>
+        <echo>###  Deploying Full Infrastructure Dependencies  ###</echo>
+        <echo>####################################################</echo>
+        <ant dir="FullInfrastructureDependencies" antfile="build-jk.xml" />
+	</target>
+
+</project>
