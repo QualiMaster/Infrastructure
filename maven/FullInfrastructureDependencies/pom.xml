@@ -26,6 +26,12 @@
        </dependency>              
        <dependency>
          <groupId>eu.qualimaster</groupId>
+         <artifactId>AdaptationLayer.External</artifactId>
+         <version>0.2.0-SNAPSHOT</version>
+         <scope>provided</scope>
+       </dependency>              
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
          <artifactId>MonitoringLayer</artifactId>
          <version>0.2.0-SNAPSHOT</version>
          <scope>provided</scope>
