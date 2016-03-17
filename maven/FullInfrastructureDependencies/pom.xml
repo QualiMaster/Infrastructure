@@ -4,7 +4,7 @@
 
   <groupId>eu.qualimaster</groupId>
   <artifactId>FullInfrastructureDependencies</artifactId>
-  <version>0.2.0-SNAPSHOT</version>
+  <version>0.5.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>FullInfrastructureDependencies</name>
@@ -21,43 +21,43 @@
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>AdaptationLayer</artifactId>
-         <version>0.2.0-SNAPSHOT</version>
+         <version>0.5.0-SNAPSHOT</version>
          <scope>provided</scope>
        </dependency>              
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>AdaptationLayer.External</artifactId>
-         <version>0.2.0-SNAPSHOT</version>
+         <version>0.5.0-SNAPSHOT</version>
          <scope>provided</scope>
        </dependency>              
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>MonitoringLayer</artifactId>
-         <version>0.2.0-SNAPSHOT</version>
+         <version>0.5.0-SNAPSHOT</version>
          <scope>provided</scope>
        </dependency>              
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>CoordinationLayer</artifactId>
-         <version>0.2.0-SNAPSHOT</version>
+         <version>0.5.0-SNAPSHOT</version>
          <scope>provided</scope>
        </dependency>
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>QualiMaster.Events</artifactId>
-         <version>0.2.0-SNAPSHOT</version>
+         <version>0.5.0-SNAPSHOT</version>
          <scope>provided</scope>
        </dependency>
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>StormCommons</artifactId>
-         <version>0.2.0-SNAPSHOT</version>
+         <version>0.5.0-SNAPSHOT</version>
          <scope>provided</scope>
        </dependency>              
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>DataManagementLayer</artifactId>
-         <version>0.2.0-SNAPSHOT</version>
+         <version>0.5.0-SNAPSHOT</version>
          <scope>provided</scope>
        </dependency>
        <dependency>
@@ -68,7 +68,7 @@
         <dependency>
             <groupId>eu.qualimaster</groupId>
             <artifactId>InfrastructureDependencies</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.5.0-SNAPSHOT</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -78,28 +78,28 @@
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>AdaptationLayer</artifactId>
-         <version>0.2.0-SNAPSHOT</version>
+         <version>0.5.0-SNAPSHOT</version>
          <type>test-jar</type>
          <scope>provided</scope>
        </dependency>
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>MonitoringLayer</artifactId>
-         <version>0.2.0-SNAPSHOT</version>
+         <version>0.5.0-SNAPSHOT</version>
          <type>test-jar</type>
          <scope>provided</scope>
        </dependency>
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>CoordinationLayer</artifactId>
-         <version>0.2.0-SNAPSHOT</version>
+         <version>0.5.0-SNAPSHOT</version>
          <type>test-jar</type>
          <scope>provided</scope>
        </dependency>
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>QualiMaster.Events</artifactId>
-         <version>0.2.0-SNAPSHOT</version>
+         <version>0.5.0-SNAPSHOT</version>
          <type>test-jar</type>
          <scope>provided</scope>
        </dependency>
