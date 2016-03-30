@@ -67,7 +67,7 @@
          <scope>provided</scope>
        </dependency>
        <dependency>
-         <groupId>de.uni_hildesheim.sse.easyProducer.runtime</groupId>
+         <groupId>eu.qualimaster.easyProducer.runtime</groupId>
          <artifactId>EASy.QualiMaster</artifactId>
          <version>1.2.0-SNAPSHOT</version>
        </dependency>
