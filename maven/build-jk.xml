@@ -21,6 +21,12 @@
         <echo>###  Deploying Full Infrastructure Dependencies  ###</echo>
         <echo>####################################################</echo>
         <ant dir="FullInfrastructureDependencies" antfile="build-jk.xml" />
+
+        <echo>##############################</echo>
+        <echo>###  Algorithm Assemblies  ###</echo>
+        <echo>##############################</echo>
+        <ant dir="AlgorithmAssemblies" antfile="build-jk.xml" />
+
 	</target>
 
 </project>
