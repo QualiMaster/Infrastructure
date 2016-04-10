@@ -14,6 +14,6 @@
 		
 	<target name="maven"> 
 		<maven pomFile="pom.xml" />
-        <mvnDeploy folderName="${ant.project.name}" jarFolder="target" jarFile="${ant.project.name}-*.jar"/>
+        <mvnDeploy folderName="${ant.project.name}" jarFolder="target" jarFile="${ant.project.name}-0.5.0-SNAPSHOT.jar"/>
 	</target>
 </project>
