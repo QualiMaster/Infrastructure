@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="AlgorithmDependencies" default="maven" basedir=".">
+<project name="AlgorithmAssemblies" default="maven" basedir=".">
     <!-- xmlns:artifact="antlib:org.apache.maven.artifact.ant" -->
 	<!-- import of the global Jenkins properties -->
 	<property file="${user.home}/global-build.properties"/>
@@ -14,6 +14,6 @@
 		
 	<target name="maven"> 
 		<maven pomFile="pom.xml" />
-	    <mvnDeployPom folderName="AlgorithmAssemblies" pomFile="pom.xml" />
+        <mvnDeploy folderName="${ant.project.name}" jarFolder="target" jarFile="${ant.project.name}-*.jar"/>
 	</target>
 </project>
