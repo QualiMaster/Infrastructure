@@ -30,7 +30,9 @@ To use in Maven single project build:
        </plugin>
        
   If the maven-assembly-plugin is already used, in particular enable version 2.6, add the dependencies section and 
-  the make-profilingAssembly execution.
+  the make-profilingAssembly execution. If for some reasons the AlgorithmAssemblies artifact cannot be resolved, just
+  list it also in the normal dependencies of your project. If you use the algorithm dependencies via dependency 
+  management, you may even leave out the version number.
   
   Create two files (formats -> Wiki), namely profile.ctl and profile.data either in 
     /profiling
@@ -59,5 +61,8 @@ To use in Maven multi module build:
     </build> 
   
     to the child pom. Note that it is important to refer properly to the maven-assembly-plugin (version not needed
-    as defined in parent) and the overriding execution with the correct id (make-profilingAssembly) and the phase none.
-  
+    as defined in parent) and the overriding execution with the correct id (make-profilingAssembly) and the phase "none".
+    
+    If for some reasons the AlgorithmAssemblies artifact cannot be resolved, just list it also in the normal 
+    dependencies of your project. If you use the algorithm dependencies via dependency management, you may even leave 
+    out the version number.
