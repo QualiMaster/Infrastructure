@@ -110,7 +110,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase</artifactId>
+      <artifactId>hbase-server</artifactId>
       <version>0.98.6-hadoop2</version>
       <exclusions>
         <exclusion>
