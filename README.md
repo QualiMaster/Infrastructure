@@ -7,7 +7,7 @@ The layers and components of the infrastructure will be released incrementally. 
 
 ![QualiMaster infrastructure architecture](Overview.png)
 
-The event bus as well as the data management layer are already released. The other components will follow successively.
+The Event Bus, the Data Management Layer and Storm Commons are already released. The other components will follow successively.
 
 The QualiMaster infrastructure is open source under the Apache 2.0 license.
 
