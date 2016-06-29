@@ -1,0 +1,233 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>eu.qualimaster</groupId>
+	<artifactId>DataManagementLayer</artifactId>
+	<version>0.5.0-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<build>
+		<sourceDirectory>${basedir}/src/main/java</sourceDirectory>
+		<plugins>
+			<plugin>
+				<artifactId>maven-install-plugin</artifactId>
+				<version>2.3.1</version>
+				<configuration>
+					<createChecksum>true</createChecksum>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.4</version>
+				<configuration>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+					<archive>
+						<manifest>
+						</manifest>
+					</archive>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.0</version>
+				<configuration>
+					<source>1.7</source>
+					<target>1.7</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>2.6.1</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>lib</directory>
+							<includes>
+								<include>**/*.jar</include>
+							</includes>
+							<followSymlinks>false</followSymlinks>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+
+
+            <!--  disabled due to local dependency
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>2.1</version>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${basedir}/lib</outputDirectory>
+							<overWriteReleases>false</overWriteReleases>
+							<overWriteSnapshots>false</overWriteSnapshots>
+							<overWriteIfNewer>true</overWriteIfNewer>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			 -->
+		</plugins>
+
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.apache.maven.plugins</groupId>
+										<artifactId>maven-dependency-plugin</artifactId>
+										<versionRange>[2.0,)</versionRange>
+										<goals>
+											<goal>copy-dependencies</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<execute />
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+
+	</build>
+
+	<repositories>
+		<repository>
+			<id>qm.eu</id>
+			<name>qm.eu</name>
+			<url>https://projects.sse.uni-hildesheim.de/qm/maven/</url>
+			<layout>default</layout>
+		</repository>
+		<!--  preliminary - due to Jenkins -->
+		<repository>
+		    <id>mvnrepository</id>
+		    <name>mvnrepository</name>
+		    <url>http://repo1.maven.org/maven2</url>
+		</repository>
+	</repositories>
+	
+  <!-- Depedency Management -->
+	<dependencyManagement>
+    <dependencies>
+		<!-- add if infrastructure dependencies(storm, hdfs and hbase) are involved -->
+        <dependency>
+            <groupId>eu.qualimaster</groupId>
+            <artifactId>FullInfrastructureDependencies</artifactId>
+            <version>0.5.0-SNAPSHOT</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency> 
+        <!-- add if pipeline dependencies(StormCommons and QualiMaster.Events) are involved -->		
+        <dependency>
+            <groupId>eu.qualimaster</groupId>
+            <artifactId>PipelineDependencies</artifactId>
+            <version>0.5.0-SNAPSHOT</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>            
+    </dependencies>
+</dependencyManagement>
+  
+	<dependencies>
+		<!-- Storm Dependency -->
+		<dependency>
+			<groupId>org.apache.storm</groupId>
+			<artifactId>storm-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hbase</groupId>
+			<artifactId>hbase-common</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hbase</groupId>
+			<artifactId>hbase-protocol</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hbase</groupId>
+			<artifactId>hbase-client</artifactId>
+		</dependency>
+		<dependency>
+	      <groupId>org.apache.hadoop</groupId>
+	      <artifactId>hadoop-hdfs</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.avro</groupId>
+			<artifactId>avro</artifactId>
+			<version>1.7.7</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<!-- Dependencies from Qualimaster -->
+		<dependency>
+			<groupId>eu.qualimaster</groupId>
+			<artifactId>QualiMaster.Events</artifactId>
+		</dependency>
+		
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>QualiMaster.Events</artifactId>
+         <type>test-jar</type>
+         <scope>provided</scope>
+       </dependency>		
+	</dependencies>
+
+</project>
