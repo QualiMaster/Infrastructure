@@ -1,0 +1,31 @@
+package eu.qualimaster.base.protos;
+
+option java_package = "eu.qualimaster.base.protos";
+option java_outer_classname = "UploadInterfaceProtos";
+
+message SUploadIn {
+    required string id = 1;
+    required bytes executableCode = 2;   
+}
+
+message SUploadOut {
+    required string errorMsg = 1;
+    required int32 portIn = 2;
+    required int32 portOut = 3;
+}
+
+message SStopIn {
+    required string id = 1; 
+}
+
+message SStopOut {
+    required string errorMsg = 1;
+}
+
+message SIsRunningIn {
+    required string id = 1;
+}
+
+message SIsRunningOut {
+    required bool isRunning = 1;
+}

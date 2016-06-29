@@ -1,0 +1,9 @@
+package protos;
+
+option java_package = "eu.qualimaster.base.protos";
+option java_outer_classname = "StringListProtos";
+
+
+message SStringList {
+    repeated string string = 1;
+}
