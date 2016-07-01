@@ -20,7 +20,10 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import backtype.storm.task.TopologyContext;
+import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
 import eu.qualimaster.base.algorithm.IncrementalAverage;
+import eu.qualimaster.common.monitoring.MonitoringPluginRegistry;
 import eu.qualimaster.events.AbstractTimerEventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.events.TimerEvent;
@@ -56,6 +59,9 @@ public class Monitor {
     private boolean includeItems;
     private TimerEventHandler timerHandler;
 
+    private transient long startTime;
+    private transient int count;
+    
     /**
      * Creates a monitor and sends once the executors resource usage event.
      * 
@@ -144,12 +150,20 @@ public class Monitor {
         if (now - lastSend.get() > sendInterval) {
             if (includeItems) {
                 Map<IObservable, Double> data = new HashMap<IObservable, Double>();
+                MonitoringPluginRegistry.collectObservations(data);
                 data.put(TimeBehavior.LATENCY, executionTime.getAverage());
                 data.put(TimeBehavior.THROUGHPUT_ITEMS, itemsSend);
                 EventManager.send(new PipelineElementMultiObservationMonitoringEvent(namespace, name, key, data));
             } else {
-                EventManager.send(new PipelineElementObservationMonitoringEvent(namespace, name, key, 
-                    TimeBehavior.LATENCY, executionTime.getAverage()));
+                if (MonitoringPluginRegistry.getRegisteredPluginCount() > 0) {
+                    Map<IObservable, Double> data = new HashMap<IObservable, Double>();
+                    MonitoringPluginRegistry.collectObservations(data);
+                    data.put(TimeBehavior.LATENCY, executionTime.getAverage());
+                    EventManager.send(new PipelineElementMultiObservationMonitoringEvent(namespace, name, key, data));
+                } else {
+                    EventManager.send(new PipelineElementObservationMonitoringEvent(namespace, name, key, 
+                        TimeBehavior.LATENCY, executionTime.getAverage()));
+                }
             }
             lastSend.set(now);
         }
@@ -172,6 +186,56 @@ public class Monitor {
             EventManager.unregister(timerHandler);
         }
         timerHandler = null;
+    }
+
+    /**
+     * Starts monitoring for an execution method and informs the monitoring plugins.
+     */
+    public void startMonitoring() {
+        startTime = System.currentTimeMillis();
+        count = 0;
+        MonitoringPluginRegistry.startMonitoring();
+    }
+    
+    /**
+     * Notifies about emitting a tuple and informs the monitoring plugins.
+     * 
+     * @param streamId the output stream Id
+     * @param tuple the data tuple
+     */
+    public void emitted(String streamId, Tuple tuple) {
+        count += tuple.size();
+        MonitoringPluginRegistry.emitted(streamId, tuple);
+    }
+    
+    /**
+     * Notifies about emitting an amount of tuples.
+     * 
+     * @param streamId the output stream Id
+     * @param count the amount of tuples
+     */
+    public void emitted(String streamId, int count) {
+        this.count += count;
+        MonitoringPluginRegistry.emitted(streamId, count);
+    }
+
+    /**
+     * Notifies about emitting a tuple and informs the monitoring plugins.
+     * 
+     * @param streamId the output stream Id
+     * @param values the emitted values
+     */
+    public void emitted(String streamId, Values values) {
+        count += values.size();
+        MonitoringPluginRegistry.emitted(streamId, values);
+    }
+    
+    /**
+     * Ends monitoring for an execution method and informs the monitoring plugins.
+     */
+    public void endMonitoring() {
+        aggregateExecutionTime(startTime, count);
+        MonitoringPluginRegistry.endMonitoring();
     }
     
 }

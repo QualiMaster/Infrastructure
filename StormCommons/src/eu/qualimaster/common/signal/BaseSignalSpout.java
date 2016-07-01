@@ -13,6 +13,8 @@ import eu.qualimaster.monitoring.events.LoadSheddingChangedMonitoringEvent;
 import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.base.*;
+import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
 
 /**
  * Implements a basic signalling spout.
@@ -78,6 +80,50 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
         } catch (Exception e) {
             LOGGER.error("Error SignalConnection:" + e.getMessage(), e);
         }
+    }
+    
+    /**
+     * Starts monitoring for an execution method.
+     */
+    protected void startMonitoring() {
+        monitor.startMonitoring();
+    }
+
+    /**
+     * Ends monitoring for an execution method.
+     */
+    protected void endMonitoring() {
+        monitor.endMonitoring();
+    }
+    
+    /**
+     * Notifies about emitting a tuple.
+     * 
+     * @param streamId the output stream Id
+     * @param tuple the data tuple
+     */
+    protected void emitted(String streamId, Tuple tuple) {
+        monitor.emitted(streamId, tuple);
+    }
+    
+    /**
+     * Notifies about emitting values.
+     * 
+     * @param streamId the output stream Id
+     * @param values the emitted values
+     */
+    protected void emitted(String streamId, Values values) {
+        monitor.emitted(streamId, values);
+    }
+    
+    /**
+     * Notifies about emitting an amount of tuples.
+     * 
+     * @param streamId the output stream Id
+     * @param count the amount of tuples
+     */
+    public void emitted(String streamId, int count) {
+        monitor.emitted(streamId, count);
     }
 
     /**

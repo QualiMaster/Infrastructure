@@ -34,31 +34,20 @@ import eu.qualimaster.observables.ResourceUsage;
  * Represents a frozen system state for monitoring.
  * 
  * @author Holger Eichelberger
- *
  */
 @QMSupport
 public class FrozenSystemState implements Serializable {
     
     // set to IVML type names??
-    @QMInternal
     public static final String INFRASTRUCTURE = "Infrastructure"; // no name
-    @QMInternal
     public static final String INFRASTRUCTURE_NAME = "";
-    @QMInternal
     public static final String MACHINE = "Machine";
-    @QMInternal
     public static final String HWNODE = "HwNode";
-    @QMInternal
     public static final String CLOUDENV = "Cloud";
-    @QMInternal
     public static final String ALGORITHM = "Algorithm";
-    @QMInternal
     public static final String DATASOURCE = "DataSource";
-    @QMInternal
     public static final String DATASINK = "DataSink";
-    @QMInternal
     public static final String PIPELINE = "Pipeline";
-    @QMInternal
     public static final String PIPELINE_ELEMENT = "PipelineElement";
 
     @QMInternal
@@ -117,7 +106,6 @@ public class FrozenSystemState implements Serializable {
      * @param observable the observable
      * @return the observed value or <b>null</b> if nothing was observed (so far)
      */
-    @QMInternal
     public static String obtainKey(String prefix, String name, IObservable observable) {
         return prefix + SEPARATOR + name + SEPARATOR + (null == observable ? null : observable.name());
     }
@@ -187,7 +175,19 @@ public class FrozenSystemState implements Serializable {
      */
     @QMInternal
     public Double getObservation(String prefix, String name, IObservable observable, Double dflt) {
-        Double result = values.get(obtainKey(prefix, name, observable));
+        return getObservation(obtainKey(prefix, name, observable), dflt);
+    }
+    
+    /**
+     * Returns an observation.
+     * 
+     * @param key the access key (see {@link #obtainKey(String, String, IObservable)}.
+     * @param dflt the default value to return if nothing was observed (so far)
+     * @return the observed value or <code>dflt</code> if nothing was observed (so far)
+     */
+    @QMInternal
+    public Double getObservation(String key, Double dflt) {
+        Double result = values.get(key);
         if (null == result) {
             result = dflt;
         }
