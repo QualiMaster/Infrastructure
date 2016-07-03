@@ -19,8 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
+import backtype.storm.hooks.info.EmitInfo;
 import eu.qualimaster.observables.IObservable;
 
 /**
@@ -64,41 +63,28 @@ public class MonitoringPluginRegistry {
     }
     
     /**
-     * Notifies about emitting a tuple.
+     * Notifies about emitting tuples.
      * 
-     * @param streamId the output stream Id
-     * @param tuple the data tuple
+     * @param info information about the last emit
      */
-    public static void emitted(String streamId, Tuple tuple) {
+    public static void emitted(EmitInfo info) {
         for (int p = 0, n = PLUGINS.size(); p < n; p++) {
-            PLUGINS.get(p).emitted(streamId, tuple);
+            PLUGINS.get(p).emitted(info);
         }
     }
-    
+
     /**
-     * Notifies about emitting an amount of tuples.
+     * Notifies about emitting sink tuples.
      * 
-     * @param streamId the output stream Id
-     * @param count the amount of tuples
+     * @param tuple the emitted tuple
      */
-    public static void emitted(String streamId, int count) {
+    public static void emitted(Object tuple) {
         for (int p = 0, n = PLUGINS.size(); p < n; p++) {
-            PLUGINS.get(p).emitted(streamId, count);
+            PLUGINS.get(p).emitted(tuple);
         }
     }
-    
-    /**
-     * Notifies about emitting values.
-     * 
-     * @param streamId the output stream Id
-     * @param values the emitted values
-     */
-    public static void emitted(String streamId, Values values) {
-        for (int p = 0, n = PLUGINS.size(); p < n; p++) {
-            PLUGINS.get(p).emitted(streamId, values);
-        }
-    }
-    
+
+
     /**
      * Ends monitoring for an execution method.
      */

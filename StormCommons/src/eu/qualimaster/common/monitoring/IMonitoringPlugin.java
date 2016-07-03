@@ -17,8 +17,7 @@ package eu.qualimaster.common.monitoring;
 
 import java.util.Map;
 
-import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
+import backtype.storm.hooks.info.EmitInfo;
 import eu.qualimaster.observables.IObservable;
 
 /**
@@ -38,34 +37,24 @@ public interface IMonitoringPlugin {
     public void startMonitoring();
     
     /**
-     * Notifies about emitting a tuple.
+     * Notifies about emitting a tuples.
      * 
-     * @param streamId the output stream Id
-     * @param tuple the data tuple
+     * @param info information about the last emit
      */
-    public void emitted(String streamId, Tuple tuple);
-    
-    /**
-     * Notifies about emitting values.
-     * 
-     * @param streamId the output stream Id
-     * @param values the emitted values
-     */
-    public void emitted(String streamId, Values values);
-    
-    /**
-     * Notifies about emitting an amount of tuples (in particular for sinks).
-     * 
-     * @param streamId the output stream Id
-     * @param count the amount of tuples
-     */
-    public void emitted(String streamId, int count);
+    public void emitted(EmitInfo info);
     
     /**
      * Ends monitoring for an execution method.
      */
     public void endMonitoring();
-    
+
+    /**
+     * Notifies about emitting sink tuples.
+     * 
+     * @param tuple the emitted tuple
+     */
+    public void emitted(Object tuple);
+
     /**
      * Collects the observations for sending them to the infrastructure.
      * 

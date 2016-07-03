@@ -5,25 +5,29 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.Configuration;
+import eu.qualimaster.common.monitoring.MonitoringPluginRegistry;
 import eu.qualimaster.common.shedding.LoadShedder;
 import eu.qualimaster.common.shedding.LoadShedderFactory;
 import eu.qualimaster.common.shedding.NoShedder;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.monitoring.events.LoadSheddingChangedMonitoringEvent;
+import backtype.storm.hooks.info.BoltAckInfo;
+import backtype.storm.hooks.info.BoltExecuteInfo;
+import backtype.storm.hooks.info.BoltFailInfo;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
 
 /**
  * Extends the basic Storm Bolt by signalling capabilities.
  * 
  * @author Cui Qin
+ * @author Holger Eichelberger
  */
 @SuppressWarnings("serial")
 public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListener, IAlgorithmChangeListener, 
-    IParameterChangeListener, IShutdownListener, ILoadSheddingListener {
+    IParameterChangeListener, IShutdownListener, ILoadSheddingListener, IMonitoringChangeListener {
 
     private static final Logger LOGGER = Logger.getLogger(BaseSignalBolt.class);
     private String name;
@@ -35,7 +39,44 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     private transient ParameterChangeEventHandler parameterEventHandler;
     private transient ShutdownEventHandler shutdownEventHandler;
     private transient Monitor monitor;
+    private transient TaskHook taskHook;
 
+    /**
+     * A task hook for obtaining the raw execution times.
+     * 
+     * @author Holger Eichelberger
+     */
+    private static class TaskHook extends CountingTaskHook {
+        
+        private Monitor monitor;
+
+        /**
+         * Creates a task hook.
+         * 
+         * @param monitor the collecting monitor
+         */
+        private TaskHook(Monitor monitor) {
+            this.monitor = monitor;
+        }
+
+        @Override
+        public void boltExecute(BoltExecuteInfo info) {
+            if (null != info && null != info.executeLatencyMs) {
+                monitor.setVolume(getAndResetEmitVolume());
+                monitor.aggregateExecutionTimeAbs(info.executeLatencyMs, getAndResetEmitCount());
+            }
+        }
+
+        @Override
+        public void boltAck(BoltAckInfo info) {
+        }
+
+        @Override
+        public void boltFail(BoltFailInfo info) {
+        }
+        
+    }
+    
     /**
      * Creates a base signal Bolt with no regular event sending.
      * 
@@ -70,6 +111,10 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
         }
         StormSignalConnection.configureEventBus(conf);
         monitor = new Monitor(namespace, name, true, context, sendRegular);
+        if (Constants.MEASURE_BY_TASK_HOOKS) {
+            taskHook = new TaskHook(monitor);
+            context.addTaskHook(taskHook);
+        }
         try {
             LOGGER.info("Prepare--basesignalbolt....");
             signalConnection = new StormSignalConnection(this.name, this, namespace);
@@ -88,44 +133,29 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      * Starts monitoring for an execution method.
      */
     protected void startMonitoring() {
-        monitor.startMonitoring();
+        //monitor.startMonitoring(); done by TaskHook
+        MonitoringPluginRegistry.startMonitoring();
+    }
+
+    /**
+     * Counts emitting for a sink execution method.
+     * 
+     * @param tuple the tuple emitted
+     */
+    protected void emitted(Object tuple) {
+        if (Constants.MEASURE_BY_TASK_HOOKS) {
+            taskHook.emitted(tuple);
+        } else {
+            MonitoringPluginRegistry.emitted(tuple);
+        }
     }
 
     /**
      * Ends monitoring for an execution method.
      */
     protected void endMonitoring() {
-        monitor.endMonitoring();
-    }
-    
-    /**
-     * Notifies about emitting a tuple.
-     * 
-     * @param streamId the output stream Id
-     * @param tuple the data tuple
-     */
-    protected void emitted(String streamId, Tuple tuple) {
-        monitor.emitted(streamId, tuple);
-    }
-    
-    /**
-     * Notifies about emitting values.
-     * 
-     * @param streamId the output stream Id
-     * @param values the emitted values
-     */
-    protected void emitted(String streamId, Values values) {
-        monitor.emitted(streamId, values);
-    }
-    
-    /**
-     * Notifies about emitting an amount of tuples.
-     * 
-     * @param streamId the output stream Id
-     * @param count the amount of tuples
-     */
-    public void emitted(String streamId, int count) {
-        monitor.emitted(streamId, count);
+        //monitor.endMonitoring(); done by TaskHook
+        MonitoringPluginRegistry.endMonitoring();
     }
     
     /**
@@ -134,7 +164,9 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      * start time measurement. Assumes one item processed. [convenience]
      * 
      * @param start the start execution time
+     * @deprecated use {@link #startMonitoring()} and {@link #endMonitoring()} instead
      */
+    @Deprecated
     protected void aggregateExecutionTime(long start) {
         monitor.aggregateExecutionTime(start);
     }
@@ -146,7 +178,9 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      * 
      * @param start the start execution time
      * @param itemsCount the number of items processed
+     * @deprecated use {@link #startMonitoring()} and {@link #endMonitoring()} instead
      */
+    @Deprecated
     protected void aggregateExecutionTime(long start, int itemsCount) {
         monitor.aggregateExecutionTime(start, itemsCount);
     }
@@ -232,11 +266,49 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     }
 
     @Override
-    public void notifyLoadShedding(LoadSheddingSignal signal) {
+    public final void notifyLoadShedding(LoadSheddingSignal signal) {
         shedder = LoadShedderFactory.createShedder(signal.getShedder());
         shedder.configure(signal);
         EventManager.send(new LoadSheddingChangedMonitoringEvent(namespace, name, 
             signal.getShedder(), shedder.getDescriptor().getIdentifier(), signal.getCauseMessageId()));
+    }
+    
+    /**
+     * Notifies that monitoring shall be changed.
+     * 
+     * @param signal the signal describing the change
+     */
+    public final void notifyMonitoringChange(MonitoringChangeSignal signal) {
+        if (Constants.MEASURE_BY_TASK_HOOKS) {
+            taskHook.notifyMonitoringChange(signal);
+        }
+        monitor.notifyMonitoringChange(signal);
+    }
+
+    /**
+     * Process a single tuple of input. Considers {@link #isEnabled(Object)} for 
+     * load shedding, calls {@link #startMonitoring()} and {@link #endMonitoring()}. Delegates
+     * to {@link #doExecute(Tuple)} for the real work. Subclasses may override this method
+     * but shall consider load shedding and monitoring (or just do their work in {@link #doExecute(Tuple)}.
+     * 
+     * @param input The input tuple to be processed.
+     */
+    @Override
+    public void execute(Tuple input) {
+        if (isEnabled(input)) {
+            startMonitoring();
+            doExecute(input);
+            endMonitoring();
+        }
+    }
+
+    /**
+     * Process a single not load shedded tuple of input under monitoring. Pipeline sinks shall call 
+     * {@link #emitted(Object)} for all data passed finally to the sink implementation.
+     * 
+     * @param input The input tuple to be processed.
+     */
+    protected void doExecute(Tuple input) {
     }
     
     /**

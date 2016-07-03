@@ -20,8 +20,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import backtype.storm.task.TopologyContext;
-import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
 import eu.qualimaster.base.algorithm.IncrementalAverage;
 import eu.qualimaster.common.monitoring.MonitoringPluginRegistry;
 import eu.qualimaster.events.AbstractTimerEventHandler;
@@ -30,24 +28,29 @@ import eu.qualimaster.events.TimerEvent;
 import eu.qualimaster.monitoring.events.ComponentKey;
 import eu.qualimaster.monitoring.events.PipelineElementMultiObservationMonitoringEvent;
 import eu.qualimaster.monitoring.events.PipelineElementObservationMonitoringEvent;
+import eu.qualimaster.monitoring.spassMeter.QmPlugin;
 import eu.qualimaster.observables.IObservable;
+import eu.qualimaster.observables.MonitoringFrequency;
 import eu.qualimaster.observables.ResourceUsage;
 import eu.qualimaster.observables.TimeBehavior;
 
 /**
  * A common monitoring support class form bolts and spouts. No monitoring / event sending will 
- * happen as long as the aggregate method(s) are not called.
+ * happen as long as the aggregate method(s) are not called. Caller must take care of 
+ * {@link MonitoringPluginRegistry#startMonitoring()}, 
+ * {@link MonitoringPluginRegistry#emitted(backtype.storm.hooks.info.EmitInfo)}, 
+ * {@link MonitoringPluginRegistry#endMonitoring()}. Calls {@link MonitoringPluginRegistry#collectObservations(Map)}.
  * 
  * Example:
  * <pre>
- *    long start = System.currentTimeMillis();
+ *    startMonitoring();
  *    // the specific code that actually causes a tuple to be sent
- *    aggregateExecutionTime(start);
+ *    endMonitoring();
  * </pre>
  * 
  * @author Holger Eichelberger
  */
-public class Monitor {
+public class Monitor implements IMonitoringChangeListener {
     
     private String namespace;
     private String name;
@@ -56,6 +59,7 @@ public class Monitor {
     private ComponentKey key;
     private AtomicLong lastSend = new AtomicLong();
     private double itemsSend = 0;
+    private double itemsVolume = -1;
     private boolean includeItems;
     private TimerEventHandler timerHandler;
 
@@ -116,9 +120,9 @@ public class Monitor {
     }
 
     /**
-     * Aggregate the execution time and send the recorded value to the monitoring layer.
-     * Shall be used only in combination with a corresponding start time measurement.
-     * The number of items to that have been sent since <code>start</code> is assumed to 1.
+     * Aggregate the execution time and send the recorded value to the monitoring layer if the send interval
+     * is outdated. Shall be used only in combination with a corresponding start time measurement.
+     * The number of items to that have been sent since <code>start</code> is by default 1.
      *
      * @param start the start execution time
      */
@@ -127,32 +131,47 @@ public class Monitor {
     }
     
     /**
-     * Aggregate the execution time and send the recorded value to the monitoring layer.
-     * Shall be used only in combination with a corresponding start time measurement.
+     * Aggregate the execution time and sends the recorded value to the monitoring layer if the send interval
+     * is outdated. Shall be used only in combination with a corresponding start time measurement.
      *
      * @param start the start execution time
      * @param itemsCount the number of items emitted since <code>start</code>, (negative is turned to <code>0</code>)
      */
     public void aggregateExecutionTime(long start, int itemsCount) {
-        itemsCount = Math.max(0, itemsCount);
         long now = System.currentTimeMillis();
         executionTime.addValue(now - start);
-        itemsSend += itemsCount;
+        itemsSend += Math.max(0, itemsCount);
         checkSend(now);
     }
-    
+
+    /**
+     * Aggregate the absolute execution time and sends the recorded value to the monitoring layer if the send interval
+     * is outdated. Shall be used only in combination with a corresponding start time measurement.
+     *
+     * @param time the absolute execution time
+     * @param itemsCount the number of items emitted since <code>start</code>, (negative is turned to <code>0</code>)
+     */
+    public void aggregateExecutionTimeAbs(long time, int itemsCount) {
+        executionTime.addValue(time);
+        itemsSend += Math.max(0, itemsCount);
+        checkSend(System.currentTimeMillis());
+    }
+
     /**
      * Checks whether the actual measurements have/shall be sent. This method must be thread-safe.
      * 
      * @param now the current time
      */
     private void checkSend(long now) {
-        if (now - lastSend.get() > sendInterval) {
+        if (sendInterval > 0 && now - lastSend.get() > sendInterval) {
             if (includeItems) {
                 Map<IObservable, Double> data = new HashMap<IObservable, Double>();
                 MonitoringPluginRegistry.collectObservations(data);
                 data.put(TimeBehavior.LATENCY, executionTime.getAverage());
                 data.put(TimeBehavior.THROUGHPUT_ITEMS, itemsSend);
+                if (itemsVolume >= 0) {
+                    data.put(TimeBehavior.THROUGHPUT_VOLUME, itemsVolume);
+                }
                 EventManager.send(new PipelineElementMultiObservationMonitoringEvent(namespace, name, key, data));
             } else {
                 if (MonitoringPluginRegistry.getRegisteredPluginCount() > 0) {
@@ -194,40 +213,6 @@ public class Monitor {
     public void startMonitoring() {
         startTime = System.currentTimeMillis();
         count = 0;
-        MonitoringPluginRegistry.startMonitoring();
-    }
-    
-    /**
-     * Notifies about emitting a tuple and informs the monitoring plugins.
-     * 
-     * @param streamId the output stream Id
-     * @param tuple the data tuple
-     */
-    public void emitted(String streamId, Tuple tuple) {
-        count += tuple.size();
-        MonitoringPluginRegistry.emitted(streamId, tuple);
-    }
-    
-    /**
-     * Notifies about emitting an amount of tuples.
-     * 
-     * @param streamId the output stream Id
-     * @param count the amount of tuples
-     */
-    public void emitted(String streamId, int count) {
-        this.count += count;
-        MonitoringPluginRegistry.emitted(streamId, count);
-    }
-
-    /**
-     * Notifies about emitting a tuple and informs the monitoring plugins.
-     * 
-     * @param streamId the output stream Id
-     * @param values the emitted values
-     */
-    public void emitted(String streamId, Values values) {
-        count += values.size();
-        MonitoringPluginRegistry.emitted(streamId, values);
     }
     
     /**
@@ -235,7 +220,43 @@ public class Monitor {
      */
     public void endMonitoring() {
         aggregateExecutionTime(startTime, count);
-        MonitoringPluginRegistry.endMonitoring();
+    }
+
+    /**
+     * Explicitly sets the number of emitted tuples.
+     * 
+     * @param count the number of emitted tuples
+     */
+    void setEmitCount(int count) {
+        this.count = count;
+    }
+    
+    /**
+     * Explicitly sets the volume of emitted tuples.
+     * 
+     * @param volume the volume (negative disables collection)
+     */
+    void setVolume(long volume) {
+        this.itemsVolume = volume;
+    }
+
+    @Override
+    public void notifyMonitoringChange(MonitoringChangeSignal signal) {
+        Integer tmp = signal.getFrequency(MonitoringFrequency.PIPELINE_NODE);
+        if (null != tmp) {
+            sendInterval = tmp;
+            if (null != timerHandler) {
+                if (0 == tmp) {
+                    EventManager.setTimerPeriod(0); // disable
+                } else {
+                    EventManager.setTimerPeriod(tmp + 100); // allow for tolerances
+                }
+            }
+        }
+        tmp = signal.getFrequency(MonitoringFrequency.PIPELINE_NODE_RESOURCES);
+        if (null != tmp) {
+            QmPlugin.changeFrequency(tmp);
+        }
     }
     
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2016 University of Hildesheim, Software Systems Engineering
+ * Copyright 2009-2015 University of Hildesheim, Software Systems Engineering
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,17 @@
 package eu.qualimaster.common.signal;
 
 /**
- * Some common constants.
+ * Defines a listener for monitoring changes.
  * 
  * @author Holger Eichelberger
  */
-public class Constants {
+public interface IMonitoringChangeListener {
 
-    public static final String CONFIG_KEY_SUBPIPELINE_NAME = "SUBPIPELINE.NAME";
+    /**
+     * Notifies that monitoring shall be changed.
+     * 
+     * @param signal the signal describing the change
+     */
+    public void notifyMonitoringChange(MonitoringChangeSignal signal);
     
-    // requires startMonitoring()/endMonitoring() rather than aggregateExecutionTime in pipeline code
-    public static final boolean MEASURE_BY_TASK_HOOKS = true;
 }

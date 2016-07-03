@@ -5,6 +5,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.Configuration;
+import eu.qualimaster.common.monitoring.MonitoringPluginRegistry;
 import eu.qualimaster.common.shedding.LoadShedder;
 import eu.qualimaster.common.shedding.LoadShedderFactory;
 import eu.qualimaster.common.shedding.NoShedder;
@@ -13,17 +14,16 @@ import eu.qualimaster.monitoring.events.LoadSheddingChangedMonitoringEvent;
 import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.base.*;
-import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
 
 /**
  * Implements a basic signalling spout.
  * 
  * @author Cui Qin
+ * @author Holger Eichelberger
  */
 @SuppressWarnings("serial")
 public abstract class BaseSignalSpout extends BaseRichSpout implements SignalListener, IParameterChangeListener, 
-    IShutdownListener, ILoadSheddingListener {
+    IShutdownListener, ILoadSheddingListener, IMonitoringChangeListener {
 
     private static final Logger LOGGER = Logger.getLogger(BaseSignalSpout.class);
     private String name;
@@ -34,7 +34,8 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     private transient ParameterChangeEventHandler parameterEventHandler;
     private transient ShutdownEventHandler shutdownEventHandler;
     private transient Monitor monitor;
-
+    private transient CountingTaskHook taskHook;
+    
     /**
      * Creates a signal spout.
      * 
@@ -69,6 +70,10 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
         }
         StormSignalConnection.configureEventBus(conf);
         monitor = new Monitor(namespace, name, true, context, sendRegular);
+        if (Constants.MEASURE_BY_TASK_HOOKS) {
+            taskHook = new CountingTaskHook();
+            context.addTaskHook(taskHook);
+        }
         try {
             LOGGER.info("Prepare--basesignalspout....");
             signalConnection = new StormSignalConnection(this.name, this, namespace);
@@ -87,43 +92,19 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      */
     protected void startMonitoring() {
         monitor.startMonitoring();
+        MonitoringPluginRegistry.startMonitoring();
     }
 
     /**
      * Ends monitoring for an execution method.
      */
     protected void endMonitoring() {
+        if (Constants.MEASURE_BY_TASK_HOOKS) {
+            monitor.setEmitCount(taskHook.getAndResetEmitCount());
+            monitor.setVolume(taskHook.getAndResetEmitVolume());
+        }
         monitor.endMonitoring();
-    }
-    
-    /**
-     * Notifies about emitting a tuple.
-     * 
-     * @param streamId the output stream Id
-     * @param tuple the data tuple
-     */
-    protected void emitted(String streamId, Tuple tuple) {
-        monitor.emitted(streamId, tuple);
-    }
-    
-    /**
-     * Notifies about emitting values.
-     * 
-     * @param streamId the output stream Id
-     * @param values the emitted values
-     */
-    protected void emitted(String streamId, Values values) {
-        monitor.emitted(streamId, values);
-    }
-    
-    /**
-     * Notifies about emitting an amount of tuples.
-     * 
-     * @param streamId the output stream Id
-     * @param count the amount of tuples
-     */
-    public void emitted(String streamId, int count) {
-        monitor.emitted(streamId, count);
+        MonitoringPluginRegistry.endMonitoring();
     }
 
     /**
@@ -132,7 +113,9 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      * start time measurement. Assumes one item processed. [convenience]
      * 
      * @param start the start execution time
+     * @deprecated use {@link #startMonitoring()} and {@link #endMonitoring()} instead
      */
+    @Deprecated
     protected void aggregateExecutionTime(long start) {
         monitor.aggregateExecutionTime(start);
     }
@@ -144,7 +127,9 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      * 
      * @param start the start execution time
      * @param itemsCount the number of items processed
+     * @deprecated use {@link #startMonitoring()} and {@link #endMonitoring()} instead
      */
+    @Deprecated
     protected void aggregateExecutionTime(long start, int itemsCount) {
         monitor.aggregateExecutionTime(start, itemsCount);
     }
@@ -226,11 +211,23 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     }
 
     @Override
-    public void notifyLoadShedding(LoadSheddingSignal signal) {
+    public final void notifyLoadShedding(LoadSheddingSignal signal) {
         shedder = LoadShedderFactory.createShedder(signal.getShedder());
         shedder.configure(signal);
         EventManager.send(new LoadSheddingChangedMonitoringEvent(namespace, name, 
             signal.getShedder(), shedder.getDescriptor().getIdentifier(), signal.getCauseMessageId()));
+    }
+
+    /**
+     * Notifies that monitoring shall be changed.
+     * 
+     * @param signal the signal describing the change
+     */
+    public final void notifyMonitoringChange(MonitoringChangeSignal signal) {
+        if (Constants.MEASURE_BY_TASK_HOOKS) {
+            taskHook.notifyMonitoringChange(signal);
+        }
+        monitor.notifyMonitoringChange(signal);
     }
     
     /**
@@ -268,6 +265,30 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      */
     public String getNamespace() {
         return namespace;
+    }
+    
+    /**
+     * When this method is called, Storm is requesting that the Spout emit tuples to the 
+     * output collector. This method should be non-blocking, so if the Spout has no tuples
+     * to emit, this method should return. nextTuple, ack, and fail are all called in a tight
+     * loop in a single thread in the spout task. When there are no tuples to emit, it is courteous
+     * to have nextTuple sleep for a short amount of time (like a single millisecond)
+     * so as not to waste too much CPU. This method calls {@link #startMonitoring()}, {@link #endMonitoring()}
+     * and {@link #doNextTuple()}, but may be overriden by subclass which should at least do the 
+     * monitoring stuff.
+     */
+    public void nextTuple() {
+        startMonitoring();
+        doNextTuple();
+        endMonitoring();
+    }
+    
+    /**
+     * Determines the next tuple. This method shall call the respective ack/emit methods. When there are no tuples to 
+     * emit, it is courteous to have nextTuple sleep for a short amount of time (like a single millisecond)
+     * so as not to waste too much CPU. Shall consider {@link #isEnabled(Object)} for load shedding.
+     */
+    protected void doNextTuple() {
     }
 
 }
