@@ -17,6 +17,7 @@ import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.events.EventManager.EventSender;
 import eu.qualimaster.events.IEvent;
+import eu.qualimaster.events.IResponseEvent;
 import eu.qualimaster.events.IReturnableEvent;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.logging.events.LoggingEvent;
@@ -34,6 +35,7 @@ import eu.qualimaster.monitoring.events.PlatformMonitoringEvent;
 import eu.qualimaster.monitoring.events.ReplayChangedMonitoringEvent;
 import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 import eu.qualimaster.observables.IObservable;
+import eu.qualimaster.observables.MonitoringFrequency;
 import eu.qualimaster.observables.ResourceUsage;
 import eu.qualimaster.observables.Scalability;
 import eu.qualimaster.observables.TimeBehavior;
@@ -104,6 +106,9 @@ public class EventsTests {
     public void testMonitoringEvents() {
         final String pipeline = "pip";
         final String pipelineElement = "proc";
+        final AbstractReturnableEvent req = new AbstractReturnableEvent("abba-1223", "msg-09876551") {
+            private static final long serialVersionUID = -4739552560324373138L;
+        };
         
         ComponentKey key = new ComponentKey("localhost", 7777, 4);
         PipelineElementObservationMonitoringEvent oEvent = new PipelineElementObservationMonitoringEvent(pipeline, 
@@ -127,43 +132,95 @@ public class EventsTests {
         Assert.assertEquals(obs, moEvent.getObservations());
         Assert.assertEquals(key, moEvent.getKey());
         
-        long timestamp = System.currentTimeMillis();
-        ChangeMonitoringEvent cEvent = new ChangeMonitoringEvent(true, timestamp);
+        ChangeMonitoringEvent cEvent = new ChangeMonitoringEvent(MonitoringFrequency.createMap(
+            MonitoringFrequency.CLUSTER_MONITORING, 100), null);
         Assert.assertNull(cEvent.getPipeline());
         Assert.assertNull(cEvent.getPipelineElement());
-        Assert.assertNull(cEvent.getObservable());
-        Assert.assertEquals(true, cEvent.isEnabled());
-        Assert.assertEquals(timestamp, cEvent.getTimestamp());
-        
-        timestamp = System.currentTimeMillis();
-        cEvent = new ChangeMonitoringEvent(Scalability.VARIETY, false, timestamp);
-        Assert.assertNull(cEvent.getPipeline());
-        Assert.assertNull(cEvent.getPipelineElement());
-        Assert.assertEquals(Scalability.VARIETY, cEvent.getObservable());
-        Assert.assertEquals(false, cEvent.isEnabled());
-        Assert.assertEquals(timestamp, cEvent.getTimestamp());
+        Assert.assertNull(cEvent.getObservables());
+        assertEqualsFrequency(100, MonitoringFrequency.CLUSTER_MONITORING, cEvent);
+        assertCause(null, cEvent);
 
-        timestamp = System.currentTimeMillis();
-        cEvent = new ChangeMonitoringEvent(pipeline, Scalability.VARIETY, true, timestamp);
+        Map<IObservable, Boolean> eObs = new HashMap<IObservable, Boolean>();
+        eObs.put(Scalability.VARIETY, false);
+        cEvent = new ChangeMonitoringEvent(MonitoringFrequency.createAllMap(0), eObs, req);
+        Assert.assertNull(cEvent.getPipeline());
+        Assert.assertNull(cEvent.getPipelineElement());
+        Assert.assertEquals(eObs, cEvent.getObservables());
+        assertEqualsAllFrequencies(0, cEvent);
+        assertCause(req, cEvent);
+
+        eObs.put(Scalability.VARIETY, true);
+        cEvent = new ChangeMonitoringEvent(pipeline, null, eObs, req);
         Assert.assertEquals(pipeline, cEvent.getPipeline());
         Assert.assertNull(cEvent.getPipelineElement());
-        Assert.assertEquals(Scalability.VARIETY, cEvent.getObservable());
-        Assert.assertEquals(true, cEvent.isEnabled());
-        Assert.assertEquals(timestamp, cEvent.getTimestamp());
+        Assert.assertEquals(eObs, cEvent.getObservables());
+        assertEqualsFrequency(null, null, cEvent);
+        assertCause(req, cEvent);
 
-        timestamp = System.currentTimeMillis();
-        cEvent = new ChangeMonitoringEvent(pipeline, pipelineElement, Scalability.VARIETY, true, timestamp);
+        cEvent = new ChangeMonitoringEvent(pipeline, pipelineElement, 
+            MonitoringFrequency.createMap(MonitoringFrequency.CLUSTER_MONITORING, 100), eObs, req);
         Assert.assertEquals(pipeline, cEvent.getPipeline());
         Assert.assertEquals(pipelineElement, cEvent.getPipelineElement());
-        Assert.assertEquals(Scalability.VARIETY, cEvent.getObservable());
-        Assert.assertEquals(true, cEvent.isEnabled());
-        Assert.assertEquals(timestamp, cEvent.getTimestamp());
+        Assert.assertEquals(eObs, cEvent.getObservables());
+        assertEqualsFrequency(100, MonitoringFrequency.CLUSTER_MONITORING, cEvent);
+        assertCause(req, cEvent);
         
         SubTopologyMonitoringEvent sEvent = new SubTopologyMonitoringEvent(pipeline, null);
         Assert.assertEquals(pipeline, sEvent.getPipeline());
         Assert.assertNull(sEvent.getStructure());
     }
 
+    /**
+     * Asserts the message cause.
+     * 
+     * @param expected the expected cause
+     * @param evt the actual event with cause information embedded
+     */
+    private static final void assertCause(IReturnableEvent expected, IResponseEvent evt) {
+        if (null == expected) {
+            Assert.assertNull(evt.getReceiverId());
+            Assert.assertNull(evt.getMessageId());
+        } else {
+            Assert.assertEquals(expected.getSenderId(), evt.getReceiverId());
+            Assert.assertEquals(expected.getMessageId(), evt.getMessageId());
+        }
+    }
+
+    /**
+     * Asserts equality of all frequency types.
+     * 
+     * @param expected the expected value
+     * @param event the monitoring change event
+     */
+    private static final void assertEqualsAllFrequencies(Integer expected, ChangeMonitoringEvent event) {
+        for (MonitoringFrequency freq : MonitoringFrequency.values()) {
+            assertEqualsFrequency(expected, freq, event);
+        }
+    }
+    
+    /**
+     * Asserts equality of frequencies.
+     * 
+     * @param expected the expected value
+     * @param freq the frequency type (may be <b>null</b>)
+     * @param event the monitoring change event
+     */
+    private static final void assertEqualsFrequency(Integer expected, MonitoringFrequency freq, 
+        ChangeMonitoringEvent event) {
+        if (null == expected) {
+            Assert.assertTrue(null == event.getFrequencies());
+            if (null != freq) {
+                Assert.assertTrue(null == event.getFrequencies().get(freq));
+                Assert.assertNull(event.getFrequency(freq));
+            }
+        } else {
+            Assert.assertNotNull(event.getFrequencies());
+            Assert.assertNotNull(freq);
+            Assert.assertEquals(expected, event.getFrequencies().get(freq));
+            Assert.assertEquals(expected, event.getFrequency(freq));
+        }
+    }
+ 
     /**
      * Test monitoring events.
      */

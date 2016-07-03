@@ -1,8 +1,12 @@
 package eu.qualimaster.monitoring.events;
 
+import java.util.Map;
+
 import eu.qualimaster.common.QMInternal;
-import eu.qualimaster.observables.IForwardedCoordinationCommand;
+import eu.qualimaster.events.IResponseEvent;
+import eu.qualimaster.events.IReturnableEvent;
 import eu.qualimaster.observables.IObservable;
+import eu.qualimaster.observables.MonitoringFrequency;
 
 /**
  * Causes a change in monitoring an observable.
@@ -10,58 +14,63 @@ import eu.qualimaster.observables.IObservable;
  * @author Holger Eichelberger
  */
 @QMInternal
-public class ChangeMonitoringEvent extends AbstractPipelineElementMonitoringEvent 
-    implements IForwardedCoordinationCommand {
+public class ChangeMonitoringEvent extends AbstractPipelineElementMonitoringEvent implements IResponseEvent {
 
     private static final long serialVersionUID = 3321516452071765608L;
-    private IObservable observable;
-    private boolean enabled;
-    private long timestamp;
+    private Map<MonitoringFrequency, Integer> frequencies;
+    private Map<IObservable, Boolean> observables;
     private Boolean enableAlgorithmTracing; 
+    private String receiverId;
+    private String msgId;
 
     /**
-     * Creates a neutral monitoring event, i.e., a disabled timestamp and
+     * Creates a neutral monitoring event potentially affecting algorithm tracing, i.e., no receiverId/msgId and 
      * continued enabled monitoring. 
      * 
      * @param enableAlgorithmTracing enables or disables algorithm tracing to files for obtaining 
      *     (initial/experimental/testing) profiles
      */
     public ChangeMonitoringEvent(boolean enableAlgorithmTracing) {
-        this(true, 0);
+        this(null, null);
         this.enableAlgorithmTracing = enableAlgorithmTracing;
     }
     
     /**
      * Changes the monitoring for the entire infrastructure.
      * 
-     * @param enabled whether the observable shall be enabled or disabled
-     * @param timestamp the coordination / enactment timestamp pointing to the respective coordination log entry
+     * @param frequencies the desired monitoring frequency, <b>null</b> for unspecified, 0 or negative for 
+     *     completely disabled
+     * @param cause optional request message with sender and message id (may be <b>null</b>)
      */
-    public ChangeMonitoringEvent(boolean enabled, long timestamp) {
-        this(null, null, null, enabled, timestamp);
+    public ChangeMonitoringEvent(Map<MonitoringFrequency, Integer> frequencies, IReturnableEvent cause) {
+        this(null, null, frequencies, null, cause);
     }
 
     /**
      * Changes the monitoring of a resource for the entire infrastructure.
      * 
-     * @param observable the observable to be changed (may be <b>null</b> for all)
-     * @param enabled whether the observable shall be enabled or disabled
-     * @param timestamp the coordination / enactment timestamp pointing to the respective coordination log entry
+     * @param frequencies the desired monitoring frequencies, <b>null</b> for unspecified, 0 or negative for 
+     *     completely disabled
+     * @param observables the enabled/disabled observables, <b>null</b> for unspecified
+     * @param cause optional request message with sender and message id (may be <b>null</b>)
      */
-    public ChangeMonitoringEvent(IObservable observable, boolean enabled, long timestamp) {
-        this(null, null, observable, enabled, timestamp);
+    public ChangeMonitoringEvent(Map<MonitoringFrequency, Integer> frequencies, Map<IObservable, Boolean> observables, 
+        IReturnableEvent cause) {
+        this(null, null, frequencies, observables, cause);
     }
 
     /**
      * Changes the monitoring for a <code>pipeline</code>.
      * 
      * @param pipeline the name of the pipeline (may be <b>null</b> for all)
-     * @param observable the observable to be changed (may be <b>null</b> for all)
-     * @param enabled whether the observable shall be enabled or disabled
-     * @param timestamp the coordination / enactment timestamp pointing to the respective coordination log entry
+     * @param frequencies the desired monitoring frequencies, <b>null</b> for unspecified, 0 or negative for 
+     *     completely disabled
+     * @param observables the enabled/disabled observables, <b>null</b> for unspecified
+     * @param cause optional request message with sender and message id (may be <b>null</b>)
      */
-    public ChangeMonitoringEvent(String pipeline, IObservable observable, boolean enabled, long timestamp) {
-        this(pipeline, null, observable, enabled, timestamp);
+    public ChangeMonitoringEvent(String pipeline, Map<MonitoringFrequency, Integer> frequencies, 
+        Map<IObservable, Boolean> observables, IReturnableEvent cause) {
+        this(pipeline, null, frequencies, observables, cause);
     }
     
     /**
@@ -69,39 +78,48 @@ public class ChangeMonitoringEvent extends AbstractPipelineElementMonitoringEven
      * 
      * @param pipeline the name of the pipeline (may be <b>null</b> for all)
      * @param pipelineElement the pipeline element as class name (may be <b>null</b> for all)
-     * @param observable the observable to be changed (may be <b>null</b> for all)
-     * @param enabled whether the observable shall be enabled or disabled
-     * @param timestamp the coordination / enactment timestamp pointing to the respective coordination log entry
+     * @param frequencies the desired monitoring frequency, <b>null</b> for unspecified, 0 or negative for 
+     *     completely disabled
+     * @param observables the enabled/disabled observables, <b>null</b> for unspecified
+     * @param cause optional request message with sender and message id (may be <b>null</b>)
      */
-    public ChangeMonitoringEvent(String pipeline, String pipelineElement, IObservable observable, 
-        boolean enabled, long timestamp) {
+    public ChangeMonitoringEvent(String pipeline, String pipelineElement, 
+        Map<MonitoringFrequency, Integer> frequencies, Map<IObservable, Boolean> observables, IReturnableEvent cause) {
         super(pipeline, pipelineElement, null);
-        this.observable = observable;
-        this.enabled = enabled;
-        this.timestamp = timestamp;
+        this.frequencies = frequencies;
+        this.observables = observables;
+        if (null != cause) {
+            this.receiverId = cause.getSenderId();
+            this.msgId = cause.getMessageId();
+        }
     }
 
     /**
-     * Returns the observable to be affected.
+     * Returns the desired monitoring frequencies.
      * 
-     * @return the observable to be affected (may be <b>null</b> for all)
+     * @return the desired monitoring frequencies, <b>null</b> for unspecified, 0 or negative for completely disabled
      */
-    public IObservable getObservable() {
-        return observable;
-    }
-
-    /**
-     * Returns whether this event enables or disables something..
-     * 
-     * @return <code>true</code> if enable, <code>false</code> if disable
-     */
-    public boolean isEnabled() {
-        return enabled;
+    public Map<MonitoringFrequency, Integer> getFrequencies() {
+        return frequencies;
     }
     
-    @Override
-    public long getTimestamp() {
-        return timestamp;
+    /**
+     * Returns the desired frequency for a certain frequency kind.
+     * 
+     * @param frequency the frequency kind
+     * @return the desired monitoring frequency, <b>null</b> for unspecified, 0 or negative for completely disabled
+     */
+    public Integer getFrequency(MonitoringFrequency frequency) {
+        return null == frequencies || null == frequency ? null : frequencies.get(frequency);
+    }
+    
+    /**
+     * Returns the enabled/disabled observables.
+     * 
+     * @return the enabled/disabled observables, <b>null</b> for unspecified
+     */
+    public Map<IObservable, Boolean> getObservables() {
+        return observables;
     }
     
     /**
@@ -112,6 +130,16 @@ public class ChangeMonitoringEvent extends AbstractPipelineElementMonitoringEven
      */
     public Boolean enableAlgorithmTracing() {
         return enableAlgorithmTracing;
+    }
+
+    @Override
+    public String getReceiverId() {
+        return receiverId;
+    }
+
+    @Override
+    public String getMessageId() {
+        return msgId;
     }
     
 }

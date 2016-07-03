@@ -20,6 +20,7 @@ import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent.Status;
 import eu.qualimaster.monitoring.events.ChangeMonitoringEvent;
+import eu.qualimaster.observables.MonitoringFrequency;
 
 /**
  * A test server for inter-JVM-message forwarding.
@@ -41,7 +42,7 @@ public class ForwardTestServer {
                 Thread.sleep(1000);
                 EventManager.send(new PipelineLifecycleEvent("test", Status.UNKNOWN, null));
                 Thread.sleep(1000);
-                EventManager.send(new ChangeMonitoringEvent(true, 123456));
+                EventManager.send(new ChangeMonitoringEvent(MonitoringFrequency.createAllMap(100), null));
             } catch (InterruptedException e) {
             }
         }

@@ -31,9 +31,19 @@ public abstract class AbstractReturnableEvent implements IReturnableEvent {
     
     /**
      * Creates an instance.
-     * 
      */
     protected AbstractReturnableEvent() {
+    }
+
+    /**
+     * Creates an instance.
+     * 
+     * @param senderId the sender id
+     * @param messageId the message id
+     */
+    protected AbstractReturnableEvent(String senderId, String messageId) {
+        this.senderId = senderId;
+        this.messageId = messageId;
     }
     
     @QMInternal
