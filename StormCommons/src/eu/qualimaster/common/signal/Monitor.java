@@ -19,8 +19,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import de.uni_hildesheim.sse.system.GathererFactory;
-import de.uni_hildesheim.sse.system.IMemoryDataGatherer;
+//import de.uni_hildesheim.sse.system.GathererFactory;
+//import de.uni_hildesheim.sse.system.IMemoryDataGatherer;
 
 import backtype.storm.hooks.ITaskHook;
 import backtype.storm.hooks.info.BoltAckInfo;
@@ -62,7 +62,7 @@ import eu.qualimaster.observables.TimeBehavior;
  */
 public class Monitor implements IMonitoringChangeListener, ITaskHook {
     
-    private static final IMemoryDataGatherer MEMGATHERER = GathererFactory.getMemoryDataGatherer();
+    //private static final IMemoryDataGatherer MEMGATHERER = GathererFactory.getMemoryDataGatherer();
     private String namespace;
     private String name;
     private IncrementalAverage executionTime;
@@ -277,9 +277,9 @@ public class Monitor implements IMonitoringChangeListener, ITaskHook {
     public void emit(EmitInfo info) {
         if (null != info && null != info.values) {
             itemsSend += info.values.size();
-            if (collectVolume) {
+            /*if (collectVolume) {
                 itemsVolume += MEMGATHERER.getObjectSize(info.values);
-            }
+            }*/
             MonitoringPluginRegistry.emitted(info);
         }
     }
@@ -316,9 +316,9 @@ public class Monitor implements IMonitoringChangeListener, ITaskHook {
     public void emitted(Object tuple) {
         if (null != tuple) {
             itemsSend++;
-            if (collectVolume) {
+            /*if (collectVolume) {
                 itemsVolume += MEMGATHERER.getObjectSize(tuple);
-            }
+            }*/
             MonitoringPluginRegistry.emitted(tuple);
         }
     }
