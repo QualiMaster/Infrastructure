@@ -11,9 +11,6 @@ import eu.qualimaster.common.shedding.LoadShedderFactory;
 import eu.qualimaster.common.shedding.NoShedder;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.monitoring.events.LoadSheddingChangedMonitoringEvent;
-import backtype.storm.hooks.info.BoltAckInfo;
-import backtype.storm.hooks.info.BoltExecuteInfo;
-import backtype.storm.hooks.info.BoltFailInfo;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.base.BaseRichBolt;
@@ -39,43 +36,6 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     private transient ParameterChangeEventHandler parameterEventHandler;
     private transient ShutdownEventHandler shutdownEventHandler;
     private transient Monitor monitor;
-    private transient TaskHook taskHook;
-
-    /**
-     * A task hook for obtaining the raw execution times.
-     * 
-     * @author Holger Eichelberger
-     */
-    private static class TaskHook extends CountingTaskHook {
-        
-        private Monitor monitor;
-
-        /**
-         * Creates a task hook.
-         * 
-         * @param monitor the collecting monitor
-         */
-        private TaskHook(Monitor monitor) {
-            this.monitor = monitor;
-        }
-
-        @Override
-        public void boltExecute(BoltExecuteInfo info) {
-            if (null != info && null != info.executeLatencyMs) {
-                monitor.setVolume(getAndResetEmitVolume());
-                monitor.aggregateExecutionTimeAbs(info.executeLatencyMs, getAndResetEmitCount());
-            }
-        }
-
-        @Override
-        public void boltAck(BoltAckInfo info) {
-        }
-
-        @Override
-        public void boltFail(BoltFailInfo info) {
-        }
-        
-    }
     
     /**
      * Creates a base signal Bolt with no regular event sending.
@@ -112,8 +72,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
         StormSignalConnection.configureEventBus(conf);
         monitor = new Monitor(namespace, name, true, context, sendRegular);
         if (Constants.MEASURE_BY_TASK_HOOKS) {
-            taskHook = new TaskHook(monitor);
-            context.addTaskHook(taskHook);
+            context.addTaskHook(monitor);
         }
         try {
             LOGGER.info("Prepare--basesignalbolt....");
@@ -144,7 +103,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      */
     protected void emitted(Object tuple) {
         if (Constants.MEASURE_BY_TASK_HOOKS) {
-            taskHook.emitted(tuple);
+            monitor.emitted(tuple);
         } else {
             MonitoringPluginRegistry.emitted(tuple);
         }
@@ -168,7 +127,9 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      */
     @Deprecated
     protected void aggregateExecutionTime(long start) {
+        //if (!Constants.MEASURE_BY_TASK_HOOKS) {
         monitor.aggregateExecutionTime(start);
+        //}
     }
     
     /**
@@ -182,16 +143,9 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      */
     @Deprecated
     protected void aggregateExecutionTime(long start, int itemsCount) {
+        //if (!Constants.MEASURE_BY_TASK_HOOKS) {
         monitor.aggregateExecutionTime(start, itemsCount);
-    }
-    
-    /**
-     * Returns the monitoring support class.
-     * 
-     * @return the monitoring support instance
-     */
-    protected Monitor getMonitor() {
-        return monitor;
+        //}
     }
 
     /**
@@ -279,9 +233,6 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      * @param signal the signal describing the change
      */
     public final void notifyMonitoringChange(MonitoringChangeSignal signal) {
-        if (Constants.MEASURE_BY_TASK_HOOKS) {
-            taskHook.notifyMonitoringChange(signal);
-        }
         monitor.notifyMonitoringChange(signal);
     }
 

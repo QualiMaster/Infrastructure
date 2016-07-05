@@ -34,7 +34,6 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     private transient ParameterChangeEventHandler parameterEventHandler;
     private transient ShutdownEventHandler shutdownEventHandler;
     private transient Monitor monitor;
-    private transient CountingTaskHook taskHook;
     
     /**
      * Creates a signal spout.
@@ -71,8 +70,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
         StormSignalConnection.configureEventBus(conf);
         monitor = new Monitor(namespace, name, true, context, sendRegular);
         if (Constants.MEASURE_BY_TASK_HOOKS) {
-            taskHook = new CountingTaskHook();
-            context.addTaskHook(taskHook);
+            context.addTaskHook(monitor);
         }
         try {
             LOGGER.info("Prepare--basesignalspout....");
@@ -99,10 +97,6 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      * Ends monitoring for an execution method.
      */
     protected void endMonitoring() {
-        if (Constants.MEASURE_BY_TASK_HOOKS) {
-            monitor.setEmitCount(taskHook.getAndResetEmitCount());
-            monitor.setVolume(taskHook.getAndResetEmitVolume());
-        }
         monitor.endMonitoring();
         MonitoringPluginRegistry.endMonitoring();
     }
@@ -117,7 +111,9 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      */
     @Deprecated
     protected void aggregateExecutionTime(long start) {
+        //if (!Constants.MEASURE_BY_TASK_HOOKS) {
         monitor.aggregateExecutionTime(start);
+        //}
     }
     
     /**
@@ -131,16 +127,9 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      */
     @Deprecated
     protected void aggregateExecutionTime(long start, int itemsCount) {
+        //if (!Constants.MEASURE_BY_TASK_HOOKS) {
         monitor.aggregateExecutionTime(start, itemsCount);
-    }
-
-    /**
-     * Returns the monitoring support class.
-     * 
-     * @return the monitoring support instance
-     */
-    protected Monitor getMonitor() {
-        return monitor;
+        //}
     }
 
     // checkstyle: resume exception type check
@@ -224,9 +213,6 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      * @param signal the signal describing the change
      */
     public final void notifyMonitoringChange(MonitoringChangeSignal signal) {
-        if (Constants.MEASURE_BY_TASK_HOOKS) {
-            taskHook.notifyMonitoringChange(signal);
-        }
         monitor.notifyMonitoringChange(signal);
     }
     

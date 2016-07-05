@@ -19,6 +19,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import de.uni_hildesheim.sse.system.GathererFactory;
+import de.uni_hildesheim.sse.system.IMemoryDataGatherer;
+
+import backtype.storm.hooks.ITaskHook;
+import backtype.storm.hooks.info.BoltAckInfo;
+import backtype.storm.hooks.info.BoltExecuteInfo;
+import backtype.storm.hooks.info.BoltFailInfo;
+import backtype.storm.hooks.info.EmitInfo;
+import backtype.storm.hooks.info.SpoutAckInfo;
+import backtype.storm.hooks.info.SpoutFailInfo;
 import backtype.storm.task.TopologyContext;
 import eu.qualimaster.base.algorithm.IncrementalAverage;
 import eu.qualimaster.common.monitoring.MonitoringPluginRegistry;
@@ -50,8 +60,9 @@ import eu.qualimaster.observables.TimeBehavior;
  * 
  * @author Holger Eichelberger
  */
-public class Monitor implements IMonitoringChangeListener {
+public class Monitor implements IMonitoringChangeListener, ITaskHook {
     
+    private static final IMemoryDataGatherer MEMGATHERER = GathererFactory.getMemoryDataGatherer();
     private String namespace;
     private String name;
     private IncrementalAverage executionTime;
@@ -62,6 +73,7 @@ public class Monitor implements IMonitoringChangeListener {
     private double itemsVolume = -1;
     private boolean includeItems;
     private TimerEventHandler timerHandler;
+    private boolean collectVolume = false; // TODO activate by default?
 
     private transient long startTime;
     private transient int count;
@@ -145,19 +157,6 @@ public class Monitor implements IMonitoringChangeListener {
     }
 
     /**
-     * Aggregate the absolute execution time and sends the recorded value to the monitoring layer if the send interval
-     * is outdated. Shall be used only in combination with a corresponding start time measurement.
-     *
-     * @param time the absolute execution time
-     * @param itemsCount the number of items emitted since <code>start</code>, (negative is turned to <code>0</code>)
-     */
-    public void aggregateExecutionTimeAbs(long time, int itemsCount) {
-        executionTime.addValue(time);
-        itemsSend += Math.max(0, itemsCount);
-        checkSend(System.currentTimeMillis());
-    }
-
-    /**
      * Checks whether the actual measurements have/shall be sent. This method must be thread-safe.
      * 
      * @param now the current time
@@ -169,7 +168,7 @@ public class Monitor implements IMonitoringChangeListener {
                 MonitoringPluginRegistry.collectObservations(data);
                 data.put(TimeBehavior.LATENCY, executionTime.getAverage());
                 data.put(TimeBehavior.THROUGHPUT_ITEMS, itemsSend);
-                if (itemsVolume >= 0) {
+                if (collectVolume && itemsVolume > 0) {
                     data.put(TimeBehavior.THROUGHPUT_VOLUME, itemsVolume);
                 }
                 EventManager.send(new PipelineElementMultiObservationMonitoringEvent(namespace, name, key, data));
@@ -256,6 +255,71 @@ public class Monitor implements IMonitoringChangeListener {
         tmp = signal.getFrequency(MonitoringFrequency.PIPELINE_NODE_RESOURCES);
         if (null != tmp) {
             QmPlugin.changeFrequency(tmp);
+        }
+        Boolean b = signal.getEnabled(TimeBehavior.THROUGHPUT_VOLUME);
+        if (null != b) {
+            collectVolume = b;
+        }
+    }
+    
+    // --------------------- ITaskHook ---------------------------
+    
+    @SuppressWarnings("rawtypes")
+    @Override
+    public void prepare(Map conf, TopologyContext context) {
+    }
+
+    @Override
+    public void cleanup() {
+    }
+
+    @Override
+    public void emit(EmitInfo info) {
+        if (null != info && null != info.values) {
+            itemsSend += info.values.size();
+            if (collectVolume) {
+                itemsVolume += MEMGATHERER.getObjectSize(info.values);
+            }
+            MonitoringPluginRegistry.emitted(info);
+        }
+    }
+
+    @Override
+    public void spoutAck(SpoutAckInfo info) {
+    }
+
+    @Override
+    public void spoutFail(SpoutFailInfo info) {
+    }
+
+    @Override
+    public void boltExecute(BoltExecuteInfo info) {
+        if (null != info && null != info.executeLatencyMs) {
+            executionTime.addValue(info.executeLatencyMs);
+            checkSend(System.currentTimeMillis());
+        }
+    }
+
+    @Override
+    public void boltAck(BoltAckInfo info) {
+    }
+
+    @Override
+    public void boltFail(BoltFailInfo info) {
+    }
+    
+    /**
+     * Counts emitting for a sink execution method.
+     * 
+     * @param tuple the tuple emitted
+     */
+    public void emitted(Object tuple) {
+        if (null != tuple) {
+            itemsSend++;
+            if (collectVolume) {
+                itemsVolume += MEMGATHERER.getObjectSize(tuple);
+            }
+            MonitoringPluginRegistry.emitted(tuple);
         }
     }
     
