@@ -48,6 +48,7 @@ public class PasswordStoreTests {
             Assert.assertEquals("katerina", entry.getUserName());
             Assert.assertEquals("mySecret", entry.getPassword());
             Assert.assertEquals("aabbbcc", entry.getValue("accessToken"));
+            Assert.assertEquals("admin", entry.getRole());
             
             entry = PasswordStore.getEntry("holger");
             Assert.assertEquals("holger", entry.getVUser());

@@ -42,6 +42,7 @@ public class PasswordStore {
     public static final String SEPARATOR = ".";
     private static final String PASSWORD = "passwd";
     private static final String USER = "user";
+    private static final String ROLE = "role";
     private static Properties properties = new Properties();
     
     /**
@@ -89,6 +90,15 @@ public class PasswordStore {
         public String getUserName() {
             String tmp = getValue(USER);
             return null == tmp ? vUser : tmp;
+        }
+        
+        /**
+         * Returns the actual role of the user.
+         * 
+         * @return the role of vUser, may be <b>null</b> if not specified
+         */
+        public String getRole() {
+            return getValue(ROLE);
         }
         
         /**
