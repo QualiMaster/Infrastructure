@@ -150,7 +150,7 @@ public class Configuration {
          * @param dflt the default value
          * @param reader the respective property reader
          */
-        protected ConfigurationOption(String key, T dflt, PropertyReader<T> reader) {
+        public ConfigurationOption(String key, T dflt, PropertyReader<T> reader) {
             this.key = key;
             this.dflt = dflt;
             this.value = dflt;
