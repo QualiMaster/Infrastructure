@@ -1,0 +1,13 @@
+@advice(QM)
+vilScript QM (Project source, Configuration config, Project target, String pipelineName) {
+
+    interfaces(Project source, Configuration config, Project target) = : {
+    }
+
+    main(Project source, Configuration config, Project target) = : {  
+    }
+    
+    pipeline(Project source, Configuration config, Project target, String pipelineName) = : {
+    }
+    
+}

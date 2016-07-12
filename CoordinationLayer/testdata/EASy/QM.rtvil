@@ -1,0 +1,79 @@
+// specific rt-VIL script for tests.eu.qualimaster.storm
+
+@advice(QM)
+rtVilScript QM (Project source, Configuration config, Project target, AdaptationEvent event) {
+
+    // simplified as we do not have the full adaptation events in all layers
+    strategy main(Project source, Configuration config, Project target, AdaptationEvent event) = {
+        objective true;
+        breakdown {
+            tactic startupTakeFirst(config, "pipeline");
+        }
+    }
+
+    tactic defaultTactic() = {
+    }
+
+    tactic startupTakeFirst(Configuration config, String pipName) = {
+        QM qm = config;
+        map(Pipeline pip:qm.pipelines) {
+            if (pip.name == pipName) {
+                map(Source src:pip.sources) {
+                    assignFirst(src);
+                };
+            }
+        };
+    }
+
+    assignFirst(Node node) = : {
+    }
+
+    assignFirst(Source src) = : {
+        map(Node n:src.next) {
+            assignFirst(n);
+        };
+    }
+
+    assignFirst(FamilyElement elt) = : {
+        Family fam = elt.family;
+        if (!isConfigured(elt.actual)) {
+            elt.actual = fam.members.toSequence().first();
+        }
+        map(Node n:elt.next) {
+            assignFirst(n);
+        };
+    }
+    
+    // ------------------------ enactment -------------------
+
+    enact(Project source, Configuration config, Project target) = : {
+        QM qm = config.selectChangedWithContext();
+        map(Pipeline p:qm.pipelines) {
+            map(Source s:p.sources) {
+                enact(p, s);
+            };
+        };
+    }
+
+    enact(Pipeline pipeline, Node node) = : {
+    }
+
+    enact(Pipeline pipeline, Source source) = : {
+        map(Node n:source.next) {
+            enact(pipeline, n);
+        };
+    }
+
+    enact(Pipeline pipeline, FamilyElement elt) = : {
+        Family family = elt.family;
+        CommandSequence cmd = new CommandSequence();
+        if (elt.actual != null) {
+            cmd.add(new AlgorithmChangeCommand(pipeline.name, elt.name, elt.actual.name));
+        }
+        map(Node n:elt.next) {
+            enact(pipeline, n);
+        };
+        cmd.exec();
+    }
+
+}

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata modelVersion="1.1.0">
+  <groupId>eu.qualimaster</groupId>
+  <artifactId>infrastructureModel</artifactId>
+  <version>0.5.0-SNAPSHOT</version>
+  <versioning>
+    <snapshot>
+      <timestamp>20160420.131718</timestamp>
+      <buildNumber>217</buildNumber>
+    </snapshot>
+    <lastUpdated>20160420131718</lastUpdated>
+    <snapshotVersions>
+      <snapshotVersion>
+        <extension>jar</extension>
+        <value>0.5.0-20160420.131718-217</value>
+        <updated>20160420131718</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <extension>pom</extension>
+        <value>0.5.0-20160420.131718-217</value>
+        <updated>20160420131718</updated>
+      </snapshotVersion>
+    </snapshotVersions>
+  </versioning>
+</metadata>

@@ -1,0 +1,20 @@
+<mapping>
+  <pipeline name="PriorityPip" class="eu.qualimaster.PriorityPip.topology.Topology">
+      <node name="FinancialDataSource" type="source">
+          <component name="PriorityPip_Source0" container="PriorityPip" class="eu.qualimaster.PriorityPip.topology.PriorityPip_Source0Source" receiver="true" thrift="false" tasks="1"/>
+      </node>
+      <node name="FinancialCorrelation" type="family">
+          <component name="PriorityPip_FamilyElement0" container="PriorityPip" class="eu.qualimaster.PriorityPip.topology.PriorityPip_FamilyElement0FamilyElement" receiver="true" thrift="false" tasks="1" alternative0 = "CorrelationSW"/>
+      </node>
+      <node name="Preprocessor" type="family">
+          <component name="PriorityPip_FamilyElement1" container="PriorityPip" class="eu.qualimaster.PriorityPip.topology.PriorityPip_FamilyElement1FamilyElement" receiver="false" thrift="false" tasks="1" alternative0 = "Preprocessor"/>
+      </node>
+      <algorithm name="CorrelationSW" implName="CorrelationSWSubTopology" class="eu.qualimaster.CorrelationSW.topology.CorrelationSWSubTopology">
+          <component name="SubTopology_FamilyElement0" container="CorrelationSW" class="eu.qualimaster.CorrelationSW.topology.SubTopology_FamilyElement0FamilyElement" receiver="true" thrift="false" tasks="1"/>
+          <component name="SubTopology_FamilyElement1" container="CorrelationSW" class="eu.qualimaster.CorrelationSW.topology.SubTopology_FamilyElement1FamilyElement" receiver="false" thrift="false" tasks="13"/>
+      </algorithm>
+      <algorithm name="Preprocessor" implName="Preprocessor" class="eu.qualimaster.algorithms.imp.correlation.Preprocessor"/>
+      <parameter parameter="windowSize" name="FinancialCorrelation" receiver="SubTopology_FamilyElement0"/> 
+  </pipeline>
+
+</mapping>

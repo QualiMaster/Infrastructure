@@ -1,0 +1,18 @@
+<pipeline name="pipTSI">
+    <node name="Spring Financial Data">
+        <component name="src_TSI" container="pipTSI" class="Src_TSISource" receiver="true"/>
+    </node>
+    <node name="fPreprocessor">
+        <component name="preprocessor_TSI" container="pipTSI" class="Preprocessor_TSIFamilyElement" receiver="true"/>
+    </node>
+    <node name="fCorrelation">
+        <component name="correlation_TSI" container="pipTSI" class="Correlation_TSIFamilyElement" receiver="true"/>
+    </node>
+    <node name="Public Financial Sink">
+        <component name="snk_TSI" container="pipTSI" class="Snk_TSISink" receiver="true"/>
+    </node>
+    <algorithm name="Preprocessor" class="Preprocessor"/>
+    <algorithm name="HWCorrelation" class="HWCorrelation"/>
+    <algorithm name="SWCorrelationSubtopology" class="SWCorrelationSubtopology"/>
+</pipeline>
+

@@ -1,0 +1,47 @@
+<mapping>
+  <pipeline name="pipTSI" class="eu.qualimaster.topologies.pipTSI.Topology">
+      <node name="Spring Financial Data">
+          <component name="src_TSI" container="pipTSI" class="eu.qualimaster.topologies.Src_TSISource" receiver="true"/>
+      </node>
+      <node name="fPreprocessor">
+          <component name="preprocessor_TSI" container="pipTSI" class="eu.qualimaster.topologies.Preprocessor_TSIFamilyElement" receiver="true"/>
+      </node>
+      <node name="fCorrelation">
+          <component name="correlation_TSI" container="pipTSI" class="eu.qualimaster.topologies.Correlation_TSIFamilyElement" receiver="true"/>
+      </node>
+      <node name="Public Financial Sink">
+          <component name="snk_TSI" container="pipTSI" class="eu.qualimaster.topologies.Snk_TSISink" receiver="true"/>
+      </node>
+      <algorithm name="Preprocessor" class="Preprocessor"/>
+      <algorithm name="HWCorrelation" class="HWCorrelation"/>
+      <algorithm name="SWCorrelationSubtopology" class="SWCorrelationSubtopology"/>
+  </pipeline>
+
+  <pipeline name="pipL3S" class="eu.qualimaster.topologies.pipL3S.Topology">
+      <node name="Twitter Stream Data">
+          <component name="src_L3S" container="pipL3S" class="eu.qualimaster.topologies.Src_L3SSource" receiver="true"/>
+      </node>
+      <node name="fSentimentAnalysis">
+          <component name="sentimentAnalysis_L3S" container="pipL3S" class="eu.qualimaster.topologies.SentimentAnalysis_L3SFamilyElement" receiver="true"/>
+      </node>
+      <node name="Public Twitter Sink">
+          <component name="snk_L3S" container="pipL3S" class="eu.qualimaster.topologies.Snk_L3SSink" receiver="true"/>
+      </node>
+      <algorithm name="sentiWord" class="SWSentiWordSubTopology"/>
+      <algorithm name="SVM" class="SWSVMSubTopology"/>
+  </pipeline>
+
+  <pipeline name="examplePip" class="eu.qualimaster.topologies.examplePip.Topology">
+      <node name="Example Spring Data">
+          <component name="src_example" container="examplePip" class="eu.qualimaster.topologies.Src_exampleSource" receiver="true"/>
+      </node>
+      <node name="normalize">
+          <component name="exNormalize" container="examplePip" class="eu.qualimaster.topologies.ExNormalizeFamilyElement" receiver="true"/>
+      </node>
+      <node name="Example Sink">
+          <component name="snk_example" container="examplePip" class="eu.qualimaster.topologies.Snk_exampleSink" receiver="true"/>
+      </node>
+      <algorithm name="normalize" class="Normalize"/>
+  </pipeline>
+
+</mapping>
