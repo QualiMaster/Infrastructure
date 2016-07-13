@@ -150,7 +150,6 @@ public class HdfsUtils {
             fs.create(target);
         } else if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getDfsPath())) {
             File targetPath = new File(DataManagementConfiguration.getDfsPath(), folder.getName());
-System.out.println("deleting " + targetPath);
             targetPath.mkdirs();
         } else {
             throw new IOException("Cannot crete folder. Check HDFS/DFS configuration.");            
@@ -176,7 +175,6 @@ System.out.println("deleting " + targetPath);
             result = basePath;
         } else if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getDfsPath())) {
             File tgt = new File(DataManagementConfiguration.getDfsPath(), target.toString());
-System.out.println("copying " + source+" -> "+tgt);
             FileUtils.copyDirectory(source, tgt);
             result = tgt.getAbsolutePath();
         } else {
