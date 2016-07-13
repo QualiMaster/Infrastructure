@@ -15,15 +15,18 @@
  */
 package eu.qualimaster.dataManagement.storage.hdfs;
 
+import java.io.File;
 import java.io.IOException;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 
 import eu.qualimaster.dataManagement.DataManagementConfiguration;
 
 /**
- * Some HDFS utilities.
+ * Some HDFS/storage utilities.
  * 
  * @author Holger Eichelberger
  */
@@ -56,6 +59,57 @@ public class HdfsUtils {
         c.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
         c.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
         return FileSystem.get(c);
+    }
+
+
+    /**
+     * Stores <code>dataFile</code> either to HDFS (precedence) or to DFS.
+     * 
+     * @param dataFile the data file
+     * @throws IOException in case that I/O fails
+     */
+    public static void store(File dataFile) throws IOException {
+        String dataPath = storeToHdfs(dataFile);
+        if (null == dataPath) {
+            if (null == storeToDfs(dataFile)) {
+                throw new IOException("Cannot store file '" + dataFile + "', neither to HDFS nor DFS. "
+                    + "Check HDFS/DFS configuration.");
+            }
+        }
+    }
+    
+    /**
+     * Stores the data file to the HDFS (alternative).
+     * 
+     * @return <code>true</code> if successful, <code>false</code> else
+     * @throws IOException in case that I/O fails
+     */
+    public static String storeToHdfs(File dataFile) throws IOException {
+        String dataPath = null;
+        if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getHdfsUrl())) {
+            String basePath = DataManagementConfiguration.getDfsPath() + "/";
+            FileSystem fs = HdfsUtils.getFilesystem();
+            Path target = new Path(basePath, dataFile.getName()); 
+            fs.copyFromLocalFile(new Path(dataFile.getAbsolutePath()), target);
+            dataPath = target.toString();
+        }
+        return dataPath;
+    }
+    
+    /**
+     * Stores the data file to the DFS (alternative).
+     * 
+     * @return the target path if successful, <b>null</b> else
+     * @throws IOException in case that I/O fails
+     */
+    public static String storeToDfs(File dataFile) throws IOException {
+        String dataPath = null;
+        if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getDfsPath())) {
+            File targetPath = new File(DataManagementConfiguration.getDfsPath(), dataFile.getName());
+            FileUtils.copyFile(dataFile, targetPath);
+            dataPath = targetPath.getAbsolutePath().toString();
+        }
+        return dataPath;
     }
 
 }
