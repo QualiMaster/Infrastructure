@@ -66,9 +66,10 @@ public class HdfsUtils {
      * Stores <code>dataFile</code> either to HDFS (precedence) or to DFS.
      * 
      * @param dataFile the data file
+     * @return the target path if successful, <b>null</b> else
      * @throws IOException in case that I/O fails
      */
-    public static void store(File dataFile) throws IOException {
+    public static String store(File dataFile) throws IOException {
         String dataPath = storeToHdfs(dataFile);
         if (null == dataPath) {
             if (null == storeToDfs(dataFile)) {
@@ -76,12 +77,13 @@ public class HdfsUtils {
                     + "Check HDFS/DFS configuration.");
             }
         }
+        return dataPath;
     }
     
     /**
-     * Stores the data file to the HDFS (alternative).
+     * Stores the data file to the HDFS (alternative) using the Dfs path as prefix.
      * 
-     * @return <code>true</code> if successful, <code>false</code> else
+     * @return the target path if successful, <b>null</b> else
      * @throws IOException in case that I/O fails
      */
     public static String storeToHdfs(File dataFile) throws IOException {
@@ -110,6 +112,101 @@ public class HdfsUtils {
             dataPath = targetPath.getAbsolutePath().toString();
         }
         return dataPath;
+    }
+
+    /**
+     * Deletes a folder, either transparently on DFS or the file system.
+     *  
+     * @param folder the folder to create (relative)
+     * @throws IOException in case that the creation fails
+     */
+    public static void deleteFolder(File folder, boolean recursive) throws IOException {
+        if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getHdfsUrl())) {
+            FileSystem fs = HdfsUtils.getFilesystem();
+            Path target = new Path(DataManagementConfiguration.getDfsPath() + "/" + folder);
+            fs.delete(target, recursive);
+        } else if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getDfsPath())) {
+            File targetPath = new File(DataManagementConfiguration.getDfsPath(), folder.getName());
+            if (recursive) {
+                FileUtils.deleteDirectory(targetPath);
+            } else {
+                targetPath.delete();
+            }
+        } else {
+            throw new IOException("Delete folder. Check HDFS/DFS configuration.");            
+        }
+    }
+    
+    /**
+     * Creates a folder, either transparently on DFS or the file system.
+     *  
+     * @param folder the folder to create (relative)
+     * @throws IOException in case that the creation fails
+     */
+    public static void createFolder(File folder) throws IOException {
+        if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getHdfsUrl())) {
+            FileSystem fs = HdfsUtils.getFilesystem();
+            Path target = new Path(DataManagementConfiguration.getDfsPath() + "/" + folder);
+            fs.create(target);
+        } else if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getDfsPath())) {
+            File targetPath = new File(DataManagementConfiguration.getDfsPath(), folder.getName());
+System.out.println("deleting " + targetPath);
+            targetPath.mkdirs();
+        } else {
+            throw new IOException("Cannot crete folder. Check HDFS/DFS configuration.");            
+        }
+    }
+    
+    /**
+     * Transparently copies <code>source</code> to <code>target</code> in HDFS or DFS.
+     * 
+     * @param source the source file
+     * @param target the target file
+     * @param targetBase shell target be considered as the base path in HDFS or shall the Dfs path be prefixed
+     * @return the target path used 
+     * @throws IOException in case that copying fails
+     */
+    public static String copy(File source, File target, boolean absolute) throws IOException {
+        String result;
+        if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getHdfsUrl())) {
+            String basePath = absolute ? target + "/" : 
+                DataManagementConfiguration.getDfsPath() + "/" + target + "/";
+            FileSystem fs = HdfsUtils.getFilesystem();
+            copy(fs, basePath, source);
+            result = basePath;
+        } else if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getDfsPath())) {
+            File tgt = new File(DataManagementConfiguration.getDfsPath(), target.toString());
+System.out.println("copying " + source+" -> "+tgt);
+            FileUtils.copyDirectory(source, tgt);
+            result = tgt.getAbsolutePath();
+        } else {
+            throw new IOException("Cannot copy directory. Check HDFS/DFS configuration.");            
+        }
+        return result;
+    }
+    
+    /**
+     * Copies <code>source</code> to <code>fs</code> and <code>basePath</code>.
+     * 
+     * @param fs the file system
+     * @param basePath the actual base path
+     * @param source the source file/directory
+     * @throws IOException in case that copying fails
+     */
+    private static void copy(FileSystem fs, String basePath, File source) throws IOException {
+        if (source.isDirectory()) {
+            String bp = basePath + "/" + source.getName();
+            fs.create(new Path(bp));
+            File[] files = source.listFiles();
+            if (null != files) {
+                for (File f : files) {
+                    copy(fs, bp, f);
+                }
+            }
+        } else {
+            Path target = new Path(basePath, source.getName()); 
+            fs.copyFromLocalFile(new Path(source.getAbsolutePath()), target);
+        }
     }
 
 }
