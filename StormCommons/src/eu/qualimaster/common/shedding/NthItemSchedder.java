@@ -30,7 +30,7 @@ public class NthItemSchedder extends LoadShedder<Object> {
      * Creates a shedder instance.
      */
     public NthItemSchedder() {
-        super(DefaultLoadShedders.NTH_ITEM, Object.class, DefaultLoadSheddingParameter.N_TH_TUPLE);
+        super(DefaultLoadShedders.NTH_ITEM, Object.class, DefaultLoadSheddingParameter.NTH_TUPLE);
     }
 
     @Override
@@ -52,7 +52,7 @@ public class NthItemSchedder extends LoadShedder<Object> {
     
     @Override
     public void configure(ILoadShedderConfigurer configurer) {
-        limit = configurer.getIntParameter(DefaultLoadSheddingParameter.N_TH_TUPLE, 0);
+        limit = configurer.getIntParameter(DefaultLoadSheddingParameter.NTH_TUPLE, 0);
     }
 
 }

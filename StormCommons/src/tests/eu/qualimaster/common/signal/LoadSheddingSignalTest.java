@@ -109,7 +109,7 @@ public class LoadSheddingSignalTest {
         Assert.assertTrue(listener.receivedSignal());
 
         Map<String, Serializable> parameter = new HashMap<String, Serializable>();
-        parameter.put(DefaultLoadSheddingParameter.N_TH_TUPLE.name(), 25);
+        parameter.put(DefaultLoadSheddingParameter.NTH_TUPLE.name(), 25);
         signal = new LoadSheddingSignal(topology, executor, shedder, parameter, msgId);
         listener = new TestListener();
         listener.expect(signal);
