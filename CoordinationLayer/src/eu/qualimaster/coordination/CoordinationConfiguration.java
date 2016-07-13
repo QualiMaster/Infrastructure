@@ -144,7 +144,8 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
     public static final DetailMode DEFAULT_DETAILED_PROFILING = DetailMode.FALSE;
     
     /**
-     * The folder where pipeline setting files shall be copied after extracting the model. 
+     * The folder where pipeline setting files shall be copied after extracting the model.
+     * Relative folder to {@link #getDfsPath()} or {@link #getHdfsUrl()}. 
      */
     public static final String PIPELINE_SETTINGS_LOCATION = "pipelines.settings";
     

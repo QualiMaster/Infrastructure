@@ -16,6 +16,7 @@ import ch.qos.logback.classic.Level;
 import de.uni_hildesheim.sse.easy.loader.ListLoader;
 import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.common.logging.QmLogging;
+import eu.qualimaster.dataManagement.storage.hdfs.HdfsUtils;
 import eu.qualimaster.easy.extension.internal.ConfigurationInitializer;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
 import net.ssehub.easy.basics.modelManagement.IModel;
@@ -445,11 +446,10 @@ public class RepositoryConnector {
                     File settingsFolderF = new File(modelPathF, "settings");
                     if (settingsFolderF.exists()) {
                         File settingsTargetF = new File(settingsTarget);
-                        if (settingsTargetF.exists()) {
-                            FileUtils.cleanDirectory(settingsTargetF);
-                        }
-                        FileUtils.copyDirectory(settingsFolderF, settingsTargetF);
-                        getLogger().info("unpacked settings to (" + settingsTargetF.getAbsolutePath() + ")");
+                        HdfsUtils.deleteFolder(settingsTargetF, true);
+                        HdfsUtils.createFolder(settingsTargetF);
+                        String tgt = HdfsUtils.copy(settingsFolderF, settingsTargetF, true);
+                        getLogger().info("unpacked settings to (" + tgt + ")");
                     } else {
                         getLogger().info("no settings folder in model (" + settingsFolderF.getAbsolutePath() + ")");
                     }

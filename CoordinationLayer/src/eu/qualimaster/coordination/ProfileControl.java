@@ -25,8 +25,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -208,10 +206,15 @@ public class ProfileControl implements IProfile {
         dataFile = pResult.getDataFile();
         processing = pResult.getProcessingEntries();
         parameters = pResult.getParameters();
-        useHdfs = storeToHdfs();
-        if (!useHdfs) {
-            if (!storeToDfs()) {
+        dataPath = HdfsUtils.storeToDfs(dataFile);
+        if (null != dataPath) {
+            useHdfs = true;    
+        } else {
+            dataPath = HdfsUtils.storeToDfs(dataFile);
+            if (null == dataPath) {
                 throw new IOException("Cannot store data files. Check HDFS/DFS configuration.");
+            } else {
+                useHdfs = false;
             }
         }
         calcVariants();
@@ -231,48 +234,6 @@ public class ProfileControl implements IProfile {
             maxVariants *= ent.getValue().size();
             actPos.add(new Position(ent.getKey()));
         }
-    }
-
-    /**
-     * Stores the data file to the HDFS (alternative).
-     * 
-     * @return <code>true</code> if successful, <code>false</code> else
-     */
-    private boolean storeToHdfs() {
-        boolean done = false;
-        if (!CoordinationConfiguration.isEmpty(CoordinationConfiguration.getHdfsUrl())) {
-            try {
-                String basePath = CoordinationConfiguration.getDfsPath() + "/"; // + family + algorithm
-                FileSystem fs = HdfsUtils.getFilesystem();
-                Path target = new Path(basePath, dataFile.getName()); 
-                fs.copyFromLocalFile(new Path(dataFile.getAbsolutePath()), target);
-                dataPath = target.toString();
-                done = true;
-            } catch (IOException e) {
-                getLogger().error(e.getMessage());
-            }
-        }
-        return done;
-    }
-    
-    /**
-     * Stores the data file to the DFS (alternative).
-     * 
-     * @return <code>true</code> if successful, <code>false</code> else
-     */
-    private boolean storeToDfs() {
-        boolean done = false;
-        if (!CoordinationConfiguration.isEmpty(CoordinationConfiguration.getDfsPath())) {
-            File targetPath = new File(CoordinationConfiguration.getDfsPath(), dataFile.getName());
-            try {
-                FileUtils.copyFile(dataFile, targetPath);
-                dataPath = targetPath.getAbsolutePath().toString();
-                done = true;
-            } catch (IOException e) {
-                getLogger().error(e.getMessage());
-            }
-        }
-        return done;
     }
     
     /**

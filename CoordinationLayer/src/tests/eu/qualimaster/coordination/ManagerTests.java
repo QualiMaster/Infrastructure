@@ -591,8 +591,8 @@ public class ManagerTests extends AbstractCoordinationTests {
             "https://projects.sse.uni-hildesheim.de/qm/maven/");
         prop.put(CoordinationConfiguration.CONFIG_MODEL_ARTIFACT_SPEC, 
             "eu.qualimaster:infrastructureModel:0.5.0-SNAPSHOT");
-        prop.put(CoordinationConfiguration.PIPELINE_SETTINGS_LOCATION, 
-            FileUtils.getTempDirectoryPath() + "\\pipSettings");
+        prop.put(CoordinationConfiguration.PATH_DFS, FileUtils.getTempDirectoryPath());
+        prop.put(CoordinationConfiguration.PIPELINE_SETTINGS_LOCATION, "pipSettings");
         CoordinationConfiguration.configure(prop, false);
         CoordinationManager.start();
         CoordinationManager.stop();
