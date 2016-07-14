@@ -206,7 +206,7 @@ public class ProfileControl implements IProfile {
         dataFile = pResult.getDataFile();
         processing = pResult.getProcessingEntries();
         parameters = pResult.getParameters();
-        dataPath = HdfsUtils.storeToDfs(dataFile);
+        dataPath = HdfsUtils.storeToHdfs(dataFile);
         if (null != dataPath) {
             useHdfs = true;    
         } else {
