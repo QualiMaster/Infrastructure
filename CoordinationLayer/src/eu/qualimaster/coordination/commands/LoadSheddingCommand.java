@@ -53,6 +53,7 @@ public class LoadSheddingCommand extends AbstractPipelineElementCommand {
      */
     public LoadSheddingCommand(String pipeline, String pipelineElement, String shedder) {
         super(pipeline, pipelineElement);
+        this.shedder = shedder;
     }
     
     /**
@@ -115,6 +116,20 @@ public class LoadSheddingCommand extends AbstractPipelineElementCommand {
     public Map<String, Serializable> parameters() {
         Map<String, Serializable> result = new HashMap<String, Serializable>();
         result.putAll(parameter);
+        return result;
+    }
+    
+    /**
+     * Returns the value of a specific parameter.
+     * 
+     * @param param the parameter
+     * @return the value
+     */
+    public Serializable getParameter(ILoadSheddingParameter param) {
+        Serializable result = null;
+        if (null != param) {
+            result = parameter.get(param.name());
+        }
         return result;
     }
 

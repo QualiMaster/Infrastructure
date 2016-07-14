@@ -549,6 +549,8 @@ public class ManagerTests extends AbstractCoordinationTests {
         LoadSheddingCommand cmd 
             = new LoadSheddingCommand(Naming.PIPELINE_NAME, Naming.NODE_SINK, DefaultLoadShedders.NTH_ITEM); 
         cmd.setIntParameter(DefaultLoadSheddingParameter.NTH_TUPLE, 25);
+        Assert.assertEquals(cmd.getShedder(), DefaultLoadShedders.NTH_ITEM.getIdentifier());
+        Assert.assertEquals(25, cmd.getParameter(DefaultLoadSheddingParameter.NTH_TUPLE));
         cmd.execute();
         waitForExecution(2, 0);
         Assert.assertTrue(getTracer().contains(cmd));
