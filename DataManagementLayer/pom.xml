@@ -150,6 +150,11 @@
 		    <name>mvnrepository</name>
 		    <url>http://repo1.maven.org/maven2</url>
 		</repository>
+        <repository>
+            <id>mvnrepository.com</id>
+            <name>mvnrepository.com</name>
+            <url>http://www.mvnrepository.com/artifact</url>
+        </repository>		
 	</repositories>
 	
   <!-- Depedency Management -->
