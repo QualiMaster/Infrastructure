@@ -103,6 +103,7 @@ public class CoordinationManager {
             case CREATED:
                 // to enable the adaptation layer sending signals
                 handleSignalNamespace(pipelineName, NamespaceState.ENABLE);
+                ProfileControl.created(pipelineName);
                 break;
             default:
                 break;

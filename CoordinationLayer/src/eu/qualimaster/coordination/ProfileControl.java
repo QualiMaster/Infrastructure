@@ -29,6 +29,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.adaptation.events.AdaptationEvent;
+import eu.qualimaster.coordination.commands.AlgorithmChangeCommand;
 import eu.qualimaster.coordination.commands.ProfileAlgorithmCommand;
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent;
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent.Status;
@@ -37,11 +38,18 @@ import eu.qualimaster.coordination.profiling.ParseResult;
 import eu.qualimaster.coordination.profiling.ProcessingEntry;
 import eu.qualimaster.coordination.profiling.ProfileControlParserFactory;
 import eu.qualimaster.dataManagement.storage.hdfs.HdfsUtils;
+import eu.qualimaster.easy.extension.QmConstants;
 import eu.qualimaster.easy.extension.internal.AlgorithmProfileHelper;
 import eu.qualimaster.easy.extension.internal.AlgorithmProfileHelper.ProfileData;
+import eu.qualimaster.easy.extension.internal.HardwareRepositoryHelper;
+import eu.qualimaster.easy.extension.internal.PipelineHelper;
+import eu.qualimaster.easy.extension.internal.VariableHelper;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineOptions;
+import eu.qualimaster.pipeline.AlgorithmChangeParameter;
+import net.ssehub.easy.instantiation.core.model.common.VilException;
 import net.ssehub.easy.varModel.confModel.Configuration;
+import net.ssehub.easy.varModel.confModel.IDecisionVariable;
 
 /**
  * Class for controlling the profiling of an algorithm via its data/profiling script.
@@ -438,6 +446,84 @@ public class ProfileControl implements IProfile {
      */
     private Logger getLogger() {
         return LogManager.getLogger(getClass());
+    }
+    
+    /**
+     * Sends an initial algorithm change command, in particular for hardware.
+     */
+    private void sendInitialAlgorithmChangeCommand() {
+        String pipelineName = getPipeline();
+        String familyName = getFamilyName();
+        String algorithmName = getAlgorithmName();
+        AlgorithmChangeCommand cmd = new AlgorithmChangeCommand(pipelineName, familyName, algorithmName);
+        IDecisionVariable pip = PipelineHelper.obtainPipelineByName(config, pipelineName);
+        IDecisionVariable family = PipelineHelper.obtainFamilyByName(pip, familyName);
+        IDecisionVariable algo = PipelineHelper.obtainAlgorithmFromFamilyByName(family, algorithmName);
+        if (null != algo) {
+            IDecisionVariable hw = algo.getNestedElement(QmConstants.SLOT_HARDWAREALGORITHM_HWNODE);
+            if (null != hw) {
+                String artifact = VariableHelper.getString(hw, QmConstants.SLOT_ALGORITHM_ARTIFACT);
+                if (null != artifact) {
+                    try {
+                        cmd.setStringParameter(AlgorithmChangeParameter.IMPLEMENTING_ARTIFACT, 
+                            HardwareRepositoryHelper.obtainHardwareArtifactUrl(artifact));
+                    } catch (VilException e) {
+                        getLogger().error(e.getMessage());
+                    }
+                }
+
+                hw = Configuration.dereference(hw);
+                setStringParameter(cmd, AlgorithmChangeParameter.COPROCESSOR_HOST, hw, "host");
+                setIntParameter(cmd, AlgorithmChangeParameter.CONTROL_RESPONSE_PORT, hw, "commandSendingPort");
+                setIntParameter(cmd, AlgorithmChangeParameter.CONTROL_REQUEST_PORT, hw, "commandReceivingPort");
+            }
+        }
+        cmd.execute();
+    }
+
+    /**
+     * Sets a String parameter for an algorithm change command. Nothing happens if the variable or the slot 
+     * do not exist.
+     * 
+     * @param cmd the command
+     * @param param the parameter
+     * @param var the variable to take the value from
+     * @param slot the slot to take the value from
+     */
+    private static void setStringParameter(AlgorithmChangeCommand cmd, AlgorithmChangeParameter param, 
+        IDecisionVariable var, String slot) {
+        String val = VariableHelper.getString(var, slot);
+        if (null != val) {
+            cmd.setStringParameter(param, val);
+        }
+    }
+    
+    /**
+     * Sets an int parameter for an algorithm change command. Nothing happens if the variable or the slot do not exist.
+     * 
+     * @param cmd the command
+     * @param param the parameter
+     * @param var the variable to take the value from
+     * @param slot the slot to take the value from
+     */
+    private static void setIntParameter(AlgorithmChangeCommand cmd, AlgorithmChangeParameter param, 
+        IDecisionVariable var, String slot) {
+        Integer val = VariableHelper.getInteger(var, slot);
+        if (null != val) {
+            cmd.setIntParameter(param, val);
+        }
+    }
+    
+    /**
+     * Called to inform about a created pipeline.
+     * 
+     * @param pipelineName the name of the pipeline
+     */
+    static void created(String pipelineName) {
+        ProfileControl ctl = INSTANCES.get(pipelineName);
+        if (null != ctl) {
+            ctl.sendInitialAlgorithmChangeCommand();
+        }
     }
 
 }

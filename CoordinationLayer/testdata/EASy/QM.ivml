@@ -39,6 +39,9 @@ project QM {
     
     compound Sink refines Node {
     }
+
+    compound ReplaySink refines Sink {
+    }
     
     compound Family {
         String name;
