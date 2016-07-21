@@ -63,7 +63,7 @@ public class ShutdownSignal extends AbstractTopologyExecutorSignal {
     
     @Override
     public String toString() {
-        return "SutdownSignal " + super.toString();
+        return "ShutdownSignal " + super.toString();
     }
 
 }
