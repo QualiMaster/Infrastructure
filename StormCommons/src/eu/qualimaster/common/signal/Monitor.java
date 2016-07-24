@@ -60,7 +60,7 @@ import eu.qualimaster.observables.TimeBehavior;
  * 
  * @author Holger Eichelberger
  */
-public class Monitor implements IMonitoringChangeListener, ITaskHook {
+public class Monitor extends AbstractMonitor implements IMonitoringChangeListener, ITaskHook {
     
     //private static final IMemoryDataGatherer MEMGATHERER = GathererFactory.getMemoryDataGatherer();
     private String namespace;
@@ -69,14 +69,11 @@ public class Monitor implements IMonitoringChangeListener, ITaskHook {
     private long sendInterval; 
     private ComponentKey key;
     private AtomicLong lastSend = new AtomicLong();
-    private double itemsSend = 0;
-    private double itemsVolume = -1;
+    private AtomicLong itemsSend = new AtomicLong(0);
+    private AtomicLong itemsVolume = new AtomicLong(-1);
     private boolean includeItems;
     private TimerEventHandler timerHandler;
     private boolean collectVolume = false; // TODO activate by default?
-
-    private transient long startTime;
-    private transient int count;
     
     /**
      * Creates a monitor and sends once the executors resource usage event.
@@ -152,7 +149,7 @@ public class Monitor implements IMonitoringChangeListener, ITaskHook {
     public void aggregateExecutionTime(long start, int itemsCount) {
         long now = System.currentTimeMillis();
         executionTime.addValue(now - start);
-        itemsSend += Math.max(0, itemsCount);
+        itemsSend.addAndGet(Math.max(0, itemsCount));
         checkSend(now);
     }
 
@@ -167,9 +164,10 @@ public class Monitor implements IMonitoringChangeListener, ITaskHook {
                 Map<IObservable, Double> data = new HashMap<IObservable, Double>();
                 MonitoringPluginRegistry.collectObservations(data);
                 data.put(TimeBehavior.LATENCY, executionTime.getAverage());
-                data.put(TimeBehavior.THROUGHPUT_ITEMS, itemsSend);
-                if (collectVolume && itemsVolume > 0) {
-                    data.put(TimeBehavior.THROUGHPUT_VOLUME, itemsVolume);
+                data.put(TimeBehavior.THROUGHPUT_ITEMS, Double.valueOf(itemsSend.get()));
+                long itemsTmp = itemsVolume.get();
+                if (collectVolume && itemsTmp > 0) {
+                    data.put(TimeBehavior.THROUGHPUT_VOLUME, Double.valueOf(itemsTmp));
                 }
                 EventManager.send(new PipelineElementMultiObservationMonitoringEvent(namespace, name, key, data));
             } else {
@@ -205,30 +203,6 @@ public class Monitor implements IMonitoringChangeListener, ITaskHook {
         }
         timerHandler = null;
     }
-
-    /**
-     * Starts monitoring for an execution method and informs the monitoring plugins.
-     */
-    public void startMonitoring() {
-        startTime = System.currentTimeMillis();
-        count = 0;
-    }
-    
-    /**
-     * Ends monitoring for an execution method and informs the monitoring plugins.
-     */
-    public void endMonitoring() {
-        aggregateExecutionTime(startTime, count);
-    }
-
-    /**
-     * Explicitly sets the number of emitted tuples.
-     * 
-     * @param count the number of emitted tuples
-     */
-    void setEmitCount(int count) {
-        this.count = count;
-    }
     
     /**
      * Explicitly sets the volume of emitted tuples.
@@ -236,7 +210,7 @@ public class Monitor implements IMonitoringChangeListener, ITaskHook {
      * @param volume the volume (negative disables collection)
      */
     void setVolume(long volume) {
-        this.itemsVolume = volume;
+        this.itemsVolume.set(volume);
     }
 
     @Override
@@ -276,9 +250,9 @@ public class Monitor implements IMonitoringChangeListener, ITaskHook {
     @Override
     public void emit(EmitInfo info) {
         if (null != info && null != info.values) {
-            itemsSend += info.values.size();
+            itemsSend.addAndGet(info.values.size());
             /*if (collectVolume) {
-                itemsVolume += MEMGATHERER.getObjectSize(info.values);
+                itemsVolume.addAndGet(MEMGATHERER.getObjectSize(info.values));
             }*/
             MonitoringPluginRegistry.emitted(info);
         }
@@ -315,12 +289,21 @@ public class Monitor implements IMonitoringChangeListener, ITaskHook {
      */
     public void emitted(Object tuple) {
         if (null != tuple) {
-            itemsSend++;
+            itemsSend.incrementAndGet();
             /*if (collectVolume) {
-                itemsVolume += MEMGATHERER.getObjectSize(tuple);
+                itemsVolume.addAndGet(MEMGATHERER.getObjectSize(tuple));
             }*/
             MonitoringPluginRegistry.emitted(tuple);
         }
+    }
+    
+    /**
+     * Returns a new monitor for a parallel thread.
+     * 
+     * @return the monitor
+     */
+    public ThreadMonitor createThreadMonitor() {
+        return new ThreadMonitor(this);
     }
     
 }

@@ -60,7 +60,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
         this.namespace = namespace;
         this.sendRegular = sendRegular;
     }
-
+    
     // checkstyle: stop exception type check
 
     @Override
@@ -92,7 +92,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      * Starts monitoring for an execution method.
      */
     protected void startMonitoring() {
-        //monitor.startMonitoring(); done by TaskHook
+        monitor.startMonitoring(); // else done by TaskHook
         MonitoringPluginRegistry.startMonitoring();
     }
 
@@ -108,12 +108,21 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
             MonitoringPluginRegistry.emitted(tuple);
         }
     }
+    
+    /**
+     * Returns a new monitor for a parallel thread.
+     * 
+     * @return the monitor
+     */
+    protected ThreadMonitor createThreadMonitor() {
+        return monitor.createThreadMonitor();
+    }
 
     /**
      * Ends monitoring for an execution method.
      */
     protected void endMonitoring() {
-        //monitor.endMonitoring(); done by TaskHook
+        monitor.endMonitoring(); // else done by TaskHook
         MonitoringPluginRegistry.endMonitoring();
     }
     

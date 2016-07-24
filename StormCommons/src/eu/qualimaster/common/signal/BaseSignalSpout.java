@@ -92,6 +92,15 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
         monitor.startMonitoring();
         MonitoringPluginRegistry.startMonitoring();
     }
+    
+    /**
+     * Returns a new monitor for a parallel thread.
+     * 
+     * @return the monitor
+     */
+    protected ThreadMonitor createThreadMonitor() {
+        return monitor.createThreadMonitor();
+    }
 
     /**
      * Ends monitoring for an execution method.
