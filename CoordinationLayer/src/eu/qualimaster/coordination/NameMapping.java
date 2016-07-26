@@ -439,6 +439,13 @@ public class NameMapping implements INameMapping {
                 String container = attributes.getValue(ATTRIBUTE_CONTAINER);
                 String name = attributes.getValue(ATTRIBUTE_NAME);
                 String className = attributes.getValue(ATTRIBUTE_CLASS);
+                Type type = obtainType(currentType);
+                String givenType = attributes.getValue(ATTRIBUTE_TYPE);
+                if (null != givenType) {
+                    if (Type.HARDWARE == obtainType(givenType)) {
+                        type = Type.HARDWARE;
+                    }
+                }
                 boolean isReceiver = Boolean.valueOf(attributes.getValue(ATTRIBUTE_RECEIVER));
                 boolean useThrift = toBoolean(attributes.getValue(ATTRIBUTE_THRIFT), true); // legacy default
                 int tasks = toInteger(attributes.getValue(ATTRIBUTE_TASKS), 1);
@@ -455,7 +462,7 @@ public class NameMapping implements INameMapping {
                 }
                 // just ignore the nesting here
                 if (ok && null != currentParent) {
-                    comp = new ComponentImpl(container, name, className, obtainType(currentType));
+                    comp = new ComponentImpl(container, name, className, type);
                     if (Level.NODE == level) { // don't map algorithm components to top-level
                         pipelineNodeComponents.put(currentParent, comp);
                         pipelineNodes.put(name, currentParent);

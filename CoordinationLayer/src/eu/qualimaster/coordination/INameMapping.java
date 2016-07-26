@@ -49,6 +49,11 @@ public interface INameMapping {
             DATA_MGT,
             
             /**
+             * A hardware integration node.
+             */
+            HARDWARE,
+            
+            /**
              * A currently unknown node.
              */
             UNKNOWN;
