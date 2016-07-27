@@ -1,0 +1,22 @@
+<mapping>
+  <pipeline name="pip" class="tests.eu.qualimaster.pip.Topology">
+    <node name="src" type="source">
+        <component name="src" container="pip" class="tests.eu.qualimaster.pip.Source" receiver="true" thrift="false" tasks="1"/>
+    </node>
+    <node name="prc" type="family">
+        <component name="prc" container="pip" class="tests.eu.qualimaster.pip.Process" receiver="true" thrift="false" tasks="1" alternative0="alg1" alternative1="alg2"/>
+    </node>
+    <node name="snk" type="snk">
+        <component name="snk" container="pip" class="tests.eu.qualimaster.pip.Sink" receiver="true" thrift="false" tasks="1"/>
+    </node>
+    <algorithm name="alg1" implName="alg1" class="tests.eu.qualimaster.storm.Alg1">
+	    <component name="prc1.1" container="alg1" class="tests.eu.qualimaster.pip.Prc11" receiver="true" thrift="false" tasks="1"/>
+		<component name="prc1.2" container="alg1" class="tests.eu.qualimaster.pip.Prc12" receiver="true" thrift="false" tasks="1"/>
+	</algorithm>
+    <algorithm name="alg2" implName="alg1" class="tests.eu.qualimaster.storm.Alg2">
+	    <component name="prc2.1" container="alg1" class="tests.eu.qualimaster.pip.Prc21" receiver="true" thrift="false" tasks="1"/>
+		<component name="prc2.2" container="alg1" class="tests.eu.qualimaster.pip.Prc22" receiver="true" thrift="false" tasks="1"/>
+	</algorithm>
+  </pipeline>
+</mapping>
+

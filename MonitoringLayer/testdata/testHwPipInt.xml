@@ -1,0 +1,18 @@
+<mapping>
+  <pipeline name="testHwPip" class="eu.qualimaster.testHwPip.topology.Topology">
+      <node name="TestSource" type="source">
+          <component name="TestSource" container="testHwPip" class="eu.qualimaster.testHwPip.topology.TestSourceSource" receiver="true" thrift="false" tasks="1"/>
+      </node>
+      <node name="TestFamily" type="family">
+          <component name="TestFamily" container="testHwPip" class="eu.qualimaster.testHwPip.topology.TestFamilyFamilyElement" receiver="true" thrift="false" tasks="1" alternative0 = "GenTopoHardwareCorrelationFinancial"/>
+      </node>
+      <algorithm name="GenTopoHardwareCorrelationFinancial" implName="GenTopoHardwareCorrelationFinancialSubTopology" class="eu.qualimaster.algorithms.GenTopoHardwareCorrelationFinancial.GenTopoHardwareCorrelationFinancialSubTopology">
+          <component name="Intermediary" container="CorrelationSW" class="eu.qualimaster.CorrelationSW.topology.Intermediary" receiver="true" thrift="false" tasks="1"/>
+          <component name="GenTopoHardwareCorrelationFinancialHardwareConnectionBolt" container="GenTopoHardwareCorrelationFinancial" class="eu.qualimaster.algorithms.GenTopoHardwareCorrelationFinancial.HardwareConnectionBolt" receiver="true" thrift="false" tasks="1" type="HARDWARE"/>
+          <component name="GenTopoHardwareCorrelationFinancialHardwareConnectionSpout" container="GenTopoHardwareCorrelationFinancial" class="eu.qualimaster.algorithms.GenTopoHardwareCorrelationFinancial.HardwareConnectionSpout" receiver="false" thrift="false" tasks="1" type="HARDWARE"/>
+          <component name="OutIntermediary" container="CorrelationSW" class="eu.qualimaster.CorrelationSW.topology.Intermediary" receiver="true" thrift="false" tasks="1"/>
+          <component name="SwitchEnd" container="CorrelationSW" class="eu.qualimaster.CorrelationSW.topology.Intermediary" receiver="true" thrift="false" tasks="1"/>
+      </algorithm>
+  </pipeline>
+
+</mapping>

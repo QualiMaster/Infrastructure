@@ -1,0 +1,20 @@
+<mapping>
+  <pipeline name="pipeline" class="tests.eu.qualimaster.storm.Topology">
+    <node name="source" type="source">
+        <component name="source" container="pipeline" class="tests.eu.qualimaster.storm.Source" receiver="true" thrift="false" tasks="1"/>
+    </node>
+    <node name="process" type="family">
+        <component name="process" container="pipeline" class="tests.eu.qualimaster.storm.Process" receiver="true" thrift="false" tasks="1" alternative0="alg1" alternative1="alg2"/>
+    </node>
+    <node name="sink" type="sink">
+        <component name="sink" container="pipeline" class="tests.eu.qualimaster.storm.Sink" receiver="true" thrift="false" tasks="1"/>
+    </node>
+    <algorithm name="alg1" implName="alg1" class="tests.eu.qualimaster.storm.Alg1"/>
+    <algorithm name="alg2" implName="alg1" class="tests.eu.qualimaster.storm.Alg2"/>
+  </pipeline>
+  <pipeline name="other" class="xxx">
+      <node name="other">
+      </node>
+  </pipeline>
+</mapping>
+

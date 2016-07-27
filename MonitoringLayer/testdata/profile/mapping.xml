@@ -1,0 +1,12 @@
+<mapping>
+  <pipeline name="TestPip1462956249588" class="eu.qualimaster.ProfileTestPip.topology.Topology">
+      <node name="TestSource" type="source">
+          <component name="TestSource" container="TestSource" class="eu.qualimaster.ProfileTestPip.topology.TestSourceSource" receiver="true" thrift="false" tasks="1"/>
+      </node>
+      <node name="TestFamily" type="family">
+          <component name="TestFamily" container="TestFamily" class="eu.qualimaster.ProfileTestPip.topology.TestFamilyFamilyElement" receiver="true" thrift="false" tasks="1" alternative0 = "TopoSoftwareCorrelationFinancial"/>
+      </node>
+      <algorithm name="TopoSoftwareCorrelationFinancial" implName="TopoSoftwareCorrelationFinancial" class="eu.qualimaster.algorithms.imp.correlation.softwaresubtopology.TopoSoftwareCorrelationFinancial"/>
+  </pipeline>
+
+</mapping>

@@ -1,0 +1,12 @@
+<mapping>
+  <pipeline name="testManPip" class="tests.eu.qualimaster.monitoring.Topology">
+      <node name="TestSource" type="source">
+          <component name="TestSource" container="testManPip" class="tests.eu.qualimaster.monitoring.TestSourceSource" receiver="true" thrift="false" tasks="1"/>
+      </node>
+      <node name="TestFamily" type="family">
+          <component name="TestFamily" container="testManPip" class="tests.eu.qualimaster.monitoring.TestFamilyFamilyElement" receiver="true" thrift="false" tasks="1" alternative0 = "TopoSoftwareCorrelationFinancial"/>
+      </node>
+      <algorithm name="TopoSoftwareCorrelationFinancial" implName="TopoSoftwareCorrelationFinancial" class="tests.eu.qualimaster.monitoring.genTopo.TopoSoftwareCorrelationFinancial"/>
+  </pipeline>
+
+</mapping>

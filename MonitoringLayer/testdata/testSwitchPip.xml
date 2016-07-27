@@ -1,0 +1,21 @@
+<mapping>
+  <pipeline name="pipeline" class="eu.qualimaster.SwitchPip.topology.Topology">
+      <node name="src" type="source">
+          <component name="src" container="pipeline" class="eu.qualimaster.SwitchPip.topology.PipelineVar_2_Source0Source" receiver="true" thrift="false" tasks="1"/>
+      </node>
+      <node name="process" type="family">
+          <component name="process" container="pipeline" class="eu.qualimaster.SwitchPip.topology.PipelineVar_2_FamilyElement0FamilyElement" receiver="true" thrift="false" tasks="1" alternative0 = "SwitchProcessor1" alternative1 = "CorrelationSW"/>
+      </node>
+      <node name="snk" type="sink">
+          <component name="snk" container="pipeline" class="eu.qualimaster.SwitchPip.topology.PipelineVar_2_Sink0Sink" receiver="false" thrift="false" tasks="1"/>
+      </node>
+      <algorithm name="CorrelationSW" implName="CorrelationSWSubTopology" class="eu.qualimaster.CorrelationSW.topology.CorrelationSWSubTopology">
+              <component name="Intermediary" container="CorrelationSW" class="eu.qualimaster.CorrelationSW.topology.Intermediary" receiver="true" thrift="false" tasks="1"/>
+              <component name="CorrelationSWMapper" container="CorrelationSW" class="eu.qualimaster.CorrelationSW.topology.SubTopology_FamilyElement0FamilyElement" receiver="true" thrift="false" tasks="1"/>
+              <component name="CorrelationSWHayashiYoshida" container="CorrelationSW" class="eu.qualimaster.CorrelationSW.topology.SubTopology_FamilyElement1FamilyElement" receiver="false" thrift="false" tasks="13"/>
+              <component name="OutIntermediary" container="CorrelationSW" class="eu.qualimaster.CorrelationSW.topology.Intermediary" receiver="true" thrift="false" tasks="1"/>
+              <component name="SwitchEnd" container="CorrelationSW" class="eu.qualimaster.CorrelationSW.topology.Intermediary" receiver="true" thrift="false" tasks="1"/>
+      </algorithm>
+  </pipeline>
+
+</mapping>

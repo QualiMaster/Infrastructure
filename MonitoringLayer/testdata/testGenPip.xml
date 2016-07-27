@@ -1,0 +1,16 @@
+<mapping>
+  <pipeline name="testGenPip" class="tests.eu.qualimaster.monitoring.Topology">
+      <node name="TestSource" type="source">
+          <component name="TestSource" container="testGenPip" class="tests.eu.qualimaster.monitoring.TestSourceSource" receiver="true" thrift="false" tasks="1"/>
+      </node>
+      <node name="TestFamily" type="family">
+          <component name="TestFamily" container="testGenPip" class="tests.eu.qualimaster.monitoring.TestFamilyFamilyElement" receiver="true" thrift="false" tasks="1" alternative0 = "CorrelationSW"/>
+      </node>
+      <algorithm name="CorrelationSW" implName="CorrelationSWSubTopology" class="eu.qualimaster.CorrelationSW.topology.CorrelationSWSubTopology">
+          <component name="SubTopology_FamilyElement0" container="CorrelationSW" class="tests.eu.qualimaster.monitoring.SubTopologyFamilyElement0FamilyElement" receiver="true" thrift="false" tasks="1"/>
+          <component name="SubTopology_FamilyElement1" container="CorrelationSW" class="tests.eu.qualimaster.monitoring.SubTopologyFamilyElement1FamilyElement" receiver="false" thrift="false" tasks="13"/>
+      </algorithm>
+      <parameter parameter="windowSize" name="TestFamily" receiver="SubTopology_FamilyElement0"/> 
+  </pipeline>
+
+</mapping>
