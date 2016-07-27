@@ -1,0 +1,187 @@
+// specific rt-VIL script for tests.eu.qualimaster.storm
+
+@advice(QM)
+rtVilScript QM (Project source, Configuration config, Project target, AdaptationEvent event, mapOf(String, Real) bindings) {
+
+    strategy main(Project source, Configuration config, Project target, AdaptationEvent event) = {
+        objective true;
+        breakdown {
+		    tactic slaViolationTactic(source, config, target, event);
+		    tactic userTrigger(source, config, target, event);
+            tactic defaultTactic(source, config, target, event);
+        }
+    }
+    
+    strategy startup(Project source, Configuration config, Project target, CheckBeforeStartupAdaptationEvent event) = {
+        objective true;
+        breakdown {
+            tactic checkAtStartup(config, event.getPipeline());
+        }
+    }
+    
+    tactic checkAtStartup(Configuration config, String pipName) = {
+        // TODO fail if not permissible
+    }
+    
+    strategy startup(Project source, Configuration config, Project target, StartupAdaptationEvent event) = {
+        objective true;
+        breakdown {
+            tactic startupTakeFirst(config, event.getPipeline());
+        }
+    }
+
+    tactic userTrigger(Project source, Configuration config, Project target, ParameterConfigurationAdaptationEvent event) = {
+        // shall go for enactment, but ok for testing
+        ParameterChangeCommand cmd = new ParameterChangeCommand(event.getPipeline(), event.getPipelineElement(), event.getParameter(), event.getValue());
+        cmd.exec();
+    }
+
+    tactic userTrigger(Project source, Configuration config, Project target, AlgorithmConfigurationAdaptationEvent event) = {
+        // shall go for enactment, but ok for testing
+        AlgorithmChangeCommand cmd = new AlgorithmChangeCommand(event.getPipeline(), event.getPipelineElement(), event.getAlgorithm());
+        cmd.exec();
+    }
+    
+    tactic userTrigger(Project source, Configuration config, Project target, AdaptationEvent event) = {
+        fail; // no event match -> try next tactic
+    }
+
+	tactic slaViolationTactic(Project source, Configuration config, Project target, ConstraintViolationAdaptationEvent event) = {
+	    Boolean found = false;
+        for(ViolatingClause cl : event.violatingClauses()) {
+            if (cl.getObservable() == ResourceUsage.CAPACITY) {
+               println("online rebalance " + cl.getVariable());
+               found = true;
+            }
+        };
+        if (!found) {
+            fail; //-> try next tactic
+        }
+	}
+	
+	tactic slaViolationTactic(Project source, Configuration config, Project target, AdaptationEvent event) = {
+	    fail; // no event match -> try next tactic
+	}
+	
+    tactic defaultTactic(Project source, Configuration config, Project target, AdaptationEvent event) = {
+        // nothing to do
+    }
+
+    tactic startupTakeFirst(Configuration config, String pipName) = {
+        QM qm = config;
+        for(Pipeline pip:qm.pipelines) {
+            if (pip.name == pipName) {
+                for(Source src:pip.sources) {
+                    assignFirst(src);
+                };
+            }
+        };
+    }
+
+    assignFirst(PipelineElement node) = : {
+    }
+
+    assignFirst(Source src) = : {
+        for(PipelineElement n:src.next) {
+            assignFirst(n);
+        };
+    }
+
+    assignFirst(FamilyElement elt) = : {
+        Family fam = elt.family;
+println(fam.members);
+println(fam.members.toSequence().first());
+println(elt.actual);            
+        //if (!isConfigured(elt.actual)) {
+            elt.actual = fam.members.toSequence().first();
+        //}
+println(elt.actual);      
+        for(PipelineElement n:elt.next) {
+            assignFirst(n);
+        };
+    }
+    
+    // ------------------------ enactment -------------------
+
+    enact(Project source, Configuration config, Project target) = : {
+        QM qm = config.selectChangedWithContext();
+        for(Pipeline p:qm.pipelines) {
+            for(Source s:p.sources) {
+                enact(p, s);
+            };
+        };
+    }
+
+    enact(Pipeline pipeline, PipelineElement node) = : {
+    }
+
+    enact(Pipeline pipeline, Source source) = : {
+        for(PipelineElement n:source.next) {
+            enact(pipeline, n);
+        };
+    }
+
+    enact(Pipeline pipeline, FamilyElement elt) = : {
+        Family family = elt.family;
+        CommandSequence cmd = new CommandSequence();
+        if (elt.actual != null) {
+            cmd.add(new AlgorithmChangeCommand(pipeline.name, elt.name, elt.actual.name));
+        }
+        for(PipelineElement n:elt.next) {
+            enact(pipeline, n);
+        };
+        cmd.exec();
+    }
+
+    // ------------------------ mapping -------------------
+
+    bindValues(Configuration config, mapOf(String, Real) bindings) = {
+        QM qm = config;
+        FrozenSystemState state = new FrozenSystemState(bindings);
+        for(Pipeline p : qm.pipelines) {
+            bindValues(p, state);
+        };
+    }
+
+    bindValues(Algorithm algorithm, Pipeline pipeline, FrozenSystemState state) = {
+        String algName = algorithm.name;
+        String pipName = pipeline.name;
+        algorithm.latency = state.getAlgorithmObservation(pipName, algName, TimeBehavior.LATENCY);
+        algorithm.throughputItem = state.getAlgorithmObservation(pipName, algName, TimeBehavior.THROUGHPUT_ITEMS);
+    }
+
+    bindValues(Pipeline pipeline, FrozenSystemState state) = {
+        String pipName = pipeline.name;
+        pipeline.latency = state.getPipelineObservation(pipName, TimeBehavior.LATENCY);
+        pipeline.throughputItem = state.getPipelineObservation(pipName, TimeBehavior.THROUGHPUT_ITEMS);
+        pipeline.capacity = state.getPipelineObservation(pipName, ResourceUsage.CAPACITY);
+        pipeline.executors = state.getPipelineObservation(pipName, ResourceUsage.EXECUTORS);
+        
+        for(Source s : pipeline.sources) {
+            bindValues(s, pipeline, state);
+        };
+    }
+
+    bindValues(PipelineElement node, Pipeline pipeline, FrozenSystemState state) = {
+    }
+
+    bindValues(Source src, Pipeline pipeline, FrozenSystemState state) = {
+        // nothing further to monitor - test case 
+        for(PipelineElement n : src.next) {
+            bindValues(n, pipeline, state);
+        };
+    }
+
+    bindValues(FamilyElement elt, Pipeline pipeline, FrozenSystemState state) = {
+        String pipName = pipeline.name;
+        String eltName = elt.name;
+        // nothing further to monitor - test case
+        elt.capacity = state.getPipelineElementObservation(pipName, eltName, ResourceUsage.CAPACITY);
+        elt.executors = state.getPipelineElementObservation(pipName,eltName, ResourceUsage.EXECUTORS);
+        // all values come from algorithm
+        for(PipelineElement n : elt.next) {
+            bindValues(n, pipeline, state);
+        };
+    }
+
+}

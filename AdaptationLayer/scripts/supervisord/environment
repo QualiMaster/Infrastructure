@@ -1,0 +1,10 @@
+JAVA_HOME=/usr/local/java/jdk1.7.0_71
+JRE_HOME=/usr/local/java/jre1.7.0_71
+M2_HOME=/usr/local/maven
+STORM=/usr/local/storm
+CLASSPATH=/usr/local/storm/lib
+QM_HOME=/var/nfs/storm/qm
+QM_LIBS=/var/nfs/lib/qm-libs
+PROVIDED_LIBS=/var/nfs/lib/provided-libs
+STORM_HOME=/usr/local/storm
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/java/jdk1.7.0_71/bin:/usr/local/java/jre1.7.0_71/bin:/usr/local/maven/bin:/usr/local/storm/bin"
