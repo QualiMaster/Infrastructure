@@ -1,0 +1,87 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>eu.qualimaster</groupId>
+  <artifactId>FullInfrastructure</artifactId>
+  <version>0.5.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+  
+  <build>
+  </build>
+    
+  <repositories>       
+    <repository>
+      <id>qm.eu</id>
+      <name>qm.eu</name>
+      <url>https://projects.sse.uni-hildesheim.de/qm/maven/</url>
+      <layout>default</layout>
+    </repository>
+  </repositories> 
+   <!-- Depedency Management -->
+  <dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>eu.qualimaster</groupId>
+            <artifactId>FullInfrastructureDependencies</artifactId>
+            <version>0.5.0-SNAPSHOT</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>     
+    </dependencies>
+  </dependencyManagement> 
+    
+  <dependencies>
+        <!-- Storm Dependency -->
+        <dependency>
+            <groupId>org.apache.storm</groupId>
+            <artifactId>storm-core</artifactId>
+        </dependency>
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>AdaptationLayer</artifactId>
+       </dependency>
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>MonitoringLayer</artifactId>
+       </dependency>
+       <dependency>
+         <groupId>de.uni_hildesheim.sse.spassMeter</groupId>
+         <artifactId>spass-meter-ia</artifactId>
+       </dependency>
+       <dependency>
+         <groupId>de.uni_hildesheim.sse.spassMeter</groupId>
+         <artifactId>spass-meter-boot</artifactId>
+       </dependency>
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>SpassMeterIntegration</artifactId>
+       </dependency>
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>CoordinationLayer</artifactId>
+       </dependency>
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>DataManagementLayer</artifactId>
+       </dependency>
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>StormCommons</artifactId>
+       </dependency>              
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>QualiMaster.Events</artifactId>
+       </dependency>
+       <dependency>
+         <groupId>eu.qualimaster.easyProducer.runtime</groupId>
+         <artifactId>EASy.QualiMaster</artifactId>
+       </dependency>
+       
+       <!-- preliminary -->
+       <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-math3</artifactId>
+        <version>3.6.1</version>
+       </dependency>
+   </dependencies> 
+  
+  </project>

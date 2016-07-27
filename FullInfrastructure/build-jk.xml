@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="FullInfrastructure" default="collect" basedir="." xmlns:jacoco="antlib:org.jacoco.ant"
+    xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+    <!-- import of the global Jenkins properties -->
+    <property file="${user.home}/global-build.properties"/>
+    <property file="${user.home}/qualimaster-build.properties"/>
+
+    <include file="${user.home}/macros.xml"/>
+
+    <!-- Settings for the project -->
+    <property name="src.dir" value="src"/>
+    <property name="javacSource" value="1.7"/>
+    <property name="javacTarget" value="1.7"/>
+
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml" />
+
+    <!-- Check - no typedef shall be required as installed in ANT/lib -->
+    <path id="maven-ant-tasks.classpath" path="${ant-maven.lib}" />
+    <typedef resource="org/apache/maven/artifact/ant/antlib.xml"
+       uri="antlib:org.apache.maven.artifact.ant"
+       classpathref="maven-ant-tasks.classpath" />
+
+    <!-- force snapshot update - does not work in macros.xml  -->
+    <artifact:remoteRepository id="qm.repository" url="${maven.repository}">
+        <snapshots updatePolicy="always" />
+    </artifact:remoteRepository>
+
+    <!-- Targets  -->
+    <target name="init">
+        <artifact:dependencies pathId="maven.compile.classpath">
+            <pom file="pom.xml" id="pom"/>
+            <remoteRepository refid="qm.repository" />
+        </artifact:dependencies>
+    </target>
+    
+    <scriptdef name="adjustName" language="javascript">
+     <attribute name="base" />
+     <attribute name="file" />
+     <attribute name="now" />
+     <attribute name="property" />
+     <![CDATA[
+       var base = attributes.get("base");
+       var filepath = attributes.get("file");
+       var filename = filepath.substring(filepath.lastIndexOf("/") + 1);
+       var now = attributes.get("now");
+       var dotPos = filename.lastIndexOf(".");
+       var name = filename.substring(0, dotPos);
+       var extension = filename.substring(dotPos);
+       project.setProperty(attributes.get("property"), base + "/" + name + "-" + now + extension);
+     ]]>
+    </scriptdef>
+    
+    <macrodef name="copyArtifact">
+     <attribute name="base" />
+     <attribute name="file" />
+     <attribute name="now" />
+     <sequential>
+       <local name="target"/>
+       <adjustName base="@{base}" file="@{file}" now="@{now}" property="target"/>
+       <copy file="@{file}" tofile="${target}"/>
+     </sequential>
+   </macrodef>
+    
+    
+    <target name="collect" depends="init">
+        <delete dir="build"/>
+        <mkdir dir="build"/>
+        <mkdir dir="build/base"/>
+        <mkdir dir="build/base/qm-libs"/>
+        <mkdir dir="build/base/provided-libs"/>
+        <mkdir dir="build/stamp"/>
+        <mkdir dir="build/stamp/qm-libs"/>
+        <mkdir dir="build/stamp/provided-libs"/>
+        <tstamp>
+            <format property="NOW" pattern="yyyyMMdd-HHmmss" locale="en,EN"/>
+        </tstamp>
+        <echoproperties/>
+
+        <copy file="${eu.qualimaster:DataManagementLayer:jar}" todir="build/base/provided-libs"/>
+        <copy file="${eu.qualimaster:QualiMaster.Events:jar}" todir="build/base/provided-libs"/>
+        <copy file="${eu.qualimaster:StormCommons:jar}" todir="build/base/provided-libs"/>
+        
+        <copy file="${eu.qualimaster:AdaptationLayer:jar}" todir="build/base/qm-libs"/>
+        <copy file="${eu.qualimaster:CoordinationLayer:jar}" todir="build/base/qm-libs"/>
+        <copy file="${eu.qualimaster:MonitoringLayer:jar}" todir="build/base/qm-libs"/>
+    	
+    	<copy file="${de.uni_hildesheim.sse.spassMeter:spass-meter-ia:jar}" tofile="build/base/qm-libs/spass-meter-ia.jar"/>
+    	<copy file="${de.uni_hildesheim.sse.spassMeter:spass-meter-boot:jar}" tofile="build/base/qm-libs/spass-meter-boot.jar"/>
+        <copy file="${eu.qualimaster:SpassMeterIntegration:jar}" tofile="build/base/qm-libs/spass-meter-rt.jar"/>
+        <copy file="${eu.qualimaster.easyProducer.runtime:EASy.QualiMaster:jar}" todir="build/base/qm-libs"/>
+        <copy file="${eu.qualimaster.easyProducer.runtime:Eclipse.QualiMaster:jar}" todir="build/base/qm-libs"/>
+        <copy file="${org.eclipse.equinox:common:jar}" todir="build/base/qm-libs"/>
+        <copy file="${org.eclipse.equinox:preferences:jar}" todir="build/base/qm-libs"/>
+    	<copy file="${org.apache.commons:commons-math3:jar}" todir="build/base/qm-libs"/>
+    	
+        <copy todir="build/base/qm-libs">
+            <fileset dir="${home.base.dir}/QualiMaster.EASyRuntime/workspace/build/generatedLibs.ex/dist">
+                <include name="lib/**/*.jar"/>
+                <include name="org.eclipse*.jar"/>
+            </fileset>
+        </copy>
+
+        <zip destfile="infra_maven-${NOW}.zip">
+            <fileset dir="build/base" />
+        </zip>
+        <zip destfile="infra-${NOW}.zip"> 
+            <fileset dir="build/base" excludes="**/lib/*.jar"/>
+        </zip>
+
+        <copyArtifact base="build/stamp/provided-libs" file="${eu.qualimaster:DataManagementLayer:jar}" now="${NOW}"/>
+        <copyArtifact base="build/stamp/provided-libs" file="${eu.qualimaster:QualiMaster.Events:jar}" now="${NOW}"/>
+        <copyArtifact base="build/stamp/provided-libs" file="${eu.qualimaster:StormCommons:jar}" now="${NOW}"/>
+        
+        <copyArtifact base="build/stamp/qm-libs" file="${eu.qualimaster:AdaptationLayer:jar}" now="${NOW}"/>
+        <copyArtifact base="build/stamp/qm-libs" file="${eu.qualimaster:CoordinationLayer:jar}" now="${NOW}"/>
+        <copyArtifact base="build/stamp/qm-libs" file="${eu.qualimaster:MonitoringLayer:jar}" now="${NOW}"/>
+        <!--copy file="${eu.qualimaster:PriorityPipelineInterfaces:jar}" todir="build"/-->
+        <copyArtifact base="build/stamp/qm-libs" file="${eu.qualimaster.easyProducer.runtime:EASy.QualiMaster:jar}" now="${NOW}"/>
+        <copyArtifact base="build/stamp/qm-libs" file="${eu.qualimaster.easyProducer.runtime:Eclipse.QualiMaster:jar}" now="${NOW}"/>
+        <copy file="${org.eclipse.equinox:common:jar}" todir="build/stamp/qm-libs"/>
+        <copy file="${org.eclipse.equinox:preferences:jar}" todir="build/stamp/qm-libs"/>
+        <copy todir="build/stamp/qm-libs">
+            <fileset dir="${home.base.dir}/QualiMaster.EASyRuntime/workspace/build/generatedLibs.ex/dist">
+                <include name="lib/**/*.jar"/>
+                <include name="org.eclipse*.jar"/>
+            </fileset>
+        </copy>
+        <zip destfile="infra_maven-${NOW}-stamped.zip">
+            <fileset dir="build/stamp" />
+        </zip>
+        <zip destfile="infra-${NOW}-stamped.zip"> 
+            <fileset dir="build/stamp" excludes="**/lib/*.jar"/>
+        </zip>
+    </target>
+    
+</project>
