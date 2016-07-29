@@ -18,7 +18,7 @@ import tests.eu.qualimaster.events.RemoteHandlerTests;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({ConfigurationTests.class, EventHandlerTests.class, EventsTests.class, RemoteHandlerTests.class, 
     PipelineStatusTrackerTest.class, ForwardTests.class, PipelineOptionsTest.class, FrozenSystemStateTest.class, 
-    ComponentKeyTests.class, AlgorithmChangeParameterTest.class, ResponseStoreTest.class })
+    ComponentKeyTests.class, AlgorithmChangeParameterTest.class, ResponseStoreTest.class, AdditionalTests.class })
 public class AllTests {
 
 }
