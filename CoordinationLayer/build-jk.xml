@@ -12,7 +12,9 @@
 	<property name="javacSource" value="1.7"/>
 	<property name="javacTarget" value="1.7"/>
 	
-    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml" />
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+        <classpath path="${jacoco.path}/jacocoant.jar"/>
+    </taskdef>
 	
     <!-- Check - no typedef shall be required as installed in ANT/lib -->
     <path id="maven-ant-tasks.classpath" path="${ant-maven.lib}" />
