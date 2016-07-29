@@ -30,7 +30,7 @@ public class DataLogger {
     
     /**
      * Returns a print writer to write the log in a given location.
-     * @param fileName the log name without postfix
+     * @param fileName the log name
      * @param directory the location to write the log
      * @return a print writer
      */
@@ -43,7 +43,7 @@ public class DataLogger {
                 String userhome = System.getProperty("user.home");
                 file = new File(userhome);
             }
-            File logFile = new File(file, fileName + ".log");
+            File logFile = new File(file, fileName);
             fileOut = new FileOutputStream(logFile, false);
             writer = new PrintWriter(fileOut);
         } catch (FileNotFoundException e) {
