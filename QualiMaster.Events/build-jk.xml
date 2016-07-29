@@ -13,15 +13,15 @@
 	<property name="javacSource" value="1.7"/>
 	<property name="javacTarget" value="1.7"/>
 	
+	<taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+    <classpath path="${jacoco.path}/jacocoant.jar"/>
+  </taskdef>
+	
 	<!-- Check - no typedef shall be required as installed in ANT/lib -->
 	<path id="maven-ant-tasks.classpath" path="${ant-maven.lib}" />
     <typedef resource="org/apache/maven/artifact/ant/antlib.xml"
        uri="antlib:org.apache.maven.artifact.ant"
        classpathref="maven-ant-tasks.classpath" />
-	
-	<taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
-		<classpath path="${jacoco.path}/jacocoant.jar"/>
-	</taskdef>
 	
 	<path id ="includes">
         <!-- all taken from maven -->
@@ -61,7 +61,8 @@
 		<echoproperties/>  
 		<jacoco:coverage output="file" destfile="jacoco.exec">
         <junit printsummary="withOutAndErr" dir="${build.base.dir}" fork="true" timeout="240000" forkmode="once">
-            <classpath>
+        	<classpath path="${jacoco.path}/jacocoant.jar"/>  
+        	<classpath>
                 <path refid="maven.compile.classpath" />
                 <path refid="includes" />
                 <pathelement location="${build.classes.dir}" />
