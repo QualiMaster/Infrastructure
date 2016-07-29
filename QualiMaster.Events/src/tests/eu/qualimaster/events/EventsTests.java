@@ -33,6 +33,7 @@ import eu.qualimaster.monitoring.events.PipelineElementMultiObservationMonitorin
 import eu.qualimaster.monitoring.events.PipelineElementObservationMonitoringEvent;
 import eu.qualimaster.monitoring.events.PlatformMonitoringEvent;
 import eu.qualimaster.monitoring.events.ReplayChangedMonitoringEvent;
+import eu.qualimaster.monitoring.events.SourceVolumeMonitoringEvent;
 import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.MonitoringFrequency;
@@ -269,6 +270,22 @@ public class EventsTests {
         Assert.assertEquals("bbb", lEvent.getActualShedder());
         Assert.assertEquals(msgId, lEvent.getCauseMessageId());
     }    
+    
+    /**
+     * Tests source monitoring events.
+     */
+    @Test
+    public void testSourceMonitoringEvents() {
+        final String pipeline = "pip";
+        final String source = "src";
+        final Map<String, Integer> obs = new HashMap<String, Integer>();
+        obs.put("tweet1", 100);
+        obs.put("tweet2", 1);
+        SourceVolumeMonitoringEvent evt = new SourceVolumeMonitoringEvent(pipeline, source, obs);
+        Assert.assertEquals(pipeline, evt.getPipeline());
+        Assert.assertEquals(source, evt.getPipelineElement());
+        Assert.assertEquals(obs, evt.getObservations());
+    }
     
     /**
      * Test hardware events.
