@@ -19,7 +19,9 @@
        uri="antlib:org.apache.maven.artifact.ant"
        classpathref="maven-ant-tasks.classpath" />
 	
-    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml" />
+	<taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+		<classpath path="${jacoco.path}/jacocoant.jar"/>
+	</taskdef>
 	
 	<path id ="includes">
         <!-- all taken from maven -->
