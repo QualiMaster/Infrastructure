@@ -153,11 +153,33 @@
         </exclusion>        
       </exclusions>      
     </dependency>
+    <!-- prediction dependencies -->
     <dependency>
      <groupId>org.apache.commons</groupId>
      <artifactId>commons-math3</artifactId>
      <version>3.6.1</version>
     </dependency>
+    <dependency>
+	  <groupId>pentaho.weka</groupId>
+	  <artifactId>pdm-timeseriesforecasting-ce</artifactId>
+	  <version>1.1.1</version>
+    </dependency>
+    <dependency>
+	    <groupId>nz.ac.waikato.cms.weka</groupId>
+	    <artifactId>weka-dev</artifactId>
+	    <version>3.7.5</version>
+	</dependency>
+	<dependency>
+	    <groupId>jfree</groupId>
+	    <artifactId>jcommon</artifactId>
+	    <version>1.0.14</version>
+	</dependency>
+	<dependency>
+	    <groupId>jfree</groupId>
+	    <artifactId>jfreechart</artifactId>
+	    <version>1.0.13</version>
+	</dependency>
+    <!-- testing dependencies -->
 	<dependency>
 		<groupId>junit</groupId>
 		<artifactId>junit</artifactId>
