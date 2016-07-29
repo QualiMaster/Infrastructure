@@ -79,6 +79,18 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-math3</artifactId>
        </dependency>
+        <dependency>
+          <groupId>pentaho.weka</groupId>
+          <artifactId>pdm-timeseriesforecasting-ce</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>nz.ac.waikato.cms.weka</groupId>
+            <artifactId>weka-dev</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jfree</groupId>
+            <artifactId>jcommon</artifactId>
+        </dependency>       
    </dependencies> 
   
   </project>
