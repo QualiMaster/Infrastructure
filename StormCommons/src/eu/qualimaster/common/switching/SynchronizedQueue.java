@@ -1,8 +1,6 @@
 package eu.qualimaster.common.switching;
 
 import java.util.Queue;
-
-import backtype.storm.tuple.Tuple;
 /**
  * A synchronized queue adopting the producer-consumer pattern.
  * @param <T> the data type
