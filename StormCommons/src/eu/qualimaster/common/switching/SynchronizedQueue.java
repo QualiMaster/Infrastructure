@@ -15,7 +15,7 @@ public class SynchronizedQueue {
     /**
      * Creates a synchronized queue.
      * @param queue the queue to store data
-     * @param size the size indicating the full queue 
+     * @param size the size of a full queue 
      */
     public SynchronizedQueue(Queue<Tuple> queue, int size) {
         this.queue = queue;
