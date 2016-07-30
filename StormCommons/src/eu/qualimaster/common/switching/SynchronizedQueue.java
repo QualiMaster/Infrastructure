@@ -9,8 +9,8 @@ import backtype.storm.tuple.Tuple;
  *
  */
 public class SynchronizedQueue {
-    private static Queue<Tuple> queue;
-    private static int size;
+    private Queue<Tuple> queue;
+    private int size;
     
     /**
      * Creates a synchronized queue.
@@ -25,7 +25,7 @@ public class SynchronizedQueue {
      * Consumes tuple data from the queue.
      * @return a tuple
      */
-    public static Tuple consume() {
+    public Tuple consume() {
       //wait if queue is empty
         while (queue.isEmpty()) {
             synchronized (queue) {
@@ -47,7 +47,7 @@ public class SynchronizedQueue {
      * Stores tuples into the queue.
      * @param data the tuple data to be stored
      */
-    public static void produce(Tuple data) {
+    public void produce(Tuple data) {
         // wait if queue is full
         while (queue.size() == size) {
             synchronized (queue) {
