@@ -30,6 +30,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import eu.qualimaster.XmlFactory;
+
 /**
  * Represents a (snapshot) Maven metadata.
  * 
@@ -111,7 +113,7 @@ public class MavenMetaInfo {
      */
     public MavenMetaInfo(InputStream in) throws IOException {
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilderFactory factory = XmlFactory.getDefaultXmlDocumentBuilderFactory();
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document document = builder.parse(in);
             NodeList list = document.getElementsByTagName("metadata");
