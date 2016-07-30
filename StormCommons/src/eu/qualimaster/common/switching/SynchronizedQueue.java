@@ -5,11 +5,12 @@ import java.util.Queue;
 import backtype.storm.tuple.Tuple;
 /**
  * A synchronized queue adopting the producer-consumer pattern.
+ * @param <T> the data type
  * @author Cui Qin
  *
  */
-public class SynchronizedQueue {
-    private Queue<Tuple> queue;
+public class SynchronizedQueue<T> {
+    private Queue<T> queue;
     private int size;
     
     /**
@@ -17,7 +18,7 @@ public class SynchronizedQueue {
      * @param queue the queue to store data
      * @param size the size of a full queue 
      */
-    public SynchronizedQueue(Queue<Tuple> queue, int size) {
+    public SynchronizedQueue(Queue<T> queue, int size) {
         this.queue = queue;
         this.size = size;
     }
@@ -25,7 +26,7 @@ public class SynchronizedQueue {
      * Consumes tuple data from the queue.
      * @return a tuple
      */
-    public Tuple consume() {
+    public T consume() {
       //wait if queue is empty
         while (queue.isEmpty()) {
             synchronized (queue) {
@@ -47,7 +48,7 @@ public class SynchronizedQueue {
      * Stores tuples into the queue.
      * @param data the tuple data to be stored
      */
-    public void produce(Tuple data) {
+    public void produce(T data) {
         // wait if queue is full
         while (queue.size() == size) {
             synchronized (queue) {
