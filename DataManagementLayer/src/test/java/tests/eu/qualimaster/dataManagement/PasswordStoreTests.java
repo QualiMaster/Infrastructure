@@ -40,6 +40,7 @@ public class PasswordStoreTests {
      */
     @Test
     public void testPasswordStore() throws IOException {
+        PasswordStore.setAuthenticationProvider(PasswordStore.PWSTORE_AUTH_PROVIDER);
         PasswordStore.load(new File(TESTDATA, "password.properties"));
         try {
             PasswordEntry entry = PasswordStore.getEntry("twitter/katerina");
@@ -49,11 +50,18 @@ public class PasswordStoreTests {
             Assert.assertEquals("mySecret", entry.getPassword());
             Assert.assertEquals("aabbbcc", entry.getValue("accessToken"));
             Assert.assertEquals("admin", entry.getRole());
-            
+
+            Assert.assertTrue(PasswordStore.isAuthenticated("twitter/katerina", "mySecret"));
+            Assert.assertFalse(PasswordStore.isAuthenticated("twitter/katerina", "mySecret1"));
+
             entry = PasswordStore.getEntry("holger");
             Assert.assertEquals("holger", entry.getVUser());
             Assert.assertEquals("holger", entry.getUserName());
             Assert.assertEquals("dontKnow", entry.getPassword());
+
+            Assert.assertTrue(PasswordStore.isAuthenticated("holger", "dontKnow"));
+            Assert.assertFalse(PasswordStore.isAuthenticated("holger", ""));
+            Assert.assertFalse(PasswordStore.isAuthenticated("holger", null));
         } catch (IllegalArgumentException e) {
             Assert.fail("Unexpected exception: " + e.getMessage());
         }

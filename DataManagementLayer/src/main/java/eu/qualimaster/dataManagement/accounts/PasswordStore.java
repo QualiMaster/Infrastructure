@@ -38,12 +38,32 @@ import eu.qualimaster.dataManagement.DataManager;
  * @author Holger Eichelberger
  */
 public class PasswordStore {
-    
+
+    /**
+     * The default authentication provider relying on the {@link PasswordStore}.
+     */
+    public static final IAuthenticationProvider PWSTORE_AUTH_PROVIDER = new IAuthenticationProvider() {
+        
+        @Override
+        public boolean isAuthenticated(String vUser, String password) {
+            boolean result = false;
+            PasswordEntry entry = getEntry(vUser);
+            if (null != entry) {
+                String pw = entry.getPassword();
+                if (null != pw) {
+                    result = pw.equals(password);
+                }
+            }
+            return result;
+        }
+    };
+
     public static final String SEPARATOR = ".";
     private static final String PASSWORD = "passwd";
     private static final String USER = "user";
     private static final String ROLE = "role";
     private static Properties properties = new Properties();
+    private static IAuthenticationProvider authProvider = PWSTORE_AUTH_PROVIDER;
     
     /**
      * Represents all values assigned to a (virtual) user.
@@ -163,6 +183,30 @@ public class PasswordStore {
         FileInputStream fis = new FileInputStream(file);
         properties.load(fis);
         fis.close();
+    }
+    
+    /**
+     * Changes the authentication provider.
+     * 
+     * @param provider the new provider (ignored if <b>null</b>)
+     */
+    public static void setAuthenticationProvider(IAuthenticationProvider provider) {
+        if (null != provider) {
+            authProvider = provider;
+        }
+    }
+
+    /**
+     * Returns whether an <code>user</code> is authenticated using the actual authentication
+     * provider.
+     * 
+     * @param user the user name
+     * @param password the password/passphrase
+     * @return <code>true</code> for authentication, <code>false</code> else
+     * @see #setAuthenticationProvider(IAuthenticationProvider)
+     */
+    public static boolean isAuthenticated(String user, String password) {
+        return authProvider.isAuthenticated(user, password);
     }
 
 }
