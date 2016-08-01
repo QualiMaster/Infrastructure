@@ -16,6 +16,7 @@
 package tests.eu.qualimaster.storm;
 
 import backtype.storm.utils.Utils;
+import eu.qualimaster.dataManagement.sources.IHistoricalDataProvider;
 import eu.qualimaster.dataManagement.strategies.IStorageStrategyDescriptor;
 import eu.qualimaster.dataManagement.strategies.NoStorageStrategyDescriptor;
 import eu.qualimaster.observables.IObservable;
@@ -70,6 +71,11 @@ public class Src implements ISrc {
     @Override
     public String toString() {
         return "Test data source";
+    }
+
+    @Override
+    public IHistoricalDataProvider getHistoricalDataProvider() {
+        return null;
     }
 
 }

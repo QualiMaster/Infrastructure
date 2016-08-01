@@ -16,6 +16,7 @@
 package tests.eu.qualimaster.storm;
 
 import eu.qualimaster.dataManagement.sources.FixedRateSource;
+import eu.qualimaster.dataManagement.sources.IHistoricalDataProvider;
 
 /**
  * Implements an alternative data source operating at a fixed rate.
@@ -46,6 +47,11 @@ public class Src2 extends FixedRateSource<Integer> implements ISrc {
     @Override
     public String toString() {
         return "Test data source (fixed rate)";
+    }
+    
+    @Override
+    public IHistoricalDataProvider getHistoricalDataProvider() {
+        return null;
     }
     
 }

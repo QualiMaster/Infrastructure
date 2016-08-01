@@ -24,6 +24,6 @@ public interface IDataSource extends IDataElement, IMeasurable {
      * 
      * @return the data provider (may be <b>null</b> if not implemented)
      */
-    //public IHistoricalDataProvider getHistoricalDataProvider();
+    public IHistoricalDataProvider getHistoricalDataProvider();
     
 }

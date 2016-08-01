@@ -16,6 +16,7 @@
 package tests.eu.qualimaster.storm;
 
 import eu.qualimaster.dataManagement.sources.GenericMultiSourceHandler;
+import eu.qualimaster.dataManagement.sources.IHistoricalDataProvider;
 import eu.qualimaster.dataManagement.sources.ReplayMechanism;
 import eu.qualimaster.dataManagement.sources.replay.LongTimestampParser;
 import eu.qualimaster.dataManagement.strategies.IStorageStrategyDescriptor;
@@ -101,6 +102,11 @@ public class TestSrc implements ISrc {
      */
     public void setParameterHdfsDataFile(String dataFile) {
         replay.setParameterHdfsDataFile(dataFile);
+    }
+
+    @Override
+    public IHistoricalDataProvider getHistoricalDataProvider() {
+        return null;
     }
 
 }

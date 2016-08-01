@@ -329,5 +329,10 @@ public class ReplayMechanism implements IDataSource {
             }
         }
     }
+    
+    @Override
+    public IHistoricalDataProvider getHistoricalDataProvider() {
+        return null;
+    }
 
 }
