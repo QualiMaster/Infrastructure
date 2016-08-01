@@ -1,9 +1,15 @@
 package eu.qualimaster.monitoring.volumePrediction;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.TreeMap;
 
+import weka.classifiers.evaluation.NumericPrediction;
 import weka.classifiers.functions.LinearRegression;
 import weka.classifiers.timeseries.WekaForecaster;
 import weka.classifiers.timeseries.core.TSLagMaker;
@@ -25,7 +31,7 @@ public class PredictionModel {
 	private String source;
 	
 	/** The window of recent volume values, used to predict the volume at the next time point. */
-	private ArrayList<Double> recentVolumes;
+	private Instances recentVolumes;
 	
 	/** The model to make predictions based on recent volume values. */
 	private WekaForecaster forecaster;
@@ -55,10 +61,72 @@ public class PredictionModel {
 	 */
 	public PredictionModel(String source, String dataPath){
 		this.source = source;
-		this.recentVolumes = new ArrayList<>();
+		this.recentVolumes = createDataset();
 		this.forecaster = new WekaForecaster();
 		this.historicalVolumes = new HashMap<>();
 		trainModels(dataPath);
+	}
+	
+	/**
+	 * Predicts the volume during the next time step (1 minute) given the recent values.
+	 * It requires at least 12 previous points to make the prediction. If not enough
+	 * recent points are available, the method returns a negative integer indicating the
+	 * number of steps that still have to be waited before being able to make predictions.
+	 * 
+	 * @return The predicted volume within the next time step.
+	 */
+	public double predict()
+	{
+		try
+		{
+			// if there are not enough values in the recent history, return a negative value indicating the steps to wait
+			if(this.forecaster.getTSLagMaker().getMaxLag() > this.recentVolumes.size())
+			{
+				System.out.println("Not enough recent values to make predictions.");
+				return this.recentVolumes.size() - this.forecaster.getTSLagMaker().getMaxLag();
+			}
+			
+			// prime the forecaster with enough recent historical data to cover up to the maximum lag
+			this.forecaster.primeForecaster(this.recentVolumes);
+	
+			// forecast the desired number of data points
+			List<List<NumericPrediction>> wekaForecast = this.forecaster.forecast(1, System.out);
+			double forecast = wekaForecast.get(0).get(0).predicted();
+			
+			return forecast;
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return -1;
+		}
+	}
+	
+	/**
+	 * Estimates the volume at the current time (minute) of the day by computing the average over
+	 * the volumes at the same time of the day in different past days. This can be used without
+	 * knowing the sequence of recent volumes (e.g. to estimate the volume introduced by crawling
+	 * a stock before actually doing it).
+	 * 
+	 * @return The estimated volume at the current time of the day (-1 if no historical data is available)
+	 */
+	public double predictBlindly()
+	{
+		// check if there are data
+		if(this.historicalVolumes.isEmpty())
+		{
+			System.out.println("Not historical data available to make predictions.");
+			return -1;
+		}
+		
+		// get the current timestamp
+		DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+		Date date = new Date();
+		String time = dateFormat.format(date).split("'T'")[1];
+		
+		// fetch the historical average value at the required time of the day
+		if(this.getHistoricalVolumes().containsKey(time)) return this.getHistoricalVolumes().get(time);
+		else return getNeighborValue(time);
 	}
 	
 	private void trainModels(String dataPath)
@@ -127,22 +195,15 @@ public class PredictionModel {
 				if(value < Integer.MAX_VALUE) sortedData.put(date, data.get(date));
 			}
 				
-			// define the attributes
-			Attribute date = new Attribute(DATE_FIELD, DATE_FORMAT);
-			Attribute volume = new Attribute(VOLUME_FIELD);
-			
-			// create the dataset
-			ArrayList<Attribute> attrs = new ArrayList<>();
-			attrs.add(date);
-			attrs.add(volume);
-			Instances dataset = new	Instances("dataset", attrs, 12);
+			// create the structure of the dataset
+			Instances dataset = createDataset();
 			
 			// add the instances
 			for(String key : sortedData.keySet())
 			{
 				Instance instance = new DenseInstance(dataset.get(0).numAttributes());
-				instance.setValue(date, date.parseDate(key));
-				instance.setValue(volume, sortedData.get(key));
+				instance.setValue(dataset.attribute(0), dataset.attribute(0).parseDate(key));
+				instance.setValue(dataset.attribute(1), sortedData.get(key));
 				dataset.add(instance);
 			}
 			
@@ -182,6 +243,73 @@ public class PredictionModel {
 		}
 		
 		return outputMap;
+	}
+	
+	private Instances createDataset()
+	{
+		// define the attributes
+		Attribute date = new Attribute(DATE_FIELD, DATE_FORMAT);
+		Attribute volume = new Attribute(VOLUME_FIELD);
+		
+		// create the dataset
+		ArrayList<Attribute> attrs = new ArrayList<>();
+		attrs.add(date);
+		attrs.add(volume);
+		Instances dataset = new	Instances("dataset", attrs, 0);
+		
+		return dataset;
+	}
+	
+	private double getNeighborValue(String time)
+	{
+		String[] fields = time.split(":");
+		int hour = Integer.valueOf(fields[0]);
+		int minutes = Integer.valueOf(fields[1]);
+		int seconds = Integer.valueOf(fields[2]);
+		
+		Calendar prevCalendar = Calendar.getInstance();
+		Calendar succCalendar = Calendar.getInstance();
+		prevCalendar.set(Calendar.HOUR_OF_DAY, hour);
+		prevCalendar.set(Calendar.MINUTE, minutes);
+		prevCalendar.set(Calendar.SECOND, seconds);
+		succCalendar.set(Calendar.HOUR_OF_DAY, hour);
+		succCalendar.set(Calendar.MINUTE, minutes);
+		succCalendar.set(Calendar.SECOND, seconds);
+		
+		double neighborValue = -1;
+		while(neighborValue == -1)
+		{
+			prevCalendar.add(Calendar.MINUTE, -1);
+			succCalendar.add(Calendar.MINUTE, 1);
+			
+			int prevHour = prevCalendar.get(Calendar.HOUR_OF_DAY);
+			int prevMinute = prevCalendar.get(Calendar.MINUTE);
+			int prevSecond = prevCalendar.get(Calendar.SECOND);
+			int succHour = succCalendar.get(Calendar.HOUR_OF_DAY);
+			int succMinute = succCalendar.get(Calendar.MINUTE);
+			int succSecond = succCalendar.get(Calendar.SECOND);
+			
+			String prevTime = "";
+			if(prevHour < 10) prevTime += "0" + prevHour + ":";
+			else prevTime += prevHour + ":";
+			if(prevMinute < 10) prevTime += "0" + prevMinute + ":";
+			else prevTime += prevMinute + ":";
+			if(prevSecond < 10) prevTime += "0" + prevSecond;
+			else prevTime += prevSecond;
+			
+			String succTime = "";
+			if(succHour < 10) succTime += "0" + succHour + ":";
+			else succTime += succHour + ":";
+			if(succMinute < 10) succTime += "0" + succMinute + ":";
+			else succTime += succMinute + ":";
+			if(succSecond < 10) succTime += "0" + succSecond;
+			else succTime += succSecond;
+			
+			if(this.historicalVolumes.containsKey(prevTime)) neighborValue = this.historicalVolumes.get(prevTime);
+			if(this.historicalVolumes.containsKey(succTime)) neighborValue = this.historicalVolumes.get(succTime);
+		}
+		
+		return neighborValue;
 	}
 	
 	private void detectPeriodicity(WekaForecaster forecaster, Instances dataset, String dateField)
@@ -308,14 +436,14 @@ public class PredictionModel {
 	/**
 	 * @return the recentVolumes
 	 */
-	public ArrayList<Double> getRecentVolumes() {
+	public Instances getRecentVolumes() {
 		return recentVolumes;
 	}
 
 	/**
 	 * @param recentVolumes the recentVolumes to set
 	 */
-	public void setRecentVolumes(ArrayList<Double> recentVolumes) {
+	public void setRecentVolumes(Instances recentVolumes) {
 		this.recentVolumes = recentVolumes;
 	}
 
