@@ -62,17 +62,22 @@ public class SourceMonitor extends Monitor {
     /**
      * Registers an aggregation key provider.
      * 
-     * @param <T> the tuple type
-     * @param cls the tuple class (nothing happens if <b>null</b>)
-     * @param provider the provider instance (deregistered if <b>null</b>)
+     * @param provider the provider instance (ignored if <b>null</b>)
      */
-    public <T> void registerAggregationKeyProvider(Class<T> cls, AggregationKeyProvider<T> provider) {
-        if (null != cls) {
-            if (null == provider) {
-                providers.remove(cls);
-            } else {
-                providers.put(cls, provider);
-            }
+    public void registerAggregationKeyProvider(AggregationKeyProvider<?> provider) {
+        if (null != provider) {
+            providers.put(provider.handles(), provider);
+        }
+    }
+
+    /**
+     * Unregisters an aggregation key provider.
+     * 
+     * @param provider the provider instance (ignored if <b>null</b>)
+     */
+    public void unregisterAggregationKeyProvider(AggregationKeyProvider<?> provider) {
+        if (null != provider) {
+            providers.remove(provider.handles());
         }
     }
     

@@ -55,4 +55,13 @@ public abstract class AggregationKeyProvider<T> {
         return getAggregationKey(cls.cast(tuple));
     }
     
+    /**
+     * Returns the class that is handled by this provider.
+     * 
+     * @return the class
+     */
+    public final Class<T> handles() {
+        return cls;
+    }
+    
 }
