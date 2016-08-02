@@ -1,5 +1,6 @@
 package eu.qualimaster.common.switching;
 
+import java.io.IOException;
 import java.net.Socket;
 
 /**
@@ -13,4 +14,14 @@ public interface ITupleReceiverHandler extends Runnable {
      * @param socket the socket to be connected
      */
     public void setSocket(Socket socket);
+    /**
+     * Stops the handler thread.
+     * @throws IOException the IO exception
+     */
+    public void stop() throws IOException;
+    /**
+     * Returns true if the handler is stopped, otherwise false.
+     * @return true if the handler is stopped, otherwise false.
+     */
+    public boolean isStopped();
 }

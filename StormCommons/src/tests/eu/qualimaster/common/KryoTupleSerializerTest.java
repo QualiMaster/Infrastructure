@@ -35,7 +35,7 @@ public class KryoTupleSerializerTest {
      * @author Cui Qin
      *
      */
-    private static interface IDataItem extends Serializable {
+    public static interface IDataItem extends Serializable {
         /**
          * Sets an id for the data item.
          * @param id the id
@@ -62,7 +62,7 @@ public class KryoTupleSerializerTest {
      * @author Cui Qin
      *
      */
-    private static class DataItem implements IDataItem {
+    public static class DataItem implements IDataItem {
         private int id;
         private String value;
         /**
