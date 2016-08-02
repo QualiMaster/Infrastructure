@@ -2,7 +2,7 @@ package tests.eu.qualimaster.storm;
 
 import java.util.Map;
 
-import eu.qualimaster.common.signal.BaseSignalSpout;
+import eu.qualimaster.common.signal.BaseSignalSourceSpout;
 import eu.qualimaster.common.signal.ParameterChangeSignal;
 import eu.qualimaster.common.signal.ShutdownSignal;
 import eu.qualimaster.dataManagement.DataManager;
@@ -22,7 +22,7 @@ import backtype.storm.tuple.Values;
  * @author Holger Eichelberger
  */
 @SuppressWarnings("serial")
-public class Source<S extends ISrc> extends BaseSignalSpout {
+public class Source<S extends ISrc> extends BaseSignalSourceSpout {
 
     private static SignalCollector signals = new SignalCollector(Naming.LOG_SOURCE);
     private Class<S> srcClass;

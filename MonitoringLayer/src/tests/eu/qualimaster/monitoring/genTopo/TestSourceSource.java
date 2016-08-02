@@ -23,14 +23,14 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
-import eu.qualimaster.common.signal.BaseSignalSpout;
+import eu.qualimaster.common.signal.BaseSignalSourceSpout;
 
 /**
  * Implements the test source.
  * 
  * @author Holger Eichelberger
  */
-public class TestSourceSource extends BaseSignalSpout {
+public class TestSourceSource extends BaseSignalSourceSpout {
 
     public static final long LATENCY = 300;
     private static final long serialVersionUID = -4142872611182850871L;

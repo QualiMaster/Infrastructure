@@ -146,7 +146,7 @@ public class StormTests extends AbstractCoordinationTests {
 
         handleParallelism(parallelism, 1);
         
-        sleep(4000); // let Storm run for a while
+        sleep(4000); // let Storm run for a while // 600000
         
         handleParallelism(parallelism, 2);
 
