@@ -68,7 +68,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
             namespace = (String) conf.get(Constants.CONFIG_KEY_SUBPIPELINE_NAME);
         }
         StormSignalConnection.configureEventBus(conf);
-        monitor = new Monitor(namespace, name, true, context, sendRegular);
+        monitor = createMonitor(namespace, name, true, context, sendRegular);
         if (Constants.MEASURE_BY_TASK_HOOKS) {
             context.addTaskHook(monitor);
         }
@@ -83,6 +83,22 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
         } catch (Exception e) {
             LOGGER.error("Error SignalConnection:" + e.getMessage(), e);
         }
+    }
+    
+    /**
+     * Creates the monitor instance.
+     * 
+     * @param namespace the namespace (pipeline name)
+     * @param name the element name
+     * @param includeItems whether the send items shall also be included
+     * @param context the topology context for creating the component id
+     * @param sendRegular whether this monitor shall care for sending regular events (<code>true</code>) or 
+     *     not (<code>false</code>, for thrift-based monitoring)
+     * @return the monitor instance (must not be <b>null</b>)
+     */
+    protected Monitor createMonitor(String namespace, String name, boolean includeItems, TopologyContext context, 
+        boolean sendRegular) {
+        return new Monitor(namespace, name, true, context, sendRegular);
     }
     
     /**

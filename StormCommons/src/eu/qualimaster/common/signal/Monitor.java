@@ -114,6 +114,24 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     }
     
     /**
+     * Returns the namespace.
+     * 
+     * @return the namespace (pipeline name)
+     */
+    public String getNamespace() {
+        return namespace;
+    }
+    
+    /**
+     * Returns the element name.
+     * 
+     * @return the element name
+     */
+    public String getName() {
+        return name;
+    }
+    
+    /**
      * Reacts on timer events.
      * 
      * @author Holger Eichelberger
@@ -158,7 +176,7 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
      * 
      * @param now the current time
      */
-    private void checkSend(long now) {
+    protected void checkSend(long now) {
         if (sendInterval > 0 && now - lastSend.get() > sendInterval) {
             if (includeItems) {
                 Map<IObservable, Double> data = new HashMap<IObservable, Double>();
