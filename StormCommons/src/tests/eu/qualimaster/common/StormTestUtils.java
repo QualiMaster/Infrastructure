@@ -31,14 +31,37 @@ import com.esotericsoftware.kryo.Kryo;
 public class StormTestUtils {
 
     /**
-     * Creates a Storm-like Kryo instance.
+     * Creates a Storm-like configuration for Kryo.
+     * 
+     * @return the configuration instance
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static Map createStormKryoConf() {
+        Map conf = new HashMap();
+        conf.put(Config.TOPOLOGY_FALL_BACK_ON_JAVA_SERIALIZATION, Boolean.TRUE);
+        conf.put(Config.TOPOLOGY_SKIP_MISSING_KRYO_REGISTRATIONS, Boolean.FALSE);
+        conf.put(Config.TOPOLOGY_KRYO_FACTORY, "backtype.storm.serialization.DefaultKryoFactory");
+        conf.put(Config.TOPOLOGY_TUPLE_SERIALIZER, "backtype.storm.serialization.types.ListDelegateSerializer");
+        return conf;
+    }
+
+    /**
+     * Creates a Storm-like Kryo instance. 
      * 
      * @return the Kryo instance
      */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     public static Kryo createStormKryo() {
-        Map conf = new HashMap();
-        conf.put(Config.TOPOLOGY_FALL_BACK_ON_JAVA_SERIALIZATION, Boolean.TRUE);
+        return createStormKryo(createStormKryoConf());
+    }
+    
+    /**
+     * Creates a Storm-like Kryo instance.
+     *
+     * @param conf the configuration map to create the kryo instance for
+     * @return the Kryo instance
+     */
+    @SuppressWarnings({ "rawtypes" })
+    public static Kryo createStormKryo(Map conf) {
         DefaultKryoFactory factory = new DefaultKryoFactory();
         Kryo k = factory.getKryo(conf);
         k.register(byte[].class);

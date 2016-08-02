@@ -3,47 +3,36 @@ package eu.qualimaster.base.algorithm;
 import java.util.List;
 
 /**
- * Implementation of the switch tuple.
+ * Implementation of the switch tuple {@link ISwitchTuple}.
  * @author qin
  *
  */
-public class SwitchTuple implements ISwitchTuple {
-    private int id;
+public class SwitchTuple extends GeneralTuple implements ISwitchTuple {
+    private long id;
     private List<Object> values;
-    
     /**
      * Creates a switch tuple with id and values.
      * @param id the tuple id
      * @param values the tuple values
      */
-    public SwitchTuple(int id, List<Object> values) {
+    public SwitchTuple(long id, List<Object> values) {
+        super(values);
         this.id = id;
-        this.values = values;
     }
     
     @Override
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
     @Override
-    public int getId() {
+    public long getId() {
         return id;
     }
-
+    
     @Override
-    public void setValues(List<Object> values) {
-        this.values = values;
-    }
-
-    @Override
-    public List<Object> getValues() {
-        return values;
-    }
-
-    @Override
-    public Object getValue(int index) {
-        return values.get(index);
+    public boolean isGeneralTuple() {
+        return false;
     }
 
 }

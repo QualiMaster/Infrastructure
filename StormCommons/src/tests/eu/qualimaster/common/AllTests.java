@@ -26,7 +26,7 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({tests.eu.qualimaster.common.signal.AllTests.class, 
     RecordingTopologyBuilderTest.class, OutputItemsTest.class, HardwareConnectionTest.class, 
-    AlgorithmUtilsTest.class })
+    AlgorithmUtilsTest.class, KryoTupleSerializerTest.class })
 public class AllTests {
 
 }
