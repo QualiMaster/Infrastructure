@@ -192,7 +192,7 @@ public class SourceMonitor extends Monitor {
     @Override
     public void notifyMonitoringChange(MonitoringChangeSignal signal) {
         super.notifyMonitoringChange(signal);
-        Integer tmp = signal.getFrequency(MonitoringFrequency.PIPELINE_NODE);
+        Integer tmp = signal.getFrequency(MonitoringFrequency.SOURCE_AGGREGATION);
         if (null != tmp) {
             aggregationInterval = tmp; // we just ignore the EventManager.setTimerPeriod here
         }
