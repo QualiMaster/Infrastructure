@@ -74,12 +74,10 @@ public abstract class AbstractHyTopology extends AbstractTopology {
             assertGreaterEquals(1, source, TimeBehavior.THROUGHPUT_ITEMS);
             //assertGreaterEquals(1, mapper, TimeBehavior.THROUGHPUT_ITEMS);
             
-            double itemsPerS = processorThroughput / Math.max(0, pipRunTime - 500) * 1000; // items/s, 
             // throughput/latency reporting delay
-            assertValue(itemsPerS, processor, Scalability.ITEMS, 0.8); // small number -> higher tolerance
-            //assertValue(itemsPerS, algorithm, Scalability.ITEMS, 0.5);
-            assertValue(itemsPerS, family, Scalability.ITEMS, 0.8);
-            assertValue(itemsPerS, pip, Scalability.ITEMS, 0.8);
+            assertGreaterEquals(0.5, processor, Scalability.ITEMS);
+            assertGreaterEquals(0.5, family, Scalability.ITEMS);
+            assertGreaterEquals(0.5, pip, Scalability.ITEMS);
         }
     }
     

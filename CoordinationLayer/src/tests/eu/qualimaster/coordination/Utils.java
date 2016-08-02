@@ -38,7 +38,9 @@ public class Utils {
         
         @Override
         public void dispose() {
-            tmp.delete();
+            ArtifactRegistry.undefineArtifact(MODEL_ARTIFACTSPEC);
+            boolean success = tmp.delete();
+            System.out.println("deleting " + tmp + " " + success);
         }
         
     };

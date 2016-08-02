@@ -2,9 +2,11 @@ package tests.eu.qualimaster.storm;
 
 import java.util.Map;
 
+import eu.qualimaster.common.signal.AggregationKeyProvider;
 import eu.qualimaster.common.signal.BaseSignalSourceSpout;
 import eu.qualimaster.common.signal.ParameterChangeSignal;
 import eu.qualimaster.common.signal.ShutdownSignal;
+import eu.qualimaster.common.signal.SourceMonitor;
 import eu.qualimaster.dataManagement.DataManager;
 import eu.qualimaster.dataManagement.strategies.NoStorageStrategyDescriptor;
 import eu.qualimaster.events.EventManager;
@@ -118,6 +120,18 @@ public class Source<S extends ISrc> extends BaseSignalSourceSpout {
             source.disconnect(); 
         }
         super.close();
+    }
+    
+    @Override
+    public void configure(SourceMonitor monitor) {
+        monitor.setAggregationInterval(1000);
+        monitor.registerAggregationKeyProvider(new AggregationKeyProvider<Integer>(Integer.class) {
+
+            @Override
+            public String getAggregationKey(Integer tuple) {
+                return String.valueOf(tuple);
+            }
+        });
     }
     
 }

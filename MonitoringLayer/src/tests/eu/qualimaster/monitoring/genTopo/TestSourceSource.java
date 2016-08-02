@@ -23,7 +23,9 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
+import eu.qualimaster.common.signal.AggregationKeyProvider;
 import eu.qualimaster.common.signal.BaseSignalSourceSpout;
+import eu.qualimaster.common.signal.SourceMonitor;
 
 /**
  * Implements the test source.
@@ -73,6 +75,18 @@ public class TestSourceSource extends BaseSignalSourceSpout {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declare(new Fields("number"));
+    }
+    
+    @Override
+    public void configure(SourceMonitor monitor) {
+        monitor.setAggregationInterval(1000);
+        monitor.registerAggregationKeyProvider(new AggregationKeyProvider<Integer>(Integer.class) {
+
+            @Override
+            public String getAggregationKey(Integer tuple) {
+                return String.valueOf(tuple);
+            }
+        });
     }
 
 }
