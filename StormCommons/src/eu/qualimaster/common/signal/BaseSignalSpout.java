@@ -34,6 +34,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     private transient ParameterChangeEventHandler parameterEventHandler;
     private transient ShutdownEventHandler shutdownEventHandler;
     private transient Monitor monitor;
+    private transient PortManager portManager;
     
     /**
      * Creates a signal spout.
@@ -80,6 +81,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
                 parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, namespace, name);
                 shutdownEventHandler = ShutdownEventHandler.createAndRegister(this, namespace, name);
             }
+            portManager = new PortManager(signalConnection.getClient());
         } catch (Exception e) {
             LOGGER.error("Error SignalConnection:" + e.getMessage(), e);
         }
@@ -99,6 +101,15 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     protected Monitor createMonitor(String namespace, String name, boolean includeItems, TopologyContext context, 
         boolean sendRegular) {
         return new Monitor(namespace, name, true, context, sendRegular);
+    }
+    
+    /**
+     * Returns the port manager.
+     * 
+     * @return the port manager
+     */
+    protected PortManager getPortManager() {
+        return portManager;
     }
     
     /**
@@ -200,6 +211,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     public final void notifyShutdown(ShutdownSignal signal) {
         prepareShutdown(signal);
         monitor.shutdown();
+        portManager.close();
         signalConnection.close();
         if (Configuration.getPipelineSignalsQmEvents()) {
             EventManager.unregister(parameterEventHandler);
