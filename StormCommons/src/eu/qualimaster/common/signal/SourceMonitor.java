@@ -44,47 +44,6 @@ public class SourceMonitor extends Monitor {
     private long aggregationInterval; 
 
     /**
-     * An aggregation key provider plugin.
-     * 
-     * @param <T> the tuple type
-     * @author Holger Eichelberger
-     */
-    public abstract class AggregationKeyProvider<T> {
-
-        private Class<T> cls;
-        
-        /**
-         * Creates an aggregation key provider.
-         * 
-         * @param cls the tuple class
-         */
-        protected AggregationKeyProvider(Class<T> cls) {
-            if (null == cls) {
-                throw new IllegalArgumentException("cls must not be null");
-            }
-            this.cls = cls;
-        }
-        
-        /**
-         * Returns the aggregation key for <code>tuple</code>.
-         * 
-         * @param tuple the tuple
-         * @return the aggregation key
-         */
-        public abstract String getAggregationKey(T tuple);
-        
-        /**
-         * Returns the aggregation key for <code>tuple</code>.
-         * 
-         * @param tuple the tuple
-         * @return the aggregation key
-         */
-        private String getKey(Object tuple) {
-            return getAggregationKey(cls.cast(tuple));
-        }
-    }
-    
-    /**
      * Creates a monitor and sends once the executors resource usage event.
      * 
      * @param namespace the namespace (pipeline name)
