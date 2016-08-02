@@ -1,6 +1,7 @@
 package eu.qualimaster.monitoring.volumePrediction;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -129,6 +130,28 @@ public class PredictionModel {
 		else return getNeighborValue(time);
 	}
 	
+	/**
+	 * Appends the input volume (assumed to be the new observed one) to the recent volumes, which are used to make predictions.
+	 * If the size of the recent volumes exceeds the maximum one, the oldest volume is removed to make room for the new one.
+	 * 
+	 * @param time The timestamp when the volume was observed.
+	 * @param observation The observed volume.
+	 */
+	public void updateRecentVolumes(String time, Long observation)
+	{
+		try
+		{
+			// Create the instance (according to the structure of the recent volumes) and add it to the recent volumes
+			Instance instance = dataToInstance(time, observation, this.recentVolumes);
+			if(this.recentVolumes.size() > NUM_RECENT_VOLUMES) this.recentVolumes.remove(0);
+			this.recentVolumes.add(instance);
+		}
+		catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	private void trainModels(String dataPath)
 	{
 		HashMap<String,Long> trainingData = readDataFromPath(dataPath, this.source);
@@ -201,10 +224,7 @@ public class PredictionModel {
 			// add the instances
 			for(String key : sortedData.keySet())
 			{
-				Instance instance = new DenseInstance(dataset.get(0).numAttributes());
-				instance.setValue(dataset.attribute(0), dataset.attribute(0).parseDate(key));
-				instance.setValue(dataset.attribute(1), sortedData.get(key));
-				dataset.add(instance);
+				dataset.add(dataToInstance(key, sortedData.get(key), dataset));
 			}
 			
 			return dataset;
@@ -215,7 +235,16 @@ public class PredictionModel {
 		}
 	}
 	
-	public HashMap<String,Double> computeAverageVolumes(HashMap<String,Long> map)
+	private Instance dataToInstance(String time, Long value, Instances dataset) throws ParseException
+	{
+		Instance instance = new DenseInstance(dataset.get(0).numAttributes());
+		instance.setValue(dataset.attribute(0), dataset.attribute(0).parseDate(time));
+		instance.setValue(dataset.attribute(1), value);
+		
+		return instance;
+	}
+	
+	private HashMap<String,Double> computeAverageVolumes(HashMap<String,Long> map)
 	{
 		HashMap<String,Double> outputMap = new HashMap<String, Double>();
 		HashMap<String, ArrayList<Long>> mapByTime = new HashMap<String, ArrayList<Long>>();
