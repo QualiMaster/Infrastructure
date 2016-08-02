@@ -42,6 +42,11 @@ public enum MonitoringFrequency {
      * The pipeline node (processing) monitoring frequency.
      */
     PIPELINE_NODE,
+
+    /**
+     * The pipeline source volume aggregation monitoring frequency.
+     */
+    SOURCE_AGGREGATION,
     
     /**
      * The pipeline resource monitoring frequency.
