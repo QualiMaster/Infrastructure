@@ -30,7 +30,7 @@ public abstract class AggregationKeyProvider<T> {
      * 
      * @param cls the tuple class
      */
-    protected AggregationKeyProvider(Class<T> cls) {
+    public AggregationKeyProvider(Class<T> cls) {
         if (null == cls) {
             throw new IllegalArgumentException("cls must not be null");
         }
