@@ -17,6 +17,8 @@ package eu.qualimaster.monitoring.events;
 
 import java.util.Map;
 
+import eu.qualimaster.common.QMInternal;
+
 /**
  * A specialized event to be sent only by sources informing the infrastructure about the aggregated occurrences of
  * source-specific keys.
@@ -24,6 +26,7 @@ import java.util.Map;
  * @author Holger Eichelberger
  * @author Andrea Ceroni
  */
+@QMInternal
 public class SourceVolumeMonitoringEvent extends AbstractPipelineElementMonitoringEvent {
 
     private static final long serialVersionUID = 1510429874478741585L;
