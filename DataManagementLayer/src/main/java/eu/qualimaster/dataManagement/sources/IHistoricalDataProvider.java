@@ -17,6 +17,7 @@ package eu.qualimaster.dataManagement.sources;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * Interface of a forward object providing access to historical data of a certain {@link ISource data source}.
@@ -24,7 +25,7 @@ import java.io.IOException;
  * 
  * @author Holger Eichelberger
  */
-public interface IHistoricalDataProvider {
+public interface IHistoricalDataProvider extends Serializable {
 
     /**
      * Obtains historical data.
