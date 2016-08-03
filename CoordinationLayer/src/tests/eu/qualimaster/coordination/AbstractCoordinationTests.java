@@ -39,6 +39,7 @@ import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineStatusTracker;
 import net.ssehub.easy.instantiation.core.model.buildlangModel.Script;
+import tests.eu.qualimaster.common.TestHelper;
 import tests.eu.qualimaster.storm.Naming;
 
 /**
@@ -331,7 +332,7 @@ public class AbstractCoordinationTests {
      * test cases if required.
      */
     protected void configure() {
-        Utils.configure(2000); // as used by local cluster
+        Utils.configure(TestHelper.LOCAL_ZOOKEEPER_PORT); // as used by local cluster
     }
     
     /**

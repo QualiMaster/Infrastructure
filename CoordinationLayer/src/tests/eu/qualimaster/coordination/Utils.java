@@ -3,12 +3,12 @@ package tests.eu.qualimaster.coordination;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
 import eu.qualimaster.coordination.ArtifactRegistry;
 import eu.qualimaster.coordination.CoordinationConfiguration;
+import tests.eu.qualimaster.common.TestHelper;
 
 /**
  * Test utilities.
@@ -135,27 +135,7 @@ public class Utils {
      * @return <code>contents</code> or a new instance created if <code>contents</code> is <b>null</b>
      */
     public static Set<File> trackTemp(Set<File> contents, boolean delete) {
-        if (null == contents) {
-            contents = new HashSet<File>();
-        }
-        String tmp = System.getProperty("java.io.tmpdir", null);
-        if (null != tmp) {
-            File tmpDir = new File(tmp);
-            File[] files = tmpDir.listFiles();
-            if (null != files) {
-                for (int f = 0; f < files.length; f++) {
-                    File file = files[f];
-                    if (delete) {
-                        if (!contents.contains(file)) {
-                            file.delete();
-                        }
-                    } else {
-                        contents.add(file);
-                    }
-                }
-            }
-        }
-        return contents;
+        return TestHelper.trackTemp(contents, delete);
     }
     
 }

@@ -143,6 +143,11 @@ public class PortManager {
             }
             return result;
         }
+        
+        @Override
+        public String toString() {
+            return host + "@" + port + " " + taskId + " " + assignmentId;
+        }
 
     }
     
@@ -154,14 +159,48 @@ public class PortManager {
     public static class PortRange {
         private int lowPort;
         private int highPort;
+
+        /**
+         * Creates a port range from a string in format "<num>-<num>".
+         * 
+         * @param range the range
+         */
+        public PortRange(String range) {
+            if (null == range || range.isEmpty()) {
+                throw new IllegalArgumentException("range must not be null or empty");
+            }
+            String[] parts = range.replace(" ", "").split("-");
+            if (null != parts) {
+                if (1 == parts.length) {
+                    int p = Integer.parseInt(parts[0]);
+                    setPorts(p, p);
+                } else if (2 == parts.length) {
+                    setPorts(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+                } else {
+                    throw new IllegalArgumentException("illegal range format: " + range);    
+                }
+            } else {
+                throw new IllegalArgumentException("illegal range format: " + range);
+            }
+        }
         
         /**
-         * Creates a port range.
+         * Creates a port range. If not given in ascending order, ports will be re-ordered.
          * 
          * @param lowPort the low port
          * @param highPort the high port
          */
         public PortRange(int lowPort, int highPort) {
+            setPorts(lowPort, highPort);
+        }
+        
+        /**
+         * Sets the ports range. If not given in ascending order, ports will be re-ordered.
+         * 
+         * @param lowPort the low port
+         * @param highPort the high port
+         */        
+        private void setPorts(int lowPort, int highPort) {
             this.lowPort = Math.min(lowPort, highPort);
             this.highPort = Math.max(lowPort, highPort);
         }
@@ -238,7 +277,12 @@ public class PortManager {
         public void clear() {
             assignments.clear();
         }
-        
+
+        @Override
+        public String toString() {
+            return assignments.toString();
+        }
+
     }
 
     /**
@@ -349,6 +393,11 @@ public class PortManager {
             }
             return done;
         }
+        
+        @Override
+        public String toString() {
+            return assignments.toString();
+        }
 
     }
 
@@ -380,10 +429,17 @@ public class PortManager {
      */
     public void clearPortAssignment(String pipeline, String element, PortAssignment assignment) throws SignalException {
         String path = getNodePath(pipeline, element, assignment.getTaskId());
-        PortsTable table = loadSafe(path, PortsTable.class);
-        if (null != table) {
-            if (table.clearPortAssignment(assignment)) {
-                store(path, table, null, false);
+        PortsTable portsTable = loadSafe(path, PortsTable.class);
+        if (null != portsTable) {
+            if (portsTable.clearPortAssignment(assignment)) {
+                String hostPath = getHostPath(assignment.getHost());
+                HostTable hostTable = loadSafe(hostPath, HostTable.class);
+                if (null != hostTable) {
+                    hostTable.removeAssignment(assignment.getPort());
+                }
+                CuratorTransaction transaction = client.inTransaction();
+                store(path, portsTable, transaction, false);
+                store(hostPath, hostTable, transaction, true);
             }
         }
     }
@@ -397,7 +453,7 @@ public class PortManager {
      * @return the path
      */
     private String getNodePath(String pipeline, String element, int taskId) {
-        return NODES_PREFIX + pipeline + PATH_SEPARATOR + element + PATH_SEPARATOR; // TODO decide about taskId
+        return NODES_PREFIX + pipeline + PATH_SEPARATOR + element; // TODO decide about taskId
     }
 
     /**
@@ -407,7 +463,7 @@ public class PortManager {
      * @return the path
      */
     private String getHostPath(String host) {
-        return HOSTS_PREFIX + host + PATH_SEPARATOR;
+        return HOSTS_PREFIX + host;
     }
 
     /**
@@ -422,7 +478,7 @@ public class PortManager {
      */
     public PortAssignment getPortAssignment(String pipeline, String element, int taskId, String assignmentId) 
         throws SignalException {
-        PortAssignment result = new PortAssignment("localhost", 8999, 0, assignmentId); // TODO remove fallback
+        PortAssignment result = null;
         String path = getNodePath(pipeline, element, taskId);
         PortsTable table = loadSafe(path, PortsTable.class);
         if (null != table) {
@@ -447,14 +503,15 @@ public class PortManager {
      * @throws SignalException in case of communication problems
      */
     public void clearPortAssignments(String pipeline) throws SignalException {
-        String pipPath = PORTS + pipeline;
+        String pipPath = NODES_PREFIX + pipeline;
         try {
             if (client.checkExists().forPath(pipPath) != null) { 
                 CuratorTransaction transaction = client.inTransaction();
                 List<String> children = client.getChildren().forPath(pipPath);
                 if (null != children) {
                     for (String child : children) {
-                        PortsTable table = loadSafe(child, PortsTable.class);
+                        String childPath = pipPath + PATH_SEPARATOR + child;
+                        PortsTable table = loadSafe(childPath, PortsTable.class);
                         delete(child);
                         Map<String, List<PortAssignment>> assng = table.assigmentsByHost();
                         for (Map.Entry<String, List<PortAssignment>> ent : assng.entrySet()) {
@@ -467,6 +524,7 @@ public class PortManager {
                             }
                             store(hostPath, hosts, transaction, false);
                         }
+                        delete(childPath, transaction, false);
                     }
                     delete(pipPath, transaction, true);
                 }
@@ -513,6 +571,7 @@ public class PortManager {
             this.element = element;
             this.taskId = taskId;
             this.host = host;
+            this.assignmentId = assignmentId;
         }
 
         /**
@@ -577,6 +636,8 @@ public class PortManager {
         String nodePath = getNodePath(request.getPipeline(), request.getElement(), request.getTaskId());
         String hostPath = getHostPath(request.getHost());
         try {
+            assertExists(nodePath, null, false);
+            assertExists(hostPath, null, false);
             CuratorTransaction transaction = client.inTransaction();
             PortsTable portsTable = loadWithInit(nodePath, PortsTable.class, transaction, false);
             HostTable hostTable = loadWithInit(hostPath, HostTable.class, transaction, false);
@@ -594,7 +655,7 @@ public class PortManager {
             store(nodePath, portsTable, transaction, false);
             store(hostPath, hostTable, transaction, true);
         } catch (Exception e) {
-            throw new SignalException(e.getMessage());
+            throw new SignalException(e);
         }
         return result;
     }
@@ -615,20 +676,51 @@ public class PortManager {
     private <T> T loadWithInit(String path, Class<T> cls, CuratorTransaction transaction, boolean commit) 
         throws SignalException {
         try {
-            T result;
-            if (client.checkExists().forPath(path) == null) {
-                if (null != transaction) {
-                    checkCommit(transaction.create().forPath(path).and(), commit); // unsure whether transitive
-                } else {
-                    client.create().creatingParentsIfNeeded().forPath(path);
-                }
+            T result = load(path, cls);
+            if (null == result) {
                 result = cls.newInstance();
-            } else {
-                result = load(path, cls);
             }
             return result;
         } catch (Exception e) {
-            throw new SignalException(e.getMessage());
+            throw new SignalException(e);
+        }
+    }
+    
+    /**
+     * Asserts the existence of <code>path</code>.
+     * 
+     * @param path the path to check/create
+     * @param transaction use the transaction and add to it, may be <b>null</b> for no transaction
+     * @param commit commit the transaction, ignored if no transaction 
+     * @throws SignalException in case of I/O problems or if the object in <code>path</code>
+     */
+    private void assertExists(String path, CuratorTransaction transaction, boolean commit) throws SignalException {
+        try {
+            if (client.checkExists().forPath(path) == null) {
+                if (null != transaction) {
+                    int pos = path.indexOf(PATH_SEPARATOR);
+                    CuratorTransactionFinal fin = null;
+                    while (pos > 0) {
+                        int next = path.indexOf(PATH_SEPARATOR, pos + 1);
+                        String sub = path.substring(0, pos);
+                        if (null == client.checkExists().forPath(sub)) {
+                            if (null == fin) {
+                                fin = transaction.create().forPath(sub, null).and();    
+                            } else {
+                                fin = fin.create().forPath(sub, null).and();
+                            }
+                            if (next < 0) {
+                                checkCommit(fin, commit);
+                            }
+                        }
+                        pos = next;
+                    }
+                } else {
+                    client.create().creatingParentsIfNeeded().forPath(path, null);
+                }
+            }
+        } catch (Exception e) {
+            throw new SignalException(e);
         }
     }
 
@@ -651,11 +743,10 @@ public class PortManager {
                 result = null;
             }
         } catch (Exception e) {
-            throw new SignalException(e.getMessage());
+            throw new SignalException(e);
         }
         return result;
     }
-
 
     /**
      * Loads an instance of <code>class</code> from <code>path</code> if possible. Does not check whether
@@ -670,15 +761,21 @@ public class PortManager {
      */
     private <T> T load(String path, Class<T> cls) throws SignalException {
         try {
+            T result;
             byte[] data = client.getData().forPath(path);
-            Object obj = Utils.deserialize(data);
-            if (null != obj && !(cls.isInstance(obj))) {
-                throw new SignalException("path " + path + " contains " + obj + " as data rather than a " 
-                    + cls.getName());
+            if (null != data) {
+                Object obj = Utils.deserialize(data);
+                if (null != obj && !(cls.isInstance(obj))) {
+                    throw new SignalException("path " + path + " contains " + obj + " as data rather than a " 
+                        + cls.getName());
+                }
+                result = cls.cast(obj);
+            } else {
+                result = null;
             }
-            return cls.cast(obj);
+            return result;
         } catch (Exception e) {
-            throw new SignalException(e.getMessage());
+            throw new SignalException(e);
         }
     }
     
@@ -706,13 +803,14 @@ public class PortManager {
     private void store(String path, Object obj, CuratorTransaction transaction, boolean commit) throws SignalException {
         try {
             byte[] data = Utils.serialize(obj);
+            assertExists(path, transaction, commit);
             if (null != transaction) {
                 checkCommit(transaction.setData().forPath(path, data).and(), commit);
             } else {
                 client.setData().forPath(path, data);
             }
         } catch (Exception e) {
-            throw new SignalException(e.getMessage());
+            throw new SignalException(e);
         }
     }
 
@@ -740,11 +838,11 @@ public class PortManager {
                 if (null != transaction) {
                     checkCommit(transaction.delete().forPath(path).and(), commit);
                 } else {
-                    client.delete().forPath(path);
+                    client.delete().deletingChildrenIfNeeded().forPath(path);
                 }
             }
         } catch (Exception e) {
-            throw new SignalException(e.getMessage());
+            throw new SignalException(e);
         }
     }
     
@@ -760,7 +858,7 @@ public class PortManager {
             try {
                 transaction.commit();
             } catch (Exception e) {
-                throw new SignalException(e.getMessage());
+                throw new SignalException(e);
             }
         }
     }
