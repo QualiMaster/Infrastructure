@@ -111,10 +111,6 @@ public class PortManagerTest {
         Assert.assertTrue(assng.equalsAssigmentId("id"));
     }
     
-    // test port range
-    // test port request
-    // test port assignment
-    
     /**
      * Tests the port manager.
      */

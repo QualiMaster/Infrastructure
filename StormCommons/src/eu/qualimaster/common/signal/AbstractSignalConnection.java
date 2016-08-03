@@ -61,13 +61,22 @@ public abstract class AbstractSignalConnection implements Watcher {
      */
     protected void initWatcher() throws Exception {
         if (Configuration.getPipelineSignalsCurator()) {
-            String path = "/" + name;
+            String path = getWatchedPath();
             Stat stat = client.checkExists().forPath(path);
             if (stat == null) {
                 client.create().creatingParentsIfNeeded().forPath(path);
             }
             stat = this.client.checkExists().usingWatcher(this).forPath(path);
         }
+    }
+    
+    /**
+     * Returns the watched path.
+     * 
+     * @return the watched path
+     */
+    private String getWatchedPath() {
+        return SignalMechanism.PATH_SEPARATOR + name;
     }
 
     /**
@@ -77,7 +86,7 @@ public abstract class AbstractSignalConnection implements Watcher {
      */
     public void process(WatchedEvent we) {
         if (Configuration.getPipelineSignalsCurator()) {
-            String path = "/" + name;
+            String path = getWatchedPath();
             try {
                 this.client.checkExists().usingWatcher(this).forPath(path);
             } catch (Exception ex) {

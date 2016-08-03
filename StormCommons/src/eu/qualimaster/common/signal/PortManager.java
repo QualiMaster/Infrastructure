@@ -27,6 +27,8 @@ import org.apache.storm.curator.framework.api.transaction.CuratorTransactionFina
 
 import backtype.storm.utils.Utils;
 
+import static eu.qualimaster.common.signal.SignalMechanism.PATH_SEPARATOR;
+
 /**
  * Dynamically manages the ports to be used for loose pipeline connections and switches. Assignment ids are intended
  * to separate multiple assignments for one task using a (logical) identifier)
@@ -36,8 +38,7 @@ import backtype.storm.utils.Utils;
  */
 public class PortManager {
 
-    private static final String PATH_SEPARATOR = "/";
-    private static final String PORTS = "qm" + PATH_SEPARATOR + "ports";
+    private static final String PORTS = SignalMechanism.GLOBAL_NAMESPACE + PATH_SEPARATOR + "ports";
     private static final String PORTS_PREFIX = PORTS + PATH_SEPARATOR;
     private static final String NODES = PORTS_PREFIX + "nodes";
     private static final String NODES_PREFIX = NODES + PATH_SEPARATOR;

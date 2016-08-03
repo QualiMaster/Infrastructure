@@ -40,15 +40,15 @@ public class LoadSheddingSignal extends AbstractTopologyExecutorSignal implement
     /**
      * Creates the signal.
      * 
-     * @param namespace the topology namespace
+     * @param topology the topology
      * @param executor the executor name
      * @param shedder the (identification or class) name of the shedder (disable shedding if <b>null</b> or empty)
      * @param parameter the shedder parameters
      * @param causeMsgId the message id of the causing message (may be <b>null</b> or empty if there is none)
      */
-    public LoadSheddingSignal(String namespace, String executor, String shedder, 
+    public LoadSheddingSignal(String topology, String executor, String shedder, 
         Map<String, Serializable> parameter, String causeMsgId) {
-        super(namespace, executor, causeMsgId);
+        super(topology, executor, causeMsgId);
         this.shedder = shedder;
         if (null != parameter) {
             this.parameter.putAll(parameter);

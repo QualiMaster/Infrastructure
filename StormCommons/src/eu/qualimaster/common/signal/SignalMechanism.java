@@ -37,6 +37,8 @@ import eu.qualimaster.events.EventManager;
  */
 public class SignalMechanism {
 
+    public static final String PATH_SEPARATOR = "/";
+    public static final String GLOBAL_NAMESPACE = "qm";
     private static final Map<String, CuratorFramework> FRAMEWORKS = 
         Collections.synchronizedMap(new HashMap<String, CuratorFramework>());
     private static final Map<String, String> CONNECT_INFO = 

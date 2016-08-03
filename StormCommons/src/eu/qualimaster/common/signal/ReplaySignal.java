@@ -39,14 +39,14 @@ public class ReplaySignal extends AbstractTopologyExecutorSignal {
     /**
      * Creates a replay signal.
      * 
-     * @param namespace the topology namespace
+     * @param topology the topology
      * @param executor the executor name
      * @param startReplay whether replay shall start or stop
      * @param ticket the ticket number characterizing the replay
      * @param causeMsgId the message id of the causing message (may be <b>null</b> or empty if there is none)
      */
-    public ReplaySignal(String namespace, String executor, boolean startReplay, int ticket, String causeMsgId) {
-        super(namespace, executor, causeMsgId);
+    public ReplaySignal(String topology, String executor, boolean startReplay, int ticket, String causeMsgId) {
+        super(topology, executor, causeMsgId);
         this.startReplay = startReplay;
         this.ticket = ticket;
     }

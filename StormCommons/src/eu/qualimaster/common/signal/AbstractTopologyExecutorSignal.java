@@ -35,19 +35,19 @@ public abstract class AbstractTopologyExecutorSignal extends TopologySignal {
 
     public static final String SEPARATOR = "/";
     private static final long serialVersionUID = 7262999433585164281L;
-    private String namespace;
+    private String topology;
     private String executor;
     private String causeMsgId;
 
     /**
      * Creates a topology executor signal.
      * 
-     * @param namespace the topology namespace
+     * @param topology the topology namespace
      * @param executor the executor name
      * @param causeMsgId the message id of the causing message (may be <b>null</b> or empty if there is none)
      */
-    protected AbstractTopologyExecutorSignal(String namespace, String executor, String causeMsgId) {
-        this.namespace = namespace;
+    protected AbstractTopologyExecutorSignal(String topology, String executor, String causeMsgId) {
+        this.topology = topology;
         this.executor = executor;
         this.causeMsgId = null == causeMsgId ? "" : causeMsgId;
     }
@@ -58,7 +58,16 @@ public abstract class AbstractTopologyExecutorSignal extends TopologySignal {
      * @return the namespace of the topology receiving the signal
      */
     public String getNamespace() {
-        return namespace;
+        return topology;
+    }
+    
+    /**
+     * Returns the name of the topology.
+     * 
+     * @return the name of the topology
+     */
+    public String getTopology() {
+        return topology;
     }
     
     /**
@@ -108,12 +117,12 @@ public abstract class AbstractTopologyExecutorSignal extends TopologySignal {
 
     @Override
     public String toString() {
-        return namespace + SEPARATOR + executor;
+        return topology + SEPARATOR + executor;
     }
 
     @Override
     public String getChannel() {
-        return namespace + SEPARATOR + executor;
+        return topology + SEPARATOR + executor;
     }
     
     /**
