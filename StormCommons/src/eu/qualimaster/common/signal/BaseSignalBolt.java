@@ -37,7 +37,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     private transient ShutdownEventHandler shutdownEventHandler;
     private transient Monitor monitor;
     private transient PortManager portManager;
-    
+
     /**
      * Creates a base signal Bolt with no regular event sending.
      * 
@@ -88,6 +88,9 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
         } catch (Exception e) {
             LOGGER.error("Error SignalConnection:" + e.getMessage(), e);
         }
+
+// TODO read pipeline interconn ports
+        
     }
     
     /**

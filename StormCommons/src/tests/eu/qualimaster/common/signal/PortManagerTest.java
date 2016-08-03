@@ -74,6 +74,14 @@ public class PortManagerTest {
             Assert.fail("No illegal argument exception.");
         } catch (IllegalArgumentException e) {
         }
+        
+        range = PortManager.createPortRangeQuietly("1-2");
+        Assert.assertNotNull(range);
+        Assert.assertEquals(1, range.getLowPort());
+        Assert.assertEquals(2, range.getHighPort());
+
+        range = PortManager.createPortRangeQuietly(".1-2");
+        Assert.assertNull(range);
     }
 
     /**
@@ -157,6 +165,8 @@ public class PortManagerTest {
             pa2 = mgr.getPortAssignment("pip", "element", 5, "id");
             Assert.assertEquals(pa1, pa2);
 
+            // try with default range
+            mgr = new PortManager(client, range);
             // register again - reuse port
             pa3 = assertPortAssignment(mgr, req, range, 1001);
             pa4 = mgr.getPortAssignment("pip", "element", 6, null);
@@ -196,7 +206,12 @@ public class PortManagerTest {
      */
     private PortAssignment assertPortAssignment(PortManager mgr, PortAssignmentRequest req, PortRange range, 
         int expectedPort) throws SignalException {
-        PortAssignment assng = mgr.registerPortAssignment(req, range);
+        PortAssignment assng;
+        if (null == range) {
+            assng = mgr.registerPortAssignment(req);
+        } else {
+            assng = mgr.registerPortAssignment(req, range);
+        }
         Assert.assertNotNull(assng);
         Assert.assertEquals(req.getTaskId(), assng.getTaskId());
         Assert.assertEquals(expectedPort, assng.getPort());

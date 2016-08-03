@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.LogManager;
 import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.storm.curator.framework.api.transaction.CuratorTransaction;
 import org.apache.storm.curator.framework.api.transaction.CuratorTransactionFinal;
@@ -46,6 +47,7 @@ public class PortManager {
     private static final String HOSTS_PREFIX = HOSTS + PATH_SEPARATOR;
 
     private CuratorFramework client;
+    private PortRange range;
     
     /**
      * Represents a host-port assignment.
@@ -165,6 +167,8 @@ public class PortManager {
          * Creates a port range from a string in format "<num>-<num>".
          * 
          * @param range the range
+         * @throws IllegalArgumentException if range is not given
+         * @throws NumberFormatException if the given ports are not numerical
          */
         public PortRange(String range) {
             if (null == range || range.isEmpty()) {
@@ -408,9 +412,37 @@ public class PortManager {
      * @param client the curator client connection
      */
     public PortManager(CuratorFramework client) {
-        this.client = client;
+        this(client, null);
     }
     
+    /**
+     * Creates a port manager (frontend).
+     * 
+     * @param client the curator client connection
+     * @param range the default port range (may be <b>null</b> if there is none)
+     */
+    public PortManager(CuratorFramework client, PortRange range) {
+        this.client = client;
+        this.range = range;
+    }
+
+    /**
+     * Creates a port range using logging for exceptions.
+     * 
+     * @param range the range to parse
+     * @return the port range or <b>null</b> if parsing failed
+     */
+    public static PortRange createPortRangeQuietly(String range) {
+        PortRange result;
+        try {
+            result = new PortRange(range);
+        } catch (IllegalArgumentException e) {
+            LogManager.getLogger(PortManager.class).warn("Parsing port range: " + e.getMessage());
+            result = null;
+        }
+        return result;
+    }
+
     /**
      * Cleans up all existing port assignments.
      * 
@@ -621,6 +653,19 @@ public class PortManager {
         }
         
     }
+
+    /**
+     * Registers a port assignment using the default range registered in the constructor. 
+     * This method shall only be called by the component which runs the server thread.
+     * 
+     * @param request the assignment request
+     * @return the assigned port (<b>null</b> if none was assigned)
+     * @throws SignalException in case that communication fails
+     * @throws IllegalArgumentException if no default range was given in the constructor
+     */
+    public PortAssignment registerPortAssignment(PortAssignmentRequest request) throws SignalException {
+        return registerPortAssignment(request, range);
+    }
     
     /**
      * Registers a port assignment. This method shall only be called by the component which runs the
@@ -630,9 +675,16 @@ public class PortManager {
      * @param portRange the range of valid ports
      * @return the assigned port (<b>null</b> if none was assigned)
      * @throws SignalException in case that communication fails
+     * @throws IllegalArgumentException if port range or request are <b>null</b>
      */
     public PortAssignment registerPortAssignment(PortAssignmentRequest request, PortRange portRange) 
         throws SignalException {
+        if (null == portRange) {
+            throw new IllegalArgumentException("no port range given");
+        }
+        if (null == request) {
+            throw new IllegalArgumentException("no request given");
+        }
         PortAssignment result = null;
         String nodePath = getNodePath(request.getPipeline(), request.getElement(), request.getTaskId());
         String hostPath = getHostPath(request.getHost());
