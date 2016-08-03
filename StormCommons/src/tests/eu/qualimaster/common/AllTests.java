@@ -18,6 +18,8 @@ package tests.eu.qualimaster.common;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
+import tests.eu.qualimaster.common.signal.PortManagerTest;
+
 /**
  * The tests for the storm commons component.
  * 
@@ -26,7 +28,8 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({tests.eu.qualimaster.common.signal.AllTests.class, 
     RecordingTopologyBuilderTest.class, OutputItemsTest.class, HardwareConnectionTest.class, 
-    AlgorithmUtilsTest.class, KryoTupleSerializerTest.class, TupleReceiverServerTest.class })
+    AlgorithmUtilsTest.class, KryoTupleSerializerTest.class, TupleReceiverServerTest.class, 
+    PortManagerTest.class })
 public class AllTests {
 
 }
