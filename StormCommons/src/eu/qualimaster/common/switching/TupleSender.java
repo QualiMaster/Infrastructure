@@ -56,4 +56,12 @@ public class TupleSender {
         }
     }
     
+    /**
+     * Checks whether the connection is there.
+     * @return true if connected, otherwise false
+     */
+    public boolean isConnected() {
+        return null != socket;
+    }
+    
 }
