@@ -168,7 +168,7 @@ public class PortManagerTest {
             // try with default range
             mgr = new PortManager(client, range);
             // register again - reuse port
-            pa3 = assertPortAssignment(mgr, req, range, 1001);
+            pa3 = assertPortAssignment(mgr, req, null, 1001); // use default range
             pa4 = mgr.getPortAssignment("pip", "element", 6, null);
             Assert.assertEquals(pa3, pa4);
             mgr.clearPortAssignment("pip", "element", pa3);
