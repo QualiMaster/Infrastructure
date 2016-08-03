@@ -640,6 +640,9 @@ public class Configuration {
         if (null != conf.get(Configuration.EVENT_DISABLE_LOGGING)) {
             prop.put(Configuration.EVENT_DISABLE_LOGGING, conf.get(Configuration.EVENT_DISABLE_LOGGING));
         }
+        if (null != conf.get(Configuration.PIPELINE_INTERCONN_PORTS)) {
+            prop.put(Configuration.PIPELINE_INTERCONN_PORTS, conf.get(Configuration.PIPELINE_INTERCONN_PORTS));
+        }
         if (prop.size() > 0) {
             Configuration.configure(prop, false);
         }
