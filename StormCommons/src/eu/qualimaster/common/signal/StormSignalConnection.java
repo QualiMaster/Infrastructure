@@ -20,18 +20,18 @@ import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
  */
 public class StormSignalConnection extends AbstractSignalConnection {
 
-    private String namespace;
+    private String pipeline;
     
     /**
      * Creates a storm signal connection.
      * 
      * @param name the name of this element
      * @param listener the signal listener
-     * @param namespace the namespace of this element
+     * @param pipeline the name of the pipeline 
      */
-    public StormSignalConnection(String name, SignalListener listener, String namespace) {
+    public StormSignalConnection(String name, SignalListener listener, String pipeline) {
         super(name, listener);
-        this.namespace = namespace;
+        this.pipeline = pipeline;
     }
 
     // checkstyle: stop exception type check
@@ -46,16 +46,26 @@ public class StormSignalConnection extends AbstractSignalConnection {
     public void init(Map conf) throws Exception {
         if (Configuration.getPipelineSignalsCurator()) {
             String connectString = zkHosts(conf);
-            SignalMechanism.setConnectString(namespace, connectString);
+            SignalMechanism.setConnectString(pipeline, connectString);
             int retryCount = Utils.getInt(conf.get("storm.zookeeper.retry.times"));
             int retryInterval = Utils.getInt(conf.get("storm.zookeeper.retry.interval"));
-            CuratorFramework client = CuratorFrameworkFactory.builder().namespace(namespace).
+            // use global namespace here
+            CuratorFramework client = CuratorFrameworkFactory.builder().namespace(SignalMechanism.GLOBAL_NAMESPACE).
                 connectString(connectString).retryPolicy(new RetryNTimes(retryCount, retryInterval)).build();
             super.setClient(client);
             client.start();
     
             initWatcher(); // failing
         }
+    }
+    
+    /**
+     * Returns the watched path.
+     * 
+     * @return the watched path
+     */
+    protected String getWatchedPath() {
+        return SignalMechanism.getTopologyExecutorPath(getTopology(), getElementName());
     }
     
     /**
@@ -111,16 +121,16 @@ public class StormSignalConnection extends AbstractSignalConnection {
      * @return the thrift namespace
      */
     public String getNamespace() {
-        return namespace;
+        return pipeline; // keep as "virtual" namespace for namespace state
     }
     
     /**
      * Returns the pipeline name.
      * 
-     * @return the pipeline name (currently identical with the thrift namespace)
+     * @return the pipeline name 
      */
-    public String getPipelineName() {
-        return namespace;
+    public String getTopology() {
+        return pipeline;
     }
     
     /**
@@ -129,7 +139,7 @@ public class StormSignalConnection extends AbstractSignalConnection {
      * @param algorithm the name of the new algorithm
      */
     public void sendAlgorithmChangedEvent(String algorithm) {
-        sendEvent(new AlgorithmChangedMonitoringEvent(namespace, getElementName(), algorithm));
+        sendEvent(new AlgorithmChangedMonitoringEvent(pipeline, getElementName(), algorithm));
     }
 
     

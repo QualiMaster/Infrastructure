@@ -30,6 +30,7 @@ import eu.qualimaster.common.signal.PortManager.PortAssignment;
 import eu.qualimaster.common.signal.PortManager.PortAssignmentRequest;
 import eu.qualimaster.common.signal.PortManager.PortRange;
 import eu.qualimaster.common.signal.SignalException;
+import eu.qualimaster.common.signal.SignalMechanism;
 import tests.eu.qualimaster.common.TestHelper;
 
 /**
@@ -119,10 +120,9 @@ public class PortManagerTest {
         SignalException fail = null;
         Set<File> tmpFiles = TestHelper.trackTemp(null, false);
         LocalCluster cluster = new LocalCluster();
-        final String namespace = "qm";
 
         String connectString = "localhost:" + TestHelper.LOCAL_ZOOKEEPER_PORT;
-        CuratorFramework client = CuratorFrameworkFactory.builder().namespace(namespace).
+        CuratorFramework client = CuratorFrameworkFactory.builder().namespace(SignalMechanism.GLOBAL_NAMESPACE).
             connectString(connectString).retryPolicy(new RetryNTimes(5, 100)).build();
         client.start();
 

@@ -58,7 +58,7 @@ public abstract class AbstractTopologyExecutorSignal extends TopologySignal {
      * @return the namespace of the topology receiving the signal
      */
     public String getNamespace() {
-        return topology;
+        return topology; // keep as "virtual" namespace for namespace state
     }
     
     /**

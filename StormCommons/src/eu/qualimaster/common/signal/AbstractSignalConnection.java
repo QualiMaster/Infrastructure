@@ -75,7 +75,8 @@ public abstract class AbstractSignalConnection implements Watcher {
      * 
      * @return the watched path
      */
-    private String getWatchedPath() {
+    protected String getWatchedPath() {
+        //         return SignalMechanism.getTopologyExecutorPath(getTopology(), getExecutor());
         return SignalMechanism.PATH_SEPARATOR + name;
     }
 
