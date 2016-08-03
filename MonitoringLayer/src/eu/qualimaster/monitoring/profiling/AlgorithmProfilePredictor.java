@@ -18,6 +18,9 @@ package eu.qualimaster.monitoring.profiling;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 import eu.qualimaster.monitoring.events.ParameterChangedMonitoringEvent;
+import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
+import eu.qualimaster.observables.IObservable;
+import eu.qualimaster.observables.Observables;
 
 /**
  * Interface to the prediction of algorithm quality properties.
@@ -33,7 +36,8 @@ public class AlgorithmProfilePredictor {
     }
 
      /**
-     * Notifies the predictor about changes in the lifecycle of pipelines.
+     * Notifies the predictor about changes in the lifecycle of pipelines. This happens in particular during 
+     * pipeline startup.
      *  
      * @param event the lifecycle event
      */
@@ -41,7 +45,7 @@ public class AlgorithmProfilePredictor {
     }
 
     /**
-     * Is called when an algorithm changed.
+     * Is called when an algorithm changed. This happens in particular during pipeline startup.
      * 
      * @param event the algorithm changed monitoring event
      */
@@ -57,11 +61,49 @@ public class AlgorithmProfilePredictor {
      */
     public static void notifyParameterChangedMonitoringEvent(ParameterChangedMonitoringEvent event) {
     }
+    
+    /**
+     * Called regularly to update the prediction model with the most recently monitored values.
+     * 
+     * @param pipeline the pipeline name containing <code>element</code>
+     * @param element the pipeline element name running <code>algorith,</code>
+     * @param algorithm the actual algorithm implement system part (copy)
+     */
+    public static void update(String pipeline, String element, NodeImplementationSystemPart algorithm) {
+        @SuppressWarnings("unused")
+        String algorithmName = algorithm.getName();
+        for (IObservable obs : Observables.OBSERVABLES) {
+            if (algorithm.hasValue(obs)) {
+                // TODO update Kalman
+                dummy();
+            }
+        }
+    }
+
+    /**
+     * Predict the next value for the given algorithm.
+     * 
+     * @param pipeline the pipeline name containing <code>element</code>
+     * @param element the pipeline element name running <code>algorithm</code>
+     * @param algorithm the name of the algorithm
+     * @param observable the observable to predict
+     * @return the predicted value (<code>Double.MIN_VALUE</code> in case of no prediction)
+     */
+    public static double predict(String pipeline, String element, String algorithm, IObservable observable) {
+        return 0;
+    }
+
+    /**
+     * Just for checkstyle.
+     */
+    private static void dummy() {
+    }
 
     /**
     * Called upon shutdown of the infrastructure. Clean up global resources here.
     */
     public static void stop() {
+       // free resources, store all changed matrices
     }
 
 }
