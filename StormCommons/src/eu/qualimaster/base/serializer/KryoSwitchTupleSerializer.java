@@ -26,6 +26,7 @@ public class KryoSwitchTupleSerializer implements ISwitchTupleSerializer {
      * Creates the kryo serializer for the switch tuple.
      * @param conf the storm config
      */
+    @SuppressWarnings("rawtypes")
     public KryoSwitchTupleSerializer(final Map conf) {
         this.valuesSer = new KryoValuesSerializer(conf);
         this.valuesDeser = new KryoValuesDeserializer(conf);

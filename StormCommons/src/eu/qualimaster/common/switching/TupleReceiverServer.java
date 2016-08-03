@@ -58,7 +58,6 @@ public class TupleReceiverServer implements Runnable {
      * Stops the server.
      * @throws IOException the IO exception
      */
-    @SuppressWarnings("deprecation")
     public void stop() throws IOException {
         LOGGER.info("Stopping server");
         if (cont) {

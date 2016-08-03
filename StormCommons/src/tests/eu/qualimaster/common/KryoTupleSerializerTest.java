@@ -62,6 +62,7 @@ public class KryoTupleSerializerTest {
      * @author Cui Qin
      *
      */
+    @SuppressWarnings("serial")
     public static class DataItem implements IDataItem {
         private int id;
         private String value;
@@ -118,7 +119,7 @@ public class KryoTupleSerializerTest {
     /**
      * Test.
      */
-    @SuppressWarnings({ "deprecation", "unchecked" })
+    @SuppressWarnings("rawtypes")
     @Test
     public void test() {
         //create a data item
@@ -157,7 +158,6 @@ public class KryoTupleSerializerTest {
      * @param tuple the general tuple to be serialized
      * @param serializer the general serializer
      */
-    @SuppressWarnings({ "deprecation", "unused" })
     private void assertSerialization(IDataItem expected, IGeneralTuple tuple, IGeneralTupleSerializer serializer) {
         byte[] byteSer = serializer.serialize(tuple);
         IGeneralTuple result = serializer.deserialize(byteSer);
@@ -172,7 +172,6 @@ public class KryoTupleSerializerTest {
      * @param tuple the switch tuple to be serialized
      * @param serializer the switch serializer
      */
-    @SuppressWarnings({ "deprecation", "unused" })
     private void assertSerialization(IDataItem expected, ISwitchTuple tuple, ISwitchTupleSerializer serializer) {
         byte[] byteSer = serializer.serialize(tuple);
         ISwitchTuple result = serializer.deserialize(byteSer);
