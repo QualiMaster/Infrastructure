@@ -47,6 +47,7 @@ import eu.qualimaster.monitoring.handlers.PipelineElementObservationMonitoringEv
 import eu.qualimaster.monitoring.handlers.PlatformMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.PlatformMultiMonitoringHostEventHandler;
 import eu.qualimaster.monitoring.handlers.SubTopologyMonitoringEventHandler;
+import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictor;
 import eu.qualimaster.monitoring.storm.StormMonitoringPlugin;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
@@ -421,6 +422,7 @@ public class MonitoringManager {
                     }
                 }
             }
+            AlgorithmProfilePredictor.notifyPipelineLifecycleChange(event);
             VolumePredictor.notifyPipelineLifecycleChange(event);
         }
         
@@ -567,7 +569,6 @@ public class MonitoringManager {
      * @see #registerDefaultPlugins()
      */
     public static void start(boolean registerDefaultPlugins) {
-        VolumePredictor.start();
         if (registerDefaultPlugins) {
             registerDefaultPlugins();
         }
@@ -576,6 +577,8 @@ public class MonitoringManager {
         for (IMonitoringPlugin plugin : plugins) {
             startPlugin(plugin);
         }
+        AlgorithmProfilePredictor.start();
+        VolumePredictor.start();
     }
     
     /**
@@ -738,6 +741,7 @@ public class MonitoringManager {
      */
     public static void stop() {
         VolumePredictor.stop();
+        AlgorithmProfilePredictor.stop();
         if (null != reasoningTask) {
             reasoningTask.cancel();
         }
