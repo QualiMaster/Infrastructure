@@ -245,26 +245,16 @@ return running;
 	}
 
 	/**
-	 * A handler for upcoming data sources. Transports the historical data providers if available.
+	 * Is called when the monitoring manager receives a {@link SourceVolumeMonitoringEvent}.
+	 * Although a full event bus handler would also do the job, this shall be less resource consumptive as 
+	 * the event is anyway received in the Monitoring Layer.
 	 * 
-	 * @author  Andrea Ceroni
+	 * @param event the event
 	 */
-	private static class SourceVolumeMonitoringEventHandler extends EventHandler<SourceVolumeMonitoringEvent> {
-
-	    /**
-	     * Creates an instance.
-	     */
-	    protected SourceVolumeMonitoringEventHandler() {
-	        super(SourceVolumeMonitoringEvent.class);
-	    }
-
-	    @Override
-	    protected void handle(SourceVolumeMonitoringEvent event) {
-	        // TODO called when aggregated source volume information is available. The frequency is by default 60000ms
-	        // but can be defined in the infrastructure configuration via QM-IConf. May be delayed if the source does 
-	        // not emit data. No data is aggregated in the source if the getAggregationKey(.) method returns null.
-	    }
-	            
+	public static void notifySourceVolumeMonitoringEvent(SourceVolumeMonitoringEvent event) {
+	    // TODO called when aggregated source volume information is available. The frequency is by default 60000ms
+	    // but can be defined in the infrastructure configuration via QM-IConf. May be delayed if the source does 
+	    // not emit data. No data is aggregated in the source if the getAggregationKey(.) method returns null.
 	}
 	    
 	/**
@@ -272,7 +262,6 @@ return running;
 	*/
 	public static void start() {
 	    EventManager.register(new HistoricalDataProviderRegistrationEventHandler());
-	    EventManager.register(new SourceVolumeMonitoringEventHandler());
 	}
 
 	/**

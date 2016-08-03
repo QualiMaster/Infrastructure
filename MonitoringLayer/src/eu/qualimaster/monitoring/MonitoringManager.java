@@ -42,10 +42,12 @@ import eu.qualimaster.monitoring.events.MonitoringEvent;
 import eu.qualimaster.monitoring.handlers.AlgorithmChangedMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.AlgorithmMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.CloudResourceMonitoringEventHandler;
+import eu.qualimaster.monitoring.handlers.ParameterChangedMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.PipelineElementMultiObservationMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.PipelineElementObservationMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.PlatformMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.PlatformMultiMonitoringHostEventHandler;
+import eu.qualimaster.monitoring.handlers.SourceVolumeMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.SubTopologyMonitoringEventHandler;
 import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictor;
 import eu.qualimaster.monitoring.storm.StormMonitoringPlugin;
@@ -527,6 +529,8 @@ public class MonitoringManager {
         register(PlatformMultiMonitoringHostEventHandler.INSTANCE);
         register(SubTopologyMonitoringEventHandler.INSTANCE);
         register(CloudResourceMonitoringEventHandler.INSTANCE);
+        register(ParameterChangedMonitoringEventHandler.INSTANCE);
+        register(SourceVolumeMonitoringEventHandler.INSTANCE);
         
         EventManager.register(new TopMonitoringEventHandler());
         EventManager.register(new PipelineLifecycleEventEventHandler());

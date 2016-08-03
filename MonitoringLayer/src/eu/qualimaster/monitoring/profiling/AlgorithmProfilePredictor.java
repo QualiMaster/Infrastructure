@@ -16,6 +16,8 @@
 package eu.qualimaster.monitoring.profiling;
 
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
+import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
+import eu.qualimaster.monitoring.events.ParameterChangedMonitoringEvent;
 
 /**
  * Interface to the prediction of algorithm quality properties.
@@ -38,9 +40,27 @@ public class AlgorithmProfilePredictor {
     public static void notifyPipelineLifecycleChange(PipelineLifecycleEvent event) {
     }
 
-     /**
-     * Called upon shutdown of the infrastructure. Clean up global resources here.
+    /**
+     * Is called when an algorithm changed.
+     * 
+     * @param event the algorithm changed monitoring event
      */
+    public static void notifyAlgorithmChanged(AlgorithmChangedMonitoringEvent event) {
+    }
+
+    /**
+     * Is called when the monitoring manager receives a {@link ParameterChangedMonitoringEvent}.
+     * Although a full event bus handler would also do the job, this shall be less resource consumptive as 
+     * the event is anyway received in the Monitoring Layer.
+     * 
+     * @param event the event
+     */
+    public static void notifyParameterChangedMonitoringEvent(ParameterChangedMonitoringEvent event) {
+    }
+
+    /**
+    * Called upon shutdown of the infrastructure. Clean up global resources here.
+    */
     public static void stop() {
     }
 
