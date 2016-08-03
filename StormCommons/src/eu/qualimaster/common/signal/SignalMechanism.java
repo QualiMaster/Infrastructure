@@ -37,6 +37,10 @@ import eu.qualimaster.events.EventManager;
  */
 public class SignalMechanism {
 
+    public static final String PATH_SEPARATOR = "/";
+    public static final String GLOBAL_NAMESPACE = "qm";
+    public static final String PIPELINES_PREFIX = "pipelines" + PATH_SEPARATOR;
+    
     private static final Map<String, CuratorFramework> FRAMEWORKS = 
         Collections.synchronizedMap(new HashMap<String, CuratorFramework>());
     private static final Map<String, String> CONNECT_INFO = 
@@ -68,6 +72,15 @@ public class SignalMechanism {
          */
         private NamespaceState getState() {
             return state;
+        }
+        
+        /**
+         * Returns the name of the namespace.
+         * 
+         * @return the name of the namespace
+         */
+        private String getName() {
+            return GLOBAL_NAMESPACE; // map back from virtual to global namespace
         }
         
         /**
@@ -266,13 +279,14 @@ public class SignalMechanism {
      * Sends a signal to the given topology / namespace / executor.
      * 
      * @param framework the framework to send with
+     * @param topology the topology name
      * @param executor the executor to send to
      * @param payload the signal payload to send
      * @throws SignalException in case that sending fails
      */
-    static void sendSignal(CuratorFramework framework, String executor, String payload) 
+    static void sendSignal(CuratorFramework framework, String topology, String executor, String payload) 
         throws SignalException {
-        sendSignal(framework, executor, payload.getBytes());
+        sendSignal(framework, topology, executor, payload.getBytes());
     }
     
     // checkstyle: stop exception type check
@@ -281,15 +295,16 @@ public class SignalMechanism {
      * Sends a signal to the given topology / namespace / executor.
      * 
      * @param framework the framework to send with
+     * @param topology the topology name
      * @param executor the executor to send to
      * @param payload the signal payload to send
      * @throws SignalException in case that sending fails
      */
-    static void sendSignal(CuratorFramework framework, String executor, byte[] payload) 
+    static void sendSignal(CuratorFramework framework, String topology, String executor, byte[] payload) 
         throws SignalException {
         try {
             String namespace = framework.getNamespace();
-            String path = executor;
+            String path = getTopologyExecutorPath(topology, executor);
             org.apache.storm.zookeeper.data.Stat stat = framework.checkExists().forPath(path);
             if (stat == null) {
                 framework.create().creatingParentsIfNeeded().forPath(path);
@@ -298,9 +313,9 @@ public class SignalMechanism {
             }
             getLogger().info("path " + stat);
             if (stat == null) {
-                throw new Exception("component does not exist " + namespace + "/" + executor);
+                throw new Exception("component does not exist " + namespace + ":" + path);
             }
-            getLogger().info(System.currentTimeMillis() + "sending " + payload + " to " + namespace + "/" + executor);
+            getLogger().info(System.currentTimeMillis() + " sending " + payload + " to " + namespace + ":" + path);
             framework.setData().forPath(path, payload);
         } catch (Exception e) {
             getLogger().error(e.getMessage(), e);
@@ -309,6 +324,17 @@ public class SignalMechanism {
     }
     
     // checkstyle: resume exception type check
+    
+    /**
+     * Returns the zookeeper path to a topology executor.
+     * 
+     * @param topology the topology name
+     * @param executor the executor name
+     * @return the path
+     */
+    public static String getTopologyExecutorPath(String topology, String executor) {
+        return PIPELINES_PREFIX + topology + PATH_SEPARATOR + executor;
+    }
     
     /**
      * Returns the logger for this class.
@@ -329,12 +355,11 @@ public class SignalMechanism {
      * @throws SignalException in case that obtaining the mechanism fails or that sending fails
      */
     static void sendSignal(CuratorFramework mechanism, AbstractTopologyExecutorSignal signal) throws SignalException {
-        String namespace = signal.getNamespace();
-        Namespace space = obtainNamespace(namespace);
+        Namespace space = obtainNamespace(signal.getNamespace());
         if (Configuration.getPipelineSignalsCurator()) {
             if (null == mechanism) {
                 try {
-                    mechanism = obtainFramework(namespace);
+                    mechanism = obtainFramework(space.getName());
                 } catch (IOException e) {
                     throw new SignalException(e);
                 }
@@ -344,12 +369,13 @@ public class SignalMechanism {
 
                     @Override
                     protected void send() throws SignalException {
-                        sendSignal(getMechanism(), getSignal().getExecutor(), getSignal().createPayload());
+                        AbstractTopologyExecutorSignal signal = getSignal();
+                        sendSignal(getMechanism(), signal.getTopology(), signal.getExecutor(), signal.createPayload());
                     }
                     
                 });
             } else {
-                sendSignal(mechanism, signal.getExecutor(), signal.createPayload());
+                sendSignal(mechanism, signal.getTopology(), signal.getExecutor(), signal.createPayload());
             }
         } else {
             if (NamespaceState.DISABLE == space.getState()) {
@@ -389,6 +415,7 @@ public class SignalMechanism {
          * state will implicitly be {@link #DISABLE}.
          */
         CLEAR
+        
     }
     
     /**

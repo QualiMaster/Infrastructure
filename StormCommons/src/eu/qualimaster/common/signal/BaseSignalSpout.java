@@ -27,7 +27,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
 
     private static final Logger LOGGER = Logger.getLogger(BaseSignalSpout.class);
     private String name;
-    private String namespace;
+    private String pipeline;
     private boolean sendRegular;
     private LoadShedder<?> shedder = NoShedder.INSTANCE;
     private transient StormSignalConnection signalConnection;
@@ -40,23 +40,23 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      * Creates a signal spout.
      * 
      * @param name the name of the spout
-     * @param namespace the namespace
+     * @param pipeline the name of the containing pipeline
      */
-    public BaseSignalSpout(String name, String namespace) {
-        this(name, namespace, false);
+    public BaseSignalSpout(String name, String pipeline) {
+        this(name, pipeline, false);
     }
 
     /**
      * Creates a signal spout.
      * 
      * @param name the name of the spout
-     * @param namespace the namespace
+     * @param pipeline the name of the containing pipeline
      * @param sendRegular whether this monitor shall care for sending regular events (<code>true</code>) or 
      *     not (<code>false</code>, for thrift-based monitoring)
      */
-    public BaseSignalSpout(String name, String namespace, boolean sendRegular) {
+    public BaseSignalSpout(String name, String pipeline, boolean sendRegular) {
         this.name = name;
-        this.namespace = namespace;
+        this.pipeline = pipeline;
         this.sendRegular = sendRegular;
     }
 
@@ -66,20 +66,20 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     @Override
     public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
         if (conf.containsKey(Constants.CONFIG_KEY_SUBPIPELINE_NAME)) {
-            namespace = (String) conf.get(Constants.CONFIG_KEY_SUBPIPELINE_NAME);
+            pipeline = (String) conf.get(Constants.CONFIG_KEY_SUBPIPELINE_NAME);
         }
         StormSignalConnection.configureEventBus(conf);
-        monitor = createMonitor(namespace, name, true, context, sendRegular);
+        monitor = createMonitor(pipeline, name, true, context, sendRegular);
         if (Constants.MEASURE_BY_TASK_HOOKS) {
             context.addTaskHook(monitor);
         }
         try {
             LOGGER.info("Prepare--basesignalspout....");
-            signalConnection = new StormSignalConnection(this.name, this, namespace);
+            signalConnection = new StormSignalConnection(this.name, this, pipeline);
             signalConnection.init(conf);
             if (Configuration.getPipelineSignalsQmEvents()) {
-                parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, namespace, name);
-                shutdownEventHandler = ShutdownEventHandler.createAndRegister(this, namespace, name);
+                parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, pipeline, name);
+                shutdownEventHandler = ShutdownEventHandler.createAndRegister(this, pipeline, name);
             }
             portManager = new PortManager(signalConnection.getClient());
         } catch (Exception e) {
@@ -182,12 +182,12 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
 
     @Override
     public void onSignal(byte[] data) {
-        boolean done = ParameterChangeSignal.notify(data, namespace, name, this);
+        boolean done = ParameterChangeSignal.notify(data, pipeline, name, this);
         if (!done) {
-            done = ShutdownSignal.notify(data, namespace, name, this);
+            done = ShutdownSignal.notify(data, pipeline, name, this);
         }
         if (!done) {
-            done = LoadSheddingSignal.notify(data, namespace, name, this);
+            done = LoadSheddingSignal.notify(data, pipeline, name, this);
         }
     }
 
@@ -240,7 +240,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     public final void notifyLoadShedding(LoadSheddingSignal signal) {
         shedder = LoadShedderFactory.createShedder(signal.getShedder());
         shedder.configure(signal);
-        EventManager.send(new LoadSheddingChangedMonitoringEvent(namespace, name, 
+        EventManager.send(new LoadSheddingChangedMonitoringEvent(pipeline, name, 
             signal.getShedder(), shedder.getDescriptor().getIdentifier(), signal.getCauseMessageId()));
     }
 
@@ -285,9 +285,20 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      * Returns the namespace of this bolt.
      * 
      * @return the namespace of this bolt
+     * @deprecated use {@link #getPipeline()} instead
      */
+    @Deprecated
     public String getNamespace() {
-        return namespace;
+        return pipeline;
+    }
+    
+    /**
+     * Returns the name of the pipeline this bolt is part of.
+     * 
+     * @return the name of the pipeline
+     */
+    public String getPipeline() {
+        return pipeline;
     }
     
     /**

@@ -28,7 +28,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
 
     private static final Logger LOGGER = Logger.getLogger(BaseSignalBolt.class);
     private String name;
-    private String namespace;
+    private String pipeline;
     private boolean sendRegular;
     private LoadShedder<?> shedder = NoShedder.INSTANCE;
     private transient StormSignalConnection signalConnection;
@@ -42,23 +42,23 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      * Creates a base signal Bolt with no regular event sending.
      * 
      * @param name the name of the bolt
-     * @param namespace the namespace of the bolt
+     * @param pipeline the name of the containing pipeline
      */
-    public BaseSignalBolt(String name, String namespace) {
-        this(name, namespace, false);
+    public BaseSignalBolt(String name, String pipeline) {
+        this(name, pipeline, false);
     }
     
     /**
      * Creates a base signal Bolt.
      * 
      * @param name the name of the bolt
-     * @param namespace the namespace of the bolt
+     * @param pipeline the name of the containing pipeline
      * @param sendRegular whether this monitor shall care for sending regular events (<code>true</code>) or 
      *     not (<code>false</code>, for thrift-based monitoring)
      */
-    public BaseSignalBolt(String name, String namespace, boolean sendRegular) {
+    public BaseSignalBolt(String name, String pipeline, boolean sendRegular) {
         this.name = name;
-        this.namespace = namespace;
+        this.pipeline = pipeline;
         this.sendRegular = sendRegular;
     }
     
@@ -68,21 +68,21 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     @SuppressWarnings("rawtypes")
     public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
         if (conf.containsKey(Constants.CONFIG_KEY_SUBPIPELINE_NAME)) {
-            namespace = (String) conf.get(Constants.CONFIG_KEY_SUBPIPELINE_NAME);
+            pipeline = (String) conf.get(Constants.CONFIG_KEY_SUBPIPELINE_NAME);
         }
         StormSignalConnection.configureEventBus(conf);
-        monitor = createMonitor(namespace, name, true, context, sendRegular);
+        monitor = createMonitor(pipeline, name, true, context, sendRegular);
         if (Constants.MEASURE_BY_TASK_HOOKS) {
             context.addTaskHook(monitor);
         }
         try {
             LOGGER.info("Prepare--basesignalbolt....");
-            signalConnection = new StormSignalConnection(this.name, this, namespace);
+            signalConnection = new StormSignalConnection(this.name, this, pipeline);
             signalConnection.init(conf);
             if (Configuration.getPipelineSignalsQmEvents()) {
-                algorithmEventHandler = AlgorithmChangeEventHandler.createAndRegister(this, namespace, name);
-                parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, namespace, name);
-                shutdownEventHandler = ShutdownEventHandler.createAndRegister(this, namespace, name);
+                algorithmEventHandler = AlgorithmChangeEventHandler.createAndRegister(this, pipeline, name);
+                parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, pipeline, name);
+                shutdownEventHandler = ShutdownEventHandler.createAndRegister(this, pipeline, name);
             }
             portManager = new PortManager(signalConnection.getClient());
         } catch (Exception e) {
@@ -219,15 +219,15 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
 
     @Override
     public void onSignal(byte[] data) {
-        boolean done = AlgorithmChangeSignal.notify(data, namespace, name, this);
+        boolean done = AlgorithmChangeSignal.notify(data, pipeline, name, this);
         if (!done) {
-            done = ParameterChangeSignal.notify(data, namespace, name, this);
+            done = ParameterChangeSignal.notify(data, pipeline, name, this);
         }
         if (!done) {
-            done = ShutdownSignal.notify(data, namespace, name, this);
+            done = ShutdownSignal.notify(data, pipeline, name, this);
         }
         if (!done) {
-            done = LoadSheddingSignal.notify(data, namespace, name, this);
+            done = LoadSheddingSignal.notify(data, pipeline, name, this);
         }
     }
 
@@ -260,7 +260,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     public final void notifyLoadShedding(LoadSheddingSignal signal) {
         shedder = LoadShedderFactory.createShedder(signal.getShedder());
         shedder.configure(signal);
-        EventManager.send(new LoadSheddingChangedMonitoringEvent(namespace, name, 
+        EventManager.send(new LoadSheddingChangedMonitoringEvent(pipeline, name, 
             signal.getShedder(), shedder.getDescriptor().getIdentifier(), signal.getCauseMessageId()));
     }
     
@@ -347,9 +347,20 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      * Returns the namespace of this bolt.
      * 
      * @return the namespace of this bolt
+     * @deprecated use {@link #getPipeline()} instead
      */
+    @Deprecated
     public String getNamespace() {
-        return namespace;
+        return pipeline;
+    }
+    
+    /**
+     * Returns the name of the pipeline this bolt is part of.
+     * 
+     * @return the name of the pipeline
+     */
+    public String getPipeline() {
+        return pipeline;
     }
 
 }

@@ -37,16 +37,16 @@ public class MonitoringChangeSignal extends AbstractTopologyExecutorSignal {
     /**
      * Creates the signal.
      * 
-     * @param namespace the topology namespace
+     * @param topology the topology
      * @param executor the executor name
      * @param frequencies the desired monitoring frequencies, <b>null</b> for unspecified, 0 or negative for 
      *     completely disabled
      * @param observables the enabled/disabled observables, <b>null</b> for unspecified
      * @param causeMsgId the message id of the causing message (may be <b>null</b> or empty if there is none)
      */
-    public MonitoringChangeSignal(String namespace, String executor, Map<MonitoringFrequency, Integer> frequencies, 
+    public MonitoringChangeSignal(String topology, String executor, Map<MonitoringFrequency, Integer> frequencies, 
         Map<IObservable, Boolean> observables, String causeMsgId) {
-        super(namespace, executor, causeMsgId);
+        super(topology, executor, causeMsgId);
         this.frequencies = frequencies;
         this.observables = observables;
     }

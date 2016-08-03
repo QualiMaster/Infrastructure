@@ -367,7 +367,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         if (!CoordinationManager.isTestingMode()) {
             StormUtils.submitTopology(CoordinationConfiguration.getNimbus(), mapping, jarPath, 
                 options);
-            // cache curator, takes a while, leave namespace as currently legacy
+            // cache curator, takes a while, pass "virtual" namespace for namespace state
             SignalMechanism.prepareMechanism(getNamespace(mapping));
         }
         EventManager.handle(new PipelineLifecycleEvent(pipelineName, PipelineLifecycleEvent.Status.STARTING, 

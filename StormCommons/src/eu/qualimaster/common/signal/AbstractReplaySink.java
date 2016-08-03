@@ -178,7 +178,7 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
                         close(streamer);
                     }
                 }
-                EventManager.send(new ReplayChangedMonitoringEvent(sink.getNamespace(), sink.getName(), 
+                EventManager.send(new ReplayChangedMonitoringEvent(sink.getPipeline(), sink.getName(), 
                     signal.getTicket(), signal.getStartReplay(), signal.getCauseMessageId()));
                 result = streamers.size();
             }
