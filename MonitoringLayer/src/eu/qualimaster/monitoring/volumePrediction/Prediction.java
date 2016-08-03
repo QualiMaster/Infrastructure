@@ -22,11 +22,11 @@ import weka.core.Instance;
 import weka.core.Instances;
 
 /**
- * Implementation of the two types of volume prediction: the one based on recent values and the one based on historical values.
+ * Implementation of one of the types of volume prediction: the one based on recent values.
  * 
  * @author  Andrea Ceroni
  */
-public class PredictionModel {
+public class Prediction {
 
 	/** The name of the term the model refers to (can be either the name of a stock or an hashtag). */
 	private String source;
@@ -37,14 +37,8 @@ public class PredictionModel {
 	/** The model to make predictions based on recent volume values. */
 	private WekaForecaster forecaster;
 	
-	/** The set of average volume values, at each minute of the day, used to estimate the volume of a source without knowing its recent values. */
-	private HashMap<String,Double> historicalVolumes;
-	
 	/** The number of recent time points to be considered in the model. */
 	private static final int NUM_RECENT_VOLUMES = 12;
-	
-	/** The number of month of data to consider when training the model. */
-	private static final int NUM_MONTHS = 4;
 	
 	/** Name of the volume field */
 	private static final String VOLUME_FIELD = "volume";
@@ -60,12 +54,11 @@ public class PredictionModel {
 	 * @param source The name of the source the model makes predictions for
 	 * @param dataPath The path to the data used for training the model
 	 */
-	public PredictionModel(String source, String dataPath){
+	public Prediction(String source, String dataPath){
 		this.source = source;
 		this.recentVolumes = createDataset();
 		this.forecaster = new WekaForecaster();
-		this.historicalVolumes = new HashMap<>();
-		trainModels(dataPath);
+		trainModel(dataPath);
 	}
 	
 	/**
@@ -104,33 +97,6 @@ public class PredictionModel {
 	}
 	
 	/**
-	 * Estimates the volume at the current time (minute) of the day by computing the average over
-	 * the volumes at the same time of the day in different past days. This can be used without
-	 * knowing the sequence of recent volumes (e.g. to estimate the volume introduced by crawling
-	 * a stock before actually doing it).
-	 * 
-	 * @return The estimated volume at the current time of the day (-1 if no historical data is available)
-	 */
-	public double predictBlindly()
-	{
-		// check if there are data
-		if(this.historicalVolumes.isEmpty())
-		{
-			System.out.println("Not historical data available to make predictions.");
-			return -1;
-		}
-		
-		// get the current timestamp
-		DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
-		Date date = new Date();
-		String time = dateFormat.format(date).split("'T'")[1];
-		
-		// fetch the historical average value at the required time of the day
-		if(this.getHistoricalVolumes().containsKey(time)) return this.getHistoricalVolumes().get(time);
-		else return getNeighborValue(time);
-	}
-	
-	/**
 	 * Appends the input volume (assumed to be the new observed one) to the recent volumes, which are used to make predictions.
 	 * If the size of the recent volumes exceeds the maximum one, the oldest volume is removed to make room for the new one.
 	 * 
@@ -152,11 +118,10 @@ public class PredictionModel {
 		}
 	}
 	
-	private void trainModels(String dataPath)
+	private void trainModel(String dataPath)
 	{
 		HashMap<String,Long> trainingData = readDataFromPath(dataPath, this.source);
 		this.forecaster = trainForecaster(trainingData);
-		this.historicalVolumes = computeAverageVolumes(trainingData);
 	}
 	
 	private HashMap<String,Long> readDataFromPath(String dataPath, String sourceName)
@@ -244,36 +209,6 @@ public class PredictionModel {
 		return instance;
 	}
 	
-	private HashMap<String,Double> computeAverageVolumes(HashMap<String,Long> map)
-	{
-		HashMap<String,Double> outputMap = new HashMap<String, Double>();
-		HashMap<String, ArrayList<Long>> mapByTime = new HashMap<String, ArrayList<Long>>();
-		
-		for(String k : map.keySet())
-		{
-			String time = k.split("'T'")[1];
-			if(mapByTime.containsKey(time)) mapByTime.get(time).add(map.get(k));
-			else
-			{
-				ArrayList<Long> values = new ArrayList<Long>();
-				values.add(map.get(k));
-				mapByTime.put(time, values);
-			}
-		}
-		
-		// compute average values for each entry
-		for(String k : mapByTime.keySet())
-		{
-			ArrayList<Long> values = mapByTime.get(k);
-			double sum = 0;
-			for(Long l : values) sum += l;
-			double avg = sum / values.size();
-			outputMap.put(k, avg);
-		}
-		
-		return outputMap;
-	}
-	
 	private Instances createDataset()
 	{
 		// define the attributes
@@ -287,58 +222,6 @@ public class PredictionModel {
 		Instances dataset = new	Instances("dataset", attrs, 0);
 		
 		return dataset;
-	}
-	
-	private double getNeighborValue(String time)
-	{
-		String[] fields = time.split(":");
-		int hour = Integer.valueOf(fields[0]);
-		int minutes = Integer.valueOf(fields[1]);
-		int seconds = Integer.valueOf(fields[2]);
-		
-		Calendar prevCalendar = Calendar.getInstance();
-		Calendar succCalendar = Calendar.getInstance();
-		prevCalendar.set(Calendar.HOUR_OF_DAY, hour);
-		prevCalendar.set(Calendar.MINUTE, minutes);
-		prevCalendar.set(Calendar.SECOND, seconds);
-		succCalendar.set(Calendar.HOUR_OF_DAY, hour);
-		succCalendar.set(Calendar.MINUTE, minutes);
-		succCalendar.set(Calendar.SECOND, seconds);
-		
-		double neighborValue = -1;
-		while(neighborValue == -1)
-		{
-			prevCalendar.add(Calendar.MINUTE, -1);
-			succCalendar.add(Calendar.MINUTE, 1);
-			
-			int prevHour = prevCalendar.get(Calendar.HOUR_OF_DAY);
-			int prevMinute = prevCalendar.get(Calendar.MINUTE);
-			int prevSecond = prevCalendar.get(Calendar.SECOND);
-			int succHour = succCalendar.get(Calendar.HOUR_OF_DAY);
-			int succMinute = succCalendar.get(Calendar.MINUTE);
-			int succSecond = succCalendar.get(Calendar.SECOND);
-			
-			String prevTime = "";
-			if(prevHour < 10) prevTime += "0" + prevHour + ":";
-			else prevTime += prevHour + ":";
-			if(prevMinute < 10) prevTime += "0" + prevMinute + ":";
-			else prevTime += prevMinute + ":";
-			if(prevSecond < 10) prevTime += "0" + prevSecond;
-			else prevTime += prevSecond;
-			
-			String succTime = "";
-			if(succHour < 10) succTime += "0" + succHour + ":";
-			else succTime += succHour + ":";
-			if(succMinute < 10) succTime += "0" + succMinute + ":";
-			else succTime += succMinute + ":";
-			if(succSecond < 10) succTime += "0" + succSecond;
-			else succTime += succSecond;
-			
-			if(this.historicalVolumes.containsKey(prevTime)) neighborValue = this.historicalVolumes.get(prevTime);
-			if(this.historicalVolumes.containsKey(succTime)) neighborValue = this.historicalVolumes.get(succTime);
-		}
-		
-		return neighborValue;
 	}
 	
 	private void detectPeriodicity(WekaForecaster forecaster, Instances dataset, String dateField)
@@ -488,19 +371,5 @@ public class PredictionModel {
 	 */
 	public void setForecaster(WekaForecaster forecaster) {
 		this.forecaster = forecaster;
-	}
-
-	/**
-	 * @return the historicalVolumes
-	 */
-	public HashMap<String,Double> getHistoricalVolumes() {
-		return historicalVolumes;
-	}
-
-	/**
-	 * @param historicalVolumes the historicalVolumes to set
-	 */
-	public void setHistoricalVolumes(HashMap<String,Double> historicalVolumes) {
-		this.historicalVolumes = historicalVolumes;
 	}
 }
