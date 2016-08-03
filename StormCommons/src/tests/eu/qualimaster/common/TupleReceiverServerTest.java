@@ -173,15 +173,16 @@ public class TupleReceiverServerTest {
     /**
      * Test.
      */
+    @SuppressWarnings("rawtypes")
     @Test
     public void test() {
         int port = 8999;
         TupleReceiverHandler handler = new TupleReceiverHandler();
-        TupleReceiverServer server = new TupleReceiverServer(handler, 8999);
+        TupleReceiverServer server = new TupleReceiverServer(handler, port);
         server.start();
         System.out.println("Server is started...");
         
-        TupleSenderClient client = new TupleSenderClient("localhost", 8999);
+        TupleSenderClient client = new TupleSenderClient("localhost", port);
         
         int count = 10; //sends 10 tuples
         while (count > 0) {

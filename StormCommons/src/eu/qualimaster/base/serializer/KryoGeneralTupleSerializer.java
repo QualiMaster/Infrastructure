@@ -24,6 +24,7 @@ public class KryoGeneralTupleSerializer implements IGeneralTupleSerializer {
      * Creates the kryo serializer for the general tuple.
      * @param conf the Storm configuration file
      */
+    @SuppressWarnings("rawtypes")
     public KryoGeneralTupleSerializer(final Map conf) {
         this.valuesSer = new KryoValuesSerializer(conf);
         this.valuesDeser = new KryoValuesDeserializer(conf);
