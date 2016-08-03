@@ -20,6 +20,8 @@ import java.net.URL;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
+
 import backtype.storm.Config;
 import eu.qualimaster.PropertyReader;
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent.DetailMode;
@@ -154,6 +156,17 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
      */
     public static final String DEFAULT_PIPELINE_SETTINGS_LOCATION = EMPTY_VALUE;
     
+    /**
+     * Denotes the folder where profiling data for prediction is stored.
+     */
+    public static final String PROFILE_LOCATION = "profiling.data.location";
+
+    /**
+     * The default value for {@link #PROFILE_LOCATION}.
+     */
+    public static final String DEFAULT_PROFILE_LOCATION = FileUtils.getTempDirectoryPath();
+
+    
     static final PropertyReader<DetailMode> DETAIL_MODE_READER = new PropertyReader<DetailMode>() {
 
         @Override
@@ -195,6 +208,8 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
         = createStringOption(PIPELINE_SETTINGS_LOCATION, DEFAULT_PIPELINE_SETTINGS_LOCATION);
     private static ConfigurationOption<DetailMode> detailedProfiling 
         = new ConfigurationOption<DetailMode>(DETAILED_PROFILING, DEFAULT_DETAILED_PROFILING, DETAIL_MODE_READER);
+    private static ConfigurationOption<String> profileLocation 
+        = createStringOption(PROFILE_LOCATION, DEFAULT_PROFILE_LOCATION);
 
     /**
      * Reads the configuration settings from the file.
@@ -390,6 +405,15 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
      */
     public static DetailMode getProfilingMode() {
         return detailedProfiling.getValue();
+    }
+
+    /**
+     * The location where the profile data is located.
+     * 
+     * @return the location
+     */
+    public static String getProfileLocation() {
+        return profileLocation.getValue();
     }
     
 }

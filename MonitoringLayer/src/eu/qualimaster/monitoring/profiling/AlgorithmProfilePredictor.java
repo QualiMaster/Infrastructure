@@ -15,7 +15,10 @@
  */
 package eu.qualimaster.monitoring.profiling;
 
+import java.io.File;
+
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
+import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 import eu.qualimaster.monitoring.events.ParameterChangedMonitoringEvent;
 import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
@@ -28,11 +31,13 @@ import eu.qualimaster.observables.Observables;
  * @author Holger Eichelberger
  */
 public class AlgorithmProfilePredictor {
-
+    
     /**
      * Called upon startup of the infrastructure.
      */
     public static void start() {
+        // will contain the data files if provided through the pipeline artifact, for tests see #useTestData(File)
+        MonitoringConfiguration.getProfileLocation(); 
     }
 
      /**
@@ -106,4 +111,13 @@ public class AlgorithmProfilePredictor {
        // free resources, store all changed matrices
     }
 
+    /**
+     * Forces to use test data.
+     * 
+     * @param baseFolder the base folder where the test data is located
+     */
+    public static void useTestData(File baseFolder) {
+        // so far not called as there is no specific data available
+    }
+    
 }
