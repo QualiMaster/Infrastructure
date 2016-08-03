@@ -30,7 +30,7 @@ public class GeneralTupleReceiverHandler implements ITupleReceiverHandler {
      * @param syn the synchronized queue for storing tuples
      * @throws IOException the IO exception
      */
-    private GeneralTupleReceiverHandler(IGeneralTupleSerializer genSer, SynchronizedQueue<IGeneralTuple> syn) {
+    public GeneralTupleReceiverHandler(IGeneralTupleSerializer genSer, SynchronizedQueue<IGeneralTuple> syn) {
         this.genSer = genSer;
         this.syn = syn;
     }
