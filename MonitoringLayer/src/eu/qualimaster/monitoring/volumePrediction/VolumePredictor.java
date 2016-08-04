@@ -4,6 +4,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import eu.qualimaster.dataManagement.events.HistoricalDataProviderRegistrationEvent;
+import eu.qualimaster.events.EventHandler;
+import eu.qualimaster.events.EventManager;
+import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
+import eu.qualimaster.monitoring.events.SourceVolumeMonitoringEvent;
+
 /**
  * Main class implementing the available methods of the volume prediction.
  * 
@@ -213,6 +219,63 @@ public class VolumePredictor {
 	 * @return the running
 	 */
 	public boolean isRunning() {
-		return running;
+return running;
 	}
+	
+	/**
+	 * A handler for upcoming data sources. Transports the historical data providers if available.
+	 * 
+	 * @author  Andrea Ceroni
+	 */
+	private static class HistoricalDataProviderRegistrationEventHandler extends EventHandler<HistoricalDataProviderRegistrationEvent> {
+
+	    /**
+	     * Creates an instance.
+	     */
+	    protected HistoricalDataProviderRegistrationEventHandler() {
+	        super(HistoricalDataProviderRegistrationEvent.class);
+	    }
+
+	    @Override
+	    protected void handle(HistoricalDataProviderRegistrationEvent event) {
+	        // TODO called when a data source comes up in a pipeline. Carries the historical data provider.
+	        // If the source changes, an event with the same pipeline / element name will occur
+	    }
+	            
+	}
+
+	/**
+	 * Is called when the monitoring manager receives a {@link SourceVolumeMonitoringEvent}.
+	 * Although a full event bus handler would also do the job, this shall be less resource consumptive as 
+	 * the event is anyway received in the Monitoring Layer.
+	 * 
+	 * @param event the event
+	 */
+	public static void notifySourceVolumeMonitoringEvent(SourceVolumeMonitoringEvent event) {
+	    // TODO called when aggregated source volume information is available. The frequency is by default 60000ms
+	    // but can be defined in the infrastructure configuration via QM-IConf. May be delayed if the source does 
+	    // not emit data. No data is aggregated in the source if the getAggregationKey(.) method returns null.
+	}
+	    
+	/**
+	* Called upon startup of the infrastructure.
+	*/
+	public static void start() {
+	    EventManager.register(new HistoricalDataProviderRegistrationEventHandler());
+	}
+
+	/**
+	* Notifies the predictor about changes in the lifecycle of pipelines.
+	*  
+	* @param event the lifecycle event
+	*/
+	public static void notifyPipelineLifecycleChange(PipelineLifecycleEvent event) {
+	}
+
+	/**
+	* Called upon shutdown of the infrastructure. Clean up global resources here.
+	*/
+	public static void stop() {
+	}
+
 }

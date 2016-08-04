@@ -109,6 +109,17 @@ public class Configuration {
      */
     public static final int DEFAULT_PORT_ZOOKEEPER = 2181;
 
+    /**
+     * Defines the ports to be used for (dynamic) data connections among pipeline parts on software level 
+     * (hardware ports are communicated differently).
+     */
+    public static final String PIPELINE_INTERCONN_PORTS = "pipelines.ports";
+    
+    /**
+     * The default value for {@link #PIPELINE_INTERCONN_PORTS}.
+     */
+    public static final String DEFAULT_PIPELINE_INTERCONN_PORTS = "63000-64000";
+    
     // events
 
     /**
@@ -250,6 +261,8 @@ public class Configuration {
         = createBooleanOption(PIPELINE_SIGNALS_CURATOR, DEFAULT_PIPELINE_SIGNALS_CURATOR);
     private static ConfigurationOption<Integer> shutdownEventWaitingTime 
         = createIntegerOption(TIME_SHUTDOWN_EVENTS, DEFAULT_TIME_SHUTDOWN_EVENTS);
+    private static ConfigurationOption<String> pipelinePorts
+        = createStringOption(PIPELINE_INTERCONN_PORTS, DEFAULT_PIPELINE_INTERCONN_PORTS);
     
     /**
      * Prevents external creation / static class.
@@ -604,6 +617,7 @@ public class Configuration {
         config.put(Configuration.HOST_EVENT, getEventHost());
         config.put(Configuration.PORT_EVENT, getEventPort());
         config.put(Configuration.EVENT_DISABLE_LOGGING, getEventDisableLogging());
+        config.put(Configuration.PIPELINE_INTERCONN_PORTS, getPipelinePorts());
     }
 
     /**
@@ -626,6 +640,9 @@ public class Configuration {
         if (null != conf.get(Configuration.EVENT_DISABLE_LOGGING)) {
             prop.put(Configuration.EVENT_DISABLE_LOGGING, conf.get(Configuration.EVENT_DISABLE_LOGGING));
         }
+        if (null != conf.get(Configuration.PIPELINE_INTERCONN_PORTS)) {
+            prop.put(Configuration.PIPELINE_INTERCONN_PORTS, conf.get(Configuration.PIPELINE_INTERCONN_PORTS));
+        }
         if (prop.size() > 0) {
             Configuration.configure(prop, false);
         }
@@ -636,6 +653,15 @@ public class Configuration {
      */
     public static void clear() {
         OPTIONS.clear();
+    }
+
+    /**
+     * Returns the configured pipeline interconnection ports.
+     * 
+     * @return the pipeline interconnection ports
+     */
+    public static String getPipelinePorts() {
+        return pipelinePorts.getValue();
     }
 
 }

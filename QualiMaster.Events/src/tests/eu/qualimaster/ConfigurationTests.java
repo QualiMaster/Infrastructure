@@ -66,6 +66,7 @@ public class ConfigurationTests {
         Assert.assertEquals(6627, Configuration.getThriftPort());
         Assert.assertTrue(Configuration.getPipelineSignalsCurator());
         Assert.assertFalse(Configuration.getPipelineSignalsQmEvents());
+        Assert.assertEquals(Configuration.DEFAULT_PIPELINE_INTERCONN_PORTS, Configuration.getPipelinePorts());
     }
 
     /**

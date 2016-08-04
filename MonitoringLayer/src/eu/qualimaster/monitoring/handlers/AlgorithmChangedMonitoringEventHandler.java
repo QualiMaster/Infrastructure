@@ -19,6 +19,7 @@ import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.INameMapping.Algorithm;
 import eu.qualimaster.monitoring.MonitoringEventHandler;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
+import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictor;
 import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
@@ -59,6 +60,7 @@ public class AlgorithmChangedMonitoringEventHandler extends MonitoringEventHandl
                 getLogger().info("cannot find algorithm '" + event.getAlgorithm() + "': ignoring " + event);
             }
         }
+        AlgorithmProfilePredictor.notifyAlgorithmChanged(event);
     }
 
 }

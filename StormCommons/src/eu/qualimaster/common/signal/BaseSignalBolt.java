@@ -37,7 +37,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     private transient ShutdownEventHandler shutdownEventHandler;
     private transient Monitor monitor;
     private transient PortManager portManager;
-    
+
     /**
      * Creates a base signal Bolt with no regular event sending.
      * 
@@ -84,10 +84,23 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
                 parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, pipeline, name);
                 shutdownEventHandler = ShutdownEventHandler.createAndRegister(this, pipeline, name);
             }
-            portManager = new PortManager(signalConnection.getClient());
+            portManager = createPortManager(signalConnection, conf);
         } catch (Exception e) {
             LOGGER.error("Error SignalConnection:" + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Creates the port manager and considers pipeline interconnection ports from <code>conf</code>.
+     * 
+     * @param signalConnection the signal connection
+     * @param conf the Storm configuration
+     * @return the port manager instance
+     */
+    @SuppressWarnings("rawtypes")
+    static PortManager createPortManager(StormSignalConnection signalConnection, Map conf) {
+        return new PortManager(signalConnection.getClient(), 
+            PortManager.createPortRangeQuietly(String.valueOf(conf.get(Configuration.PIPELINE_INTERCONN_PORTS))));
     }
     
     /**

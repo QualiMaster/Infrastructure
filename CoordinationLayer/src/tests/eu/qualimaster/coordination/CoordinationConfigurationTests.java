@@ -39,6 +39,8 @@ public class CoordinationConfigurationTests extends DataManagementConfigurationT
              CoordinationConfiguration.getPipelineSettingsLocation());
         Assert.assertEquals(CoordinationConfiguration.DEFAULT_DETAILED_PROFILING, 
              CoordinationConfiguration.getProfilingMode());
+        Assert.assertEquals(CoordinationConfiguration.DEFAULT_PROFILE_LOCATION, 
+             CoordinationConfiguration.getProfileLocation());
     }
 
     @Override

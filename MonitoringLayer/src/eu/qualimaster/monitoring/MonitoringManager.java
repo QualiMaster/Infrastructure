@@ -42,16 +42,20 @@ import eu.qualimaster.monitoring.events.MonitoringEvent;
 import eu.qualimaster.monitoring.handlers.AlgorithmChangedMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.AlgorithmMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.CloudResourceMonitoringEventHandler;
+import eu.qualimaster.monitoring.handlers.ParameterChangedMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.PipelineElementMultiObservationMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.PipelineElementObservationMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.PlatformMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.PlatformMultiMonitoringHostEventHandler;
+import eu.qualimaster.monitoring.handlers.SourceVolumeMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.SubTopologyMonitoringEventHandler;
+import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictor;
 import eu.qualimaster.monitoring.storm.StormMonitoringPlugin;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
 import eu.qualimaster.monitoring.tracing.Tracing;
 import eu.qualimaster.monitoring.tracing.TracingTask;
+import eu.qualimaster.monitoring.volumePrediction.VolumePredictor;
 import eu.qualimaster.observables.MonitoringFrequency;
 import net.ssehub.easy.varModel.confModel.Configuration;
 import net.ssehub.easy.varModel.confModel.IDecisionVariable;
@@ -420,6 +424,8 @@ public class MonitoringManager {
                     }
                 }
             }
+            AlgorithmProfilePredictor.notifyPipelineLifecycleChange(event);
+            VolumePredictor.notifyPipelineLifecycleChange(event);
         }
         
     }
@@ -496,6 +502,7 @@ public class MonitoringManager {
                 break;
             }
             logger.info(msgPrefix + " done " + event);
+            AlgorithmProfilePredictor.notifyAlgorithmProfilingEvent(event);
         }
         
     }
@@ -523,6 +530,8 @@ public class MonitoringManager {
         register(PlatformMultiMonitoringHostEventHandler.INSTANCE);
         register(SubTopologyMonitoringEventHandler.INSTANCE);
         register(CloudResourceMonitoringEventHandler.INSTANCE);
+        register(ParameterChangedMonitoringEventHandler.INSTANCE);
+        register(SourceVolumeMonitoringEventHandler.INSTANCE);
         
         EventManager.register(new TopMonitoringEventHandler());
         EventManager.register(new PipelineLifecycleEventEventHandler());
@@ -573,6 +582,8 @@ public class MonitoringManager {
         for (IMonitoringPlugin plugin : plugins) {
             startPlugin(plugin);
         }
+        AlgorithmProfilePredictor.start();
+        VolumePredictor.start();
     }
     
     /**
@@ -734,6 +745,8 @@ public class MonitoringManager {
      * Stop the layer.
      */
     public static void stop() {
+        VolumePredictor.stop();
+        AlgorithmProfilePredictor.stop();
         if (null != reasoningTask) {
             reasoningTask.cancel();
         }

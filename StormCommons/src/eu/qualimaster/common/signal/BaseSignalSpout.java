@@ -81,7 +81,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
                 parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, pipeline, name);
                 shutdownEventHandler = ShutdownEventHandler.createAndRegister(this, pipeline, name);
             }
-            portManager = new PortManager(signalConnection.getClient());
+            portManager = BaseSignalBolt.createPortManager(signalConnection, conf);
         } catch (Exception e) {
             LOGGER.error("Error SignalConnection:" + e.getMessage(), e);
         }

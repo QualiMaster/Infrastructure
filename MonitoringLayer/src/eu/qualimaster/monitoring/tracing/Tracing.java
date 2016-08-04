@@ -41,6 +41,7 @@ import eu.qualimaster.coordination.events.AlgorithmProfilingEvent;
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent.DetailMode;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
+import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictor;
 import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
@@ -293,6 +294,7 @@ public class Tracing {
                 if (null != trace) {
                     trace.traceAlgorithm(node, current, parameters);
                 }
+                AlgorithmProfilePredictor.update(pipeline.getName(), node.getName(), current);
             }
         }
     }
