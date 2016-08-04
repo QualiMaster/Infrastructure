@@ -502,6 +502,7 @@ public class MonitoringManager {
                 break;
             }
             logger.info(msgPrefix + " done " + event);
+            AlgorithmProfilePredictor.notifyAlgorithmProfilingEvent(event);
         }
         
     }

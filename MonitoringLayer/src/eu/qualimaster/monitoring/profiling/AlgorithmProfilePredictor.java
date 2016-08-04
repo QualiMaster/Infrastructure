@@ -17,6 +17,7 @@ package eu.qualimaster.monitoring.profiling;
 
 import java.io.File;
 
+import eu.qualimaster.coordination.events.AlgorithmProfilingEvent;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
@@ -62,9 +63,19 @@ public class AlgorithmProfilePredictor {
      * Although a full event bus handler would also do the job, this shall be less resource consumptive as 
      * the event is anyway received in the Monitoring Layer.
      * 
-     * @param event the event
+     * @param event the parameter change event
      */
     public static void notifyParameterChangedMonitoringEvent(ParameterChangedMonitoringEvent event) {
+    }
+
+    /**
+     * Is called during algorithm profiling, i.e., when collecting the initial profiles. Create new structures
+     * for algorithm during {@link AlgorithmProfilingEvent.Status#START} and save them when a profiling round is closed
+     * at {@link AlgorithmProfilingEvent.Status#NEXT} or {@link AlgorithmProfilingEvent.Status#END}.
+     * 
+     * @param event the profiling event
+     */
+    public static void notifyAlgorithmProfilingEvent(AlgorithmProfilingEvent event) {
     }
     
     /**
