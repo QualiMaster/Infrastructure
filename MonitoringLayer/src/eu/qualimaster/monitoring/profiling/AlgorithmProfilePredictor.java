@@ -38,7 +38,7 @@ public class AlgorithmProfilePredictor {
      */
     public static void start() {
         // will contain the data files if provided through the pipeline artifact, for tests see #useTestData(File)
-        MonitoringConfiguration.getProfileLocation(); 
+        MonitoringConfiguration.getProfilingLogLocation(); 
     }
 
      /**
