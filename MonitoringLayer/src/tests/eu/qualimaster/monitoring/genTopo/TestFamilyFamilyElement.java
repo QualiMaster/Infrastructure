@@ -53,7 +53,7 @@ public class TestFamilyFamilyElement extends AbstractProcessor {
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
         if (null != algorithm) {
-            EventManager.send(new AlgorithmChangedMonitoringEvent(getNamespace(), getName(), algorithm));
+            EventManager.send(new AlgorithmChangedMonitoringEvent(getPipeline(), getName(), algorithm));
         }
     }
 

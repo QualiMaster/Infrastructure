@@ -66,18 +66,18 @@ public class TestFamilyHwIntFamilyElement extends SendingBolt {
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
         if (null != algorithm) {
-            EventManager.send(new AlgorithmChangedMonitoringEvent(getNamespace(), getName(), algorithm));
+            EventManager.send(new AlgorithmChangedMonitoringEvent(getPipeline(), getName(), algorithm));
         }
     }
     
     @Override
     protected void prepareShutdown(ShutdownSignal signal) {
         super.prepareShutdown(signal);
-        send(new ShutdownSignal(getNamespace(), INTERMEDIARY));
-        send(new ShutdownSignal(getNamespace(), HW_BOLT));
-        send(new ShutdownSignal(getNamespace(), HW_SPOUT));
-        send(new ShutdownSignal(getNamespace(), OUT_INTERMEDIARY));
-        send(new ShutdownSignal(getNamespace(), OUT_RECEIVER));
+        send(new ShutdownSignal(getPipeline(), INTERMEDIARY));
+        send(new ShutdownSignal(getPipeline(), HW_BOLT));
+        send(new ShutdownSignal(getPipeline(), HW_SPOUT));
+        send(new ShutdownSignal(getPipeline(), OUT_INTERMEDIARY));
+        send(new ShutdownSignal(getPipeline(), OUT_RECEIVER));
     }
     
 }
