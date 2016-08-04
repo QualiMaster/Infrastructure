@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package tests.eu.qualimaster.common;
+package tests.eu.qualimaster;
 
 import java.io.File;
 import java.util.HashSet;

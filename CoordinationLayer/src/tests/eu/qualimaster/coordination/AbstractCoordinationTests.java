@@ -39,7 +39,7 @@ import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineStatusTracker;
 import net.ssehub.easy.instantiation.core.model.buildlangModel.Script;
-import tests.eu.qualimaster.common.TestHelper;
+import tests.eu.qualimaster.TestHelper;
 import tests.eu.qualimaster.storm.Naming;
 
 /**
