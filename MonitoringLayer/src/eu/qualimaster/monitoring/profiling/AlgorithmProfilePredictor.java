@@ -25,11 +25,12 @@ import eu.qualimaster.monitoring.events.ParameterChangedMonitoringEvent;
 import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.Observables;
+import eu.qualimaster.observables.ResourceUsage;
 
 /**
  * Interface to the prediction of algorithm quality properties.
  * 
- * @author Holger Eichelberger
+ * @author Christopher Voges
  */
 public class AlgorithmProfilePredictor {
     
@@ -38,7 +39,7 @@ public class AlgorithmProfilePredictor {
      */
     public static void start() {
         // will contain the data files if provided through the pipeline artifact, for tests see #useTestData(File)
-        MonitoringConfiguration.getProfilingLogLocation(); 
+        //MonitoringConfiguration.getProfileLocation(); 
     }
 
      /**
@@ -48,6 +49,7 @@ public class AlgorithmProfilePredictor {
      * @param event the lifecycle event
      */
     public static void notifyPipelineLifecycleChange(PipelineLifecycleEvent event) {
+    	System.err.println(event);
     }
 
     /**
@@ -56,6 +58,9 @@ public class AlgorithmProfilePredictor {
      * @param event the algorithm changed monitoring event
      */
     public static void notifyAlgorithmChanged(AlgorithmChangedMonitoringEvent event) {
+    	event.getAlgorithm();
+    	event.getPipeline();
+    	event.getPipelineElement();
     }
 
     /**
@@ -66,6 +71,10 @@ public class AlgorithmProfilePredictor {
      * @param event the parameter change event
      */
     public static void notifyParameterChangedMonitoringEvent(ParameterChangedMonitoringEvent event) {
+    	event.getPipeline();
+    	event.getPipelineElement();
+    	event.getParameter();
+    	event.getValue();
     }
 
     /**
@@ -76,6 +85,7 @@ public class AlgorithmProfilePredictor {
      * @param event the profiling event
      */
     public static void notifyAlgorithmProfilingEvent(AlgorithmProfilingEvent event) {
+    	MonitoringConfiguration.getProfilingLogLocation(); 
     }
     
     /**
@@ -91,6 +101,9 @@ public class AlgorithmProfilePredictor {
         for (IObservable obs : Observables.OBSERVABLES) {
             if (algorithm.hasValue(obs)) {
                 // TODO update Kalman
+            	algorithm.getObservedValue(ResourceUsage.EXECUTORS);
+            	algorithm.getObservedValue(ResourceUsage.TASKS);
+            	// Evtl noch Inputs/s fuer den Parameterraum
                 dummy();
             }
         }
@@ -106,7 +119,7 @@ public class AlgorithmProfilePredictor {
      * @return the predicted value (<code>Double.MIN_VALUE</code> in case of no prediction)
      */
     public static double predict(String pipeline, String element, String algorithm, IObservable observable) {
-        return 0;
+    	return 0;
     }
 
     /**
