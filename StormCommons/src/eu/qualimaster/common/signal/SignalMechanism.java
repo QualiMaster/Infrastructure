@@ -25,6 +25,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.storm.curator.framework.CuratorFrameworkFactory;
+import org.apache.storm.curator.framework.imps.CuratorFrameworkState;
 import org.apache.storm.curator.retry.RetryOneTime;
 
 import eu.qualimaster.Configuration;
@@ -211,8 +212,18 @@ public class SignalMechanism {
      */
     public static void clear() {
         for (CuratorFramework framework: FRAMEWORKS.values()) {
-            framework.close();
+            if (CuratorFrameworkState.STARTED == framework.getState()) {
+                PortManager mgr = new PortManager(framework);
+                try {
+                    mgr.clearAllPortAssignments();
+                } catch (SignalException e) {
+                    getLogger().error(e.getMessage());
+                }
+                framework.close();
+            }
         }
+        FRAMEWORKS.clear();
+        NAMESPACES.clear();
     }
     
     /**
@@ -227,13 +238,25 @@ public class SignalMechanism {
     }
     
     /**
-     * Releases the signal mechanism instance for the given <code>namespace</code>
+     * Releases the signal mechanism instance for the given <code>pipeline</code>
      * from the internal cache and closes the mechanism.
      *   
-     * @param namespace the namespace to remove the framework for
+     * @param pipeline the pipeline name / namespace to clear (for port manager)
      */
-    public static void releaseMechanism(String namespace) {
-        CuratorFramework framework = FRAMEWORKS.remove(namespace);
+    public static void releaseMechanism(String pipeline) {
+        CuratorFramework framework = FRAMEWORKS.remove(pipeline);
+        CuratorFramework toClear = framework;
+        if (null == toClear) {
+            toClear = FRAMEWORKS.get(GLOBAL_NAMESPACE);
+        }
+        if (null != toClear && null != pipeline) {
+            PortManager mgr = new PortManager(toClear);
+            try {
+                mgr.clearPortAssignments(pipeline);
+            } catch (SignalException e) {
+                getLogger().error(e.getMessage());
+            }
+        }
         if (null != framework) {
             framework.close();
         }

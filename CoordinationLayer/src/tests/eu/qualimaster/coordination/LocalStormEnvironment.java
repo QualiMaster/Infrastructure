@@ -19,6 +19,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
+import eu.qualimaster.common.signal.SignalMechanism;
 import eu.qualimaster.common.signal.ThriftConnection;
 import eu.qualimaster.coordination.StormUtils;
 import eu.qualimaster.coordination.StormUtils.TopologyTestInfo;
@@ -64,6 +65,7 @@ public class LocalStormEnvironment {
     public void shutdown() {
         //http://stackoverflow.com/questions/19151897/connection-refused-error-in-storm
         AbstractCoordinationTests.sleep(3000); // wait for zookeeper
+        SignalMechanism.clear(); // avoid connection failures when doing this anyway shutting down the infrastructure
         cluster.shutdown();
         AbstractCoordinationTests.sleep(WAIT_AT_END); // wait for shutting down services
     }
