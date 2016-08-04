@@ -16,13 +16,16 @@
 package eu.qualimaster.monitoring.profiling;
 
 import java.io.File;
+import java.io.Serializable;
+import java.util.Map;
 
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 import eu.qualimaster.monitoring.events.ParameterChangedMonitoringEvent;
-import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
+import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
+import eu.qualimaster.monitoring.tracing.Tracing;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.Observables;
 import eu.qualimaster.observables.ResourceUsage;
@@ -39,7 +42,7 @@ public class AlgorithmProfilePredictor {
      */
     public static void start() {
         // will contain the data files if provided through the pipeline artifact, for tests see #useTestData(File)
-        //MonitoringConfiguration.getProfileLocation(); 
+        MonitoringConfiguration.getProfileLocation();
     }
 
      /**
@@ -92,17 +95,20 @@ public class AlgorithmProfilePredictor {
      * Called regularly to update the prediction model with the most recently monitored values.
      * 
      * @param pipeline the pipeline name containing <code>element</code>
-     * @param element the pipeline element name running <code>algorith,</code>
-     * @param algorithm the actual algorithm implement system part (copy)
+     * @param element the pipeline element name running <code>algorithm</code>
+     * @param family the family holding the algorithm as current node (copy). Family measures shall correspond to the 
+     * algorithm measures, even if the algorithm is distribured and consists of different nodes
      */
-    public static void update(String pipeline, String element, NodeImplementationSystemPart algorithm) {
+    public static void update(String pipeline, String element, PipelineNodeSystemPart family) {
         @SuppressWarnings("unused")
-        String algorithmName = algorithm.getName();
+        String algorithmName = family.getCurrent().getName(); // current may be null but shall not be passed
+        // access to the predecessor nodes, e.g., for input/s
+        Tracing.getPredecessors(family);
         for (IObservable obs : Observables.OBSERVABLES) {
-            if (algorithm.hasValue(obs)) {
+            if (family.hasValue(obs)) {
                 // TODO update Kalman
-                algorithm.getObservedValue(ResourceUsage.EXECUTORS);
-                algorithm.getObservedValue(ResourceUsage.TASKS);
+                family.getObservedValue(ResourceUsage.EXECUTORS);
+                family.getObservedValue(ResourceUsage.TASKS);
                 // Evtl noch Inputs/s fuer den Parameterraum
                 dummy();
             }
@@ -110,15 +116,20 @@ public class AlgorithmProfilePredictor {
     }
 
     /**
-     * Predict the next value for the given algorithm.
+     * Predict the next value for the given algorithm. If <code>targetValues</code> (observables or parameter values)
+     * are given, the prediction shall take these into account, either to determine the related profile or to 
+     * interpolate.
      * 
      * @param pipeline the pipeline name containing <code>element</code>
      * @param element the pipeline element name running <code>algorithm</code>
      * @param algorithm the name of the algorithm
      * @param observable the observable to predict
+     * @param targetValues the target values for prediction. Predict the next step if <b>null</b> or empty. May contain
+     *   observables ({@link IObservable}-Double) or parameter values (String-value)
      * @return the predicted value (<code>Double.MIN_VALUE</code> in case of no prediction)
      */
-    public static double predict(String pipeline, String element, String algorithm, IObservable observable) {
+    public static double predict(String pipeline, String element, String algorithm, IObservable observable, 
+        Map<Object, Serializable> targetValues) {
         return 0;
     }
 
