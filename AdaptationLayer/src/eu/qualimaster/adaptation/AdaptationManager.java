@@ -13,6 +13,7 @@ import eu.qualimaster.adaptation.events.CheckBeforeStartupAdaptationEvent;
 import eu.qualimaster.adaptation.events.HandlerAdaptationEvent;
 import eu.qualimaster.adaptation.events.ParameterConfigurationAdaptationEvent;
 import eu.qualimaster.adaptation.events.ReplayAdaptationEvent;
+import eu.qualimaster.adaptation.events.ShutdownAdaptationEvent;
 import eu.qualimaster.adaptation.events.StartupAdaptationEvent;
 import eu.qualimaster.adaptation.events.WrappingRequestMessageAdaptationEvent;
 import eu.qualimaster.adaptation.external.AlgorithmChangedMessage;
@@ -118,6 +119,7 @@ public class AdaptationManager {
                 }
                 break;
             case STOPPING:
+                handleEvent(new ShutdownAdaptationEvent(event.getPipeline()));
                 synchronized (activePipelines) {
                     activePipelines.remove(event.getPipeline());
                 }
