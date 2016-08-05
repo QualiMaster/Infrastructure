@@ -13,6 +13,7 @@ import eu.qualimaster.adaptation.events.CheckBeforeStartupAdaptationEvent;
 import eu.qualimaster.adaptation.events.HandlerAdaptationEvent;
 import eu.qualimaster.adaptation.events.ParameterConfigurationAdaptationEvent;
 import eu.qualimaster.adaptation.events.ReplayAdaptationEvent;
+import eu.qualimaster.adaptation.events.ResourceChangeAdaptationEvent;
 import eu.qualimaster.adaptation.events.ShutdownAdaptationEvent;
 import eu.qualimaster.adaptation.events.StartupAdaptationEvent;
 import eu.qualimaster.adaptation.events.WrappingRequestMessageAdaptationEvent;
@@ -31,6 +32,7 @@ import eu.qualimaster.adaptation.external.PipelineMessage;
 import eu.qualimaster.adaptation.external.PipelineStatusRequest;
 import eu.qualimaster.adaptation.external.PipelineStatusResponse;
 import eu.qualimaster.adaptation.external.ReplayMessage;
+import eu.qualimaster.adaptation.external.ResourceChangeRequest;
 import eu.qualimaster.adaptation.external.SwitchAlgorithmRequest;
 import eu.qualimaster.adaptation.external.UpdateCloudResourceMessage;
 import eu.qualimaster.adaptation.internal.HilariousAuthenticationProvider;
@@ -392,6 +394,32 @@ public class AdaptationManager {
         @Override
         public void handleUpdateCloudResourceMessage(UpdateCloudResourceMessage msg) {                         
             EventManager.send(new CloudResourceMonitoringEvent(msg.getName(), msg.getObservations()));     
+        }
+        
+        @Override
+        public void handleResourceChangeMessage(ResourceChangeRequest msg) {
+            ResourceChangeAdaptationEvent.Status status;
+            switch (msg.getStatus()) {
+            case ADDED:
+                status = ResourceChangeAdaptationEvent.Status.ADDED;
+                break;
+            case ENABLED:
+                status = ResourceChangeAdaptationEvent.Status.ENABLED;
+                break;
+            case DISABLED:
+                status = ResourceChangeAdaptationEvent.Status.DISABLED;
+                break;
+            case REMOVED:
+                status = ResourceChangeAdaptationEvent.Status.REMOVED;
+                break;
+            default:
+                status = null;
+                break;
+            }
+            if (null != status) {
+                handleEvent(new WrappingRequestMessageAdaptationEvent(msg, 
+                    new ResourceChangeAdaptationEvent(msg.getResource(), status)));
+            }
         }
         
     }

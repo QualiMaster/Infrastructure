@@ -20,7 +20,7 @@ package eu.qualimaster.adaptation.external;
  * 
  * @author Holger Eichelberger
  */
-public class ResourceChangeMessage extends PrivilegedMessage {
+public class ResourceChangeRequest extends RequestMessage {
 
     private static final long serialVersionUID = -9177806481463539059L;
     private String resource;
@@ -32,8 +32,10 @@ public class ResourceChangeMessage extends PrivilegedMessage {
      * @author Holger Eichelberger
      */
     public enum Status {
-        ENABLE,
-        DISABLE;
+        ENABLED,
+        DISABLED,
+        ADDED,
+        REMOVED;
     }
 
     /**
@@ -42,7 +44,7 @@ public class ResourceChangeMessage extends PrivilegedMessage {
      * @param resource the name of the resource
      * @param status the target status
      */
-    public ResourceChangeMessage(String resource, Status status) {
+    public ResourceChangeRequest(String resource, Status status) {
         this.resource = resource;
         this.status = status;
     }
@@ -64,7 +66,6 @@ public class ResourceChangeMessage extends PrivilegedMessage {
     public Status getStatus() {
         return status;
     }
-
     
     @Override
     public void dispatch(IDispatcher dispatcher) {
@@ -79,8 +80,8 @@ public class ResourceChangeMessage extends PrivilegedMessage {
     @Override
     public boolean equals(Object obj) {
         boolean equals = false;
-        if (obj instanceof ResourceChangeMessage) {
-            ResourceChangeMessage msg = (ResourceChangeMessage) obj;
+        if (obj instanceof ResourceChangeRequest) {
+            ResourceChangeRequest msg = (ResourceChangeRequest) obj;
             equals = Utils.equals(getResource(), msg.getResource());
             equals &= Utils.equals(getStatus(), msg.getStatus());
         }
@@ -89,8 +90,7 @@ public class ResourceChangeMessage extends PrivilegedMessage {
     
     @Override
     public Message toInformation() {
-        return new InformationMessage(resource, null, 
-            status == Status.ENABLE ? "enable resource" : "disable resource", null);
+        return new InformationMessage(resource, null, status.name().toLowerCase() , null);
     }
 
     @Override
@@ -98,4 +98,46 @@ public class ResourceChangeMessage extends PrivilegedMessage {
         return "ResourceChangeMessage " + resource + " " + status;
     }
 
+    @Override
+    public Message elevate() {
+        return new ElevatedResourceChangeMessage(this);
+    }
+
+    /**
+     * Implements an elevated change parameter request.
+     * 
+     * @author Holger Eichelberger
+     */
+    private static class ElevatedResourceChangeMessage extends ResourceChangeRequest {
+
+        private static final long serialVersionUID = -6686358436811866848L;
+
+        /**
+         * Creates an elevated resource change request.
+         * 
+         * @param request the original request
+         */
+        private ElevatedResourceChangeMessage(ResourceChangeRequest request) {
+            super(request.getResource(), request.getStatus());
+            setMessageId(request.getMessageId());
+            setClientId(request.getClientId());
+        }
+        
+        @Override
+        public final boolean requiresAuthentication() {
+            return true; // privileged messages require always an authenticated connection, no reduction possible
+        }
+
+        @Override
+        public final boolean passToUnauthenticatedClient() {
+            return false; // pass never
+        }
+        
+        @Override
+        public final Message elevate() {
+            return this; // we are already elevated
+        }
+
+    }
+    
 }

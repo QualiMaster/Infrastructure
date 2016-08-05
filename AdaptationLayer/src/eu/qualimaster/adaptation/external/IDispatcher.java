@@ -118,13 +118,13 @@ public interface IDispatcher {
      * 
      * @param msg the message
      */
-    public void handleConfigurationChangeMessage(ConfigurationChangeMessage msg);
+    public void handleConfigurationChangeMessage(ConfigurationChangeRequest msg);
 
     /**
      * Handles a resource change message.
      * 
      * @param msg the message
      */
-    public void handleResourceChangeMessage(ResourceChangeMessage msg);
+    public void handleResourceChangeMessage(ResourceChangeRequest msg);
     
 }
