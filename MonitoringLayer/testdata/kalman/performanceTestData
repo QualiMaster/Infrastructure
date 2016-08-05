@@ -1,0 +1,5 @@
+#
+# Lines starting with '#' are not read.
+# Each lines consists of a target value and list of doubles, which is used as measurement data.
+# All values are seperated by semicolon.
+# Example: 0.3;

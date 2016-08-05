@@ -52,7 +52,20 @@ public class AlgorithmProfilePredictor {
      * @param event the lifecycle event
      */
     public static void notifyPipelineLifecycleChange(PipelineLifecycleEvent event) {
-        System.err.println(event);
+        //System.err.println(event);
+        /*
+         * Use-Case
+         * The pipeline is STARTED, STOPPED or SWITCHED (i.e. one starts, another stops)
+         * 
+         * Implementation ideas:
+         * 1.   Get all data needed to identify the potentially Kalman-Instance(s) (starting and/or stopping)
+         * 2.   If STOP: Store the stopping Kalman-Instance
+         * 3.   If START: 
+         * 3a.  Load the (re)starting Kalman-Instance from ram/disk or 
+         * 3b.  Create a new Kalman-Instance 
+         *      (first: from scratch
+         *       later: as analogy, based on similar instances)
+         */
     }
 
     /**
@@ -64,6 +77,10 @@ public class AlgorithmProfilePredictor {
         event.getAlgorithm();
         event.getPipeline();
         event.getPipelineElement();
+        /*
+         * Use-Case
+         * A Algorithm changes, i.e. 
+         */
     }
 
     /**
