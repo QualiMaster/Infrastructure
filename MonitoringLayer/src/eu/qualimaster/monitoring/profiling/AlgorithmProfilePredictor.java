@@ -68,8 +68,10 @@ public class AlgorithmProfilePredictor {
          *  (first: from scratch 
          *  later: as analogy, based on similar instances)
          * 
-         * Assumption: Only the Pipeline changes. The Algorithm and IObsevables
-         * (incl. EXECUTOTRS and TASKS) stay the same.
+         * Assumption: Only the Pipeline changes. If the pipeline changes, also the algorithms and observables change,
+         * i.e., if stop, all are gone, if start, new ones are added. Tasks remain invariant during the lifetime
+         * of a pipeline, Executors may vary. During startup, the amount of measured observables may increase but shall
+         * stabilize then.
          */
     }
 
@@ -96,8 +98,9 @@ public class AlgorithmProfilePredictor {
          * 3b. Create a new Kalman-Instance 
          *  (first: from scratch, later: as analogy, based on similar instances)
          * 
-         * Assumption: Only the Algorithm changes. The Pipeline and IObsevables
-         * (incl. EXECUTOTRS and TASKS) stay the same.
+         * Assumption: Only the Algorithm changes. The Pipeline and IObservables
+         * (incl. EXECUTOTRS and TASKS) stay the same. After change, observables may change radically. Additional
+         * parameters may be set during algorithm change.
          */
     }
 
@@ -128,8 +131,9 @@ public class AlgorithmProfilePredictor {
          * 3b. Create a new Kalman-Instance 
          *  (first: from scratch, later: as analogy, based on similar instances)
          * 
-         * Assumption: Only EXECUTORS and/or TASKS changes. The Pipeline, Algorithm
-         * and monitored/predicted IObservabklstay the same.
+         * Assumption: Executors may change as other parameters may change. After change, observables may change 
+         * radically. During the lifetime of a Pipeline, the tasks are invariant. The Pipeline, Algorithms and 
+         * monitored/predicted IObservables stay the same.
          * 
          */
     }
