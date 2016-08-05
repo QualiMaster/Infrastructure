@@ -24,7 +24,7 @@ import java.util.Map;
  * 
  * @author Holger Eichelberger
  */
-public class ConfigurationChangeMessage extends PrivilegedMessage {
+public class ConfigurationChangeRequest extends RequestMessage {
 
     private static final long serialVersionUID = -5170883496135114187L;
     private Map<String, Serializable> values;
@@ -34,7 +34,7 @@ public class ConfigurationChangeMessage extends PrivilegedMessage {
      * 
      * @param values the new values of configuration variables ([qualified] variable name - value)
      */
-    public ConfigurationChangeMessage(Map<String, Serializable> values) {
+    public ConfigurationChangeRequest(Map<String, Serializable> values) {
         this.values = null == values ? new HashMap<String, Serializable>() : values;
     }
 
@@ -60,8 +60,8 @@ public class ConfigurationChangeMessage extends PrivilegedMessage {
     @Override
     public boolean equals(Object obj) {
         boolean equals = false;
-        if (obj instanceof ConfigurationChangeMessage) {
-            ConfigurationChangeMessage msg = (ConfigurationChangeMessage) obj;
+        if (obj instanceof ConfigurationChangeRequest) {
+            ConfigurationChangeRequest msg = (ConfigurationChangeRequest) obj;
             equals = Utils.equals(getValues(), msg.getValues());
         }
         return equals;
@@ -75,6 +75,62 @@ public class ConfigurationChangeMessage extends PrivilegedMessage {
     @Override
     public String toString() {
         return "ConfigurationChangeMessage " + values;
+    }
+    
+    /**
+     * Copies the contents of <code>map</code>.
+     * 
+     * @param map the map to be copied (may be <b>null</b>)
+     * @return the copy
+     */
+    private static Map<String, Serializable> copy(Map<String, Serializable> map) {
+        Map<String, Serializable> result = new HashMap<String, Serializable>();
+        if (null != map) {
+            result.putAll(map);
+        }
+        return result;
+    }
+
+    @Override
+    public Message elevate() {
+        return new ElevatedConfigurationChangeRequest(this);
+    }
+
+    /**
+     * Implements an elevated change parameter request.
+     * 
+     * @author Holger Eichelberger
+     */
+    private static class ElevatedConfigurationChangeRequest extends ConfigurationChangeRequest {
+
+        private static final long serialVersionUID = -6506199880938635337L;
+
+        /**
+         * Creates an elevated resource change request.
+         * 
+         * @param request the original request
+         */
+        private ElevatedConfigurationChangeRequest(ConfigurationChangeRequest request) {
+            super(copy(request.getValues()));
+            setMessageId(request.getMessageId());
+            setClientId(request.getClientId());
+        }
+        
+        @Override
+        public final boolean requiresAuthentication() {
+            return true; // privileged messages require always an authenticated connection, no reduction possible
+        }
+
+        @Override
+        public final boolean passToUnauthenticatedClient() {
+            return false; // pass never
+        }
+        
+        @Override
+        public final Message elevate() {
+            return this; // we are already elevated
+        }
+
     }
 
 }

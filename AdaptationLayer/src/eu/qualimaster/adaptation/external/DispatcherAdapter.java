@@ -84,11 +84,11 @@ public class DispatcherAdapter implements IDispatcher {
     }
 
     @Override
-    public void handleConfigurationChangeMessage(ConfigurationChangeMessage msg) {
+    public void handleConfigurationChangeMessage(ConfigurationChangeRequest msg) {
     }
 
     @Override
-    public void handleResourceChangeMessage(ResourceChangeMessage msg) {
+    public void handleResourceChangeMessage(ResourceChangeRequest msg) {
     }
 
 }

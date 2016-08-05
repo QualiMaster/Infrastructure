@@ -22,7 +22,7 @@ import eu.qualimaster.adaptation.external.AuthenticateMessage;
 import eu.qualimaster.adaptation.external.ChangeParameterRequest;
 import eu.qualimaster.adaptation.external.ClientEndpoint;
 import eu.qualimaster.adaptation.external.CloudPipelineMessage;
-import eu.qualimaster.adaptation.external.ConfigurationChangeMessage;
+import eu.qualimaster.adaptation.external.ConfigurationChangeRequest;
 import eu.qualimaster.adaptation.external.ConnectedMessage;
 import eu.qualimaster.adaptation.external.DisconnectRequest;
 import eu.qualimaster.adaptation.external.DispatcherAdapter;
@@ -44,8 +44,8 @@ import eu.qualimaster.adaptation.external.PipelineStatusRequest;
 import eu.qualimaster.adaptation.external.PipelineStatusResponse;
 import eu.qualimaster.adaptation.external.ReplayMessage;
 import eu.qualimaster.adaptation.external.RequestMessage;
-import eu.qualimaster.adaptation.external.ResourceChangeMessage;
-import eu.qualimaster.adaptation.external.ResourceChangeMessage.Status;
+import eu.qualimaster.adaptation.external.ResourceChangeRequest;
+import eu.qualimaster.adaptation.external.ResourceChangeRequest.Status;
 import eu.qualimaster.adaptation.external.SwitchAlgorithmRequest;
 import eu.qualimaster.adaptation.external.UpdateCloudResourceMessage;
 import eu.qualimaster.adaptation.external.Utils;
@@ -447,13 +447,13 @@ public class ExternalTests {
         }
 
         @Override
-        public void handleConfigurationChangeMessage(ConfigurationChangeMessage msg) {
+        public void handleConfigurationChangeMessage(ConfigurationChangeRequest msg) {
             test(msg);
             handle(msg);
         }
 
         @Override
-        public void handleResourceChangeMessage(ResourceChangeMessage msg) {
+        public void handleResourceChangeMessage(ResourceChangeRequest msg) {
             test(msg);
             handle(msg);
         }
@@ -881,19 +881,20 @@ public class ExternalTests {
      */
     @Test
     public void testConfigurationMessage() {
-        ConfigurationChangeMessage msg = new ConfigurationChangeMessage(null);
+        ConfigurationChangeRequest msg = new ConfigurationChangeRequest(null);
         Assert.assertNotNull(msg.getValues());
         Assert.assertTrue(msg.getValues().isEmpty());
 
         Map<String, Serializable> values = new HashMap<String, Serializable>();
         values.put("global", Boolean.TRUE);
-        msg = new ConfigurationChangeMessage(values);
+        msg = new ConfigurationChangeRequest(values);
         Assert.assertNotNull(msg.getValues());
         Assert.assertEquals(values, msg.getValues());
         
         msg.hashCode();
         Assert.assertFalse(msg.equals(null));
         Assert.assertTrue(msg.equals(msg));
+        Assert.assertNotNull(msg.elevate());
     }
 
     /**
@@ -901,13 +902,14 @@ public class ExternalTests {
      */
     @Test
     public void testResourceChangeMessage() {
-        ResourceChangeMessage msg = new ResourceChangeMessage("hardware", Status.ENABLE);
+        ResourceChangeRequest msg = new ResourceChangeRequest("hardware", Status.ENABLED);
         Assert.assertEquals(msg.getResource(), "hardware");
-        Assert.assertEquals(msg.getStatus(), Status.ENABLE);
+        Assert.assertEquals(msg.getStatus(), Status.ENABLED);
 
         msg.hashCode();
         Assert.assertFalse(msg.equals(null));
         Assert.assertTrue(msg.equals(msg));
+        Assert.assertNotNull(msg.elevate());
     }
     
 }
