@@ -1,4 +1,6 @@
 package eu.qualimaster.monitoring.profiling;
+import java.util.GregorianCalendar;
+
 import org.apache.commons.math3.filter.DefaultMeasurementModel;
 import org.apache.commons.math3.filter.DefaultProcessModel;
 import org.apache.commons.math3.filter.KalmanFilter;
@@ -106,6 +108,24 @@ public class Kalman {
      * zero-vector.
      */
     private RealVector controlVector = MatrixUtils.createRealVector(new double[] {0, 0, 0, 0});
+    
+    /**
+     * The point in time this Kalman-Instance was first created as UTC milliseconds.
+     */
+    private final long startTime = new GregorianCalendar().getTimeInMillis();    
+    
+    /**
+     * The point in time this Kalman-Instance was last updated as UTC milliseconds.
+     */
+    private long lastUpdated = 0;    
+    /**
+     * The latest value used to update the Kalman-Instance.
+     */
+    private double lastUpdate = Double.MIN_VALUE;
+    /**
+     * The latest prediction made for 1 second after 'lastUpdated'.
+     */
+    private double lastPrediction = Double.MIN_VALUE;
     
     /**
      * Default contructor used for a new timeline. TODO Custom constructors to
