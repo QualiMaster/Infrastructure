@@ -59,8 +59,8 @@ public class AlgorithmProfilePredictor {
          * 
          * 0. Continue only if the Pipeline did change, else: break/abort 
          * Implementation ideas: 
-         * 1. Get all data needed to identify the potentially Kalman-Instance(s) 
-         * (starting and/or stopping) 
+         * 1. Get all data needed to identify the potentially Kalman-Instance(s) (shall be collected through 
+         * parameter/algorithm chg.) (starting and/or stopping) 
          * 2. If STOP: Store the stopping Kalman-Instance 
          * 3. If START: 
          * 3a. Load the (re)starting Kalman-Instance from ram/disk or 
@@ -88,7 +88,7 @@ public class AlgorithmProfilePredictor {
          * 
          * Implementation ideas: 
          * 0. Continue only if the Algorithm did change, else: break/abort 
-         * 1. Get all data needed to identify the Kalman-Instances 
+         * 1. Get all data needed to identify the Kalman-Instances (shall be collected through parameter/algorithm chg.)
          * (old and new Algorithm) 
          * 2. Store the old Algorithms Kalman-Instance to ram/disk.
          * 3. For the new Algorithm:  
@@ -120,7 +120,7 @@ public class AlgorithmProfilePredictor {
          *  
          * Implementation ideas:
          * 0. Continue only if one or more Parameters changed, else: break/abort 
-         * 1. Get all data needed to identify the Kalman-Instances 
+         * 1. Get all data needed to identify the Kalman-Instances (shall be collected through parameter/algorithm chg.)
          * (old and new Algorithm) 
          * 2. Store the old Kalman-Instance to ram/disk.
          * 3. For the new Algorithm:  
@@ -147,15 +147,18 @@ public class AlgorithmProfilePredictor {
          * Use-Case: Creating Kalman-Instances for later use.
          * 
          * Implementation ideas: 
-         * 1. Get all data needed to identify the Kalman-Instance 
+         * 1. Get all data needed to identify the Kalman-Instance (shall be collected through parameter/algorithm chg.)
          * 2a. If START: Create a new Kalman-Instance
-         * 2b. If NEXT:  Load the already existing corresponding Kalman-Instance 
-         * 2c. If END: Store the Kalman-Instance 
+         * 2b. If NEXT:  Store the current one and create a new Kalman-Instance. In profiling, we can assume that
+         *     there is no existing one. 
+         * 2c. If END: Store the actual Kalman-Instance 
          * 3. If (START or NEXT) while (event.hasValues) updateKalman
          * 
          * Assumption: This method is (only) used for the batch-wise creation or 
          * updating of Kalman-Instances in an non-productive environment (during profiling), i.e. 
-         * the total execution time can be longer than 500ms.
+         * the total execution time can be longer than 500ms - in particular if required for profiling, 
+         * the execution time shall then be long enough (to be determined). Running instances are supposed to run
+         * over days, but for demos the execution time may be shorter.
          * 
          */
     }
@@ -184,17 +187,19 @@ public class AlgorithmProfilePredictor {
         }
         /*
          * Use-Case:
-         * A new value for a specific IObservable (e.g. latency) was observed.
+         * A new value for a specific IObservable (e.g. latency) was observed. Typically, multiple ones change
+         * at the same time!
          * 
          * 1. yValue=value; xValue=(timestamp/now)
-         * 2. Get all data needed to identify the Kalman-Instance 
+         * 2. Get all data needed to identify the Kalman-Instance (shall be collected through parameter/algorithm chg.)
          * 3. If Kalman-Instance is NOT running:  
          * 3a. Load the (re)starting Kalman-Instance from ram/disk or 
          * 3b. Create a new Kalman-Instance 
          *  (first: from scratch, later: as analogy, based on similar instances)
          * 4. Update the Kalman-Instance with (xValue, yValue)
          * 
-         * Note: One Kalman-Instance handles one specific (measured) IObservable.
+         * Note: One Kalman-Instance handles one specific (measured) IObservable for the given 
+         * parameter/executor/task/input speed space point.
          */
     }
 
@@ -224,11 +229,12 @@ public class AlgorithmProfilePredictor {
          * 1a. Get all data needed to identify the Kalman-Instance then (If None: Abort; result=Double.MIN_VALUE)
          * 1b. If Kalman-Instance is NOT running: Load it from ram/disk
          * 1c: If Kalman-Instances last Update older than 1s: 
-         *      Call Gap-Closing method (could be handled internally by Kalman)
-         * 1d. Get predicted value ann return it
+         *      Call Gap-Closing method (shall be handled internally by Kalman)
+         * 1d. Get predicted value and return it
          * OR
          * 2: If targetValues!=null:
-         * 2a. Get all data needed to identify the Kalman-Instance then 
+         * 2a. Get all data needed to identify the Kalman-Instance including targetValues "overriding" collected 
+         *      values then 
          *      If None: Search for Kalman-Instances (Analog-Kalmans) corresponding to
          *      the elements of targetValue
          * 2b: IF Analog-Kalman==null: abort, result=Double.MIN_VALUE
