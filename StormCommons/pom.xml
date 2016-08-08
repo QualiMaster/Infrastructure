@@ -143,5 +143,11 @@
          <groupId>eu.qualimaster</groupId>
          <artifactId>SpassMeterIntegration</artifactId>
        </dependency>
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>QualiMaster.Events</artifactId>
+         <type>test-jar</type>
+         <scope>provided</scope>
+       </dependency>       
   </dependencies>  
  </project>

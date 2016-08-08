@@ -8,7 +8,7 @@ import java.util.Set;
 
 import eu.qualimaster.coordination.ArtifactRegistry;
 import eu.qualimaster.coordination.CoordinationConfiguration;
-import tests.eu.qualimaster.common.TestHelper;
+import tests.eu.qualimaster.TestHelper;
 
 /**
  * Test utilities.

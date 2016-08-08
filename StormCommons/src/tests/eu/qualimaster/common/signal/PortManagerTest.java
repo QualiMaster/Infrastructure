@@ -31,7 +31,7 @@ import eu.qualimaster.common.signal.PortManager.PortAssignmentRequest;
 import eu.qualimaster.common.signal.PortManager.PortRange;
 import eu.qualimaster.common.signal.SignalException;
 import eu.qualimaster.common.signal.SignalMechanism;
-import tests.eu.qualimaster.common.TestHelper;
+import tests.eu.qualimaster.TestHelper;
 
 /**
  * Implements tests for the port manager.

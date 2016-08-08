@@ -16,20 +16,24 @@
 package eu.qualimaster.monitoring.profiling;
 
 import java.io.File;
+import java.io.Serializable;
+import java.util.Map;
 
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 import eu.qualimaster.monitoring.events.ParameterChangedMonitoringEvent;
-import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
+import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
+import eu.qualimaster.monitoring.tracing.Tracing;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.Observables;
+import eu.qualimaster.observables.ResourceUsage;
 
 /**
  * Interface to the prediction of algorithm quality properties.
  * 
- * @author Holger Eichelberger
+ * @author Christopher Voges
  */
 public class AlgorithmProfilePredictor {
     
@@ -38,7 +42,7 @@ public class AlgorithmProfilePredictor {
      */
     public static void start() {
         // will contain the data files if provided through the pipeline artifact, for tests see #useTestData(File)
-        MonitoringConfiguration.getProfileLocation(); 
+        MonitoringConfiguration.getProfileLocation();
     }
 
      /**
@@ -48,6 +52,27 @@ public class AlgorithmProfilePredictor {
      * @param event the lifecycle event
      */
     public static void notifyPipelineLifecycleChange(PipelineLifecycleEvent event) {
+        //System.err.println(event);
+        /*
+         * Use-Case The pipeline is STARTED, STOPPED or SWITCHED (i.e. one
+         * starts, another stops)
+         * 
+         * 0. Continue only if the Pipeline did change, else: break/abort 
+         * Implementation ideas: 
+         * 1. Get all data needed to identify the potentially Kalman-Instance(s) (shall be collected through 
+         * parameter/algorithm chg.) (starting and/or stopping) 
+         * 2. If STOP: Store the stopping Kalman-Instance 
+         * 3. If START: 
+         * 3a. Load the (re)starting Kalman-Instance from ram/disk or 
+         * 3b. Create a new Kalman-Instance 
+         *  (first: from scratch 
+         *  later: as analogy, based on similar instances)
+         * 
+         * Assumption: Only the Pipeline changes. If the pipeline changes, also the algorithms and observables change,
+         * i.e., if stop, all are gone, if start, new ones are added. Tasks remain invariant during the lifetime
+         * of a pipeline, Executors may vary. During startup, the amount of measured observables may increase but shall
+         * stabilize then.
+         */
     }
 
     /**
@@ -56,6 +81,27 @@ public class AlgorithmProfilePredictor {
      * @param event the algorithm changed monitoring event
      */
     public static void notifyAlgorithmChanged(AlgorithmChangedMonitoringEvent event) {
+        event.getAlgorithm();
+        event.getPipeline();
+        event.getPipelineElement();
+        /*
+         * Use-Case
+         * An Algorithm changes.
+         * 
+         * Implementation ideas: 
+         * 0. Continue only if the Algorithm did change, else: break/abort 
+         * 1. Get all data needed to identify the Kalman-Instances (shall be collected through parameter/algorithm chg.)
+         * (old and new Algorithm) 
+         * 2. Store the old Algorithms Kalman-Instance to ram/disk.
+         * 3. For the new Algorithm:  
+         * 3a. Load the (re)starting Kalman-Instance from ram/disk or 
+         * 3b. Create a new Kalman-Instance 
+         *  (first: from scratch, later: as analogy, based on similar instances)
+         * 
+         * Assumption: Only the Algorithm changes. The Pipeline and IObservables
+         * (incl. EXECUTOTRS and TASKS) stay the same. After change, observables may change radically. Additional
+         * parameters may be set during algorithm change.
+         */
     }
 
     /**
@@ -66,6 +112,30 @@ public class AlgorithmProfilePredictor {
      * @param event the parameter change event
      */
     public static void notifyParameterChangedMonitoringEvent(ParameterChangedMonitoringEvent event) {
+        event.getPipeline();
+        event.getPipelineElement();
+        event.getParameter();
+        event.getValue();
+        
+        /*
+         * Use-Case: A Kalman-Instance defining Parameter changes.
+         * Such Paramters are EXECUTORS, TASKS or the monitored/predicted IObservable (e.g. latency).
+         *  
+         * Implementation ideas:
+         * 0. Continue only if one or more Parameters changed, else: break/abort 
+         * 1. Get all data needed to identify the Kalman-Instances (shall be collected through parameter/algorithm chg.)
+         * (old and new Algorithm) 
+         * 2. Store the old Kalman-Instance to ram/disk.
+         * 3. For the new Algorithm:  
+         * 3a. Load the (re)starting Kalman-Instance from ram/disk or 
+         * 3b. Create a new Kalman-Instance 
+         *  (first: from scratch, later: as analogy, based on similar instances)
+         * 
+         * Assumption: Executors may change as other parameters may change. After change, observables may change 
+         * radically. During the lifetime of a Pipeline, the tasks are invariant. The Pipeline, Algorithms and 
+         * monitored/predicted IObservables stay the same.
+         * 
+         */
     }
 
     /**
@@ -76,37 +146,109 @@ public class AlgorithmProfilePredictor {
      * @param event the profiling event
      */
     public static void notifyAlgorithmProfilingEvent(AlgorithmProfilingEvent event) {
+        MonitoringConfiguration.getProfilingLogLocation(); 
+        /*
+         * Use-Case: Creating Kalman-Instances for later use.
+         * 
+         * Implementation ideas: 
+         * 1. Get all data needed to identify the Kalman-Instance (shall be collected through parameter/algorithm chg.)
+         * 2a. If START: Create a new Kalman-Instance
+         * 2b. If NEXT:  Store the current one and create a new Kalman-Instance. In profiling, we can assume that
+         *     there is no existing one. 
+         * 2c. If END: Store the actual Kalman-Instance 
+         * 3. If (START or NEXT) while (event.hasValues) updateKalman
+         * 
+         * Assumption: This method is (only) used for the batch-wise creation or 
+         * updating of Kalman-Instances in an non-productive environment (during profiling), i.e. 
+         * the total execution time can be longer than 500ms - in particular if required for profiling, 
+         * the execution time shall then be long enough (to be determined). Running instances are supposed to run
+         * over days, but for demos the execution time may be shorter.
+         * 
+         */
     }
     
     /**
      * Called regularly to update the prediction model with the most recently monitored values.
      * 
      * @param pipeline the pipeline name containing <code>element</code>
-     * @param element the pipeline element name running <code>algorith,</code>
-     * @param algorithm the actual algorithm implement system part (copy)
+     * @param element the pipeline element name running <code>algorithm</code>
+     * @param family the family holding the algorithm as current node (copy). Family measures shall correspond to the 
+     * algorithm measures, even if the algorithm is distribured and consists of different nodes
      */
-    public static void update(String pipeline, String element, NodeImplementationSystemPart algorithm) {
+    public static void update(String pipeline, String element, PipelineNodeSystemPart family) {
         @SuppressWarnings("unused")
-        String algorithmName = algorithm.getName();
+        String algorithmName = family.getCurrent().getName(); // current may be null but shall not be passed
+        // access to the predecessor nodes, e.g., for input/s
+        Tracing.getPredecessors(family);
         for (IObservable obs : Observables.OBSERVABLES) {
-            if (algorithm.hasValue(obs)) {
+            if (family.hasValue(obs)) {
                 // TODO update Kalman
+                family.getObservedValue(ResourceUsage.EXECUTORS);
+                family.getObservedValue(ResourceUsage.TASKS);
+                // Evtl noch Inputs/s fuer den Parameterraum
                 dummy();
             }
         }
+        /*
+         * Use-Case:
+         * A new value for a specific IObservable (e.g. latency) was observed. Typically, multiple ones change
+         * at the same time!
+         * 
+         * 1. yValue=value; xValue=(timestamp/now)
+         * 2. Get all data needed to identify the Kalman-Instance (shall be collected through parameter/algorithm chg.)
+         * 3. If Kalman-Instance is NOT running:  
+         * 3a. Load the (re)starting Kalman-Instance from ram/disk or 
+         * 3b. Create a new Kalman-Instance 
+         *  (first: from scratch, later: as analogy, based on similar instances)
+         * 4. Update the Kalman-Instance with (xValue, yValue)
+         * 
+         * Note: One Kalman-Instance handles one specific (measured) IObservable for the given 
+         * parameter/executor/task/input speed space point.
+         */
     }
 
     /**
-     * Predict the next value for the given algorithm.
+     * Predict the next value for the given algorithm. If <code>targetValues</code> (observables or parameter values)
+     * are given, the prediction shall take these into account, either to determine the related profile or to 
+     * interpolate.
      * 
      * @param pipeline the pipeline name containing <code>element</code>
      * @param element the pipeline element name running <code>algorithm</code>
      * @param algorithm the name of the algorithm
      * @param observable the observable to predict
+     * @param targetValues the target values for prediction. Predict the next step if <b>null</b> or empty. May contain
+     *   observables ({@link IObservable}-Double) or parameter values (String-value)
      * @return the predicted value (<code>Double.MIN_VALUE</code> in case of no prediction)
      */
-    public static double predict(String pipeline, String element, String algorithm, IObservable observable) {
+    public static double predict(String pipeline, String element, String algorithm, IObservable observable, 
+        Map<Object, Serializable> targetValues) {
         return 0;
+        /*
+         * Use-Case:
+         * Get the prediction for a specific IObservable 
+         * one time-step (second) into the future.
+         * 
+         * Implementation idea:
+         * 1. If targetValues==null:
+         * 1a. Get all data needed to identify the Kalman-Instance then (If None: Abort; result=Double.MIN_VALUE)
+         * 1b. If Kalman-Instance is NOT running: Load it from ram/disk
+         * 1c: If Kalman-Instances last Update older than 1s: 
+         *      Call Gap-Closing method (shall be handled internally by Kalman)
+         * 1d. Get predicted value and return it
+         * OR
+         * 2: If targetValues!=null:
+         * 2a. Get all data needed to identify the Kalman-Instance including targetValues "overriding" collected 
+         *      values then 
+         *      If None: Search for Kalman-Instances (Analog-Kalmans) corresponding to
+         *      the elements of targetValue
+         * 2b: IF Analog-Kalman==null: abort, result=Double.MIN_VALUE
+         * 2c: ELSE
+         *      Do 1a-1d and for all Instances in Analog-Kalman and interpolate the result.
+         * 2d. return the interpolated result
+         * 
+         * 
+         * Note: The second use case (2) is likely to take longer/too long.
+         */
     }
 
     /**

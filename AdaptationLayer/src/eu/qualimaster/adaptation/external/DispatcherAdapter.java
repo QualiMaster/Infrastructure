@@ -83,4 +83,12 @@ public class DispatcherAdapter implements IDispatcher {
     public void handleReplayMessage(ReplayMessage msg) {
     }
 
+    @Override
+    public void handleConfigurationChangeMessage(ConfigurationChangeRequest msg) {
+    }
+
+    @Override
+    public void handleResourceChangeMessage(ResourceChangeRequest msg) {
+    }
+
 }

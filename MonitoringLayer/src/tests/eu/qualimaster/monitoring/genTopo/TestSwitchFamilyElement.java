@@ -50,11 +50,11 @@ public class TestSwitchFamilyElement extends SendingBolt {
     @Override
     protected void prepareShutdown(ShutdownSignal signal) {
         super.prepareShutdown(signal);
-        send(new ShutdownSignal(getNamespace(), INTERMEDIARY));
-        send(new ShutdownSignal(getNamespace(), MAPPER));
-        send(new ShutdownSignal(getNamespace(), PROCESSOR));
-        send(new ShutdownSignal(getNamespace(), OUT_INTERMEDIARY));
-        send(new ShutdownSignal(getNamespace(), OUT_RECEIVER));
+        send(new ShutdownSignal(getPipeline(), INTERMEDIARY));
+        send(new ShutdownSignal(getPipeline(), MAPPER));
+        send(new ShutdownSignal(getPipeline(), PROCESSOR));
+        send(new ShutdownSignal(getPipeline(), OUT_INTERMEDIARY));
+        send(new ShutdownSignal(getPipeline(), OUT_RECEIVER));
     }
 
 }

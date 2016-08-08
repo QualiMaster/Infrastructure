@@ -294,7 +294,7 @@ public class Tracing {
                 if (null != trace) {
                     trace.traceAlgorithm(node, current, parameters);
                 }
-                AlgorithmProfilePredictor.update(pipeline.getName(), node.getName(), current);
+                AlgorithmProfilePredictor.update(pipeline.getName(), node.getName(), node);
             }
         }
     }

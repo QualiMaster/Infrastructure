@@ -112,5 +112,19 @@ public interface IDispatcher {
      * @param msg the message
      */
     public void handleReplayMessage(ReplayMessage msg);
+
+    /**
+     * Handles a configuration change message.
+     * 
+     * @param msg the message
+     */
+    public void handleConfigurationChangeMessage(ConfigurationChangeRequest msg);
+
+    /**
+     * Handles a resource change message.
+     * 
+     * @param msg the message
+     */
+    public void handleResourceChangeMessage(ResourceChangeRequest msg);
     
 }
