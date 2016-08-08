@@ -1,0 +1,18 @@
+<assembly>
+    <id>settings</id>
+    <!-- Generates a zip package containing the xml setting files for the stakeholder application -->
+    <formats>
+        <format>zip</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+ 
+    <fileSets>
+    <fileSet>
+      <directory>${project.basedir}/settings</directory>
+      <outputDirectory>/</outputDirectory>
+      <includes>
+        <include>*.*</include>
+      </includes>
+    </fileSet>
+    </fileSets>    
+</assembly>
