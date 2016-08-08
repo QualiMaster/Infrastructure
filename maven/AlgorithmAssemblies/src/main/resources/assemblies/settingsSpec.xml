@@ -1,0 +1,18 @@
+<assembly>
+    <id>settingsSpec</id>
+    <!-- Generates a zip package containing the xml setting files for the stakeholder application -->
+    <formats>
+        <format>zip</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+ 
+    <fileSets>
+    <fileSet>
+      <directory>${basedir}/src/main/java/eu/qualimaster/xmlFiles</directory>
+      <outputDirectory>/</outputDirectory>
+      <includes>
+        <include>*.*</include>
+      </includes>
+    </fileSet>
+    </fileSets>    
+</assembly>
