@@ -257,7 +257,7 @@ return running;
 	 * 
 	 * @param event the event
 	 */
-	public void notifySourceVolumeMonitoringEvent(SourceVolumeMonitoringEvent event) {
+	public static void notifySourceVolumeMonitoringEvent(SourceVolumeMonitoringEvent event) {
 	    // called when aggregated source volume information is available. The frequency is by default 60000ms
 	    // but can be defined in the infrastructure configuration via QM-IConf. May be delayed if the source does 
 	    // not emit data. No data is aggregated in the source if the getAggregationKey(.) method returns null.
@@ -266,30 +266,30 @@ return running;
 		//		handle the inclusion of a new source (here by checking the source map or with the dedicated event)
 		//		even if the source or model is missing for a term, the current value should be stored anyway for later training
 		
-		// handle the prediction for each incoming source
-		for(String term : event.getObservations().keySet())
-		{
-			Source s = monitoredSources.get(term);
-			
-			Prediction model = this.models.get(s.getName());
-			
-			// observe the current volume of the source and update the recent values within the model
-			// TODO clarify whether the getCurrentData method will return only the volume or also the timestamp
-			Long currVolume = getCurrentData(s.getName());
-			model.updateRecentVolumes(null, currVolume);
-			
-			// predict the volume within the next time step
-			double prediction = model.predict();
-			
-			// check whether the predicted volume is critical and, if so, raise an alarm to the adaptation layer
-			evaluatePrediction(s, prediction);
-			
-			// store the current observation in the historical data of the current source
-			storeInHistoricalData(s.getName(), null, currVolume);
-		}
-		
-		// store observed volumes for the blind models (to have historical data available in future)
-		// TODO consider to move this within the source component: the aggregated volume is always stored
+//		// handle the prediction for each incoming source
+//		for(String term : event.getObservations().keySet())
+//		{
+//			Source s = monitoredSources.get(term);
+//			
+//			Prediction model = this.models.get(s.getName());
+//			
+//			// observe the current volume of the source and update the recent values within the model
+//			// TODO clarify whether the getCurrentData method will return only the volume or also the timestamp
+//			Long currVolume = getCurrentData(s.getName());
+//			model.updateRecentVolumes(null, currVolume);
+//			
+//			// predict the volume within the next time step
+//			double prediction = model.predict();
+//			
+//			// check whether the predicted volume is critical and, if so, raise an alarm to the adaptation layer
+//			evaluatePrediction(s, prediction);
+//			
+//			// store the current observation in the historical data of the current source
+//			storeInHistoricalData(s.getName(), null, currVolume);
+//		}
+//		
+//		// store observed volumes for the blind models (to have historical data available in future)
+//		// TODO consider to move this within the source component: the aggregated volume is always stored
 //		for(String blindSource : this.blindModels.keySet())
 //		{
 //			if(!this.models.containsKey(blindSource))
