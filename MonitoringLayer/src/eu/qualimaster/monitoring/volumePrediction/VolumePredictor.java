@@ -1,8 +1,8 @@
 package eu.qualimaster.monitoring.volumePrediction;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import eu.qualimaster.dataManagement.events.HistoricalDataProviderRegistrationEvent;
 import eu.qualimaster.events.EventHandler;
@@ -17,11 +17,11 @@ import eu.qualimaster.monitoring.events.SourceVolumeMonitoringEvent;
  */
 public class VolumePredictor {
 	
-	/** Set of sources (either stocks or hashtags) monitored by the volume prediction */
+	/** Map of sources (either stocks or hashtags) monitored by the volume prediction */
 	/** Each source contains a thresholds for identifying too high volumes and raising alarms to the adaptation layer
 	 *  TODO Decide how to identify these thresholds (e.g. wrt to the recent values? wrt to the current load of the infrastructure?)
 	 * */
-	private HashSet<Source> monitoredSources;
+	private HashMap<String,Source> monitoredSources;
 	
 	/** Map containing the names of the sources (either stocks or hashtags) for which a prediction model is available (along with the corresponding model) */
 	private HashMap<String,Prediction> models;
@@ -45,12 +45,12 @@ public class VolumePredictor {
 	 */
 	public VolumePredictor(ArrayList<Source> monitoredSources)
 	{
-		this.monitoredSources = new HashSet<>(monitoredSources);
+		initializeSources(monitoredSources);
 		this.running = false;
 		initializeModels();
 	}
 	
-	public void runPrediction()
+	private void runPrediction()
 	{
 		// set "running" to true to start the component. It can be stopped by setting "running" to false
 		this.running = true;
@@ -59,7 +59,7 @@ public class VolumePredictor {
 		while(this.running)
 		{
 			Long startTime = System.nanoTime();
-			for(Source s : this.monitoredSources)
+			for(Source s : this.monitoredSources.values())
 			{
 				Prediction model = this.models.get(s.getName());
 				
@@ -134,6 +134,12 @@ public class VolumePredictor {
 		initializeModels();
 	}
 	
+	private void initializeSources(ArrayList<Source> sources)
+	{
+		this.monitoredSources = new HashMap<String,Source>();
+		for(Source s : sources) this.monitoredSources.put(s.getName(), s);
+	}
+	
 	private void evaluatePrediction(Source s, double prediction)
 	{
 		// TODO clarify the policy to raise alarms. At the moment is a simple comparison with the threshold
@@ -148,7 +154,7 @@ public class VolumePredictor {
 	private void initializeModels()
 	{
 		// models
-		for(Source source : this.monitoredSources)
+		for(Source source : this.monitoredSources.values())
 		{
 			Prediction model = new Prediction(source.getName(), getHistoricalData(source.getName(), NUM_MONTHS));
 			this.models.put(source.getName(), model);
@@ -190,8 +196,8 @@ public class VolumePredictor {
 	/**
 	 * @return the monitoredSources
 	 */
-	public HashSet<Source> getMonitoredSources() {
-		return this.monitoredSources;
+	public Collection<Source> getMonitoredSources() {
+		return this.monitoredSources.values();
 	}
 	
 	/**
@@ -212,7 +218,7 @@ public class VolumePredictor {
 	{
 		Prediction model = new Prediction(source.getName(), getHistoricalData(source.getName(), NUM_MONTHS));
 		this.models.put(source.getName(), model);
-		this.monitoredSources.add(source);
+		this.monitoredSources.put(source.getName(), source);
 	}
 
 	/**
@@ -251,10 +257,47 @@ return running;
 	 * 
 	 * @param event the event
 	 */
-	public static void notifySourceVolumeMonitoringEvent(SourceVolumeMonitoringEvent event) {
-	    // TODO called when aggregated source volume information is available. The frequency is by default 60000ms
+	public void notifySourceVolumeMonitoringEvent(SourceVolumeMonitoringEvent event) {
+	    // called when aggregated source volume information is available. The frequency is by default 60000ms
 	    // but can be defined in the infrastructure configuration via QM-IConf. May be delayed if the source does 
 	    // not emit data. No data is aggregated in the source if the getAggregationKey(.) method returns null.
+		
+		// TODO handle exceptions like: source map does not contain an input term; the model for a source is not available (null);
+		//		handle the inclusion of a new source (here by checking the source map or with the dedicated event)
+		//		even if the source or model is missing for a term, the current value should be stored anyway for later training
+		
+		// handle the prediction for each incoming source
+		for(String term : event.getObservations().keySet())
+		{
+			Source s = monitoredSources.get(term);
+			
+			Prediction model = this.models.get(s.getName());
+			
+			// observe the current volume of the source and update the recent values within the model
+			// TODO clarify whether the getCurrentData method will return only the volume or also the timestamp
+			Long currVolume = getCurrentData(s.getName());
+			model.updateRecentVolumes(null, currVolume);
+			
+			// predict the volume within the next time step
+			double prediction = model.predict();
+			
+			// check whether the predicted volume is critical and, if so, raise an alarm to the adaptation layer
+			evaluatePrediction(s, prediction);
+			
+			// store the current observation in the historical data of the current source
+			storeInHistoricalData(s.getName(), null, currVolume);
+		}
+		
+		// store observed volumes for the blind models (to have historical data available in future)
+		// TODO consider to move this within the source component: the aggregated volume is always stored
+//		for(String blindSource : this.blindModels.keySet())
+//		{
+//			if(!this.models.containsKey(blindSource))
+//			{
+//				Long currVolume = getCurrentData(blindSource);
+//				storeInHistoricalData(blindSource, null, currVolume);
+//			}
+//		}
 	}
 	    
 	/**
