@@ -28,7 +28,7 @@ import tests.eu.qualimaster.common.signal.PortManagerTest;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({tests.eu.qualimaster.common.signal.AllTests.class, 
     RecordingTopologyBuilderTest.class, OutputItemsTest.class, HardwareConnectionTest.class, 
-    AlgorithmUtilsTest.class, KryoTupleSerializerTest.class, TupleReceiverServerTest.class, 
+    AlgorithmUtilsTest.class, KryoTupleSerializerTest.class, TupleSenderAndReceiverTest.class, 
     PortManagerTest.class })
 public class AllTests {
 

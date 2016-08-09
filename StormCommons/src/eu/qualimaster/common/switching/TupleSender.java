@@ -64,4 +64,22 @@ public class TupleSender {
         return null != socket;
     }
     
+    /**
+     * Stops the sender.
+     */
+    public void stop() {
+        System.out.println("Stopping the sender...");
+        if (null != output) {
+            output.close();
+        }
+        if ( null != socket) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println("Stopped the sender...");
+    }
+    
 }

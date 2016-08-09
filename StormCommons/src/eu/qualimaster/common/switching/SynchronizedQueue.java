@@ -63,4 +63,12 @@ public class SynchronizedQueue<T> {
             queue.notifyAll();
         }
     }
+    
+    /**
+     * Returns the current size of the queue.
+     * @return the current size
+     */
+    public int currentSize() {
+        return queue.size();
+    }
 }
