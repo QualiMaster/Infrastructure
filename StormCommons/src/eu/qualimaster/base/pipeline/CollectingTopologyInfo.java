@@ -50,7 +50,10 @@ public class CollectingTopologyInfo {
      */
     public static void openThriftConnection(String nimbusHost, int thriftPort) {
         connection = new ThriftConnection(nimbusHost, thriftPort);
-        connection.open();
+        if (connection != null) {
+            logger.info("Opening the thrift connection...");
+            connection.open();
+        }
     }
 
     /**
@@ -72,17 +75,19 @@ public class CollectingTopologyInfo {
         ClusterSummary summary;
         try {
             logger.info("The thrift connection is " + connection);
-            summary = connection.getClusterSummary();
-            List<TopologySummary> topologies = summary.get_topologies();
-            for (int t = 0; t < topologies.size(); t++) {
-                TopologySummary topologySummary = topologies.get(t);
-                if (pipelineName.equals(topologySummary.get_name())) {
-                    try {
-                        logger.info("Obtaining the TopologyInfo for the pipeine: " + pipelineName);
-                        result = connection.getTopologyInfo(topologySummary
-                            .get_id());
-                        logger.info("the TopologyInfo is " + result);
-                    } catch (NotAliveException | TException e) {
+            if (connection != null) {
+                summary = connection.getClusterSummary();
+                List<TopologySummary> topologies = summary.get_topologies();
+                for (int t = 0; t < topologies.size(); t++) {
+                    TopologySummary topologySummary = topologies.get(t);
+                    if (pipelineName.equals(topologySummary.get_name())) {
+                        try {
+                            logger.info("Obtaining the TopologyInfo for the pipeine: " + pipelineName);
+                            result = connection.getTopologyInfo(topologySummary
+                                .get_id());
+                            logger.info("the TopologyInfo is " + result);
+                        } catch (NotAliveException | TException e) {
+                        }
                     }
                 }
             }
