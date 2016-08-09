@@ -14,5 +14,21 @@
         <include>*.*</include>
       </includes>
     </fileSet>
-    </fileSets>    
+    </fileSets>  
+    <moduleSets>
+        <moduleSet>
+            <includeSubModules>false</includeSubModules>
+            <sources>
+                <fileSets>
+			    <fileSet>
+			      <directory>${project.basedir}/settings</directory>
+			      <outputDirectory>/</outputDirectory>
+			      <includes>
+			        <include>*.*</include>
+			      </includes>
+			    </fileSet>
+			    </fileSets> 
+            </sources>
+        </moduleSet>
+    </moduleSets>  
 </assembly>
