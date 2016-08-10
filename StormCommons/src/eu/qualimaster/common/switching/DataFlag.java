@@ -10,6 +10,10 @@ import eu.qualimaster.base.algorithm.ISwitchTuple;
  */
 public class DataFlag {
     /**
+     * The length of the sent flag.
+     */
+    public static final int FLAG_BYTES_LEN = 8;
+    /**
      * The flag indicating the {@link ISwitchTuple} data type.
      */
     public static final String SWITCH_TUPLE_FLAG = "swiTuple";

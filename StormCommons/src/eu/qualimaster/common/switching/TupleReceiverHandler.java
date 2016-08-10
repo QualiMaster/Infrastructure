@@ -20,7 +20,6 @@ import eu.qualimaster.base.serializer.ISwitchTupleSerializer;
  */
 public class TupleReceiverHandler implements ITupleReceiverHandler {
     private static final Logger LOGGER = Logger.getLogger(TupleReceiverHandler.class);
-    private static final int STRING_BYTES_LEN = 8;
     private Socket socket;
     private InputStream in; 
     private Input kryoInput = null;
@@ -55,7 +54,7 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
                     int len = kryoInput.readInt();
                     byte[] ser = new byte[len];
                     kryoInput.readBytes(ser);
-                    if (len == STRING_BYTES_LEN) { //switch the tuple serializer
+                    if (len == DataFlag.FLAG_BYTES_LEN) { //switch the tuple serializer
                         switchMode(new String(ser));   
                         LOGGER.info("Received flag: " + new String(ser));
                     } else {
