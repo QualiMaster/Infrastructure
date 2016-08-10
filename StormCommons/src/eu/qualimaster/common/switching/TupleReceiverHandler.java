@@ -28,8 +28,8 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
     private ISwitchTupleSerializer swiSer = null;
     private SynchronizedQueue<IGeneralTuple> syn = null; //general queue
     private SynchronizedQueue<IGeneralTuple> tmpSyn = null; //tmp queue
-    private boolean general = true; //indicates the type of received tuples, default is general tuple
-    private boolean temporary = false; //indicates the queue to be used, default is the general queue
+    private boolean isGeneralTuple = true; //indicates the type of received tuples, default is general tuple
+    private boolean useTemporaryQueue = false; //indicates the queue to be used, default is the general queue
     /**
      * Create a handler receiving the general tuples.
      * @param genSer the serializer for the general tuple
@@ -105,20 +105,20 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
     private void switchMode(String mode) {
         switch(mode) { 
         case DataFlag.GENERAL_TUPLE_FLAG: 
-            general = true;
+            isGeneralTuple = true;
             break;
         case DataFlag.SWITCH_TUPLE_FLAG:
-            general = false;
+            isGeneralTuple = false;
             break;
         case DataFlag.GENERAL_QUEUE_FLAG:
-            temporary = false;
+            useTemporaryQueue = false;
             break;
         case DataFlag.TEMPORARY_QUEUE_FLAG:
-            temporary = true;
+            useTemporaryQueue = true;
             break;
         default:
-            general = true;
-            temporary = false;
+            isGeneralTuple = true;
+            useTemporaryQueue = false;
             break;
         }
     }
@@ -130,14 +130,14 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
     private void enqueue(byte[] ser) {
         IGeneralTuple tuple;
         //determining the received tuple type
-        if (general) { 
+        if (isGeneralTuple) { 
             tuple = genSer.deserialize(ser); 
         } else {
             tuple = swiSer.deserialize(ser);
         }
         if (tuple != null) {
             //determining the queue to be used
-            if (temporary) { 
+            if (useTemporaryQueue) { 
                 tmpSyn.produce(tuple);
             } else {
                 syn.produce(tuple);
