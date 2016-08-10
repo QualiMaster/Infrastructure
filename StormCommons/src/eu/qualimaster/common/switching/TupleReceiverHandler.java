@@ -20,28 +20,32 @@ import eu.qualimaster.base.serializer.ISwitchTupleSerializer;
  */
 public class TupleReceiverHandler implements ITupleReceiverHandler {
     private static final Logger LOGGER = Logger.getLogger(TupleReceiverHandler.class);
-    private static final int STRING_BYTES_LEN = 6;
+    private static final int STRING_BYTES_LEN = 8;
     private Socket socket;
     private InputStream in; 
     private Input kryoInput = null;
     private boolean cont = true;
     private IGeneralTupleSerializer genSer = null;
     private ISwitchTupleSerializer swiSer = null;
-    private SynchronizedQueue<IGeneralTuple> syn = null;
-    private boolean general = true;
+    private SynchronizedQueue<IGeneralTuple> syn = null; //general queue
+    private SynchronizedQueue<IGeneralTuple> tmpSyn = null; //tmp queue
+    private boolean general = true; //indicates the type of received tuples, default is general tuple
+    private boolean temporary = false; //indicates the queue to be used, default is the general queue
     /**
      * Create a handler receiving the general tuples.
      * @param genSer the serializer for the general tuple
      * @param swiSer the serializer for the switch tuple
-     * @param syn the synchronized queue for storing tuples
+     * @param syn the general queue for storing tuples
+     * @param tmpSyn the temporary queue for storing tuples
      * @throws IOException the IO exception
      */
     public TupleReceiverHandler(IGeneralTupleSerializer genSer, ISwitchTupleSerializer swiSer, 
-            SynchronizedQueue<IGeneralTuple> syn) {
+            SynchronizedQueue<IGeneralTuple> syn, SynchronizedQueue<IGeneralTuple> tmpSyn) {
         this.genSer = genSer;
         this.swiSer = swiSer;
         this.syn = syn;
-    }
+        this.tmpSyn = tmpSyn;
+    }    
     
     @Override
     public void run() {
@@ -52,7 +56,8 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
                     byte[] ser = new byte[len];
                     kryoInput.readBytes(ser);
                     if (len == STRING_BYTES_LEN) { //switch the tuple serializer
-                        switchMode(new String(ser));
+                        switchMode(new String(ser));   
+                        LOGGER.info("Received flag: " + new String(ser));
                     } else {
                         enqueue(ser); //enqueue the received tuple
                     }
@@ -95,14 +100,27 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
     }
     
     /**
-     * Switches the tuple mode based on the received flag.
+     * Switches the receiving mode based on the received flag.
      * @param mode the received flag
      */
     private void switchMode(String mode) {
-        if ("switch".equals(mode)) {
-            general = false;
-        } else if ("general".equals(mode)) {
+        switch(mode) { 
+        case "genTuple": 
             general = true;
+            break;
+        case "swiTuple":
+            general = false;
+            break;
+        case "genQueue":
+            temporary = false;
+            break;
+        case "tmpQueue":
+            temporary = true;
+            break;
+        default:
+            general = true;
+            temporary = false;
+            break;
         }
     }
     
@@ -112,13 +130,19 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
      */
     private void enqueue(byte[] ser) {
         IGeneralTuple tuple;
-        if (general) {
+        //determining the received tuple type
+        if (general) { 
             tuple = genSer.deserialize(ser); 
         } else {
             tuple = swiSer.deserialize(ser);
         }
         if (tuple != null) {
-            syn.produce(tuple);
+            //determining the queue to be used
+            if (temporary) { 
+                tmpSyn.produce(tuple);
+            } else {
+                syn.produce(tuple);
+            }
         }
     }     
     

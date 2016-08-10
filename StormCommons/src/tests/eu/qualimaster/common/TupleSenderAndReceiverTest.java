@@ -1,22 +1,14 @@
 package tests.eu.qualimaster.common;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.esotericsoftware.kryo.KryoException;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import backtype.storm.Config;
 import eu.qualimaster.base.algorithm.GeneralTuple;
@@ -27,7 +19,6 @@ import eu.qualimaster.base.serializer.IGeneralTupleSerializer;
 import eu.qualimaster.base.serializer.ISwitchTupleSerializer;
 import eu.qualimaster.base.serializer.KryoGeneralTupleSerializer;
 import eu.qualimaster.base.serializer.KryoSwitchTupleSerializer;
-import eu.qualimaster.common.switching.ITupleReceiverHandler;
 import eu.qualimaster.common.switching.SynchronizedQueue;
 import eu.qualimaster.common.switching.TupleReceiverHandler;
 import eu.qualimaster.common.switching.TupleReceiverServer;
@@ -42,6 +33,9 @@ import tests.eu.qualimaster.common.KryoTupleSerializerTest.IDataItem;
  */
 public class TupleSenderAndReceiverTest {
     private transient SynchronizedQueue<IGeneralTuple> syn = null;
+    private transient SynchronizedQueue<IGeneralTuple> tmpSyn = null;
+    private transient Queue<IGeneralTuple> queue = null;
+    private transient Queue<IGeneralTuple> tmpQueue = null;
  
     /**
     * A thread consumes tuples.
@@ -50,9 +44,17 @@ public class TupleSenderAndReceiverTest {
         @Override
         public void run() {
             while (true) {
-                IGeneralTuple tuple = syn.consume();
-                //assert the received data
-                assertReceivedData(tuple);
+                IGeneralTuple tuple;
+                if (syn.currentSize() > 0) {
+                    tuple = syn.consume();
+                    //assert the received data
+                    assertReceivedData(tuple);
+                }
+                if (tmpSyn.currentSize() > 0) {
+                    tuple = tmpSyn.consume();
+                    //assert the received data
+                    assertReceivedData(tuple);
+                }
             }
         }
     }
@@ -76,12 +78,13 @@ public class TupleSenderAndReceiverTest {
         ISwitchTupleSerializer swiSer = new KryoSwitchTupleSerializer(conf);
         
         //queue to store the tuple
-        Queue<IGeneralTuple> queue = new ConcurrentLinkedQueue<IGeneralTuple>();
-        syn = new SynchronizedQueue<IGeneralTuple>(queue, 20); 
+        queue = new ConcurrentLinkedQueue<IGeneralTuple>();
+        tmpQueue = new ConcurrentLinkedQueue<IGeneralTuple>();
+        syn = new SynchronizedQueue<IGeneralTuple>(queue, 20);
+        tmpSyn = new SynchronizedQueue<IGeneralTuple>(tmpQueue, 5);
         
         //creates the handler for receiving tuples, including general and switch tuple
-        TupleReceiverHandler handler = new TupleReceiverHandler(genSer, swiSer, syn);
-        
+        TupleReceiverHandler handler = new TupleReceiverHandler(genSer, swiSer, syn, tmpSyn);        
         TupleReceiverServer server = new TupleReceiverServer(handler, port);
         server.start();
         System.out.println("Server is started...");
@@ -91,36 +94,36 @@ public class TupleSenderAndReceiverTest {
         Thread consumeTupleThread = new Thread(new ConsumeTuple());
         consumeTupleThread.start();
         
-        int count = 10; //sends 10 general tuples
-        while (count > 0) {           
-            //create a general tuple
-            IGeneralTuple generalTuple = createGeneralTuple();
-            byte[] byteSer = genSer.serialize(generalTuple);
-            
-            client.send(byteSer);
-            count--;            
+        //send 10 general tuples
+        sendGeneralTuple(client, genSer, 10);
+        
+        //send a switch flag
+        String flag = "swiTuple";
+        client.send(flag.getBytes());
+        //send 10 switch tuples
+        sendSwitchTuple(client, swiSer, 10);
+       
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e1) {
+            e1.printStackTrace();
         }
         
         //send a switch flag
-        String flag = "switch";
+        flag = "swiTuple";
         client.send(flag.getBytes());
-        
-        count = 10; //sends 10 switch tuples
-        while (count > 0) {
-            //create a switch tuple
-            ISwitchTuple switchTuple = createSwitchTuple();
-            byte[] byteSer = swiSer.serialize(switchTuple);
-            
-            client.send(byteSer);
-            count--;            
-        }
+        //send a switch flag
+        flag = "tmpQueue";
+        client.send(flag.getBytes());
+        //send 10 switch tuples
+        sendSwitchTuple(client, swiSer, 10);
         
         try {
             Thread.sleep(100);
         } catch (InterruptedException e1) {
             e1.printStackTrace();
         }
-
+        
         client.stop();
         
         try {
@@ -130,6 +133,38 @@ public class TupleSenderAndReceiverTest {
             e.printStackTrace();
         }
       
+    }
+    /**
+     * Sends general tuples based on the given amount.
+     * @param client the client to send the tuple
+     * @param genSer the serializer for the general tuple
+     * @param amount the amount of tuple to send
+     */
+    public void sendGeneralTuple(TupleSender client, IGeneralTupleSerializer genSer, int amount) {
+        while (amount > 0) {
+            //create a switch tuple
+            IGeneralTuple generalTuple = createGeneralTuple();
+            byte[] byteSer = genSer.serialize(generalTuple);
+            
+            client.send(byteSer);
+            amount--;            
+        }
+    }
+    /**
+     * Sends switch tuples based on the given amount.
+     * @param client the client to send the tuple
+     * @param swiSer the serializer for the switch tuple
+     * @param amount the amount of tuple to send
+     */
+    public void sendSwitchTuple(TupleSender client, ISwitchTupleSerializer swiSer, int amount) {
+        while (amount > 0) {
+            //create a switch tuple
+            ISwitchTuple switchTuple = createSwitchTuple();
+            byte[] byteSer = swiSer.serialize(switchTuple);
+            
+            client.send(byteSer);
+            amount--;            
+        }
     }
     /**
      * Creates a general tuple.
