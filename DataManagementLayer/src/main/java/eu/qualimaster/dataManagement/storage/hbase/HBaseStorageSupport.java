@@ -3,6 +3,8 @@ package eu.qualimaster.dataManagement.storage.hbase;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import org.apache.hadoop.conf.Configuration;
@@ -11,6 +13,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import eu.qualimaster.dataManagement.storage.support.IStorageSupport;
@@ -147,6 +150,27 @@ public class HBaseStorageSupport extends HBaseStorageTable implements IStorageSu
 			e.printStackTrace();
 		}
 		return null;
+	}
+	
+	/**
+	 * Gets the whole set of keys in a table
+	 * @return The list of keys (byte[]) as objects
+	 */
+	public List<Object> getKeys() {
+		List<Object> keys = new ArrayList<Object>();
+		try {
+			Scan scan = new Scan();
+			scan.setFilter(new FirstKeyOnlyFilter());
+			ResultScanner scanner = table.getScanner(scan);
+			for (Result rr : scanner) {
+			  byte[] key = rr.getRow();
+			  keys.add(key);
+			}
+			return keys;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return keys;
+		}
 	}
 
 	/**
