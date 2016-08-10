@@ -31,12 +31,13 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
     private boolean isGeneralTuple = true; //indicates the type of received tuples, default is general tuple
     private boolean useTemporaryQueue = false; //indicates the queue to be used, default is the general queue
     /**
-     * Create a handler receiving the general tuples.
-     * @param genSer the serializer for the general tuple
-     * @param swiSer the serializer for the switch tuple
+     * Create a handler receiving the tuples in both {@link IGeneralTuple} and {@link ISwitchTuple} types,
+     * and storing received tuples into either a general queue during the warm-up phase or a temporary queue 
+     * for transferred data during data synchronization.
+     * @param genSer the serializer for the general tuple {@link IGeneralTuple}
+     * @param swiSer the serializer for the switch tuple {@link ISwitchTuple}
      * @param syn the general queue for storing tuples
      * @param tmpSyn the temporary queue for storing tuples
-     * @throws IOException the IO exception
      */
     public TupleReceiverHandler(IGeneralTupleSerializer genSer, ISwitchTupleSerializer swiSer, 
             SynchronizedQueue<IGeneralTuple> syn, SynchronizedQueue<IGeneralTuple> tmpSyn) {
@@ -44,7 +45,18 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
         this.swiSer = swiSer;
         this.syn = syn;
         this.tmpSyn = tmpSyn;
-    }    
+    } 
+    
+    /**
+     * Create a handler receiving the tuples only in {@link IGeneralTuple} type and storing received tuples 
+     * in the given queue.
+     * @param genSer the serializer for the general tuple {@link IGeneralTuple}
+     * @param syn the queue for storing tuples
+     */
+    public TupleReceiverHandler(IGeneralTupleSerializer genSer, SynchronizedQueue<IGeneralTuple> syn) {
+        this.genSer = genSer;
+        this.syn = syn;
+    } 
     
     @Override
     public void run() {
@@ -129,19 +141,23 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
      */
     private void enqueue(byte[] ser) {
         IGeneralTuple tuple;
-        //determining the received tuple type
-        if (isGeneralTuple) { 
-            tuple = genSer.deserialize(ser); 
-        } else {
-            tuple = swiSer.deserialize(ser);
-        }
-        if (tuple != null) {
-            //determining the queue to be used
-            if (useTemporaryQueue) { 
-                tmpSyn.produce(tuple);
+        try {
+            //determining the received tuple type
+            if (isGeneralTuple) { 
+                tuple = genSer.deserialize(ser); 
             } else {
-                syn.produce(tuple);
+                tuple = swiSer.deserialize(ser);
             }
+            if (tuple != null) {
+                //determining the queue to be used
+                if (useTemporaryQueue) { 
+                    tmpSyn.produce(tuple);
+                } else {
+                    syn.produce(tuple);
+                }
+            }
+        } catch (NullPointerException e) {
+            e.printStackTrace();
         }
     }     
     
