@@ -105,16 +105,16 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
      */
     private void switchMode(String mode) {
         switch(mode) { 
-        case "genTuple": 
+        case DataFlag.GENERAL_TUPLE_FLAG: 
             general = true;
             break;
-        case "swiTuple":
+        case DataFlag.SWITCH_TUPLE_FLAG:
             general = false;
             break;
-        case "genQueue":
+        case DataFlag.GENERAL_QUEUE_FLAG:
             temporary = false;
             break;
-        case "tmpQueue":
+        case DataFlag.TEMPORARY_QUEUE_FLAG:
             temporary = true;
             break;
         default:

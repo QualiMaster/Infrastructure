@@ -57,6 +57,34 @@ public class TupleSender {
     }
     
     /**
+     * Sends a flag indicating the {@link ISwitchTuple} data type.
+     */
+    public void sendSwitchTupleFlag() {
+        send(DataFlag.SWITCH_TUPLE_FLAG.getBytes());
+    }
+    
+    /**
+     * Sends a flag indicating the {@link IGeneralTuple} data type.
+     */
+    public void sendGeneralTupleFlag() {
+        send(DataFlag.GENERAL_TUPLE_FLAG.getBytes());
+    }
+    
+    /**
+     * Sends a flag indicating the temporary queue shall be used.
+     */
+    public void sendTemporaryQueueFlag() {
+        send(DataFlag.TEMPORARY_QUEUE_FLAG.getBytes());
+    }
+    
+    /**
+     * Sends a flag indicating the general queue shall be used.
+     */
+    public void sendGeneralQueueFlag() {
+        send(DataFlag.GENERAL_QUEUE_FLAG.getBytes());
+    }
+    
+    /**
      * Checks whether the connection is there.
      * @return true if connected, otherwise false
      */

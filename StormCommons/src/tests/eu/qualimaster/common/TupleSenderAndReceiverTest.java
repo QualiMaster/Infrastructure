@@ -98,8 +98,7 @@ public class TupleSenderAndReceiverTest {
         sendGeneralTuple(client, genSer, 10);
         
         //send a switch flag
-        String flag = "swiTuple";
-        client.send(flag.getBytes());
+        client.sendSwitchTupleFlag();
         //send 10 switch tuples
         sendSwitchTuple(client, swiSer, 10);
        
@@ -110,11 +109,9 @@ public class TupleSenderAndReceiverTest {
         }
         
         //send a switch flag
-        flag = "swiTuple";
-        client.send(flag.getBytes());
-        //send a switch flag
-        flag = "tmpQueue";
-        client.send(flag.getBytes());
+        client.sendSwitchTupleFlag();
+        //send a temporary queue flag
+        client.sendTemporaryQueueFlag();
         //send 10 switch tuples
         sendSwitchTuple(client, swiSer, 10);
         
