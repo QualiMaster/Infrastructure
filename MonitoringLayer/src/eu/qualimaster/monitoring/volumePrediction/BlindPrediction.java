@@ -1,11 +1,13 @@
 package eu.qualimaster.monitoring.volumePrediction;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.TreeMap;
 
 /**
  * Implementation of one of the types of volume prediction: the one based on historical values and unaware of recent values
@@ -28,11 +30,11 @@ public class BlindPrediction {
 	 * @param source The name of the source the model makes predictions for
 	 * @param dataPath The path to the data used for building the model
 	 */
-	public BlindPrediction(String source, String dataPath)
+	public BlindPrediction(String source, File dataFile)
 	{
 		this.source = source;
 		this.historicalVolumes = new HashMap<>();
-		trainModel(dataPath);
+		trainModel(dataFile);
 	}
 	
 	/**
@@ -62,23 +64,17 @@ public class BlindPrediction {
 		else return getNeighborValue(time);
 	}
 	
-	private void trainModel(String dataPath)
+	private void trainModel(File dataFile)
 	{
-		if(dataPath == null) this.historicalVolumes = null;
+		if(dataFile == null) this.historicalVolumes = null;
 		else
 		{
-			HashMap<String,Long> trainingData = readDataFromPath(dataPath, this.source);
+			TreeMap<String,Long> trainingData = DataUtils.readData(dataFile);
 			this.historicalVolumes = computeAverageVolumes(trainingData);
 		}
 	}
 	
-	private HashMap<String,Long> readDataFromPath(String dataPath, String sourceName)
-	{
-		// placeholder for the real call to the source interface
-		return null;
-	}
-	
-	private HashMap<String,Double> computeAverageVolumes(HashMap<String,Long> map)
+	private HashMap<String,Double> computeAverageVolumes(TreeMap<String,Long> map)
 	{
 		HashMap<String,Double> outputMap = new HashMap<String, Double>();
 		HashMap<String, ArrayList<Long>> mapByTime = new HashMap<String, ArrayList<Long>>();

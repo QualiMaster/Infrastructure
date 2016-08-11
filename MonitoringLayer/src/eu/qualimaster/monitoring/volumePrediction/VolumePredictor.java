@@ -1,5 +1,7 @@
 package eu.qualimaster.monitoring.volumePrediction;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -10,6 +12,8 @@ import java.util.List;
 
 import eu.qualimaster.dataManagement.DataManager;
 import eu.qualimaster.dataManagement.events.HistoricalDataProviderRegistrationEvent;
+import eu.qualimaster.dataManagement.sources.SpringHistoricalDataProvider;
+import eu.qualimaster.dataManagement.sources.TwitterHistoricalDataProvider;
 import eu.qualimaster.dataManagement.storage.hbase.HBaseStorageSupport;
 import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
@@ -37,9 +41,18 @@ public class VolumePredictor {
 	
 	/** The status of the component (whether it is running or not) */
 	private boolean running;
+	
+	/** The provider of historical data for Twitter */
+	private TwitterHistoricalDataProvider twitterHistoryProvider;
 
-	/** The number of month of data to consider when training the model */
-	private static final int NUM_MONTHS = 4;
+	/** The provider of historical data for Spring */
+	private SpringHistoricalDataProvider springHistoryProvider;
+	
+	/** File to temporarily store historical data */
+	private File historicalDataFile;
+	
+	/** The number of months (in milliseconds) of data to consider when training the model */
+	private static final long NUM_MONTHS = 4 * (1000*60*60*24*30);
 	
 	/** The granularity of the prediction (in milliseconds) */
 	private static final int GRANULARITY = 60000;
@@ -52,10 +65,14 @@ public class VolumePredictor {
 	 * 
 	 * @param monitoredSources The set of sources to be monitored by the volume prediction.
 	 */
-	public VolumePredictor(ArrayList<Source> monitoredSources)
+	public VolumePredictor(ArrayList<Source> monitoredSources, String filePath)
 	{
 		initializeSources(monitoredSources);
 		this.running = false;
+		// TODO get twitter and spring historical data provider at startup, via the proper event
+		this.twitterHistoryProvider = null;
+		this.springHistoryProvider = null;
+		this.historicalDataFile = new File(filePath);
 		initializeModels();
 	}
 	
@@ -95,7 +112,7 @@ public class VolumePredictor {
 				if(!this.models.containsKey(blindSource))
 				{
 					Long currVolume = getCurrentData(blindSource);
-					storeInHistoricalData(blindSource, null, currVolume);
+					storeInHistoricalData(blindSource, currentTimestamp, currVolume);
 				}
 			}
 			
@@ -163,19 +180,28 @@ public class VolumePredictor {
 	
 	private void initializeModels()
 	{
-		// models
-		for(Source source : this.monitoredSources.values())
-		{
-			Prediction model = new Prediction(source.getName(), getHistoricalData(source.getName(), NUM_MONTHS));
-			this.models.put(source.getName(), model);
+		try{
+			// models
+			for(Source source : this.monitoredSources.values())
+			{
+				// TODO optimize the reading of historical data and run it once for both "monitored" and "available" sources
+				getHistoricalData(source.getName(), NUM_MONTHS, this.historicalDataFile);
+				Prediction model = new Prediction(source.getName(), this.historicalDataFile);
+				this.models.put(source.getName(), model);
+			}
+			
+			// blind models
+			ArrayList<String> availableSources = getSourcesWithHistoricalData();
+			for(String source : availableSources)
+			{
+				getHistoricalData(source, NUM_MONTHS, this.historicalDataFile);
+				BlindPrediction model = new BlindPrediction(source, this.historicalDataFile);
+				this.blindModels.put(source, model);
+			}
 		}
-		
-		// blind models
-		ArrayList<String> availableSources = getSourcesWithHistoricalData();
-		for(String source : availableSources)
-		{
-			BlindPrediction model = new BlindPrediction(source, getHistoricalData(source, NUM_MONTHS));
-			this.blindModels.put(source, model);
+		catch(IOException e){
+			// TODO handle the absence of historical data
+			e.printStackTrace();
 		}
 	}
 	
@@ -185,10 +211,12 @@ public class VolumePredictor {
 		return -1;
 	}
 	
-	private String getHistoricalData(String term, int months)
+	private void getHistoricalData(String term, long months, File outputFile) throws IOException
 	{
 		// TODO get historical data via the code in the source (the actual return value still has to be decided)
-		return null;
+		// TODO decide how to distinguish between Twitter and Spring
+		if(true) this.springHistoryProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile);
+		else this.twitterHistoryProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile);
 	}
 	
 	private ArrayList<String> getSourcesWithHistoricalData()
@@ -197,10 +225,11 @@ public class VolumePredictor {
 		return null;
 	}
 	
-	private String storeInHistoricalData(String term, String timestamp, Long value)
+	private void storeInHistoricalData(String term, String timestamp, Long value)
 	{
 		// TODO store a value in the historical data (the presence of the timestamp still has to be decided)
-		return null;
+		// TODO only store data for Twitter
+		if(true) storeTwitterVolume(timestamp, term, value);
 	}
 	
 	private void storeTwitterVolume(String timestamp, String term, Long volume){
@@ -241,7 +270,14 @@ public class VolumePredictor {
 	 */
 	public void addMonitoredSource(Source source)
 	{
-		Prediction model = new Prediction(source.getName(), getHistoricalData(source.getName(), NUM_MONTHS));
+		try {
+			getHistoricalData(source.getName(), NUM_MONTHS, this.historicalDataFile);
+		}
+		catch (IOException e) {
+			// TODO handle the absence of historical data
+			e.printStackTrace();
+		}
+		Prediction model = new Prediction(source.getName(), this.historicalDataFile);
 		this.models.put(source.getName(), model);
 		this.monitoredSources.put(source.getName(), source);
 	}
