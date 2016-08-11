@@ -137,7 +137,7 @@ public class TupleSenderAndReceiverTest {
      * @param genSer the serializer for the general tuple
      * @param amount the amount of tuple to send
      */
-    public void sendGeneralTuple(TupleSender client, IGeneralTupleSerializer genSer, int amount) {
+    public static void sendGeneralTuple(TupleSender client, IGeneralTupleSerializer genSer, int amount) {
         while (amount > 0) {
             //create a switch tuple
             IGeneralTuple generalTuple = createGeneralTuple();
@@ -167,7 +167,7 @@ public class TupleSenderAndReceiverTest {
      * Creates a general tuple.
      * @return a general tuple
      */
-    private IGeneralTuple createGeneralTuple() {
+    private static IGeneralTuple createGeneralTuple() {
         IGeneralTuple tuple = new GeneralTuple(createTupleValues());
         return tuple;
     }
@@ -183,7 +183,7 @@ public class TupleSenderAndReceiverTest {
      * Creates the tuple values.
      * @return the tuple values
      */
-    private List<Object> createTupleValues() {
+    private static List<Object> createTupleValues() {
         //create a data item
         DataItem dataItem = new DataItem(1, "data");
         List<Object> tupleValues = new ArrayList<Object>();

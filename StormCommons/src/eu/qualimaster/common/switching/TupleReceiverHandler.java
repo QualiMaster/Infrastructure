@@ -14,7 +14,7 @@ import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.base.serializer.IGeneralTupleSerializer;
 import eu.qualimaster.base.serializer.ISwitchTupleSerializer;
 /**
- * Tuple handler for receiving tuples, including the ones in both general and switch mode. 
+ * Tuple handler for receiving tuples in both general and switch mode. 
  * @author Cui Qin
  *
  */
@@ -60,9 +60,9 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
     
     @Override
     public void run() {
-        while (cont) {
+        while (cont && kryoInput != null) {
             try {
-                if (kryoInput != null && kryoInput.canReadInt()) {
+                if (kryoInput.canReadInt()) {
                     int len = kryoInput.readInt();
                     byte[] ser = new byte[len];
                     kryoInput.readBytes(ser);

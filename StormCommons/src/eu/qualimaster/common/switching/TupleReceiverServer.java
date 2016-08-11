@@ -41,7 +41,7 @@ public class TupleReceiverServer implements Runnable {
     
     @Override
     public void run() {
-        while (cont) {
+        while (cont && serverSocket != null) {
             try {
                 LOGGER.info("Accepting the socket connection....");
                 Socket socket = serverSocket.accept();
@@ -68,6 +68,7 @@ public class TupleReceiverServer implements Runnable {
         }
         if (serverSocket != null) {
             serverSocket.close();
+            serverSocket = null;
         }
         LOGGER.info("Stopped server");
     }
