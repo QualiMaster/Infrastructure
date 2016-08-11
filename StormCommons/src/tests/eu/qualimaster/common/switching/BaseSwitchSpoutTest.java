@@ -20,7 +20,7 @@ import eu.qualimaster.common.switching.TupleSender;
 public class BaseSwitchSpoutTest {
     protected static final int TUPLE_SIZE = 10;
     /**
-     * Test. Run after {@link TestTopology} is executing.
+     * Sends test tuples to the running switch spout. Run after {@link TestTopology} is executing.
      */
     @SuppressWarnings("rawtypes")
     @Test
