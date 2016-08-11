@@ -40,7 +40,7 @@ public class TestIntermediarySpout extends BaseSwitchSpout {
      * @param streamId the stream id used to emit the data streams
      */
     public TestIntermediarySpout(String name, String namespace, String streamId) {
-        super(name, namespace);
+        super(name, namespace, true);
         this.streamId = streamId;
     }
     

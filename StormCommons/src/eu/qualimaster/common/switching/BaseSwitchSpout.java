@@ -23,9 +23,11 @@ public abstract class BaseSwitchSpout extends BaseSignalSpout {
      *            the name of the Spout
      * @param namespace
      *            the namespace, namely the name of the pipeline which the Spout belongs to
+     * @param sendRegular whether this monitor shall care for sending regular events (<code>true</code>) or 
+     *     not (<code>false</code>, for thrift-based monitoring)
      */
-    public BaseSwitchSpout(String name, String namespace) {
-        super(name, namespace);
+    public BaseSwitchSpout(String name, String namespace, boolean sendRegular) {
+        super(name, namespace, sendRegular);
     }
     
     @Override
