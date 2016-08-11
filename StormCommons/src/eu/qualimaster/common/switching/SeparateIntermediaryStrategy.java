@@ -2,11 +2,16 @@ package eu.qualimaster.common.switching;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.apache.log4j.Logger;
+
 import eu.qualimaster.base.algorithm.IGeneralTuple;
+import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.base.serializer.KryoGeneralTupleSerializer;
 import eu.qualimaster.base.serializer.KryoSwitchTupleSerializer;
 import eu.qualimaster.common.signal.TopologySignal;
@@ -17,16 +22,18 @@ import eu.qualimaster.common.switching.IState.SwitchState;
  *
  */
 public class SeparateIntermediaryStrategy extends AbstractSwitchStrategy {
+    private static final Logger LOGGER = Logger.getLogger(SeparateIntermediaryStrategy.class);
     private static final int QUEUE_SIZE = 100;
     private Map<String, Serializable> parameters;
     @SuppressWarnings("rawtypes")
     private Map conf;
     private transient Queue<IGeneralTuple> inQueue = null; //handle incoming tuples
-    private transient Queue<IGeneralTuple> outQueue = null; //handle outgoing tuples
+    private transient LinkedList<IGeneralTuple> outQueue = null; //handle outgoing tuples
     private transient Queue<IGeneralTuple> tmpQueue = null; //handle transferred tuples
     private SynchronizedQueue<IGeneralTuple> syn = null;
     private SynchronizedQueue<IGeneralTuple> tmpSyn = null;
     private SwitchState currentState;
+    private long lastProcessedId;
     
     /**
      * Creates a strategy serving separate intermediary node.
@@ -37,7 +44,7 @@ public class SeparateIntermediaryStrategy extends AbstractSwitchStrategy {
         this.conf = conf;
         parameters = new HashMap<String, Serializable>();
         inQueue = new ConcurrentLinkedQueue<IGeneralTuple>();
-        outQueue = new ConcurrentLinkedQueue<IGeneralTuple>();
+        outQueue = new LinkedList<IGeneralTuple>();
         tmpQueue = new ConcurrentLinkedQueue<IGeneralTuple>();
         currentState = state;
     }
@@ -61,8 +68,11 @@ public class SeparateIntermediaryStrategy extends AbstractSwitchStrategy {
     @Override
     public IGeneralTuple produceTuple() {
         IGeneralTuple tuple = null;
-        if (currentState.equals(SwitchState.ACTIVE_DEFAULT)) {
+        if (currentState.equals(SwitchState.ACTIVE_DEFAULT)) { //TODO:check which state is needed to check here
             tuple = syn.consume();
+            if (!tuple.isGeneralTuple()) { //queue the emitted tuple in the switch phase 
+                outQueue.add(tuple);
+            }
         }
         return tuple;
     }
@@ -70,6 +80,22 @@ public class SeparateIntermediaryStrategy extends AbstractSwitchStrategy {
     @Override
     public void doSignal(TopologySignal signal) {
         // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void ack(Object msgId) {
+        Iterator<IGeneralTuple> iterator = outQueue.descendingIterator();
+        while (iterator.hasNext()) {
+            ISwitchTuple ackItem = (ISwitchTuple) iterator.next();
+            if (msgId.equals(ackItem.getId())) {
+                lastProcessedId = ackItem.getId();
+                boolean flag = outQueue.remove(ackItem);
+                LOGGER.info(System.currentTimeMillis() + " Acked the tuple with the msgId: " + msgId 
+                        + " removed: " + flag + ", outQueue size: " + outQueue.size());
+                break;
+            }
+        }
         
     }
 

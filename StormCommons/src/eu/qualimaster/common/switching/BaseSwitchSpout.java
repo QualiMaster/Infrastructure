@@ -40,6 +40,11 @@ public abstract class BaseSwitchSpout extends BaseSignalSpout {
         super.notifyParameterChange(signal);
         mechanism.handleSignal(signal);
     }
+    
+    @Override
+    public void ack(Object msgId) {
+        mechanism.ack(msgId);
+    }
     /**
      * Sets the switch mechanism.
      * @param mechanism the switch mechanism

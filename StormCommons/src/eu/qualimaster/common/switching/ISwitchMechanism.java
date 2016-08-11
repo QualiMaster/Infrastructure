@@ -21,6 +21,11 @@ public interface ISwitchMechanism {
      */
     public IGeneralTuple getNextTuple();
     /**
+     * Acknowledges the processed tuple.
+     * @param msgId the message id
+     */
+    public void ack(Object msgId);
+    /**
      * Handles received signals.
      * @param signal the received signal
      */

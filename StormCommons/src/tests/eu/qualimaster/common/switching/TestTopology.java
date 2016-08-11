@@ -5,6 +5,7 @@ import backtype.storm.LocalCluster;
 import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
+import backtype.storm.topology.BoltDeclarer;
 import backtype.storm.topology.TopologyBuilder;
 import eu.qualimaster.base.algorithm.IMainTopologyCreate;
 import eu.qualimaster.base.algorithm.TopologyOutput;
@@ -35,6 +36,9 @@ public class TestTopology {
             RecordingTopologyBuilder builder = new RecordingTopologyBuilder(options);
             builder.setSpout("IntermediarySpout", new TestIntermediarySpout("IntermediarySpout", TOPOLOGY_NAME, 
                     "IntermediarySpoutStreamId"), 1).setNumTasks(1);
+            BoltDeclarer endBolt = builder.setBolt("EndBolt", new TestEndBolt("EndBolt", TOPOLOGY_NAME
+                    , "EndBoltStreamId"), 1);
+            endBolt.shuffleGrouping("IntermediarySpout", "IntermediarySpoutStreamId");
             return new TopologyOutput(config, builder, 1);
         }
         

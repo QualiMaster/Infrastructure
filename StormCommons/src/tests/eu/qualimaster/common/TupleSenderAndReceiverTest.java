@@ -153,10 +153,10 @@ public class TupleSenderAndReceiverTest {
      * @param swiSer the serializer for the switch tuple
      * @param amount the amount of tuple to send
      */
-    public void sendSwitchTuple(TupleSender client, ISwitchTupleSerializer swiSer, int amount) {
+    public static void sendSwitchTuple(TupleSender client, ISwitchTupleSerializer swiSer, int amount) {
         while (amount > 0) {
             //create a switch tuple
-            ISwitchTuple switchTuple = createSwitchTuple();
+            ISwitchTuple switchTuple = createSwitchTuple(amount);
             byte[] byteSer = swiSer.serialize(switchTuple);
             
             client.send(byteSer);
@@ -173,10 +173,11 @@ public class TupleSenderAndReceiverTest {
     }
     /**
      * Creates a switch tuple.
+     * @param id the msgId used to trace the tuple for acknowledgement
      * @return a switch tuple
      */
-    private ISwitchTuple createSwitchTuple() {
-        ISwitchTuple tuple = new SwitchTuple(0, createTupleValues());
+    private static ISwitchTuple createSwitchTuple(int id) {
+        ISwitchTuple tuple = new SwitchTuple(id, createTupleValues());
         return tuple;
     }
     /**

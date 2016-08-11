@@ -3,11 +3,14 @@ package tests.eu.qualimaster.common.switching;
 import java.io.IOException;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import eu.qualimaster.base.algorithm.IGeneralTuple;
+import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.common.switching.AbstractSwitchMechanism;
 import eu.qualimaster.common.switching.AbstractSwitchStrategy;
 import eu.qualimaster.common.switching.BaseSwitchSpout;
@@ -24,6 +27,7 @@ import eu.qualimaster.common.switching.IState.SwitchState;
 @SuppressWarnings("serial")
 public class TestIntermediarySpout extends BaseSwitchSpout {
     protected static final int PORT = 8999;
+    private static final Logger LOGGER = Logger.getLogger(TestIntermediarySpout.class);
     @SuppressWarnings("unused")
     private SpoutOutputCollector collector;
     private String streamId;
@@ -63,15 +67,27 @@ public class TestIntermediarySpout extends BaseSwitchSpout {
             IGeneralTuple tuple = mechanism.getNextTuple();
             if (tuple != null) {
                 IDataItem item = (IDataItem) tuple.getValue(0);
-                System.out.println("id: " + item.getId() + ", value: " + item.getValue());
+                LOGGER.info("id: " + item.getId() + ", value: " + item.getValue());
                 count++;
-                if (count == BaseSwitchSpoutTest.TUPLE_SIZE) {
+                if (tuple.isGeneralTuple()) {
+                    collector.emit(streamId, tuple.getValues());
+                } else {
+                    ISwitchTuple swiTuple = (ISwitchTuple) tuple;
+                    Object msgId = swiTuple.getId();
+                    collector.emit(streamId, tuple.getValues(), msgId);
+                }
+                if (count == BaseSwitchSpoutTest.TUPLE_SIZE * 2) {
                     isClosed = true;
                 }
             }
         }
     }
     
+    @Override
+    public void ack(Object msgId) {
+        LOGGER.info("Acking the processed tuple: " + msgId);
+        super.ack(msgId);
+    }
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declareStream(streamId, new Fields("tuple"));

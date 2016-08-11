@@ -31,6 +31,11 @@ public class ParallelTrackSwitchMechanism extends AbstractSwitchMechanism {
     @Override
     public void handleSignal(TopologySignal signal) {
         strategy.doSignal(signal);
+    }
+
+    @Override
+    public void ack(Object msgId) {
+        strategy.ack(msgId);
     }   
 
 }

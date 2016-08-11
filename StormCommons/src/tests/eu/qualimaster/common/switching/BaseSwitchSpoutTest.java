@@ -6,7 +6,9 @@ import org.junit.Test;
 
 import backtype.storm.Config;
 import eu.qualimaster.base.serializer.IGeneralTupleSerializer;
+import eu.qualimaster.base.serializer.ISwitchTupleSerializer;
 import eu.qualimaster.base.serializer.KryoGeneralTupleSerializer;
+import eu.qualimaster.base.serializer.KryoSwitchTupleSerializer;
 import tests.eu.qualimaster.common.StormTestUtils;
 import tests.eu.qualimaster.common.TupleSenderAndReceiverTest;
 import tests.eu.qualimaster.common.KryoTupleSerializerTest.DataItem;
@@ -33,12 +35,25 @@ public class BaseSwitchSpoutTest {
         
         //serializers
         IGeneralTupleSerializer genSer = new KryoGeneralTupleSerializer(conf);
+        ISwitchTupleSerializer swiSer = new KryoSwitchTupleSerializer(conf);
         
         TupleSender client = new TupleSender("localhost", TestIntermediarySpout.PORT);
         
         //send 10 general tuples to the running pipeline
         System.out.println("Sending " + TUPLE_SIZE + " general tuples with the id: 1 and the string value: data.");
         TupleSenderAndReceiverTest.sendGeneralTuple(client, genSer, TUPLE_SIZE);   
+        
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e1) {
+            e1.printStackTrace();
+        }
+        
+        //send the switch flag
+        client.sendSwitchTupleFlag();
+        //send 10 switch tuples to the running pipeline
+        System.out.println("Sending " + TUPLE_SIZE + " switch tuples with the id: 1 and the string value: data.");
+        TupleSenderAndReceiverTest.sendSwitchTuple(client, swiSer, TUPLE_SIZE);
         
         client.stop();
     }
