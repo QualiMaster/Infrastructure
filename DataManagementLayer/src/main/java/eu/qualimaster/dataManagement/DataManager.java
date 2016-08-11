@@ -50,6 +50,11 @@ public class DataManager {
      */
     public static final AbstractStorageManager<?> REPLAY_STORAGE_MANAGER = new ReplayStorageManager("replay.");
     
+    /**
+     * The data manager to store aggregated source volumes (for source volume prediction).
+     */
+    public static final AbstractStorageManager<?> VOLUME_PREDICTION_STORAGE_MANAGER = new HBaseStorageManager("volumePrediction.");
+    
     private static boolean started = false;
     private static boolean localMode = false;
     
@@ -278,7 +283,7 @@ public class DataManager {
     
     // enter new managers here!!!
     private static final AbstractDataManager<?>[] MANAGERS = {DATA_SOURCE_MANAGER, DATA_SINK_MANAGER, 
-        INTERMEDIARY_STORAGE_MANAGER, ADAPTATION_STORAGE_MANAGER};
+        INTERMEDIARY_STORAGE_MANAGER, ADAPTATION_STORAGE_MANAGER, VOLUME_PREDICTION_STORAGE_MANAGER};
 
     /**
      * Called as part of the startup process of the QualiMaster platform. Please call this 

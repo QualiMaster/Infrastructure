@@ -1,10 +1,16 @@
 package eu.qualimaster.monitoring.volumePrediction;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
+import eu.qualimaster.dataManagement.DataManager;
 import eu.qualimaster.dataManagement.events.HistoricalDataProviderRegistrationEvent;
+import eu.qualimaster.dataManagement.storage.hbase.HBaseStorageSupport;
 import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
@@ -38,6 +44,9 @@ public class VolumePredictor {
 	/** The granularity of the prediction (in milliseconds) */
 	private static final int GRANULARITY = 60000;
 	
+	/** The format for storing dates */
+	private static final String DATE_FORMAT = "MM/DD/YYYY,hh:mm:ss";
+	
 	/**
 	 * Constructor taking a set of sources (terms and their volume thresholds) as input.
 	 * 
@@ -59,6 +68,7 @@ public class VolumePredictor {
 		while(this.running)
 		{
 			Long startTime = System.nanoTime();
+			String currentTimestamp = getTimestamp();
 			for(Source s : this.monitoredSources.values())
 			{
 				Prediction model = this.models.get(s.getName());
@@ -75,7 +85,7 @@ public class VolumePredictor {
 				evaluatePrediction(s, prediction);
 				
 				// store the current observation in the historical data of the current source
-				storeInHistoricalData(s.getName(), null, currVolume);
+				storeInHistoricalData(s.getName(), currentTimestamp, currVolume);
 			}
 			
 			// store observed volumes for the blind models (to have historical data available in future)
@@ -192,6 +202,21 @@ public class VolumePredictor {
 		// TODO store a value in the historical data (the presence of the timestamp still has to be decided)
 		return null;
 	}
+	
+	private void storeTwitterVolume(String timestamp, String term, Long volume){
+		// Get the HBase table containing data for the input term and write into it
+    	// TODO which strategy should be used?
+    	HBaseStorageSupport table = (HBaseStorageSupport) DataManager.VOLUME_PREDICTION_STORAGE_MANAGER.getTable("", term, null);
+    	table.connect();
+    	table.doWrite(timestamp, volume);
+    	table.disconnect();
+	}
+	
+	private String getTimestamp(){
+		DateFormat format = new SimpleDateFormat(DATE_FORMAT);
+		Date date = new Date();
+		return format.format(date);
+	}
 
 	/**
 	 * @return the monitoredSources
@@ -266,6 +291,8 @@ return running;
 		//		handle the inclusion of a new source (here by checking the source map or with the dedicated event)
 		//		even if the source or model is missing for a term, the current value should be stored anyway for later training
 		
+//		String timestamp = getTimestamp();
+//		
 //		// handle the prediction for each incoming source
 //		for(String term : event.getObservations().keySet())
 //		{
@@ -285,7 +312,7 @@ return running;
 //			evaluatePrediction(s, prediction);
 //			
 //			// store the current observation in the historical data of the current source
-//			storeInHistoricalData(s.getName(), null, currVolume);
+//			storeInHistoricalData(s.getName(), timestamp, currVolume);
 //		}
 //		
 //		// store observed volumes for the blind models (to have historical data available in future)

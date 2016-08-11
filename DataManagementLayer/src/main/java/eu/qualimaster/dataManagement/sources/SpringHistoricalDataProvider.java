@@ -20,6 +20,8 @@ import java.util.zip.ZipInputStream;
  */
 public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Serializable
 {
+	private static final long serialVersionUID = 3348888358474839444L;
+	
 	/** The url of the SPRING server storing historical data */
 	private static final String BASE_URL = "http://84.200.210.254/Qualimaster/history/";
 	
