@@ -1,12 +1,8 @@
 package eu.qualimaster.monitoring.volumePrediction;
 
-import java.text.DateFormat;
+import java.io.File;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -54,11 +50,11 @@ public class Prediction {
 	 * @param source The name of the source the model makes predictions for
 	 * @param dataPath The path to the data used for training the model
 	 */
-	public Prediction(String source, String dataPath){
+	public Prediction(String source, File dataFile){
 		this.source = source;
 		this.recentVolumes = createDataset();
 		this.forecaster = new WekaForecaster();
-		trainModel(dataPath);
+		trainModel(dataFile);
 	}
 	
 	/**
@@ -118,19 +114,13 @@ public class Prediction {
 		}
 	}
 	
-	private void trainModel(String dataPath)
+	private void trainModel(File dataFile)
 	{
-		HashMap<String,Long> trainingData = readDataFromPath(dataPath, this.source);
+		TreeMap<String,Long> trainingData = DataUtils.readData(dataFile);
 		this.forecaster = trainForecaster(trainingData);
 	}
 	
-	private HashMap<String,Long> readDataFromPath(String dataPath, String sourceName)
-	{
-		// placeholder for the real call to the source interface
-		return null;
-	}
-	
-	private WekaForecaster trainForecaster(HashMap<String,Long> data)
+	private WekaForecaster trainForecaster(TreeMap<String,Long> data)
 	{
 		try
 		{
@@ -171,7 +161,7 @@ public class Prediction {
 		}
 	}
 	
-	private Instances dataToInstances(HashMap<String,Long> data)
+	private Instances dataToInstances(TreeMap<String,Long> data)
 	{
 		try
 		{
