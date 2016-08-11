@@ -34,21 +34,13 @@ public class TestIntermediarySpout extends BaseSwitchSpout {
     private boolean isClosed = false;
     
     /**
-     * Creates an intermediary Spout.
-     * @param name the name of the intermediary Spout
-     * @param namespace the namespace
-     */
-    public TestIntermediarySpout(String name, String namespace) {
-        super(name, namespace);
-    }
-    /**
      * Creates an intermediary Spout with streamId.
      * @param name the name of the intermediary Spout
      * @param namespace the namespace
      * @param streamId the stream id used to emit the data streams
      */
     public TestIntermediarySpout(String name, String namespace, String streamId) {
-        this(name, namespace);
+        super(name, namespace);
         this.streamId = streamId;
     }
     
