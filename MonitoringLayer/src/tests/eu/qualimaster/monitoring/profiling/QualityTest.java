@@ -50,7 +50,8 @@ public class QualityTest {
                 // Going through the measurements
                 for (int i = 0 + 3; i < entries.length - 1; i++) {
                     // Calculating the predictions
-                    double predicted = filter.predict(i, entries[i]);
+                    filter.update(i, entries[i]);
+                    double predicted = filter.predict();
                     // Sum mean error, when in relevant section
                     if (i >= start + 2 && i < end + 2) {
                         meanError += (entries[i] == 0) ? 0 

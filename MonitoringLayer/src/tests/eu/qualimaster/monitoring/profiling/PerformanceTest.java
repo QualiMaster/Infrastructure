@@ -51,7 +51,8 @@ public class PerformanceTest {
 
                     // Run Update-Predict-Cycle
                     for (int i = 1; i < entries.length; i++) {
-                        filter.predict(i, entries[i]);
+                        filter.update(i, entries[i]);
+                        filter.predict();
                     }
                     // Check if runTime <= maximalCriteria
                     long runTime = System.nanoTime() - startTime;

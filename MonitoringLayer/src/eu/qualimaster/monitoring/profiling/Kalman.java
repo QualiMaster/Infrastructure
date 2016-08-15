@@ -1,6 +1,8 @@
 package eu.qualimaster.monitoring.profiling;
 import java.util.GregorianCalendar;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.exception.NullArgumentException;
 import org.apache.commons.math3.filter.DefaultMeasurementModel;
 import org.apache.commons.math3.filter.DefaultProcessModel;
 import org.apache.commons.math3.filter.KalmanFilter;
@@ -9,6 +11,7 @@ import org.apache.commons.math3.filter.ProcessModel;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.linear.SingularMatrixException;
 
 /**
  * Kalman Implementation for the QualiMaster-Project using the
@@ -17,7 +20,7 @@ import org.apache.commons.math3.linear.RealVector;
  * 
  * @author Christopher Voges
  */
-public class Kalman {
+public class Kalman implements AlgorithmProfilePredictorAlgorithm {
 
     /**
      * Noise is eliminated  beforehand, but it can (for
@@ -135,18 +138,40 @@ public class Kalman {
     }
     
     /**
-     * This method predicts the value of a timeline one timestep ahead of the
-     * given value.
+     * This method updates the Kalman-Filter with the last known state/measurement of the observed value.
      * 
-     * @param xMeasured Timestep of measurement. For now the filter has to be 
+     * @param xMeasured Time step of measurement. For now the filter has to be 
      * used iterative, so this value has to be exactly one greater than the 
-     * last time this method was called.
+     * last time this method was called. // TODO Implement Gap-Handling
      * @param yMeasured Current measurement.
-     * @return Prediction for one timestep ahead as {@link Double}.
+      * @return True if the update was successful.
      */
-    public double predict(double xMeasured, double yMeasured) {
-        filter.correct(new double[] {xMeasured, 0, yMeasured, 0 });
-        filter.predict(controlVector);
-        return filter.getStateEstimation()[2];
+    public boolean update(double xMeasured, double yMeasured) {
+        boolean success = false;
+        try {
+            filter.correct(new double[] {xMeasured, 0, yMeasured, 0 });
+            this.lastUpdated = System.currentTimeMillis();
+            this.lastUpdate = yMeasured;
+            success = true;
+        } catch (NullArgumentException | DimensionMismatchException | SingularMatrixException e) {
+            e.printStackTrace();
+        }
+        return success;
+    }
+    /**
+     * This method predicts the value of a time line one time step ahead of the
+     * last (via update) given value.
+     * 
+     * @return Prediction for one time step ahead as {@link Double} or Double.MIN_VALUE if the prediction failed.
+     */
+    public double predict() {
+        try {
+            filter.predict(controlVector);
+            lastPrediction = filter.getStateEstimation()[2];
+        } catch (DimensionMismatchException e) {
+            e.printStackTrace();
+            lastPrediction = Double.MIN_VALUE;
+        }
+        return lastPrediction;
     }
 }
