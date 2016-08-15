@@ -9,6 +9,9 @@ import org.junit.runners.Suite;
  * @author Christopher Voges
  */
 @RunWith(Suite.class)
-@Suite.SuiteClasses({Performance.class, Quality.class})
+@Suite.SuiteClasses({
+    InstantiationTest.class, 
+    PerformanceTest.class, 
+    QualityTest.class})
 public class ProfilingTests {
 }
