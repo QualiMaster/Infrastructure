@@ -652,6 +652,12 @@ public class PortManager {
             return assignmentId;
         }
         
+        @Override
+        public String toString() {
+            return "port request pip:" + pipeline + " elt: " + element + " taskId: " 
+                    + taskId + " host: " + host + " id: " + assignmentId;
+        }
+        
     }
 
     /**
