@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import org.apache.log4j.Logger;
+
 import com.esotericsoftware.kryo.io.Output;
 
 /**
@@ -12,6 +14,7 @@ import com.esotericsoftware.kryo.io.Output;
  *
  */
 public class TupleSender {
+    private static final Logger LOGGER = Logger.getLogger(TupleSender.class);
     private String host;
     private int port;
     private Socket socket;
@@ -33,6 +36,7 @@ public class TupleSender {
         Socket s = null;
         if (null == socket) {
             try {
+                LOGGER.info("Connecting to the host: " + host + ", the port: " + port);
                 s = new Socket(host, port);
                 output = new Output(s.getOutputStream());
                 socket = s;
