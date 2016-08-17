@@ -86,6 +86,18 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
     public static final String DEFAULT_PIPELINE_ELEMENTS_REPOSITORY = "https://localhost";
 
     /**
+     * Denotes the location of the pipeline elements repository (fallback if {@link #PIPELINE_ELEMENTS_REPOSITORY} is 
+     * used for stable explicitly deployed pipelines, but profiling artifacts are still in the development 
+     * repository, however).
+     */
+    public static final String PIPELINE_ELEMENTS_REPOSITORY_FALLBACK = "repository.pipelineElements.fallback.url";
+
+    /**
+     * The default value for {@link #PIPELINE_ELEMENTS_REPOSITORY_FALLBACK}, {@value}.
+     */
+    public static final String DEFAULT_PIPELINE_ELEMENTS_REPOSITORY_FALLBACK = "https://localhost";
+
+    /**
      * Denotes the artifact specification of the configuration model.
      */
     public static final String CONFIG_MODEL_ARTIFACT_SPEC = "repository.confModel.artifact";
@@ -193,8 +205,10 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
         = createStringOption(LOCAL_ELEMENT_REPOSITORY, DEFAULT_LOCAL_ELEMENT_REPOSITORY);
     private static ConfigurationOption<String> localArtifactsLocation 
         = createStringOption(LOCAL_ARTIFACT_LOCATION, DEFAULT_LOCAL_ARTIFACT_LOCATION);
-    private static ConfigurationOption<URL> pipelineElementsRepository = createUrlOption(PIPELINE_ELEMENTS_REPOSITORY, 
-        toUrl(DEFAULT_PIPELINE_ELEMENTS_REPOSITORY));
+    private static ConfigurationOption<URL> pipelineElementsRepository 
+        = createUrlOption(PIPELINE_ELEMENTS_REPOSITORY, toUrl(DEFAULT_PIPELINE_ELEMENTS_REPOSITORY));
+    private static ConfigurationOption<URL> pipelineElementsRepositoryFallback 
+        = createUrlOption(PIPELINE_ELEMENTS_REPOSITORY_FALLBACK, toUrl(DEFAULT_PIPELINE_ELEMENTS_REPOSITORY_FALLBACK));
     private static ConfigurationOption<String> configModelArtifactSpecification 
         = createStringOption(CONFIG_MODEL_ARTIFACT_SPEC, DEFAULT_CONFIG_MODEL_ARTIFACT_SPEC);
     private static ConfigurationOption<Integer> stormCmdTime = createIntegerOption(TIME_STORM, DEFAULT_TIME_STORM);
@@ -321,6 +335,15 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
      */
     public static URL getPipelineElementsRepository() {
         return pipelineElementsRepository.getValue();
+    }
+    
+    /**
+     * Returns the pipeline elements fallback repository from where to obtain pipeline artifacts for execution.
+     * 
+     * @return the pipeline elements fallback repository as URL
+     */
+    public static URL getPipelineElementsRepositoryFallback() {
+        return pipelineElementsRepositoryFallback.getValue();
     }
     
     /**

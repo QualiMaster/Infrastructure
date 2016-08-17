@@ -25,6 +25,9 @@ public class CoordinationConfigurationTests extends DataManagementConfigurationT
         Assert.assertNotNull(CoordinationConfiguration.getPipelineElementsRepository());
         Assert.assertEquals("https://nexus.sse.uni-hildesheim.de/repos/qm/", 
             CoordinationConfiguration.getPipelineElementsRepository().toString());
+        Assert.assertNotNull(CoordinationConfiguration.getPipelineElementsRepositoryFallback());
+        Assert.assertEquals("https://nexus.sse.uni-hildesheim.de/repos/qmDevel/", 
+            CoordinationConfiguration.getPipelineElementsRepositoryFallback().toString());
         Assert.assertEquals("eu.qualimaster:InfrastructureModel:0.0.2", 
             CoordinationConfiguration.getConfigurationModelArtifactSpecification());
         Assert.assertEquals(CoordinationConfiguration.EMPTY_VALUE, 

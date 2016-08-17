@@ -264,22 +264,24 @@ public class RepositoryHelper {
             }
             try {
                 URL url = obtainArtifactUrl(artifactSpec, classifier, suffix);
-                try (InputStream in = url.openStream()) {
-                    Path path;
-                    if (null == basePath) {
-                        path = createLocalArtifactPath(name, suffix);
-                    } else {
-                        File f = new File(basePath, name + suffix);
-                        f.createNewFile();
-                        path = f.toPath();
-                    }
-                    path.toFile().delete(); // force reload on start
-                    Files.copy(in, path);
-                    result = path.toFile();
-                    getLogger().info("obtained artifact " + outArtifactSpec + " from " + url + " to " + path);
+                try {
+                    result = downloadArtifact(outArtifactSpec, url, name, suffix, basePath);
                 } catch (IOException e) {
                     getLogger().error("obtain artifact " + outArtifactSpec + " " + url + ": " 
                         + e.getClass().getName() + " " + e.getMessage());
+                    result = null;
+                }
+                if (null == result) {
+                    url = obtainArtifactUrl(artifactSpec, classifier, suffix, true);
+                    if (null != url) {
+                        try {
+                            result = downloadArtifact(outArtifactSpec, url, name, suffix, basePath);    
+                        } catch (IOException e1) {
+                            // ignore e1, already e failed
+                            getLogger().error("obtain artifact " + outArtifactSpec + " " + url + ": " 
+                                + e1.getClass().getName() + " " + e1.getMessage());
+                        }
+                    }
                 }
             } catch (MalformedURLException e) {
                 getLogger().error("obtain artifact " + outArtifactSpec + " " 
@@ -287,6 +289,36 @@ public class RepositoryHelper {
             }
         }
         return result;
+    }
+
+    /**
+     * Downloads an artifact.
+     * 
+     * @param artifactSpec the artifact specification
+     * @param url the URL
+     * @param name the logical name of the local artifact file
+     * @param suffix file name extension
+     * @param basePath the base path where to locate the target artifact, may be <b>null</b> for the local 
+     *   artifact location
+     * @return the artifact as a local file, <b>null</b> if not available
+     * @throws IOException in case that downloading failed
+     */
+    private static File downloadArtifact(String artifactSpec, URL url, String name, String suffix, 
+        File basePath) throws IOException {
+        InputStream in = url.openStream();
+        Path path;
+        if (null == basePath) {
+            path = createLocalArtifactPath(name, suffix);
+        } else {
+            File f = new File(basePath, name + suffix);
+            f.createNewFile();
+            path = f.toPath();
+        }
+        path.toFile().delete(); // force reload on start
+        Files.copy(in, path);
+        getLogger().info("obtained artifact " + artifactSpec + " from " + url + " to " + path);
+        in.close();
+        return path.toFile();
     }
     
     /**
@@ -302,10 +334,27 @@ public class RepositoryHelper {
      */
     public static URL obtainArtifactUrl(String artifactSpec, String classifier, String suffix) 
         throws MalformedURLException {
+        return obtainArtifactUrl(artifactSpec, classifier, suffix, false);
+    }
+    
+    /**
+     * Obtains the URL for a specific artifact. In case of snapshot artifacts, the most recently deployed artifact
+     * URL is determined.
+     * 
+     * @param artifactSpec the artifact specification (may be <b>null</b>)
+     * @param classifier the optional classifier (may be <b>null</b>) 
+     * @param suffix file name extension
+     * @param fallback use the fallback repository
+     * @return the URL to the artifact (may be <b>null</b> in case that the fallback respository is not configured)
+     * @throws MalformedURLException in case that the URL cannot be constructed
+     * @see CoordinationConfiguration#getPipelineElementsRepository()
+     */
+    private static URL obtainArtifactUrl(String artifactSpec, String classifier, String suffix, boolean fallback) 
+        throws MalformedURLException {
         String urlPart = artifactSpecToPath(artifactSpec, classifier, suffix);
         URL url = ArtifactRegistry.getArtifactURL(artifactSpec);
         if (null == url) {
-            url = obtainPipelineElementsUrl(urlPart);
+            url = obtainPipelineElementsUrl(urlPart, fallback);
         }
         return url;
     }
@@ -329,11 +378,20 @@ public class RepositoryHelper {
      * Creates an URL within the pipeline elements repository.
      * 
      * @param path the path within the repository
-     * @return the URL
+     * @param fallback the fallback repository
+     * @return the URL (may be <b>null</b> if the repository base url in 
+     *   {@link CoordinationConfiguration#getPipelineElementsRepository()} or 
+     *   {@link CoordinationConfiguration#getPipelineElementsRepositoryFallback()} is not configured)
      * @throws MalformedURLException in case that creating the URL fails
      */
-    private static URL obtainPipelineElementsUrl(String path) throws MalformedURLException {
-        return new URL(CoordinationConfiguration.getPipelineElementsRepository(), path);
+    private static URL obtainPipelineElementsUrl(String path, boolean fallback) throws MalformedURLException {
+        URL repo;
+        if (fallback) {
+            repo = CoordinationConfiguration.getPipelineElementsRepositoryFallback();
+        } else {
+            repo = CoordinationConfiguration.getPipelineElementsRepository();
+        }
+        return null == repo ? null : new URL(repo, path);
     }
     
     /**
@@ -351,7 +409,7 @@ public class RepositoryHelper {
         if (version.endsWith(MAVEN_SNAPSHOT_SUFFIX)) {
             try {
                 version = version.substring(0, version.length() - MAVEN_SNAPSHOT_SUFFIX.length());
-                URL meta = obtainPipelineElementsUrl(path + "/maven-metadata.xml");
+                URL meta = obtainPipelineElementsUrl(path + "/maven-metadata.xml", false);
                 InputStream is = meta.openStream();
                 MavenMetaInfo info = new MavenMetaInfo(is);
                 is.close();
