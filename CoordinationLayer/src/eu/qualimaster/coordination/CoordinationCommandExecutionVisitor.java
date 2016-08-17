@@ -363,6 +363,12 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
     static void doPipelineStart(INameMapping mapping, String jarPath, PipelineOptions options, 
         CoordinationCommand command) throws IOException {
         String pipelineName = mapping.getPipelineName();
+        try {
+            // just in case that the pipeline was killed manually
+            SignalMechanism.getPortManager().clearPortAssignments(pipelineName); 
+        } catch (SignalException e) {
+            getLogger().error(e.getMessage(), e);
+        }
         PipelineCache.getCache(pipelineName); // prepare the cache
         if (!CoordinationManager.isTestingMode()) {
             StormUtils.submitTopology(CoordinationConfiguration.getNimbus(), mapping, jarPath, 
@@ -408,10 +414,13 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
                 command));*/
             doPipelineStop(mapping, command.getOptions(), command);
             CoordinationManager.unregisterNameMapping(mapping);
+            SignalMechanism.getPortManager().clearPortAssignments(pipelineName);
         } catch (IOException e) {
             String message = "while stopping pipeline '" + command.getPipeline() + "': " +  e.getMessage();
             failing = new CoordinationExecutionResult(command, message, 
                 CoordinationExecutionCode.STOPPING_PIPELINE);
+        } catch (SignalException e) {
+            getLogger().error(e.getMessage(), e);
         }
         return failing;
     }

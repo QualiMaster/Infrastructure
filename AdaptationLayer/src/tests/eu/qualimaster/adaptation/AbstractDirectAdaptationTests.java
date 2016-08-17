@@ -38,6 +38,7 @@ import eu.qualimaster.coordination.RuntimeVariableMapping;
 import eu.qualimaster.coordination.commands.AlgorithmChangeCommand;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.easy.extension.internal.ConfigurationInitializer;
+import eu.qualimaster.easy.extension.internal.CoordinationHelper;
 import eu.qualimaster.easy.extension.internal.VariableHelper;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.MonitoringManager;
@@ -132,6 +133,8 @@ public abstract class AbstractDirectAdaptationTests {
         tmp = RepositoryConnector.createTmpFolder();
         new Models(Phase.ADAPTATION, adaptConfig, adaptRtVilModel, null, null);  // overrides
         ModelInitializer.removeLocation(getModelLocation(), ProgressObserver.NO_OBSERVER);
+        
+        CoordinationHelper.setInTesting(true);
     }
     
     /**
