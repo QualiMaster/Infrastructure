@@ -263,6 +263,20 @@ public class SignalMechanism {
     }
 
     /**
+     * Returns a port manager for the {@link #GLOBAL_NAMESPACE}.
+     * 
+     * @return a port manager instance
+     * @throws SignalException if the global signal mechanism cannot be obtained 
+     */
+    public static PortManager getPortManager() throws SignalException {
+        try {
+            return new PortManager(obtainFramework(GLOBAL_NAMESPACE));
+        } catch (IOException e) {
+            throw new SignalException(e);
+        }
+    }
+
+    /**
      * Prepares the signal mechanism for the given namespace.
      * 
      * @param namespace the namespace
