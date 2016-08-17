@@ -90,11 +90,15 @@ public class PortManagerTest {
     @Test
     public void testPortRequest() {
         PortAssignmentRequest request = new PortAssignmentRequest("pip", "elt", 3, "local", "id1");
+        Assert.assertTrue(request.doCheck());
         Assert.assertEquals("pip", request.getPipeline());
         Assert.assertEquals("elt", request.getElement());
         Assert.assertEquals(3, request.getTaskId());
         Assert.assertEquals("local", request.getHost());
         Assert.assertEquals("id1", request.getAssignmentId());
+        
+        request.setCheck(false);
+        Assert.assertFalse(request.doCheck());
     }
     
     /**

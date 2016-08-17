@@ -15,7 +15,10 @@
  */
 package eu.qualimaster.common.signal;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.net.ConnectException;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -579,6 +582,7 @@ public class PortManager {
         private int taskId;
         private String host;
         private String assignmentId;
+        private boolean check = true;
         
         /**
          * Creates a port assignment request.
@@ -605,6 +609,16 @@ public class PortManager {
             this.taskId = taskId;
             this.host = host;
             this.assignmentId = assignmentId;
+        }
+        
+        /**
+         * Defines whether the port manager shall check whether the port to return for this
+         * request is free.
+         * 
+         * @param check <code>true</code> for checking (default), <code>false</code> else
+         */
+        public void setCheck(boolean check) {
+            this.check = check;
         }
 
         /**
@@ -652,10 +666,19 @@ public class PortManager {
             return assignmentId;
         }
         
+        /**
+         * Returns whether the port manager shall check the port candidate whether it is free.
+         * 
+         * @return <code>true</code> for checking, <code>false</code> else
+         */
+        public boolean doCheck() {
+            return check;
+        }
+        
         @Override
         public String toString() {
             return "port request pip:" + pipeline + " elt: " + element + " taskId: " 
-                    + taskId + " host: " + host + " id: " + assignmentId;
+                    + taskId + " host: " + host + " id: " + assignmentId + " check: " + check;
         }
         
     }
@@ -701,13 +724,17 @@ public class PortManager {
             PortsTable portsTable = loadWithInit(nodePath, PortsTable.class, transaction, false);
             HostTable hostTable = loadWithInit(hostPath, HostTable.class, transaction, false);
             int candidate = portRange.getLowPort();
+            boolean check = request.doCheck();
             while (null == result && candidate <= portRange.getHighPort()) {
                 if (null == hostTable.getAssignment(candidate)) {
-                    result = new PortAssignment(request.getHost(), candidate, request.getTaskId(), 
-                        request.getAssignmentId());
-                    portsTable.registerPortAssignment(request.getTaskId(), result);
-                    hostTable.addAssignment(candidate, request.getPipeline());
-                } else {
+                    if (!check || (check && isPortFree(request.getHost(), candidate))) {
+                        result = new PortAssignment(request.getHost(), candidate, request.getTaskId(), 
+                            request.getAssignmentId());
+                        portsTable.registerPortAssignment(request.getTaskId(), result);
+                        hostTable.addAssignment(candidate, request.getPipeline());
+                    }
+                }
+                if (null == result) {
                     candidate++;
                 }
             }
@@ -717,6 +744,33 @@ public class PortManager {
             throw new SignalException(e);
         }
         return result;
+    }
+    
+    /**
+     * Returns whether the specified port is free.
+     * 
+     * @param host the host
+     * @param port the port
+     * @return <code>true</code> for free, <code>false</code> else
+     */
+    private boolean isPortFree(String host, int port) {
+        // https://git.eclipse.org/c/jdt/eclipse.jdt.debug.git/tree/org.eclipse.jdt.launching/launching/
+        //         org/eclipse/jdt/launching/SocketUtil.java
+        boolean free = false;
+        Socket s = null;
+        try {
+            s = new Socket(host, port);
+        } catch (ConnectException e) {
+            free = true;
+        } catch (IOException e) {
+        }
+        if (null != s) {
+            try {
+                s.close();
+            } catch (IOException e) {
+            }
+        }
+        return free;
     }
     
     /**
