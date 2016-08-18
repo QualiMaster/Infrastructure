@@ -64,9 +64,15 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
     
     private ArrayList<ZipInputStream> downloadHistoricalData(String term, ArrayList<String> dates) throws IOException
     {
-    	ArrayList<ZipInputStream> data = new ArrayList<>();
-    	for(String date : dates) data.add(downloadHistoricalData(term, date));
-    	return data;
+    	try{
+	    	ArrayList<ZipInputStream> data = new ArrayList<>();
+	    	for(String date : dates) data.add(downloadHistoricalData(term, date));
+	    	return data;
+    	}
+    	catch(Exception e){
+    		System.out.println("Impossible to download historical data for term " + term);
+    		throw new IOException();
+    	}
     }
     
     private ZipInputStream downloadHistoricalData(String term, String date) throws IOException
