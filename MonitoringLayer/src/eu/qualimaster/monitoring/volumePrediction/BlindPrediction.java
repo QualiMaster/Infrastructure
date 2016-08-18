@@ -70,7 +70,8 @@ public class BlindPrediction {
 		else
 		{
 			TreeMap<String,Long> trainingData = DataUtils.readData(dataFile);
-			this.historicalVolumes = computeAverageVolumes(trainingData);
+			if(!trainingData.isEmpty()) this.historicalVolumes = computeAverageVolumes(trainingData);
+			else this.historicalVolumes = null;
 		}
 	}
 	
