@@ -95,9 +95,16 @@ public class VolumePredictor {
 		else this.blindTerms = new HashSet<>();
 		this.running = false;
 		this.historicalDataFile = new File(filePath);
-		initializeModels();
+		this.models = new HashMap<>();
+		this.blindModels = new HashMap<>();
+		initializeModels(this.models, this.blindModels);
 	}
 	
+	/**
+	 * Makes a blind prediction (based on historical data) of the volume of a term that is not being monitored.
+	 * @param term the not monitored term whose volume has to be predicted.
+	 * @return the predicted volume of the term; -1 if a model with historial data for the input term is not available.
+	 */
 	public double predictBlindly(String term)
 	{
 		BlindPrediction model = this.blindModels.get(term);
@@ -119,17 +126,19 @@ public class VolumePredictor {
 		String timestamp = getTimestamp();
 		for(String term : observations.keySet())
 		{	
+			long currVolume = (long)observations.get(term);
 			Prediction model = this.models.get(term);
 			
-			// update the recent values within the model
-			long currVolume = (long)observations.get(term);
-			model.updateRecentVolumes(timestamp, currVolume);
-			
-			// predict the volume within the next time step
-			double prediction = model.predict();
-			
-			// check whether the predicted volume is critical and, if so, raise an alarm to the adaptation layer
-			evaluatePrediction(term, prediction);
+			if(model != null && model.getForecaster() != null){
+				// update the recent values within the model
+				model.updateRecentVolumes(timestamp, currVolume);
+				
+				// predict the volume within the next time step
+				double prediction = model.predict();
+				
+				// check whether the predicted volume is critical and, if so, raise an alarm to the adaptation layer
+				evaluatePrediction(term, prediction);
+			}
 			
 			// store the current observation in the historical data of the current term (only for twitter)
 			storeInHistoricalData(term, timestamp, currVolume);
@@ -148,15 +157,20 @@ public class VolumePredictor {
 	}
 	
 	/**
-	 * Updates the prediction models of each monitored source.
-	 * TODO At the moment it assumes that the prediction (i.e. the runPrediction() method) is not running.
-	 * 		Could be run as a separate thread and exchange the models once the new ones are ready.
+	 * Updates the prediction models of each monitored and blind term.
 	 */
 	public void updatePrediction()
 	{
+		// create the new models in separate objects not to interfere with any prediction that might be running
+		HashMap<String,Prediction> newModels = new HashMap<>();
+		HashMap<String,BlindPrediction> newBlindModels = new HashMap<>();
+		initializeModels(newModels, newBlindModels);
+		
+		// change the models
 		this.models.clear();
+		this.models.putAll(newModels);
 		this.blindModels.clear();
-		initializeModels();
+		this.blindModels.putAll(newBlindModels);
 	}
 	
 	private void evaluatePrediction(String term, double prediction)
@@ -170,7 +184,7 @@ public class VolumePredictor {
 		// TODO use the event class defined in the infrastructure to send alarms to the adaptation layer
 	}
 	
-	private void initializeModels(){
+	private void initializeModels(HashMap<String,Prediction> models, HashMap<String,BlindPrediction> blindModels){
 		// make the union of monitored and blind terms to avoid getting historical data twice (in case a term appears in both the sets)
 		HashSet<String> allTerms = new HashSet<>();
 		allTerms.addAll(this.monitoredTerms.keySet());
@@ -183,29 +197,26 @@ public class VolumePredictor {
 			if(this.monitoredTerms.containsKey(term)){
 				Prediction model = new Prediction(term, this.historicalDataFile);
 				if(model.getForecaster() == null) model = null;
-				this.models.put(term, model);
+				models.put(term, model);
 			}
 			// blind models
 			if(this.blindTerms.contains(term)){
 				BlindPrediction model = new BlindPrediction(term, this.historicalDataFile);
 				if(model.getHistoricalVolumes() == null) model = null;
-				this.blindModels.put(term, model);
+				blindModels.put(term, model);
 			}
 		}	
 	}
 	
 	private void getHistoricalData(String term, long months, File outputFile)
 	{
-		// TODO get historical data via the code in the source (the actual return value still has to be decided)
-		// TODO decide how to distinguish between Twitter and Spring
 		try{
 			this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile);
 		}
 		catch(IOException e){
-			// TODO handle the absence of historical data
-			System.out.println("ERROR: historical data not available for term:" + term);
-			
+			// handle the absence of historical data:
 			// clear the content of the historicalDataFile, because it refers to the read of historical data for a previous term
+			System.out.println("ERROR: historical data not available for term:" + term);
 			try {
 				BufferedWriter writer = new BufferedWriter(new FileWriter(this.historicalDataFile));
 				writer.write("");

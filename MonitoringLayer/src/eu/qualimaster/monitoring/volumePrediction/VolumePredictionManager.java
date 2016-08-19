@@ -110,7 +110,7 @@ public class VolumePredictionManager {
 	}
 	
 	/**
-	 * Updates the volume thresholds for a given monitored term.
+	 * Updates the volume threshold for a given monitored term.
 	 * @param source the source that the term belongs to
 	 * @param term the monitored term whose threshold has to be changed
 	 * @param threshold the new volume threshold for the monitored term
@@ -165,8 +165,6 @@ public class VolumePredictionManager {
 	    // not emit data. No data is aggregated in the source if the getAggregationKey(.) method returns null.
 		
 		// TODO handle exceptions like: source map does not contain an input term; the model for a source is not available (null);
-		//		handle the inclusion of a new source (here by checking the source map or with the dedicated event)
-		//		even if the source or model is missing for a term, the current value should be stored anyway for later training
 		
 		// use the right predictor based on the source
 		VolumePredictor predictor = null;
