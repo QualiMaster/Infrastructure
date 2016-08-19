@@ -46,7 +46,7 @@ public class VolumePredictionManager {
 	 * Performs a blind prediction (i.e. only based on historical data, if available) for a given term in a given source
 	 * @param source the source containing the term
 	 * @param term the term whose volume has to be predicted
-	 * @return
+	 * @return the predicted volume of the term; -1 if a model with historial data for the input term is not available. 
 	 */
 	public static double predictBlindly(SourceName source, String term){
 		if(source == SourceName.SPRING) return springVolumePredictor.predictBlindly(term);
