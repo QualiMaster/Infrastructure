@@ -18,7 +18,7 @@ package eu.qualimaster.monitoring.handlers;
 import eu.qualimaster.monitoring.MonitoringEventHandler;
 import eu.qualimaster.monitoring.events.SourceVolumeMonitoringEvent;
 import eu.qualimaster.monitoring.systemState.SystemState;
-import eu.qualimaster.monitoring.volumePrediction.VolumePredictor;
+import eu.qualimaster.monitoring.volumePrediction.VolumePredictionManager;
 
 /**
  * A handler for source volume monitoring events.
@@ -38,7 +38,7 @@ public class SourceVolumeMonitoringEventHandler extends MonitoringEventHandler<S
 
     @Override
     protected void handle(SourceVolumeMonitoringEvent event, SystemState state) {
-        VolumePredictor.notifySourceVolumeMonitoringEvent(event);
+        VolumePredictionManager.notifySourceVolumeMonitoringEvent(event);
     }
 
 }
