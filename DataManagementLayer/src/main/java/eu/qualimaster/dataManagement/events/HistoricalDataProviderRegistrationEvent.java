@@ -50,7 +50,7 @@ public class HistoricalDataProviderRegistrationEvent extends DataManagementEvent
      * 
      * @return the name of the pipeline
      */
-    protected String getPipeline() {
+    public String getPipeline() {
         return pipeline;
     }
 
@@ -59,7 +59,7 @@ public class HistoricalDataProviderRegistrationEvent extends DataManagementEvent
      * 
      * @return the name of the data source
      */
-    protected String getSource() {
+    public String getSource() {
         return source;
     }
 
@@ -68,7 +68,7 @@ public class HistoricalDataProviderRegistrationEvent extends DataManagementEvent
      * 
      * @return the historical data provide - <b>null</b> if no provider is available
      */
-    protected IHistoricalDataProvider getProvider() {
+    public IHistoricalDataProvider getProvider() {
         return provider;
     }
     

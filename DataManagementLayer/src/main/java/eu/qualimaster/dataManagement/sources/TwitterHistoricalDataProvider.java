@@ -47,7 +47,7 @@ public class TwitterHistoricalDataProvider implements IHistoricalDataProvider,Se
     	storeData(data, target);
     }
     
-    private List<String> getDataFromHBaseTable(Long timeHorizon, String term)
+    private List<String> getDataFromHBaseTable(Long timeHorizon, String term) throws IOException
     {
     	// Get the HBase table containing data for the input term
     	// TODO which strategy should be used?
@@ -62,6 +62,11 @@ public class TwitterHistoricalDataProvider implements IHistoricalDataProvider,Se
     	List<String> data = new ArrayList<>();
     	for(String key : validKeys) data.add(makeDataLine(key, table));
     	table.disconnect();
+    	
+    	if(data.isEmpty()){
+    		System.out.println("Impossible to retrieve historical data for term " + term);
+    		throw new IOException();
+    	}
     	
     	return data;
     }
@@ -100,12 +105,18 @@ public class TwitterHistoricalDataProvider implements IHistoricalDataProvider,Se
     }
     
     private void storeData(List<String> data, File outputFile) throws IOException{
-    	BufferedWriter writer = null;
-		writer = new BufferedWriter(new FileWriter(outputFile));
-		for(String s : data){
-			writer.write(s);
-			writer.newLine();
-		}
-		writer.close();
+    	try{
+	    	BufferedWriter writer = null;
+			writer = new BufferedWriter(new FileWriter(outputFile));
+			for(String s : data){
+				writer.write(s);
+				writer.newLine();
+			}
+			writer.close();
+    	}
+    	catch(Exception e){
+    		System.out.println("Impossible to write historical data in file " + outputFile.getName());
+    		throw new IOException();
+    	}
     }
 }

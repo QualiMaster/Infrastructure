@@ -117,7 +117,8 @@ public class Prediction {
 	private void trainModel(File dataFile)
 	{
 		TreeMap<String,Long> trainingData = DataUtils.readData(dataFile);
-		this.forecaster = trainForecaster(trainingData);
+		if(!trainingData.isEmpty()) this.forecaster = trainForecaster(trainingData);
+		else this.forecaster = null;
 	}
 	
 	private WekaForecaster trainForecaster(TreeMap<String,Long> data)

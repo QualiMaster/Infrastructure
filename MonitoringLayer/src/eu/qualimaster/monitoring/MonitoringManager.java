@@ -55,7 +55,7 @@ import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
 import eu.qualimaster.monitoring.tracing.Tracing;
 import eu.qualimaster.monitoring.tracing.TracingTask;
-import eu.qualimaster.monitoring.volumePrediction.VolumePredictor;
+import eu.qualimaster.monitoring.volumePrediction.VolumePredictionManager;
 import eu.qualimaster.observables.MonitoringFrequency;
 import net.ssehub.easy.varModel.confModel.Configuration;
 import net.ssehub.easy.varModel.confModel.IDecisionVariable;
@@ -425,7 +425,7 @@ public class MonitoringManager {
                 }
             }
             AlgorithmProfilePredictor.notifyPipelineLifecycleChange(event);
-            VolumePredictor.notifyPipelineLifecycleChange(event);
+            VolumePredictionManager.notifyPipelineLifecycleChange(event);
         }
         
     }
@@ -583,7 +583,7 @@ public class MonitoringManager {
             startPlugin(plugin);
         }
         AlgorithmProfilePredictor.start();
-        VolumePredictor.start();
+        VolumePredictionManager.start();
     }
     
     /**
@@ -745,7 +745,7 @@ public class MonitoringManager {
      * Stop the layer.
      */
     public static void stop() {
-        VolumePredictor.stop();
+        VolumePredictionManager.stop();
         AlgorithmProfilePredictor.stop();
         if (null != reasoningTask) {
             reasoningTask.cancel();
