@@ -13,11 +13,10 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.util.Time;
 
 import eu.qualimaster.dataManagement.DataManager;
 import eu.qualimaster.dataManagement.storage.hbase.HBaseStorageSupport;
-import eu.qualimaster.dataManagement.strategies.FirstInFirstOutStorageStrategyDescriptor;
+import eu.qualimaster.dataManagement.strategies.NoStorageStrategyDescriptor;
 
 /**
  * Provides access to the historical twitter data archived by the Data Management Layer.
@@ -51,7 +50,7 @@ public class TwitterHistoricalDataProvider implements IHistoricalDataProvider,Se
     {
     	// Get the HBase table containing data for the input term
     	// TODO which strategy should be used?
-    	HBaseStorageSupport table = (HBaseStorageSupport) DataManager.VOLUME_PREDICTION_STORAGE_MANAGER.getTable("", term, null);
+    	HBaseStorageSupport table = (HBaseStorageSupport) DataManager.VOLUME_PREDICTION_STORAGE_MANAGER.getTable("", term, NoStorageStrategyDescriptor.INSTANCE);
     	table.connect();
     	
     	// Get all the keys (dates) of the table and keep only those within the time horizon
