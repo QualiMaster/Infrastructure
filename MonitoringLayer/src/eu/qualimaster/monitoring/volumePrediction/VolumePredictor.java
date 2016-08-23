@@ -23,18 +23,16 @@ import eu.qualimaster.dataManagement.storage.hbase.HBaseStorageSupport;
  */
 public class VolumePredictor {
 	
+	/** The pipeline the predictor refers to. */
+	private String pipeline;
+	
 	/** The source the predictor refers to. */
 	private String source;
 	
-	/** Map of terms (either stocks or hashtags) monitored by the volume prediction.
-	/*  Each term (key) has a threshold (value) for identifying too high volumes and raising alarms to the adaptation layer.
-	 *  TODO Decide how to identify these thresholds (e.g. wrt to the recent values? wrt to the current load of the infrastructure?)
-	 */
-	private HashMap<String,Long> monitoredTerms;
+	/** Set of terms (either stocks or hashtags) monitored by the volume prediction. */
+	private HashSet<String> monitoredTerms;
 	
-	/** Set of terms (either stocks or hashtags) for which historical data might be looked up as blind prediction.
-	/*  Each term (key) has a threshold (value) for identifying too high volumes and raising alarms to the adaptation layer
-	 */
+	/** Set of terms (either stocks or hashtags) for which historical data might be looked up as blind prediction. */
 	private HashSet<String> blindTerms;
 	
 	/** Map containing the term (either stocks or hashtags) for which a prediction model is available (along with the corresponding model) */
@@ -61,8 +59,9 @@ public class VolumePredictor {
 	/**
 	 * Default constructor of the predictor, no models are trained nor historical data provider are set.
 	 */
-	public VolumePredictor(String source, IHistoricalDataProvider dataProvider)
+	public VolumePredictor(String pipeline, String source, IHistoricalDataProvider dataProvider)
 	{
+		this.pipeline = pipeline;
 		this.source = source;
 		this.monitoredTerms = null;
 		this.blindTerms = null;
@@ -76,12 +75,12 @@ public class VolumePredictor {
 	/**
 	 * Initializes the volume predictor with a set of terms to be monitored and a set of terms to be looked up for blind prediction,
 	 * assuming that the data provider has been already set.
-	 * @param monitoredSources the initial set of terms to be monitored (with their volume thresholds) and for which a predictor must be 
-	 * trained. It can be null or empty, in this case the predictor will not be able to make any prediction and will need to be updated at some point.
+	 * @param monitoredSources the initial set of terms to be monitored and for which a predictor must be trained. It can be null or 
+	 * empty, in this case the predictor will not be able to make any prediction and will need to be updated at some point.
 	 * @param blindSources the initial set of terms whose historical volume can looked up. It can be null or empty.
 	 * @param filePath the path of a temporary file used to store and read data.
 	 */
-	public void initialize(HashMap<String,Long> monitoredTerms, HashSet<String> blindTerms, String filePath)
+	public void initialize(HashSet<String> monitoredTerms, HashSet<String> blindTerms, String filePath)
 	{
 		// check if the historical data provider has been set
 		if(this.historyProvider == null){
@@ -89,8 +88,8 @@ public class VolumePredictor {
 			return;
 		}
 		
-		if(monitoredTerms != null) this.monitoredTerms = new HashMap<>(monitoredTerms);
-		else this.monitoredTerms = new HashMap<>();
+		if(monitoredTerms != null) this.monitoredTerms = new HashSet<>(monitoredTerms);
+		else this.monitoredTerms = new HashSet<>();
 		if(blindTerms != null) this.blindTerms = new HashSet<>(blindTerms);
 		else this.blindTerms = new HashSet<>();
 		this.running = false;
@@ -98,6 +97,27 @@ public class VolumePredictor {
 		this.models = new HashMap<>();
 		this.blindModels = new HashMap<>();
 		initializeModels(this.models, this.blindModels);
+	}
+	
+	/**
+	 * Initializes the volume predictor using the default terms (monitored and blind) contained within the historical data handler,
+	 * assuming that the data provider has been already set.
+	 * @param monitoredSources the initial set of terms to be monitored and for which a predictor must be trained. It can be null or 
+	 * empty, in this case the predictor will not be able to make any prediction and will need to be updated at some point.
+	 * @param blindSources the initial set of terms whose historical volume can looked up. It can be null or empty.
+	 * @param filePath the path of a temporary file used to store and read data.
+	 */
+	public void initialize(String filePath)
+	{
+		// check if the historical data provider has been set
+		if(this.historyProvider == null){
+			System.out.println("ERROR: no historical data provider has been set.");
+			return;
+		}
+		
+		HashSet<String> monitoredTerms = this.historyProvider.getDefaultMonitoredTerms();
+		HashSet<String> blindTerms = this.historyProvider.getDefaultBlindTerms();
+		initialize(monitoredTerms, blindTerms, filePath);
 	}
 	
 	/**
@@ -176,7 +196,13 @@ public class VolumePredictor {
 	private void evaluatePrediction(String term, double prediction)
 	{
 		// TODO clarify the policy to raise alarms. At the moment is a simple comparison with the threshold
-		if(prediction > this.monitoredTerms.get(term)) raiseAlarm(term, prediction);
+		
+		// TODO use (recent) historical data to signal 2 cases:
+		// 		- high peaks (using recent history to compute avg should detect these)
+		//		- slightly but continuously increasing trends: dangerous because the recent history is updated
+		//		  with always increasing values so the new values, although higher, do not result in alarms
+		
+		if(true) raiseAlarm(term, prediction);
 	}
 	
 	private void raiseAlarm(String term, double volume)
@@ -187,14 +213,14 @@ public class VolumePredictor {
 	private void initializeModels(HashMap<String,Prediction> models, HashMap<String,BlindPrediction> blindModels){
 		// make the union of monitored and blind terms to avoid getting historical data twice (in case a term appears in both the sets)
 		HashSet<String> allTerms = new HashSet<>();
-		allTerms.addAll(this.monitoredTerms.keySet());
+		allTerms.addAll(this.monitoredTerms);
 		allTerms.addAll(this.blindTerms);
 		
 		for(String term : allTerms){
 			getHistoricalData(term, NUM_MONTHS, this.historicalDataFile);
 			
 			// monitored models
-			if(this.monitoredTerms.containsKey(term)){
+			if(this.monitoredTerms.contains(term)){
 				Prediction model = new Prediction(term, this.historicalDataFile);
 				if(model.getForecaster() == null) model = null;
 				models.put(term, model);
@@ -257,14 +283,14 @@ public class VolumePredictor {
 	 * The model is initialized even if a model for the term already exists (because it might be outdated).
 	 * @param source The term to be monitored
 	 */
-	public void addMonitoredTerm(String term, long threshold)
+	public void addMonitoredTerm(String term)
 	{
 		getHistoricalData(term, NUM_MONTHS, this.historicalDataFile);
 		
 		Prediction model = new Prediction(term, this.historicalDataFile);
 		if(model.getForecaster() == null) model = null;
 		this.models.put(term, model);
-		this.monitoredTerms.put(term, threshold);
+		this.monitoredTerms.add(term);
 	}
 	
 	/**
@@ -292,10 +318,10 @@ public class VolumePredictor {
 		this.blindTerms.add(term);
 	}
 	
-	public void updateTermThreshold(String term, long threshold){
-		if(this.monitoredTerms.containsKey(term)) this.monitoredTerms.put(term, threshold);
-		else System.out.println("ERROR: the required term is not monitored.");
-	}
+//	public void updateTermThreshold(String term, long threshold){
+//		if(this.monitoredTerms.containsKey(term)) this.monitoredTerms.put(term, threshold);
+//		else System.out.println("ERROR: the required term is not monitored.");
+//	}
 
 	/**
 	 * @return the running
@@ -321,14 +347,14 @@ public class VolumePredictor {
 	/**
 	 * @return the monitoredTerms
 	 */
-	public HashMap<String,Long> getMonitoredTerms() {
+	public HashSet<String> getMonitoredTerms() {
 		return monitoredTerms;
 	}
 
 	/**
 	 * @param monitoredTerms the monitoredTerms to set
 	 */
-	public void setMonitoredTerms(HashMap<String,Long> monitoredTerms) {
+	public void setMonitoredTerms(HashSet<String> monitoredTerms) {
 		this.monitoredTerms = monitoredTerms;
 	}
 
@@ -358,5 +384,19 @@ public class VolumePredictor {
 	 */
 	public void setSourceName(String source) {
 		this.source = source;
+	}
+
+	/**
+	 * @return the pipeline
+	 */
+	public String getPipeline() {
+		return pipeline;
+	}
+
+	/**
+	 * @param pipeline the pipeline to set
+	 */
+	public void setPipeline(String pipeline) {
+		this.pipeline = pipeline;
 	}
 }
