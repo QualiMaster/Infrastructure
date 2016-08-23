@@ -1,5 +1,6 @@
 package eu.qualimaster.monitoring.volumePrediction;
 
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -8,6 +9,7 @@ import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.monitoring.events.SourceVolumeMonitoringEvent;
+import eu.qualimaster.monitoring.utils.IScheduler;
 
 /**
  * Entrance point for the volume prediction, it handles the events and provides the methods to use the functionalities of the volume prediction.
@@ -174,8 +176,16 @@ public class VolumePredictionManager {
 	/**
 	* Called upon startup of the infrastructure.
 	*/
-	public static void start() {
+	public static void start(IScheduler scheduler) {
 	    EventManager.register(new HistoricalDataProviderRegistrationEventHandler());
+	    
+	    // this is rather initial - each day at 2:00
+	    Calendar cal = Calendar.getInstance();
+	    cal.add(Calendar.DAY_OF_YEAR, 1);
+	    cal.set(Calendar.HOUR, 2);
+	    cal.set(Calendar.MINUTE, 0);
+	    cal.set(Calendar.SECOND, 0);
+	    scheduler.schedule(ModelUpdateTask.INSTANCE, cal.getTime(), 24 * 60 * 60 * 1000);
 	}
 
 	/**

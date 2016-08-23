@@ -6,17 +6,22 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
+import java.util.TimerTask;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import backtype.storm.scheduler.Cluster;
+import backtype.storm.scheduler.Topologies;
 import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.common.monitoring.MonitoringPluginRegistry;
 import eu.qualimaster.coordination.CoordinationManager;
@@ -55,6 +60,8 @@ import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
 import eu.qualimaster.monitoring.tracing.Tracing;
 import eu.qualimaster.monitoring.tracing.TracingTask;
+import eu.qualimaster.monitoring.utils.IScheduler;
+import eu.qualimaster.monitoring.volumePrediction.ModelUpdateTask;
 import eu.qualimaster.monitoring.volumePrediction.VolumePredictionManager;
 import eu.qualimaster.observables.MonitoringFrequency;
 import net.ssehub.easy.varModel.confModel.Configuration;
@@ -97,6 +104,15 @@ public class MonitoringManager {
 
     private static ReasoningTask reasoningTask;
     private static int runningPipelines = 0;
+    
+    private static IScheduler scheduler = new IScheduler() {
+        
+        @Override
+        public void schedule(TimerTask task, Date firstTime, long period) {
+            timer.schedule(task, firstTime, period);
+        }
+
+    };
 
     /**
      * Prevents external creation.
@@ -583,7 +599,7 @@ public class MonitoringManager {
             startPlugin(plugin);
         }
         AlgorithmProfilePredictor.start();
-        VolumePredictionManager.start();
+        VolumePredictionManager.start(scheduler);
     }
     
     /**
