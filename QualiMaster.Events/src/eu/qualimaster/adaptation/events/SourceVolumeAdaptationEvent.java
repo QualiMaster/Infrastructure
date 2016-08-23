@@ -18,6 +18,8 @@ package eu.qualimaster.adaptation.events;
 import java.util.HashMap;
 import java.util.Map;
 
+import eu.qualimaster.common.QMInternal;
+
 /**
  * Allows the source volume prediction to alert the adaptation layer about significantly changing
  * volumes.
@@ -40,6 +42,7 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
      * @param key the key/term causing the event
      * @param deviation the deviation in volume indicating a problem
      */
+    @QMInternal
     public SourceVolumeAdaptationEvent(String pipeline, String source, String key, double deviation) {
         this(pipeline, source, createSingleFinding(key, deviation));
     }
@@ -52,6 +55,7 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
      * @param findings the findings
      * @throws IllegalArgumentException if <code>findings</code> is <b>null</b> or empty
      */
+    @QMInternal
     public SourceVolumeAdaptationEvent(String pipeline, String source, Map<String, Double> findings) {
         if (null == findings || findings.isEmpty()) {
             throw new IllegalArgumentException("no findings");
@@ -95,6 +99,19 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
      */
     public Map<String, Double> getFindings() {
         return findings;
+    }
+    
+    /**
+     * Returns the sum of all deviations.
+     * 
+     * @return the sum of all deviations
+     */
+    public double getAllDeviations() {
+        double result = 0;
+        for (Double dev : findings.values()) {
+            result += dev;
+        }
+        return result;
     }
     
 }
