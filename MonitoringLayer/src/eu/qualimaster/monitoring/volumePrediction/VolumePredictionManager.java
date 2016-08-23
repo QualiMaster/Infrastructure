@@ -205,6 +205,6 @@ public class VolumePredictionManager {
 	* Called upon shutdown of the infrastructure. Clean up global resources here.
 	*/
 	public static void stop() {
-	    ModelUpdateTask.INSTANCE.cancel();
+	    // do not cancel the task...
 	}
 }
