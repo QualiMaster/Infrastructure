@@ -12,6 +12,7 @@ import org.junit.Test;
 import eu.qualimaster.adaptation.events.AdaptationEventResponse;
 import eu.qualimaster.adaptation.events.AlgorithmConfigurationAdaptationEvent;
 import eu.qualimaster.adaptation.events.ParameterConfigurationAdaptationEvent;
+import eu.qualimaster.adaptation.events.SourceVolumeAdaptationEvent;
 import eu.qualimaster.events.AbstractReturnableEvent;
 import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
@@ -76,6 +77,48 @@ public class EventsTests {
         Assert.assertEquals(pcae.getSenderId(), resp.getReceiverId());
         Assert.assertEquals(AdaptationEventResponse.ResultType.FAILED, resp.getResultType());
         Assert.assertEquals("whyever", resp.getMessage());
+        
+        try {
+            new SourceVolumeAdaptationEvent("pip", "src", null);
+            Assert.fail("no exception");
+        } catch (IllegalArgumentException e) {
+        }
+        try {
+            new SourceVolumeAdaptationEvent("pip", "src", new HashMap<String, Double>());
+            Assert.fail("no exception");
+        } catch (IllegalArgumentException e) {
+        }
+        SourceVolumeAdaptationEvent svae = new SourceVolumeAdaptationEvent("pip", "src", "$APL", 1000);
+        Assert.assertEquals("pip", svae.getPipeline());
+        Assert.assertEquals("src", svae.getSource());
+        Map<String, Double> expected = new HashMap<String, Double>();
+        expected.put("$APL", 1000.0);
+        assertEquals(expected, svae.getFindings());
+        
+        svae = new SourceVolumeAdaptationEvent("pip", "src", expected);
+        Assert.assertEquals("pip", svae.getPipeline());
+        Assert.assertEquals("src", svae.getSource());
+        assertEquals(expected, svae.getFindings());
+    }
+    
+    /**
+     * Asserts the equality of two string-double maps.
+     * 
+     * @param expected the expected map
+     * @param actual the actual map
+     */
+    private void assertEquals(Map<String, Double> expected, Map<String, Double> actual) {
+        if (null == expected) {
+            Assert.assertNull(actual);    
+        } else {
+            Assert.assertNotNull(actual);
+            Assert.assertEquals(expected.size(), actual.size());
+            for (Map.Entry<String, Double> ent : expected.entrySet()) {
+                Double actualVal = actual.get(ent.getKey());
+                Assert.assertNotNull(actualVal);
+                Assert.assertEquals(ent.getValue(), actualVal, 0.005);
+            }
+        }
     }
 
     /**
@@ -307,7 +350,7 @@ public class EventsTests {
         Assert.assertEquals("alg", evt.getAlgorithmId());
         Assert.assertEquals(ResourceUsage.MEMORY_USE, evt.getObservable());
         Assert.assertEquals(10, evt.getValue(), 0.05);
-        Assert.assertEquals("123", evt.getTopologyId());
+        Assert.assertEquals("123", evt.getPipeline());
     }
     
     /**
