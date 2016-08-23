@@ -26,14 +26,6 @@ import org.apache.log4j.LogManager;
  */
 public class ModelUpdateTask extends TimerTask {
 
-    public final static ModelUpdateTask INSTANCE = new ModelUpdateTask();
-
-    /**
-     * Prevent external instantiation.
-     */
-    private ModelUpdateTask() {
-    }
-    
     @Override
     public void run() {
         try {

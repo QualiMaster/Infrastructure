@@ -190,7 +190,7 @@ public class VolumePredictionManager {
 	    cal.set(Calendar.HOUR, 2);
 	    cal.set(Calendar.MINUTE, 0);
 	    cal.set(Calendar.SECOND, 0);
-	    scheduler.schedule(ModelUpdateTask.INSTANCE, cal.getTime(), 24 * 60 * 60 * 1000);
+	    scheduler.schedule(new ModelUpdateTask(), cal.getTime(), 24 * 60 * 60 * 1000);
 	}
 
 	/**
@@ -205,6 +205,5 @@ public class VolumePredictionManager {
 	* Called upon shutdown of the infrastructure. Clean up global resources here.
 	*/
 	public static void stop() {
-	    // do not cancel the task...
 	}
 }
