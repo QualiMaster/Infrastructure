@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import org.junit.Assert;
 import org.junit.Test;
 
+import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictorAlgorithm;
 import eu.qualimaster.monitoring.profiling.Kalman;
 
 
@@ -47,11 +48,12 @@ public class PerformanceTest {
                     long startTime = System.nanoTime();
                     
                     // Create Kalman-Instance
-                    Kalman filter = new Kalman();
+                    AlgorithmProfilePredictorAlgorithm filter = new Kalman();
 
                     // Run Update-Predict-Cycle
                     for (int i = 1; i < entries.length; i++) {
-                        filter.predict(i, entries[i]);
+                        filter.update(i, entries[i]);
+                        filter.predict(0);
                     }
                     // Check if runTime <= maximalCriteria
                     long runTime = System.nanoTime() - startTime;

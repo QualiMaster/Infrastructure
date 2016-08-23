@@ -13,8 +13,8 @@ import java.util.Map;
 
 import eu.qualimaster.dataManagement.DataManager;
 import eu.qualimaster.dataManagement.sources.IHistoricalDataProvider;
+import eu.qualimaster.dataManagement.sources.TwitterHistoricalDataProvider;
 import eu.qualimaster.dataManagement.storage.hbase.HBaseStorageSupport;
-import eu.qualimaster.monitoring.volumePrediction.VolumePredictionManager.SourceName;
 
 /**
  * Main class implementing the available methods of the volume prediction.
@@ -23,8 +23,8 @@ import eu.qualimaster.monitoring.volumePrediction.VolumePredictionManager.Source
  */
 public class VolumePredictor {
 	
-	/** The source (either Spring or Twitter) the predictor refers to. */
-	private SourceName source;
+	/** The source the predictor refers to. */
+	private String source;
 	
 	/** Map of terms (either stocks or hashtags) monitored by the volume prediction.
 	/*  Each term (key) has a threshold (value) for identifying too high volumes and raising alarms to the adaptation layer.
@@ -61,15 +61,15 @@ public class VolumePredictor {
 	/**
 	 * Default constructor of the predictor, no models are trained nor historical data provider are set.
 	 */
-	public VolumePredictor(SourceName s)
+	public VolumePredictor(String source, IHistoricalDataProvider dataProvider)
 	{
-		this.source = s;
+		this.source = source;
 		this.monitoredTerms = null;
 		this.blindTerms = null;
 		this.models = null;
 		this.blindModels = null;
 		this.running = false;
-		this.historyProvider = null;
+		this.historyProvider = dataProvider;
 		this.historicalDataFile = null;
 	}
 	
@@ -229,8 +229,8 @@ public class VolumePredictor {
 	
 	private void storeInHistoricalData(String term, String timestamp, Long value)
 	{
-		// store a value in the historical data
-		if(this.source == SourceName.TWITTER) storeTwitterVolume(timestamp, term, value);
+		// store a value in the historical data only for twitter
+		if(this.historyProvider.getClass().equals(TwitterHistoricalDataProvider.class)) storeTwitterVolume(timestamp, term, value);
 	}
 	
 	private void storeTwitterVolume(String timestamp, String term, Long volume){
@@ -349,14 +349,14 @@ public class VolumePredictor {
 	/**
 	 * @return the source
 	 */
-	public SourceName getSourceName() {
+	public String getSourceName() {
 		return source;
 	}
 
 	/**
 	 * @param source the source to set
 	 */
-	public void setSourceName(SourceName source) {
+	public void setSourceName(String source) {
 		this.source = source;
 	}
 }

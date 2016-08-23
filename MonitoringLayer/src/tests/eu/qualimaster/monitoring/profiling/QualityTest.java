@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import org.junit.Assert;
 import org.junit.Test;
 
+import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictorAlgorithm;
 import eu.qualimaster.monitoring.profiling.Kalman;
 
 
@@ -40,17 +41,23 @@ public class QualityTest {
                         e.printStackTrace();
                     }
                 }
-                Kalman filter = new Kalman();
+                AlgorithmProfilePredictorAlgorithm filter = new Kalman();
                 // The first and second entry define the part of the time-set for which the quality is checked
                 int start = (int) entries[0];
                 int end = (int) entries[1];
                 // The third entry contains the allowed mean error in %
                 double meanErrorAllowed = entries[2];
                 double meanError = 0;
+                // Number of values being no measurements
+                int offset = 3;
                 // Going through the measurements
-                for (int i = 0 + 3; i < entries.length - 1; i++) {
+                for (int i = 0 + offset; i < entries.length - 1; i++) {
                     // Calculating the predictions
-                    double predicted = filter.predict(i, entries[i]);
+                    // Here the the first time step is 1 which then advances discrete (+1 in each iteration)
+                    filter.update(i - (offset - 1), entries[i]);
+                    System.out.println("in " + (i - (offset - 1)) + " " + entries[i]);
+                    double predicted = filter.predict(0);
+                    System.out.println("out " + predicted);
                     // Sum mean error, when in relevant section
                     if (i >= start + 2 && i < end + 2) {
                         meanError += (entries[i] == 0) ? 0 
@@ -59,8 +66,8 @@ public class QualityTest {
                 }
                 // Setting the error-sum in relation
                 meanError = (entries.length > 1) ? meanError / (end - start) : 0;
-                
                 Assert.assertTrue((meanError * 100) <= meanErrorAllowed);
+                System.out.println(meanError * 100);
                 
             } else {
                 System.err.print("Following line was skipped for containing illegal characters: ");
