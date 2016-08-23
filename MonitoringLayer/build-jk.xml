@@ -58,7 +58,7 @@
 	<!-- Tests -->
     <target name="test" depends="compile">
       <jacoco:coverage output="file" destfile="jacoco.exec" excludes="backtype.*:org.apache.thrift7.*">
-        <junit printsummary="withOutAndErr" dir="${build.base.dir}" fork="true" timeout="700000">
+        <junit printsummary="withOutAndErr" dir="${build.base.dir}" fork="true" timeout="900000">
             <classpath>
                 <path refid="maven.compile.classpath" />
                 <path refid="includes" />
