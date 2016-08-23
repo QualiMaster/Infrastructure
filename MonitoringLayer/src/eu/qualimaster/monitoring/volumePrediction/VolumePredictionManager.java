@@ -8,6 +8,7 @@ import eu.qualimaster.dataManagement.events.HistoricalDataProviderRegistrationEv
 import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
+import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.events.SourceVolumeMonitoringEvent;
 import eu.qualimaster.monitoring.utils.IScheduler;
 
@@ -18,6 +19,8 @@ import eu.qualimaster.monitoring.utils.IScheduler;
  * @author  Andrea Ceroni
  */
 public class VolumePredictionManager {
+	
+	private static final String DEFAULT_FILE_NAME = "historical_data.txt";
 
 	/**
 	 * Set of available volume predictors, one for each different source.
@@ -29,12 +32,12 @@ public class VolumePredictionManager {
 	 * set via the proper event. This must be called before feeding the predictor with volume data, with enough advance to let the 
 	 * predictors (one for each input term) be trained.
 	 * @param s the source the predictor will refer to.
-	 * @param monitoredTerms the initial set of terms to be monitored (with their volume thresholds) and for which a predictor must be 
-	 * trained. It can be null or empty, in this case the predictor will not be able to make any prediction and will need to be updated at some point. 
+	 * @param monitoredTerms the initial set of terms to be monitored and for which a predictor must be trained. It can be null or empty, 
+	 * in this case the predictor will not be able to make any prediction and will need to be updated at some point. 
 	 * @param blindTerms the initial set of terms whose historical volume can looked up. It can be null or empty. 
 	 * @param path the path of a temporary file used within the predictor to store and read data.
 	 */
-	public static void initialize(String source, HashMap<String,Long> monitoredTerms, HashSet<String> blindTerms, String path){
+	public static void initialize(String source, HashSet<String> monitoredTerms, HashSet<String> blindTerms, String path){
 		VolumePredictor predictor = volumePredictors.get(source);
 		if(predictor != null) predictor.initialize(monitoredTerms, blindTerms, path);
 		else System.out.println("ERROR: no volume predictor available for the input source" + source);
@@ -78,11 +81,10 @@ public class VolumePredictionManager {
 	 * Trains a model for a new term to be monitored and adds it to the predictor (useful for having a model ready before the term is added to the source).
 	 * @param source the source that the term belongs to
 	 * @param term the new monitored term to be added
-	 * @param threshold the volume threshold for the new term
 	 */
-	public static void addMonitoredTerm(String source, String term, long threshold){
+	public static void addMonitoredTerm(String source, String term){
 		VolumePredictor predictor = volumePredictors.get(source);
-		if(predictor != null) predictor.addMonitoredTerm(term, threshold);
+		if(predictor != null) predictor.addMonitoredTerm(term);
 		else System.out.println("ERROR: no volume predictor available for the input source" + source);
 	}
 	
@@ -124,11 +126,11 @@ public class VolumePredictionManager {
 	 * @param term the monitored term whose threshold has to be changed
 	 * @param threshold the new volume threshold for the monitored term
 	 */
-	public static void updateTermThreshold(String source, String term, long threshold){
-		VolumePredictor predictor = volumePredictors.get(source);
-		if(predictor != null) predictor.updateTermThreshold(term, threshold);
-		else System.out.println("ERROR: no volume predictor available for the input source" + source);
-	}
+//	public static void updateTermThreshold(String source, String term){
+//		VolumePredictor predictor = volumePredictors.get(source);
+//		if(predictor != null) predictor.updateTermThreshold(term);
+//		else System.out.println("ERROR: no volume predictor available for the input source" + source);
+//	}
 	
 	/**
 	 * A handler for upcoming data sources. Transports the historical data providers if available.
@@ -148,7 +150,8 @@ public class VolumePredictionManager {
 	    protected void handle(HistoricalDataProviderRegistrationEvent event) {
 	        // called when a data source comes up in a pipeline. Carries the historical data provider.
 	        // If the source changes, an event with the same pipeline / element name will occur
-	    	VolumePredictor predictor = new VolumePredictor(event.getSource(), event.getProvider());
+	    	VolumePredictor predictor = new VolumePredictor(event.getPipeline(), event.getSource(), event.getProvider());
+	    	predictor.initialize(MonitoringConfiguration.getVolumeModelLocation() + DEFAULT_FILE_NAME);
 	    	volumePredictors.put(event.getSource(), predictor);
 	    }
 	}
@@ -166,6 +169,8 @@ public class VolumePredictionManager {
 	    // not emit data. No data is aggregated in the source if the getAggregationKey(.) method returns null.
 		
 		// TODO handle exceptions like: source map does not contain an input term; the model for a source is not available (null);
+		
+		// TODO dynamically add an unknown term when observed from the source? This can be done if we don't expect thresholds as input
 		
 		// use the right predictor (based on the source) to handle the prediction for the incoming terms
 		VolumePredictor predictor = volumePredictors.get(event.getPipelineElement());
