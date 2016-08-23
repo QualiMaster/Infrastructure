@@ -28,6 +28,8 @@ public class MonitoringConfigurationTests extends CoordinationConfigurationTests
         Assert.assertEquals(1002, MonitoringConfiguration.getPipelineMonitoringFrequency());
         Assert.assertEquals(5, MonitoringConfiguration.getStormExecutorStartupWaitingTime());
         Assert.assertTrue(MonitoringConfiguration.debugThriftMonitoring());
+        Assert.assertEquals(MonitoringConfiguration.DEFAULT_VOLUME_MODEL_LOCATION, 
+            MonitoringConfiguration.getProfileLocation());
     }
 
     @Override

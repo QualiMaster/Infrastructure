@@ -140,6 +140,16 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
      */
     public static final boolean DEFAULT_THRIFT_MONITORING_DEBUG = false;
 
+    /**
+     * Denotes the folder where profiling data for prediction is stored.
+     */
+    public static final String VOLUME_MODEL_LOCATION = "volumePrediction.data.location";
+
+    /**
+     * The default value for {@link #VOLUME_MODEL_LOCATION} (temp).
+     */
+    public static final String DEFAULT_VOLUME_MODEL_LOCATION = FileUtils.getTempDirectoryPath();
+
     private static ConfigurationOption<String> monitoringAnalysisDisabled
         = createStringOption(MONITORING_ANALYSIS_DISABLED, DEFAULT_MONITORING_ANALYSIS_DISABLED);
     private static ConfigurationOption<String> monitoringHardwareFilter 
@@ -160,6 +170,8 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
         = createIntegerOption(TIME_STORM_EXECUTOR_STARTUP, DEFAULT_TIME_STORM_EXECUTOR_STARTUP);
     private static ConfigurationOption<Boolean> debugThriftMonitoring
         = createBooleanOption(THRIFT_MONITORING_DEBUG, DEFAULT_THRIFT_MONITORING_DEBUG);
+    private static ConfigurationOption<String> volumeModelLocation 
+        = createStringOption(VOLUME_MODEL_LOCATION, DEFAULT_VOLUME_MODEL_LOCATION);
     
     /**
      * Reads the configuration settings from the file.
@@ -355,5 +367,14 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
     public static boolean debugThriftMonitoring() {
         return debugThriftMonitoring.getValue();
     }
-    
+
+    /**
+     * The location where the volume prediction model is located.
+     * 
+     * @return the location
+     */
+    public static String getVolumeModelLocation() {
+        return volumeModelLocation.getValue();
+    }
+
 }
