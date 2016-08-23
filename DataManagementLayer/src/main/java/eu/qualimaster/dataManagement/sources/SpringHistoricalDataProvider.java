@@ -9,6 +9,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.zip.ZipInputStream;
 
 
@@ -24,6 +25,12 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
 	
 	/** The url of the SPRING server storing historical data */
 	private static final String BASE_URL = "http://84.200.210.254/Qualimaster/history/";
+	
+	/** The default list of terms to be monitored by default */
+	private static final String[] DEFAULT_MONITORED_TERMS = {"AAPL","AMAT","AMZN","CHK","CSCO","FB","GOOGL","IBM","MU","VHC"};
+	
+	/** The default list of terms to be looked up for blind prediction */
+	private static final String[] DEFAULT_BLIND_TERMS = {"AAPL","AMAT","AMZN","CHK","CSCO","FB","GOOGL","IBM","MU","VHC","ECA","F","HPQ","MT","SPLS"};
 	
     /**
      * Obtains historical data from Spring server
@@ -115,4 +122,26 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
     	if(month < 10) return year + "0" + month;
     	else return "" + year + month;
     }
+
+	/**
+	 * @return the defaultMonitoredTerms
+	 */
+	public HashSet<String> getDefaultMonitoredTerms() {
+		HashSet<String> monitoredTerms = new HashSet<>();
+		for(int i = 0; i < DEFAULT_MONITORED_TERMS.length; i++){
+			monitoredTerms.add(DEFAULT_MONITORED_TERMS[i]);
+		}
+		return monitoredTerms;
+	}
+
+	/**
+	 * @return the defaultBlindTerms
+	 */
+	public HashSet<String> getDefaultBlindTerms() {
+		HashSet<String> blindTerms = new HashSet<>();
+		for(int i = 0; i < DEFAULT_BLIND_TERMS.length; i++){
+			blindTerms.add(DEFAULT_BLIND_TERMS[i]);
+		}
+		return blindTerms;
+	}
 }

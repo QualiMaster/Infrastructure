@@ -18,6 +18,7 @@ package eu.qualimaster.dataManagement.sources;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.HashSet;
 
 /**
  * Interface of a forward object providing access to historical data of a certain {@link ISource data source}.
@@ -37,4 +38,15 @@ public interface IHistoricalDataProvider extends Serializable {
      */
     public void obtainHistoricalData(long timeHorizon, String term, File target) throws IOException;
     
+    /**
+     * Gets the default set of terms to be monitored, used during the initialization of the volume prediction.
+     * @return the set of terms to be monitored by default
+     */
+    public HashSet<String> getDefaultMonitoredTerms();
+    
+    /**
+     * Gets the default set of terms to be available for blind prediction, used during the initialization of the volume prediction.
+     * @return the set of terms to be available for blind prediction by default
+     */
+    public HashSet<String> getDefaultBlindTerms();
 }

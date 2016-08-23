@@ -10,6 +10,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.hadoop.hbase.util.Bytes;
@@ -28,6 +29,12 @@ public class TwitterHistoricalDataProvider implements IHistoricalDataProvider,Se
 {
 	private static final String DATE_FORMAT = "MM/DD/YYYY,hh:mm:ss";
 	private static final long serialVersionUID = 2128947946366967252L;
+	
+	/** The default list of terms to be monitored by default */
+	private static final String[] DEFAULT_MONITORED_TERMS = {"$AAPL","$CHK","$FB","$MU","$VHC"};
+	
+	/** The default list of terms to be looked up for blind prediction */
+	private static final String[] DEFAULT_BLIND_TERMS = {"$AAPL","$AMZN","$CHK","$FB","$GOOGL","$IBM","$MU","$VHC","$HPQ","$SPLS"};
 
 	/**
      * Obtains twitter data via the Data Management Layer (data are retrieved from HBase)
@@ -118,4 +125,26 @@ public class TwitterHistoricalDataProvider implements IHistoricalDataProvider,Se
     		throw new IOException();
     	}
     }
+
+    /**
+	 * @return the defaultMonitoredTerms
+	 */
+	public HashSet<String> getDefaultMonitoredTerms() {
+		HashSet<String> monitoredTerms = new HashSet<>();
+		for(int i = 0; i < DEFAULT_MONITORED_TERMS.length; i++){
+			monitoredTerms.add(DEFAULT_MONITORED_TERMS[i]);
+		}
+		return monitoredTerms;
+	}
+
+	/**
+	 * @return the defaultBlindTerms
+	 */
+	public HashSet<String> getDefaultBlindTerms() {
+		HashSet<String> blindTerms = new HashSet<>();
+		for(int i = 0; i < DEFAULT_BLIND_TERMS.length; i++){
+			blindTerms.add(DEFAULT_BLIND_TERMS[i]);
+		}
+		return blindTerms;
+	}
 }
