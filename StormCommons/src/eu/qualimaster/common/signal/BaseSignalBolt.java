@@ -10,6 +10,7 @@ import eu.qualimaster.common.shedding.LoadShedder;
 import eu.qualimaster.common.shedding.LoadShedderFactory;
 import eu.qualimaster.common.shedding.NoShedder;
 import eu.qualimaster.events.EventManager;
+import eu.qualimaster.monitoring.events.ComponentKeyRegistry;
 import eu.qualimaster.monitoring.events.LoadSheddingChangedMonitoringEvent;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -88,6 +89,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
         } catch (Exception e) {
             LOGGER.error("Error SignalConnection:" + e.getMessage(), e);
         }
+        ComponentKeyRegistry.register(pipeline, this, monitor.getComponentKey());
     }
 
     /**
@@ -258,6 +260,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     @Override
     public final void notifyShutdown(ShutdownSignal signal) {
         prepareShutdown(signal);
+        ComponentKeyRegistry.unregister(this);
         monitor.shutdown();
         portManager.close();
         signalConnection.close();

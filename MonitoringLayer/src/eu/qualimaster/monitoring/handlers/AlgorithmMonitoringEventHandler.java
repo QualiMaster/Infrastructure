@@ -17,7 +17,6 @@ package eu.qualimaster.monitoring.handlers;
 
 import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.INameMapping.Algorithm;
-import eu.qualimaster.monitoring.AbstractMonitoringTask;
 import eu.qualimaster.monitoring.MonitoringEventHandler;
 import eu.qualimaster.monitoring.MonitoringManager;
 import eu.qualimaster.monitoring.events.AlgorithmMonitoringEvent;
@@ -44,18 +43,20 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
 
     @Override
     protected void handle(AlgorithmMonitoringEvent event, SystemState state) {
-        INameMapping mapping = MonitoringManager.getNameMappingForClass(event.getAlgorithmId());
-        if (null != mapping) {
-            IObservable obs = event.getObservable();
-            if (!obs.isInternal()) {
-                Algorithm algorithm = mapping.getAlgorithmByClassName(event.getAlgorithmId());
-                PipelineSystemPart pip = getActivePipeline(state, event.getTopologyId()); // TODO check!
-                if (null != pip) {
-                    NodeImplementationSystemPart algPart = pip.getAlgorithm(algorithm.getName());
-                    algPart.setValue(obs, event.getValue(), event.getTopologyId());
-                    AbstractMonitoringTask.sendSummaryEvent(algPart, mapping.getPipelineName(), 
-                        MonitoringManager.DEMO_MSG_PROCESSING_ALGORITHM);
-                }
+        String pipelineName = event.getPipeline();
+        if (null != pipelineName) { // just to be on the safe side
+            INameMapping mapping = MonitoringManager.getNameMapping(pipelineName);
+            if (null != mapping) {
+                IObservable obs = event.getObservable();
+                if (!obs.isInternal()) {
+                    Algorithm algorithm = mapping.getAlgorithmByClassName(event.getAlgorithmId());
+                    PipelineSystemPart pip = getActivePipeline(state, pipelineName);
+                    if (null != pip) {
+                        NodeImplementationSystemPart algPart = pip.getAlgorithm(algorithm.getName());
+                        // so far key: event.getTopologyId()
+                        algPart.setValue(obs, event.getValue(), event.getComponentKey());
+                    }   
+                }                
             }
         }
     }

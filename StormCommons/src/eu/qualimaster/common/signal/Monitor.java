@@ -38,7 +38,6 @@ import eu.qualimaster.events.TimerEvent;
 import eu.qualimaster.monitoring.events.ComponentKey;
 import eu.qualimaster.monitoring.events.PipelineElementMultiObservationMonitoringEvent;
 import eu.qualimaster.monitoring.events.PipelineElementObservationMonitoringEvent;
-import eu.qualimaster.monitoring.spassMeter.QmPlugin;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.MonitoringFrequency;
 import eu.qualimaster.observables.ResourceUsage;
@@ -246,7 +245,7 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
         }
         tmp = signal.getFrequency(MonitoringFrequency.PIPELINE_NODE_RESOURCES);
         if (null != tmp) {
-            QmPlugin.changeFrequency(tmp);
+            System.setProperty("qm.spass.frequency", tmp.toString()); // no constant to avoid dependency
         }
         Boolean b = signal.getEnabled(TimeBehavior.THROUGHPUT_VOLUME);
         if (null != b) {

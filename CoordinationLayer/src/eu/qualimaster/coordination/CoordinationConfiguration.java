@@ -174,10 +174,9 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
     public static final String PROFILE_LOCATION = "profiling.data.location";
 
     /**
-     * The default value for {@link #PROFILE_LOCATION}.
+     * The default value for {@link #PROFILE_LOCATION} (temp).
      */
     public static final String DEFAULT_PROFILE_LOCATION = FileUtils.getTempDirectoryPath();
-
     
     static final PropertyReader<DetailMode> DETAIL_MODE_READER = new PropertyReader<DetailMode>() {
 

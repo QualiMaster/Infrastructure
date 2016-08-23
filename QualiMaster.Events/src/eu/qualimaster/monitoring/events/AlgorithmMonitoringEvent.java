@@ -15,22 +15,39 @@ public class AlgorithmMonitoringEvent extends MonitoringEvent {
     private String algorithmId;
     private IObservable observable;
     private double value;
-    private String topologyId;
+    private String pipeline;
+    private ComponentKey componentKey;
 
     /**
      * Creates a new algorithm monitoring event.
      * 
-     * @param topologyId the (optional) topology id
+     * @param pipeline the pipeline name
      * @param algorithmId the algorithm identifier (usually the class name)
      * @param observable the observable
      * @param value the observed value
      */
-    public AlgorithmMonitoringEvent(String topologyId, String algorithmId, IObservable observable, double value) {
+    public AlgorithmMonitoringEvent(String pipeline, String algorithmId, IObservable observable, double value) {
+        this(pipeline, algorithmId, null, observable, value);
+    }
+    
+    /**
+     * Creates a new algorithm monitoring event.
+     * 
+     * @param pipeline the pipeline name
+     * @param algorithmId the algorithm identifier (usually the class name)
+     * @param key the component key if known (may be <b>null</b>)
+     * @param observable the observable
+     * @param value the observed value
+     */
+    public AlgorithmMonitoringEvent(String pipeline, String algorithmId, ComponentKey key, IObservable observable, 
+        double value) {
         this.algorithmId = algorithmId;
         this.observable = observable;
         this.value = value;
-        this.topologyId = quoteNull(topologyId);
+        this.pipeline = pipeline;
+        this.componentKey = key;
     }
+
     
     /**
      * Returns the algorithm id.
@@ -60,12 +77,21 @@ public class AlgorithmMonitoringEvent extends MonitoringEvent {
     }
     
     /**
-     * Returns the topology id.
+     * Returns the pipeline name.
      * 
-     * @return the topology id
+     * @return the pipeline name
      */
-    public String getTopologyId() {
-        return unquoteNull(topologyId);
+    public String getPipeline() {
+        return pipeline;
+    }
+    
+    /**
+     * Returns the component key (if known).
+     * 
+     * @return the component key (may be <b>null</b>)
+     */
+    public ComponentKey getComponentKey() {
+        return componentKey;
     }
 
 }
