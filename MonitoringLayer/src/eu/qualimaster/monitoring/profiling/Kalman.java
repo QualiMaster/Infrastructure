@@ -1,4 +1,6 @@
 package eu.qualimaster.monitoring.profiling;
+import java.util.ArrayList;
+
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.exception.NullArgumentException;
 import org.apache.commons.math3.filter.DefaultMeasurementModel;
@@ -91,12 +93,12 @@ public class Kalman implements AlgorithmProfilePredictorAlgorithm {
      * Vector used to store the start value for a new timeline.
      * (initial x, its velocity, initial y, its velocity)
      */
-    private RealVector x = MatrixUtils.createRealVector(new double[] {0, 1, 0, 0 });
+    private RealVector xVector = MatrixUtils.createRealVector(new double[] {0, 1, 0, 0 });
 
     /**
      * The {@link ProcessModel} for the Kalman-Filter. 
      */
-    private ProcessModel pm = new DefaultProcessModel(mA, mB, mQ, x, mP);
+    private ProcessModel pm = new DefaultProcessModel(mA, mB, mQ, xVector, mP);
 
     /**
      * The {@link MeasurementModel} for the Kalman-Filter. 
@@ -130,7 +132,7 @@ public class Kalman implements AlgorithmProfilePredictorAlgorithm {
     /**
      * Allowed gap between update and prediction in milliseconds.
      */
-    private final int allowedGap = 500;
+    private int allowedGap = 500;
     /**
      * Default measurement value.
      * If an update must be simulated and there is no predicted value to use instead of the measurement,
@@ -143,7 +145,18 @@ public class Kalman implements AlgorithmProfilePredictorAlgorithm {
      */
     public Kalman() {
     }
+    /**
+     * .
+     * @param parameters .
+     */
+    public Kalman(ArrayList<String> parameters) {
+        stringsToAttributes(parameters);
+        reinitialize();
+    }
     
+    
+
+
     /**
      * This method updates the Kalman-Filter with the current state/measurement of the observed value.
      * Where current means that the measurement will be mapped to the second since midnight, January 1, 1970 UTC. 
@@ -236,5 +249,156 @@ public class Kalman implements AlgorithmProfilePredictorAlgorithm {
      */
     public double predict() {
         return predict(1);
+    }
+
+    /** 
+     * Generates a String representation of a {@link Kalman} instance.
+     * @return {@link ArrayList} of {@link String} representing a {@link Kalman} instance.
+     */
+    public ArrayList<String> toStringArrayList() {
+        ArrayList<String> result = new ArrayList<>();
+        result.add("measurementNoise=" + measurementNoise);
+        result.add("A=" + mA);
+        result.add("B=" + mB);
+        result.add("H=" + mH);
+        result.add("Q=" + mQ);
+        result.add("R=" + mR);
+        result.add("P=" + mP);
+        result.add("x=" + xVector);
+        result.add("controlVector=" + controlVector);
+        result.add("lastUpdated=" + lastUpdated);
+        result.add("lastUpdate=" + lastUpdate);
+        result.add("allowedGap=" + allowedGap);
+        result.add("defaultMeasurenment=" + defaultMeasurenment);
+        return result;
+    }
+    /**
+     * Generates a 2-dimensional {@link RealMatrix} from a given String.
+     * @param string The needed form is '{{double,double,...},...,{...}}'.
+     * @return A {@link RealMatrix} if the conversion was successful, else <null>.
+     */
+    public RealMatrix stringTo2DMatrix(String string) {
+        RealMatrix result = null;
+        try {
+            // 2D-> '{{' marks the start and '}}' the end.
+            int start = string.indexOf("{{") + 2;
+            int end = string.indexOf("}}");
+            string = string.substring(start, end);
+            // Create lines
+            String[] lines = string.split("\\},\\{");
+            double[][] matrix = new double[lines.length][];
+            // Fill lines
+            for (int i = 0; i < matrix.length; i++) {
+                String[] line = lines[i].split(",");
+                matrix[i] = new double[line.length];
+                for (int j = 0; j < matrix[i].length; j++) {
+                    matrix[i][j] = Double.parseDouble(line[j]);
+                }
+            }
+            result = MatrixUtils.createRealMatrix(matrix);
+        } catch (NullArgumentException | DimensionMismatchException | NumberFormatException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+    /**
+     * Generates a 2-dimensional {@link RealVector} from a given String.
+     * @param string The needed form is '{double;double;...}'.
+     * @return A {@link RealVector} if the conversion was successful, else <null>.
+     */
+    private RealVector stringTo2DVector(String string) {
+        RealVector result = null;
+        
+        try {
+            int start = string.indexOf("{") + 1;
+            int end = string.indexOf("}");
+            string = string.substring(start, end);
+            String[] line = string.split(";");
+            double[] vector = new double[line.length];
+            for (int i = 0; i < vector.length; i++) {
+                vector[i] = Double.parseDouble(line[i]);
+            }
+            
+            result = MatrixUtils.createRealVector(vector);
+        } catch (NumberFormatException | NullPointerException e) {
+            e.printStackTrace();
+        }
+        
+        return result;
+    }
+    /**
+     * Update models and the Kalman-Filter after a change in the parameters / matrices.
+     */
+    private void reinitialize() {
+        pm = new DefaultProcessModel(mA, mB, mQ, xVector, mP);
+        mm = new DefaultMeasurementModel(mH, mR);
+        filter = new KalmanFilter(pm, mm);
+    }
+    /**
+     * Update the attributes using given string representations.
+     * @param parameters Content to override the attributes with.
+     */
+    private void stringsToAttributes(ArrayList<String> parameters) {
+        for (String string : parameters) {
+            String entry = string.split("=")[0];
+            String content = string.split("=")[1];
+            RealMatrix tempM = null;
+            RealVector tempV = null;
+            try {
+                switch (entry) {
+                case "measurementNoise":
+                    measurementNoise = Double.parseDouble(content);
+                    break;
+                case "A":
+                    tempM = stringTo2DMatrix(content);
+                    mA = null != tempM ? tempM : mA;
+                    break;
+                case "B":
+                    tempM = stringTo2DMatrix(content);
+                    mB = null != tempM ? tempM : mB;
+                    break;
+                case "H":
+                    tempM = stringTo2DMatrix(content);
+                    mH = null != tempM ? tempM : mH;
+                    break;
+                case "Q":
+                    tempM = stringTo2DMatrix(content);
+                    mQ = null != tempM ? tempM : mQ;
+                    break;
+                case "P":
+                    tempM = stringTo2DMatrix(content);
+                    mP = null != tempM ? tempM : mP;
+                    break;
+                case "R":
+                    tempM = stringTo2DMatrix(content);
+                    mR = null != tempM ? tempM : mR;
+                    break;
+                case "x":
+                    tempV = stringTo2DVector(content);
+                    xVector = null != tempV ? tempV : xVector;
+                    break;
+                case "controlVector":
+                    tempV = stringTo2DVector(content);
+                    controlVector = null != tempV ? tempV : controlVector;
+                    break;
+                case "lastUpdated":
+                    lastUpdated = Long.parseLong(content);
+                    break;
+                case "lastUpdate":
+                    lastUpdate = Double.parseDouble(content);
+                    break;
+                case "allowedGap":
+                    allowedGap = Integer.parseInt(content);
+                    break;
+                case "defaultMeasurenment":
+                    defaultMeasurenment = Double.parseDouble(content);
+                    break;
+                default:
+                    break;
+                }
+            } catch (NullPointerException | NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
