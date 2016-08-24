@@ -95,7 +95,8 @@
     	<copy file="${pentaho.weka:pdm-timeseriesforecasting-ce:jar}" todir="build/base/qm-libs"/>
     	<copy file="${nz.ac.waikato.cms.weka:weka-dev:jar}" todir="build/base/qm-libs"/>
     	<copy file="${jfree:jcommon:jar}" todir="build/base/qm-libs"/>
-    	<copy file="${gnujaxp:gnujaxp:jar}" todir="build/base/qm-libs"/>
+    	<!-- causes problems, not only in QM parts but also in Storm logging -->
+    	<!--<copy file="${gnujaxp:gnujaxp:jar}" todir="build/base/qm-libs"/>-->
     	
         <copy todir="build/base/qm-libs">
             <fileset dir="${home.base.dir}/QualiMaster.EASyRuntime/workspace/build/generatedLibs.ex/dist">
