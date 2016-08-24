@@ -1,5 +1,7 @@
 package eu.qualimaster.monitoring.profiling;
 
+import java.util.ArrayList;
+
 /**
  * This interface serves as the common ground for different implementations 
  * of prediction algorithms used for/by the profiling.
@@ -41,4 +43,10 @@ public interface AlgorithmProfilePredictorAlgorithm extends Cloneable {
      * @return True if the update was successful.
      */
     public boolean update(double measured);
+    
+    /** 
+     * Generates a String representation of a {@link AlgorithmProfilePredictorAlgorithm} instance.
+     * @return {@link ArrayList} of {@link String} representing a {@link AlgorithmProfilePredictorAlgorithm} instance.
+     */
+    public ArrayList<String> toStringArrayList();
 }
