@@ -381,13 +381,13 @@ public class SimpleMonitoringTests {
     @Test
     public void testResourceMeasurement() {
         SystemState state = MonitoringManager.getSystemState();
-        state.obtainPipeline("123").changeStatus(PipelineLifecycleEvent.Status.STARTED, false, null);
+        state.obtainPipeline(Naming.PIPELINE_NAME).changeStatus(PipelineLifecycleEvent.Status.STARTED, false, null);
         
-        EventManager.send(new AlgorithmMonitoringEvent("123", Naming.NODE_PROCESS_ALG1_CLASS, 
+        EventManager.send(new AlgorithmMonitoringEvent(Naming.PIPELINE_NAME, Naming.NODE_PROCESS_ALG1_CLASS, 
             ResourceUsage.MEMORY_USE, 1000));
         EventManager.cleanup(); // force execution
         
-        PipelineSystemPart pip = state.obtainPipeline("123");
+        PipelineSystemPart pip = state.obtainPipeline(Naming.PIPELINE_NAME);
         Assert.assertNotNull(pip);
         NodeImplementationSystemPart alg = pip.getAlgorithm(Naming.NODE_PROCESS_ALG1);
         assertPart(alg, ResourceUsage.MEMORY_USE, 1000);
