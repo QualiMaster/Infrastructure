@@ -6,11 +6,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import eu.qualimaster.adaptation.events.SourceVolumeAdaptationEvent;
 import eu.qualimaster.dataManagement.DataManager;
 import eu.qualimaster.dataManagement.sources.IHistoricalDataProvider;
 import eu.qualimaster.dataManagement.sources.TwitterHistoricalDataProvider;
@@ -35,6 +37,9 @@ public class VolumePredictor {
 	/** Set of terms (either stocks or hashtags) for which historical data might be looked up as blind prediction. */
 	private HashSet<String> blindTerms;
 	
+	/** Recent observed volumes of the monitored terms, used to decide whether to raise alarms or not */
+	private HashMap<String, ArrayList<Long>> recentVolumes;
+
 	/** Map containing the term (either stocks or hashtags) for which a prediction model is available (along with the corresponding model) */
 	private HashMap<String,Prediction> models;
 	
@@ -56,6 +61,12 @@ public class VolumePredictor {
 	/** The format for storing dates */
 	private static final String DATE_FORMAT = "MM/DD/YYYY,hh:mm:ss";
 	
+	/** The size of the recent history (number of time points) */
+	private static final int RECENT_HISTORY_SIZE = 30;
+	
+	/** The number of recent data points for checking small but regular increases */
+	private static final int REGULAR_INCREASE_SIZE = RECENT_HISTORY_SIZE / 3;
+	
 	/**
 	 * Default constructor of the predictor, no models are trained nor historical data provider are set.
 	 */
@@ -65,6 +76,7 @@ public class VolumePredictor {
 		this.source = source;
 		this.monitoredTerms = null;
 		this.blindTerms = null;
+		this.recentVolumes = null;
 		this.models = null;
 		this.blindModels = null;
 		this.running = false;
@@ -92,6 +104,8 @@ public class VolumePredictor {
 		else this.monitoredTerms = new HashSet<>();
 		if(blindTerms != null) this.blindTerms = new HashSet<>(blindTerms);
 		else this.blindTerms = new HashSet<>();
+		this.recentVolumes = new HashMap<>();
+		for(String term : this.monitoredTerms) this.recentVolumes.put(term, new ArrayList<Long>()); 
 		this.running = false;
 		this.historicalDataFile = new File(filePath);
 		this.models = new HashMap<>();
@@ -144,10 +158,14 @@ public class VolumePredictor {
 	 */
 	public void handlePredictionStep(Map<String,Integer> observations){
 		String timestamp = getTimestamp();
+		HashMap<String,Double> alarms = new HashMap<>();
 		for(String term : observations.keySet())
 		{	
 			long currVolume = (long)observations.get(term);
 			Prediction model = this.models.get(term);
+			
+			// add the current observation to the recent volumes for the current term
+			addRecentVolume(term, currVolume);
 			
 			if(model != null && model.getForecaster() != null){
 				// update the recent values within the model
@@ -156,13 +174,17 @@ public class VolumePredictor {
 				// predict the volume within the next time step
 				double prediction = model.predict();
 				
-				// check whether the predicted volume is critical and, if so, raise an alarm to the adaptation layer
-				evaluatePrediction(term, prediction);
+				// check whether the predicted volume is critical and, if so, include the term when raising the alarm
+				double deviation = evaluatePrediction(term, prediction);
+				if(deviation != -1) alarms.put(term, deviation);
 			}
 			
 			// store the current observation in the historical data of the current term (only for twitter)
 			storeInHistoricalData(term, timestamp, currVolume);
 		}
+		
+		// raise an alarm to the adaptation layer containing all the critical terms and their volumes
+		if(!alarms.isEmpty()) raiseAlarms(alarms);
 	}
 	
 	private String getTimestamp(){
@@ -193,21 +215,77 @@ public class VolumePredictor {
 		this.blindModels.putAll(newBlindModels);
 	}
 	
-	private void evaluatePrediction(String term, double prediction)
+	private double evaluatePrediction(String term, double prediction)
 	{
-		// TODO clarify the policy to raise alarms. At the moment is a simple comparison with the threshold
+		// handles 2 cases:
+		//  - signal high peaks (using recent history to compute avg should detect these)
+		//  - signal slightly but continuously increasing volumes: dangerous because the recent history is updated
+		//    with always increasing values so the new values, although higher, do not result in alarms
 		
-		// TODO use (recent) historical data to signal 2 cases:
-		// 		- high peaks (using recent history to compute avg should detect these)
-		//		- slightly but continuously increasing trends: dangerous because the recent history is updated
-		//		  with always increasing values so the new values, although higher, do not result in alarms
+		// compute average and std deviation within the recent history
+		ArrayList<Long> recentVolumesForTerm = this.recentVolumes.get(term);
+		double[] stats = computeStatistics(recentVolumesForTerm);
 		
-		if(true) raiseAlarm(term, prediction);
+		// compute alarm threshold from avg and std and compare it with the predicted volume
+		double threshold = stats[0] + 3 * stats[1];
+		if(prediction > threshold) return (prediction - threshold);
+		
+		// check the trend of the recent volumes and signal if it is always increasing
+		if(checkIncrease(recentVolumesForTerm, REGULAR_INCREASE_SIZE)) return computeIncrease(recentVolumesForTerm);
+		
+		else return -1;
 	}
 	
-	private void raiseAlarm(String term, double volume)
+	private double[] computeStatistics(ArrayList<Long> data){
+		double[] stats = new double[2];
+		double avg, std;
+		double sum = 0;
+		double sumsq = 0;
+		
+		if(data == null || data.isEmpty()) return stats;
+
+		// compute avg and standard deviation
+		for(int i = 0; i < data.size(); i++) sum += data.get(i);
+		avg = (double) sum / data.size();
+		for(int i = 0; i < data.size(); i++) sumsq = sumsq + ((data.get(i) - avg) * (data.get(i) - avg));
+		std = Math.sqrt((double) sumsq / data.size());
+
+		// store the statistics
+		stats[0] = avg;
+		stats[1] = std;
+
+		return stats;
+	}
+	
+	private boolean checkIncrease(ArrayList<Long> history, int size){
+		if(size > history.size() - 1) size = history.size() - 1;
+		int i = history.size() - 1;
+		int count = 0;
+		while(count < size){
+			if(history.get(i) < history.get(i-1)) return false;
+			i--;
+			count++;
+		}
+		return true;
+	}
+	
+	private int computeIncrease(ArrayList<Long> values){
+		int firstIndex = values.size() - REGULAR_INCREASE_SIZE;
+		int lastIndex = values.size() - 1;
+		return (int)(values.get(lastIndex) - values.get(firstIndex));
+	}
+	
+	private void raiseAlarms(HashMap<String,Double> alarms)
 	{
-		// TODO use the event class defined in the infrastructure to send alarms to the adaptation layer
+		// use the event class defined in the infrastructure to send alarms to the adaptation layer
+		SourceVolumeAdaptationEvent svae = new SourceVolumeAdaptationEvent(this.pipeline, this.source, alarms);
+	}
+	
+	private void addRecentVolume(String term, Long volume){
+		if(this.recentVolumes.containsKey(term)){
+			if(this.recentVolumes.get(term).size() > RECENT_HISTORY_SIZE) this.recentVolumes.get(term).remove(0);
+			this.recentVolumes.get(term).add(volume);
+		}
 	}
 	
 	private void initializeModels(HashMap<String,Prediction> models, HashMap<String,BlindPrediction> blindModels){
@@ -276,6 +354,7 @@ public class VolumePredictor {
 	{
 		this.monitoredTerms.remove(term);
 		this.models.remove(term);
+		this.recentVolumes.remove(term);
 	}
 	
 	/**
@@ -291,6 +370,7 @@ public class VolumePredictor {
 		if(model.getForecaster() == null) model = null;
 		this.models.put(term, model);
 		this.monitoredTerms.add(term);
+		this.recentVolumes.put(term, new ArrayList<Long>());
 	}
 	
 	/**
@@ -398,5 +478,12 @@ public class VolumePredictor {
 	 */
 	public void setPipeline(String pipeline) {
 		this.pipeline = pipeline;
+	}
+
+	/**
+	 * @return the recentVolumes
+	 */
+	public HashMap<String, ArrayList<Long>> getRecentVolumes() {
+		return recentVolumes;
 	}
 }
