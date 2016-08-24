@@ -3,6 +3,7 @@ package eu.qualimaster.monitoring.volumePrediction;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import eu.qualimaster.dataManagement.events.HistoricalDataProviderRegistrationEvent;
 import eu.qualimaster.events.EventHandler;
@@ -10,6 +11,8 @@ import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.events.SourceVolumeMonitoringEvent;
+import eu.qualimaster.monitoring.events.SourceVolumePredictionRequest;
+import eu.qualimaster.monitoring.events.SourceVolumePredictionResponse;
 import eu.qualimaster.monitoring.utils.IScheduler;
 
 /**
@@ -22,6 +25,12 @@ public class VolumePredictionManager {
 	
 	private static final String DEFAULT_FILE_NAME = "historical_data.txt";
 
+	private static final HistoricalDataProviderRegistrationEventHandler HISTORICAL_DATA_REGISTRATION_EVENT_HANDLER 
+            = new HistoricalDataProviderRegistrationEventHandler();
+
+	private static final SourceVolumePredictionRequestHandler SOURCE_VOLUME_PREDICTION_REQUEST_HANDLER 
+	    = new SourceVolumePredictionRequestHandler();
+	
 	/**
 	 * Set of available volume predictors, one for each different source.
 	 */
@@ -157,6 +166,33 @@ public class VolumePredictionManager {
 	}
 
 	/**
+	 * A handler for source volume prediction requests. Leads to a {@link SourceVolumePredictionResponse}.
+	 *
+	 * @author Andrea Ceroni
+	 * @author Holger Eichelberger
+	 */
+	private static class SourceVolumePredictionRequestHandler extends EventHandler<SourceVolumePredictionRequest> {
+
+	    /**
+             * Creates an instance.
+             */
+            protected SourceVolumePredictionRequestHandler() {
+                super(SourceVolumePredictionRequest.class);
+            }
+
+            @Override
+            protected void handle(SourceVolumePredictionRequest event) {
+                Map<String, Double> predictions = new HashMap<String, Double>();
+                for (int k = 0; k < event.getKeywordCount(); k++) {
+                    String keyword = event.getKeyword(k);
+                    predictions.put(keyword, predictBlindly(event.getSource(), keyword));
+                }
+                EventManager.send(new SourceVolumePredictionResponse(event, predictions));
+            }
+
+	}
+
+	/**
 	 * Is called when the monitoring manager receives a {@link SourceVolumeMonitoringEvent}.
 	 * Although a full event bus handler would also do the job, this shall be less resource consumptive as 
 	 * the event is anyway received in the Monitoring Layer.
@@ -182,7 +218,8 @@ public class VolumePredictionManager {
 	* Called upon startup of the infrastructure.
 	*/
 	public static void start(IScheduler scheduler) {
-	    EventManager.register(new HistoricalDataProviderRegistrationEventHandler());
+	    EventManager.register(HISTORICAL_DATA_REGISTRATION_EVENT_HANDLER);
+	    EventManager.register(SOURCE_VOLUME_PREDICTION_REQUEST_HANDLER );
 	    
 	    // this is rather initial - each day at 2:00
 	    Calendar cal = Calendar.getInstance();
@@ -205,5 +242,7 @@ public class VolumePredictionManager {
 	* Called upon shutdown of the infrastructure. Clean up global resources here.
 	*/
 	public static void stop() {
+	    EventManager.unregister(HISTORICAL_DATA_REGISTRATION_EVENT_HANDLER);
+	    EventManager.unregister(SOURCE_VOLUME_PREDICTION_REQUEST_HANDLER);
 	}
 }

@@ -29,6 +29,8 @@ import eu.qualimaster.monitoring.events.ConstraintViolationAdaptationEvent;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
 import eu.qualimaster.monitoring.events.MonitoringInformationEvent;
 import eu.qualimaster.monitoring.events.ResourceChangedAdaptationEvent;
+import eu.qualimaster.monitoring.events.SourceVolumePredictionRequest;
+import eu.qualimaster.monitoring.events.SourceVolumePredictionResponse;
 import eu.qualimaster.monitoring.events.ViolatingClause;
 import eu.qualimaster.observables.ResourceUsage;
 import eu.qualimaster.observables.TimeBehavior;
@@ -92,6 +94,41 @@ public class EventTests {
         Assert.assertEquals("type", mEvent.getPartType());
         Assert.assertEquals("part", mEvent.getPart());
         Assert.assertEquals(obs, mEvent.getObservations());
+    }
+    
+    /**
+     * Tests source volume prediction events.
+     */
+    @Test
+    public void testSourceVolumePredictorRequests() {
+        SourceVolumePredictionRequest req = new SourceVolumePredictionRequest("pip", "src", "me");
+        Assert.assertEquals("pip", req.getPipeline());
+        Assert.assertEquals("src", req.getSource());
+        Assert.assertEquals(1, req.getKeywordCount());
+        Assert.assertEquals("me", req.getKeyword(0));
+        
+        List<String> keywords = new ArrayList<String>();
+        keywords.add("me");
+        keywords.add("you");
+        req = new SourceVolumePredictionRequest("pip1", "src1", keywords);
+        Assert.assertEquals("pip1", req.getPipeline());
+        Assert.assertEquals("src1", req.getSource());
+        Assert.assertEquals(keywords.size(), req.getKeywordCount());
+        for (int i = 0; i < keywords.size(); i++) {
+            Assert.assertEquals(keywords.get(i), req.getKeyword(i));    
+        }
+        
+        req.setMessageId("abba");
+        req.setSenderId("here");
+        
+        Map<String, Double> predictions = new HashMap<String, Double>();
+        for (int i = 0; i < keywords.size(); i++) {
+            predictions.put(keywords.get(i), (double) i);
+        }
+        SourceVolumePredictionResponse resp = new SourceVolumePredictionResponse(req, predictions);
+        Assert.assertEquals("abba", req.getMessageId());
+        Assert.assertEquals("here", req.getSenderId());
+        Assert.assertEquals(predictions, resp.getPredictions());
     }
     
 }
