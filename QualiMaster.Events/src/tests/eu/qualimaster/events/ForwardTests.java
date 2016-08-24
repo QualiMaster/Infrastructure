@@ -23,6 +23,7 @@ import eu.qualimaster.events.AbstractResponseEvent;
 import eu.qualimaster.events.AbstractReturnableEvent;
 import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
+import eu.qualimaster.events.SynchronousEventStore;
 import eu.qualimaster.events.TimerEvent;
 
 /**
@@ -236,4 +237,30 @@ public class ForwardTests {
         requestResponse(false);
     }
 
+    /**
+     * Tests the synchronous store.
+     * 
+     * @throws InterruptedException in case that sleeping was interrupted (shall not occur)
+     */
+    @Test(timeout = 5000 + EventManager.SO_TIMEOUT)
+    public void testSynchronousStore() throws InterruptedException {
+        Configuration.configureLocal();
+        EventManager.startServer();
+        Thread.sleep(100);
+        
+        TestRequestEventHandler requestHandler = new TestRequestEventHandler();
+        EventManager.register(requestHandler);
+        SynchronousEventStore<TestRequestEvent, TestResponseEvent> store 
+            = new SynchronousEventStore<>(TestResponseEvent.class);
+        
+        TestRequestEvent req = new TestRequestEvent("here");
+        TestResponseEvent resp = store.waitFor(1000, 100, req);
+        Assert.assertNotNull(resp);
+        Assert.assertEquals(req.getData(), resp.getData());
+        
+        EventManager.unregister(requestHandler);
+        EventManager.stop();
+        EventManager.clearRegistrations();
+    }
+    
 }
