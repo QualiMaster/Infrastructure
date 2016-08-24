@@ -17,6 +17,7 @@ import eu.qualimaster.dataManagement.DataManager;
 import eu.qualimaster.dataManagement.sources.IHistoricalDataProvider;
 import eu.qualimaster.dataManagement.sources.TwitterHistoricalDataProvider;
 import eu.qualimaster.dataManagement.storage.hbase.HBaseStorageSupport;
+import eu.qualimaster.events.EventManager;
 
 /**
  * Main class implementing the available methods of the volume prediction.
@@ -159,6 +160,7 @@ public class VolumePredictor {
 	public void handlePredictionStep(Map<String,Integer> observations){
 		String timestamp = getTimestamp();
 		HashMap<String,Double> alarms = new HashMap<>();
+		ArrayList<String> unknownTerms = new ArrayList<>();
 		for(String term : observations.keySet())
 		{	
 			long currVolume = (long)observations.get(term);
@@ -178,6 +180,9 @@ public class VolumePredictor {
 				double deviation = evaluatePrediction(term, prediction);
 				if(deviation != -1) alarms.put(term, deviation);
 			}
+			else{
+				if(!this.monitoredTerms.contains(term)) unknownTerms.add(term);
+			}
 			
 			// store the current observation in the historical data of the current term (only for twitter)
 			storeInHistoricalData(term, timestamp, currVolume);
@@ -185,6 +190,9 @@ public class VolumePredictor {
 		
 		// raise an alarm to the adaptation layer containing all the critical terms and their volumes
 		if(!alarms.isEmpty()) raiseAlarms(alarms);
+		
+		// initialize one predictor for each unknown term that was observed in the source
+		for(String term : unknownTerms) addMonitoredTerm(term);
 	}
 	
 	private String getTimestamp(){
@@ -279,6 +287,7 @@ public class VolumePredictor {
 	{
 		// use the event class defined in the infrastructure to send alarms to the adaptation layer
 		SourceVolumeAdaptationEvent svae = new SourceVolumeAdaptationEvent(this.pipeline, this.source, alarms);
+		EventManager.send(svae);
 	}
 	
 	private void addRecentVolume(String term, Long volume){

@@ -206,8 +206,6 @@ public class VolumePredictionManager {
 		
 		// TODO handle exceptions like: source map does not contain an input term; the model for a source is not available (null);
 		
-		// TODO dynamically add an unknown term when observed from the source? This can be done if we don't expect thresholds as input
-		
 		// use the right predictor (based on the source) to handle the prediction for the incoming terms
 		VolumePredictor predictor = volumePredictors.get(event.getPipelineElement());
 		if(predictor != null) predictor.handlePredictionStep(event.getObservations());
