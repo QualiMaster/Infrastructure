@@ -191,6 +191,34 @@ public class ConfigurationTests {
         
         Assert.assertNull(Configuration.toUrl("abba"));
         Assert.assertEquals(new URL("http://www.sse.de"), Configuration.toUrl("http://www.sse.de"));
+        
+        // cover reusable and reused method
+        MyCfg mc = new MyCfg();
+        Assert.assertNotNull(mc.createUrl("key", new URL("http://www.sse.de")));
+        Assert.assertNotNull(Configuration.getProperties());
+        Assert.assertFalse(Configuration.isEmpty(null));
+        Assert.assertTrue(Configuration.isEmpty(""));
+        Assert.assertFalse(Configuration.isEmpty("here"));
+    }
+    
+    /**
+     * An extended configuration for accessing protected parts.
+     * 
+     * @author Holger Eichelberger
+     */
+    private class MyCfg extends Configuration {
+
+        /**
+         * Creates an Integer configuration option.
+         * 
+         * @param key the property key
+         * @param dflt the default value
+         * @return the configuration option instance
+         */
+        public ConfigurationOption<URL> createUrl(String key, URL dflt) {
+            return createUrlOption(key, dflt);
+        }
+        
     }
     
 }
