@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.log4j.LogManager;
+
 //import de.uni_hildesheim.sse.system.GathererFactory;
 //import de.uni_hildesheim.sse.system.IMemoryDataGatherer;
 
@@ -30,8 +32,6 @@ import backtype.storm.hooks.info.EmitInfo;
 import backtype.storm.hooks.info.SpoutAckInfo;
 import backtype.storm.hooks.info.SpoutFailInfo;
 import backtype.storm.task.TopologyContext;
-import de.uni_hildesheim.sse.system.GathererFactory;
-import de.uni_hildesheim.sse.system.IMemoryDataGatherer;
 import eu.qualimaster.base.algorithm.IncrementalAverage;
 import eu.qualimaster.common.monitoring.MonitoringPluginRegistry;
 import eu.qualimaster.events.AbstractTimerEventHandler;
@@ -63,7 +63,7 @@ import eu.qualimaster.observables.TimeBehavior;
  */
 public class Monitor extends AbstractMonitor implements IMonitoringChangeListener, ITaskHook {
     
-    private static final IMemoryDataGatherer MEMGATHERER = GathererFactory.getMemoryDataGatherer();
+    //private static final IMemoryDataGatherer MEMGATHERER = GathererFactory.getMemoryDataGatherer();
     private String namespace;
     private String name;
     private IncrementalAverage executionTime;
@@ -75,6 +75,11 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     private boolean includeItems;
     private TimerEventHandler timerHandler;
     private boolean collectVolume = false; // TODO activate by default?
+    
+    static {
+        LogManager.getLogger(Monitor.class).warn("Monitor " + System.getProperty("os.name")
+            + " " + System.getProperty("os.arch"));
+    }
     
     /**
      * Creates a monitor and sends once the executors resource usage event.
@@ -270,9 +275,9 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     public void emit(EmitInfo info) {
         if (null != info && null != info.values) {
             itemsSend.addAndGet(info.values.size());
-            if (collectVolume) {
+            /*if (collectVolume) {
                 itemsVolume.addAndGet(MEMGATHERER.getObjectSize(info.values));
-            }
+            }*/
             MonitoringPluginRegistry.emitted(info);
         }
     }
@@ -309,9 +314,9 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     public void emitted(Object tuple) {
         if (null != tuple) {
             itemsSend.incrementAndGet();
-            if (collectVolume) {
+            /*if (collectVolume) {
                 itemsVolume.addAndGet(MEMGATHERER.getObjectSize(tuple));
-            }
+            }*/
             MonitoringPluginRegistry.emitted(tuple);
         }
     }
