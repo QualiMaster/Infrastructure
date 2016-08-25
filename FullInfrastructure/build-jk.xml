@@ -79,7 +79,8 @@
         <copy file="${eu.qualimaster:DataManagementLayer:jar}" todir="build/base/provided-libs"/>
         <copy file="${eu.qualimaster:QualiMaster.Events:jar}" todir="build/base/provided-libs"/>
         <copy file="${eu.qualimaster:StormCommons:jar}" todir="build/base/provided-libs"/>
-        
+        <copy file="${de.uni_hildesheim.sse.spassMeter:locutor:jar}" todir="build/base/provided-libs"/>
+    	
         <copy file="${eu.qualimaster:AdaptationLayer:jar}" todir="build/base/qm-libs"/>
         <copy file="${eu.qualimaster:CoordinationLayer:jar}" todir="build/base/qm-libs"/>
         <copy file="${eu.qualimaster:MonitoringLayer:jar}" todir="build/base/qm-libs"/>
