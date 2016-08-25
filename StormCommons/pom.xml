@@ -144,6 +144,10 @@
          <artifactId>SpassMeterIntegration</artifactId>
        </dependency>
        <dependency>
+         <groupId>de.uni_hildesheim.sse.spassMeter</groupId>
+         <artifactId>locutor</artifactId>
+       </dependency>
+       <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>QualiMaster.Events</artifactId>
          <type>test-jar</type>
