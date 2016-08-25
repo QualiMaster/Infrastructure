@@ -60,6 +60,12 @@
          <scope>provided</scope>
        </dependency>
        <dependency>
+         <groupId>de.uni_hildesheim.sse.spassMeter</groupId>
+         <artifactId>locutor</artifactId>
+         <version>1.00-SNAPSHOT</version>
+         <scope>provided</scope>
+       </dependency>
+       <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>QualiMaster.Events</artifactId>
          <version>0.5.0-SNAPSHOT</version>
