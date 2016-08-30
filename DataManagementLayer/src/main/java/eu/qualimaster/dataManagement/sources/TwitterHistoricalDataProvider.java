@@ -53,6 +53,20 @@ public class TwitterHistoricalDataProvider implements IHistoricalDataProvider,Se
     	storeData(data, target);
     }
     
+    /**
+     * Obtains twitter data via the Data Management Layer (data are retrieved from HBase)
+     * 
+     * @param timeHorizon the time horizon in milliseconds into the past
+     * @param term the name of the hashtag for which the historical data is demanded 
+     * @param target the target file where to store the data
+     * @param server the server for downloading the data (not needed for Twitter) 
+     * @throws IOException in case that obtaining the historical data fails
+     */
+    public void obtainHistoricalData(long timeHorizon, String term, File target, String server) throws IOException
+    {
+    	obtainHistoricalData(timeHorizon, term, target);
+    }
+    
     private List<String> getDataFromHBaseTable(Long timeHorizon, String term) throws IOException
     {
     	// Get the HBase table containing data for the input term

@@ -37,6 +37,11 @@ public class VolumePredictionManager {
 	private static HashMap<String,VolumePredictor> volumePredictors = new HashMap<>();
 	
 	/**
+	 * Indicates whether the prediction is running in "test" mode or not.
+	 */
+	private static boolean test = false;
+	
+	/**
 	 * Initializes the volume predictor for a given source (either Spring or Twitter), assuming that the data provider has been already
 	 * set via the proper event. This must be called before feeding the predictor with volume data, with enough advance to let the 
 	 * predictors (one for each input term) be trained.
@@ -159,7 +164,7 @@ public class VolumePredictionManager {
 	    protected void handle(HistoricalDataProviderRegistrationEvent event) {
 	        // called when a data source comes up in a pipeline. Carries the historical data provider.
 	        // If the source changes, an event with the same pipeline / element name will occur
-	    	VolumePredictor predictor = new VolumePredictor(event.getPipeline(), event.getSource(), event.getProvider());
+	    	VolumePredictor predictor = new VolumePredictor(event.getPipeline(), event.getSource(), event.getProvider(), test);
 	    	predictor.initialize(MonitoringConfiguration.getVolumeModelLocation() + event.getSource() + "_" + DEFAULT_FILE_NAME);
 	    	volumePredictors.put(event.getSource(), predictor);
 	    }
@@ -242,5 +247,29 @@ public class VolumePredictionManager {
 	public static void stop() {
 	    EventManager.unregister(HISTORICAL_DATA_REGISTRATION_EVENT_HANDLER);
 	    EventManager.unregister(SOURCE_VOLUME_PREDICTION_REQUEST_HANDLER);
+	}
+	
+	/**
+	 * Simulates the handle of a HistoricalDataProviderRegistrationEvent (for testing purposes)
+	 * @param event
+	 */
+	public static void handleTest(HistoricalDataProviderRegistrationEvent event) {
+    	VolumePredictor predictor = new VolumePredictor(event.getPipeline(), event.getSource(), event.getProvider(), test);
+    	predictor.initialize(MonitoringConfiguration.getVolumeModelLocation() + event.getSource() + "_" + DEFAULT_FILE_NAME);
+    	volumePredictors.put(event.getSource(), predictor);
+    }
+
+	/**
+	 * @return the test
+	 */
+	public static boolean isTest() {
+		return test;
+	}
+
+	/**
+	 * @param test the test to set
+	 */
+	public static void setTest(boolean t) {
+		test = t;
 	}
 }

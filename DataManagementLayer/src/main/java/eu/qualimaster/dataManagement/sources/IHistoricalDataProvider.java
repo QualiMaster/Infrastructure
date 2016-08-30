@@ -39,6 +39,17 @@ public interface IHistoricalDataProvider extends Serializable {
     public void obtainHistoricalData(long timeHorizon, String term, File target) throws IOException;
     
     /**
+     * Obtains historical data.
+     * 
+     * @param timeHorizon the time horizon in milliseconds into the past
+     * @param term the term (either stock or hashtag) for which the historical data is demanded
+     * @param target the target file where to store the data (may be temporary)
+     * @param dataUrl the url from where the data has to be downloaded
+     * @throws IOException in case that obtaining the historical data fails
+     */
+    public void obtainHistoricalData(long timeHorizon, String term, File target, String dataUrl) throws IOException;
+    
+    /**
      * Gets the default set of terms to be monitored, used during the initialization of the volume prediction.
      * @return the set of terms to be monitored by default
      */
