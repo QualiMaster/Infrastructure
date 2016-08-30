@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import backtype.storm.stateTransfer.PartOfState;
+import backtype.storm.stateTransfer.StateTransfer;
 import backtype.storm.stateTransfer.StateTransferHandler;
 import backtype.storm.stateTransfer.StateTransferHandlerRegistry;
 
@@ -62,15 +63,13 @@ public class StateTransferTests {
     }
     
     /**
-     * A test class for which the state shall be transferred. Don't remove the fields!
+     * A test class for which the state shall be transferred.
      * 
      * @author Holger Eichelberger
      */
     private static class TestAlg {
         
-        @SuppressWarnings("unused")
         private TestType type;
-        @SuppressWarnings("unused")
         private int value;
         
     }
@@ -126,9 +125,24 @@ public class StateTransferTests {
 
     /**
      * Tests the state transfer functionality.
+     * 
+     * @throws IllegalAccessException shall not occur 
+     * @throws IllegalArgumentException shall not occur 
+     * @throws SecurityException shall not occur
      */
     @Test
-    public void testStateTransfer() {
+    public void testStateTransfer() throws SecurityException, IllegalArgumentException, IllegalAccessException {
+        Object src = new Object();
+        Object tgt = new Object();
+        StateTransfer.transferState(tgt, src);
+        
+        TestAlg src1 = new TestAlg();
+        src1.value = 10;
+        src1.type = new TestType();
+        TestAlg tgt1 = new TestAlg();
+        StateTransfer.transferState(tgt1, src1);
+        Assert.assertEquals(src1.value, tgt1.value);
+        Assert.assertEquals(src1.type, tgt1.type);
     }
     
 }
