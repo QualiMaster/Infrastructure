@@ -30,4 +30,11 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Stateful {
+    
+    /**
+     * Whether non-transient attributes shall be included by default, even without {@link PartOfState} annotation.
+     * 
+     * @return whether non-transient attributes shall be included by default
+     */
+    public boolean considerAll() default true;
 }

@@ -62,11 +62,11 @@ public class StateTransfer {
         throws SecurityException, IllegalArgumentException, IllegalAccessException, InstantiationException {
         if (null != fields) {
             Class<?> targetClass = target.getClass();
-            boolean hasExplicitState = targetClass.getAnnotation(Stateful.class) != null;
+            Stateful explicitState = targetClass.getAnnotation(Stateful.class);
             for (int f = 0; f < fields.length; f++) {
                 Field field = fields[f];
                 PartOfState pos = field.getAnnotation(PartOfState.class);
-                if (isPartOfState(field, hasExplicitState, pos)) {
+                if (isPartOfState(field, explicitState, pos)) {
                     boolean accessible = field.isAccessible();
                     if (!accessible) {
                         field.setAccessible(true);
@@ -91,15 +91,15 @@ public class StateTransfer {
      * Returns whether <code>field</code> is considered to be part of the state.
      * 
      * @param field the field to query
-     * @param hasExplicitState whether the containing class has an explicit state annotation
+     * @param classState the annotation of the containing class 
      * @param pos the part of state annotation of <code>field</code>
      * @return <code>true</code> if <code>field</code> is part of the state, <code>false</code> else
      */
-    private static boolean isPartOfState(Field field, boolean hasExplicitState, PartOfState pos) {
+    private static boolean isPartOfState(Field field, Stateful classState, PartOfState pos) {
         int modifiers = field.getModifiers();
         boolean isPart = !Modifier.isTransient(modifiers) && !Modifier.isFinal(modifiers);
-        if (hasExplicitState) {
-            isPart = pos != null;
+        if (null != classState) {
+            isPart = classState.considerAll() || pos != null;
         }
         return isPart;
     }

@@ -92,7 +92,7 @@ public class StateTransferTests {
      * 
      * @author Holger Eichelberger
      */
-    @Stateful
+    @Stateful(considerAll = false)
     private static class TestObj {
         
         @PartOfState(strategy = StateHandlingStrategy.CLEAR_AND_FILL)
@@ -121,7 +121,10 @@ public class StateTransferTests {
 
         @PartOfState(strategy = StateHandlingStrategy.MERGE_AND_KEEP_OLD)
         private Map<String, Integer> intMapMergeKeep = new HashMap<String, Integer>();
-        
+
+        private int value = 1;
+        private transient int value1 = 10;
+
     }
 
     /**
@@ -240,6 +243,8 @@ public class StateTransferTests {
         fill(src.intSetCaF, 10, 20, 30, 40);
         fill(src.intSetMerge, 10, 20, 30, 40);
         fill(src.intSetMergeKeep, 10, 20, 30, 40);
+        src.value = 10;
+        src.value1 = 0;
         
         TestObj tgt = new TestObj();
         fill(tgt.intListCaF, 7, 8, 9, 0);
@@ -248,6 +253,9 @@ public class StateTransferTests {
         fill(tgt.intSetCaF, 70, 80, 90, 100);
         fill(tgt.intSetMerge, 40, 70, 80, 90, 100);
         fill(tgt.intSetMergeKeep, 10, 20, 70, 80, 90, 100);
+        
+        Assert.assertEquals(1, tgt.value); // @Stateful, consider only marked attributes, default value
+        Assert.assertEquals(10, tgt.value1); // transient, default value
         
         StateTransfer.transferState(tgt, src);
         ArrayList<Integer> cmpList = new ArrayList<Integer>();
