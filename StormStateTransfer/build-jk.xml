@@ -60,7 +60,7 @@
 	<!--  Tests -->
 	<target name="test" depends="compile">
 		<echoproperties/>  
-		<!--<jacoco:coverage output="file" destfile="jacoco.exec">
+		<jacoco:coverage output="file" destfile="jacoco.exec">
         <junit printsummary="withOutAndErr" dir="${build.base.dir}" fork="true" timeout="240000" forkmode="once">
         	<classpath path="${jacoco.path}/jacocoant.jar"/>  
         	<classpath>
@@ -68,12 +68,12 @@
                 <path refid="includes" />
                 <pathelement location="${build.classes.dir}" />
             </classpath>
-            <test name="tests.eu.qualimaster.AllTests" haltonfailure="no" outfile="result">
+            <test name="tests.backtype.storm.stateTransfer.AllTests" haltonfailure="no" outfile="result">
                 <formatter type="xml" />
             </test>
-            <jvmarg value="-Dqm.base.dir=${libs.qualimaster.events.core.dir}"/>
+            <!--<jvmarg value="-Dqm.base.dir=${libs.qualimaster.events.core.dir}"/>-->
         </junit>
-      </jacoco:coverage>-->
+      </jacoco:coverage>
     </target>
 	
 	    <!-- Javadoc -->

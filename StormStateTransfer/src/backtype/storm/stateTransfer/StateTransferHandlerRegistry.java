@@ -85,7 +85,7 @@ public class StateTransferHandlerRegistry {
      * @param handler the handler (ignored if <b>null</b>)
      */
     public static void registerHandler(Class<?> type, StateTransferHandler<?> handler) {
-        getHandlers(type).put(handler.getType(), handler);
+        changeHandlers(type, true, handler);
     }
 
     /**
@@ -95,7 +95,7 @@ public class StateTransferHandlerRegistry {
      * @param handler the handler (ignored if <b>null</b>)
      */
     public static void unregisterHandler(Class<?> type, StateTransferHandler<?> handler) {
-        getHandlers(type).remove(handler);
+        changeHandlers(type, false, handler);
     }
 
     /**
@@ -137,17 +137,29 @@ public class StateTransferHandlerRegistry {
     }
 
     /**
-     * Returns the handlers for <code>type</code>, either the type specific ones if defined or the global one.
+     * Changes the handlers for <code>type</code>, either the type specific ones if defined or the global one by adding
+     * or removing a handler.
      *  
      * @param type the type to look for
-     * @return the handlers
+     * @param add add or remove <code>handler</code>
+     * @param handler the handler to add/remove
      */
-    private static Map<Class<?>, StateTransferHandler<?>> getHandlers(Class<?> type) {
+    private static void changeHandlers(Class<?> type, boolean add, StateTransferHandler<?> handler) {
         Map<Class<?>, StateTransferHandler<?>> handlers = globalHandlers;
         if (null != type) {
             handlers = typeHandlers.get(type);
+            if (add && null == handlers) {
+                handlers = new HashMap<Class<?>, StateTransferHandler<?>>();
+                typeHandlers.put(type, handlers);
+            }
         }
-        return handlers;
+        if (null != handlers) {
+            if (add) {
+                handlers.put(handler.getType(), handler);
+            } else {
+                handlers.remove(handler.getType());
+            }
+        }
     }
     
 }
