@@ -16,11 +16,13 @@
 package eu.qualimaster.monitoring.profiling;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
 
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
+import eu.qualimaster.infrastructure.PipelineLifecycleEvent.Status;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 import eu.qualimaster.monitoring.events.ParameterChangedMonitoringEvent;
@@ -36,13 +38,26 @@ import eu.qualimaster.observables.ResourceUsage;
  * @author Christopher Voges
  */
 public class AlgorithmProfilePredictor {
+    /**
+     * Dummy {@link AlgorithmProfile} instance.
+     * Contains the active/current attributes given through the notifier events.
+     * In case of an update or predict call this dummy is used to load or create a corresponding 
+     * instance which is then given the update or predict call.
+     */
+    private static AlgorithmProfile active = new AlgorithmProfile();
+ 
+    /**
+     * The {@link AlgorithmProfilePredictorManager} used for handling the {@link AlgorithmProfile} storage
+     * and the loading and storing from {@link AlgorithmProfilePredictorAlgorithm} instances.
+     */
+    private static AlgorithmProfilePredictorManager manager = new AlgorithmProfilePredictorManager();
     
     /**
      * Called upon startup of the infrastructure.
      */
     public static void start() {
         // will contain the data files if provided through the pipeline artifact, for tests see #useTestData(File)
-        MonitoringConfiguration.getProfileLocation();
+        manager.setPathToRootFolder(MonitoringConfiguration.getProfileLocation());
     }
 
      /**
@@ -52,7 +67,30 @@ public class AlgorithmProfilePredictor {
      * @param event the lifecycle event
      */
     public static void notifyPipelineLifecycleChange(PipelineLifecycleEvent event) {
-        //System.err.println(event);
+        System.err.println("TESTOUT: " + event);
+        String pipeline = event.getPipeline();
+        Status status = event.getStatus();
+        
+        active.setPipeline(pipeline); 
+        
+        if (status.equals(Status.STOPPED)) {
+            try {
+                manager.store(active);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            active = new AlgorithmProfile();
+        }
+//        if (status.equals(Status.SWITCHED)) {
+//            try {
+//                manager.store(active);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            active = new AlgorithmProfile();
+//            active.setPipeline(pipeline); 
+//        }
+        
         /*
          * Use-Case The pipeline is STARTED, STOPPED or SWITCHED (i.e. one
          * starts, another stops)
@@ -81,27 +119,9 @@ public class AlgorithmProfilePredictor {
      * @param event the algorithm changed monitoring event
      */
     public static void notifyAlgorithmChanged(AlgorithmChangedMonitoringEvent event) {
-        event.getAlgorithm();
-        event.getPipeline();
-        event.getPipelineElement();
-        /*
-         * Use-Case
-         * An Algorithm changes.
-         * 
-         * Implementation ideas: 
-         * 0. Continue only if the Algorithm did change, else: break/abort 
-         * 1. Get all data needed to identify the Kalman-Instances (shall be collected through parameter/algorithm chg.)
-         * (old and new Algorithm) 
-         * 2. Store the old Algorithms Kalman-Instance to ram/disk.
-         * 3. For the new Algorithm:  
-         * 3a. Load the (re)starting Kalman-Instance from ram/disk or 
-         * 3b. Create a new Kalman-Instance 
-         *  (first: from scratch, later: as analogy, based on similar instances)
-         * 
-         * Assumption: Only the Algorithm changes. The Pipeline and IObservables
-         * (incl. EXECUTOTRS and TASKS) stay the same. After change, observables may change radically. Additional
-         * parameters may be set during algorithm change.
-         */
+        active.setPipeline(event.getPipeline());
+        active.setElement(event.getPipelineElement()); // family
+        active.setAlgorithm(event.getAlgorithm());
     }
 
     /**
@@ -112,30 +132,9 @@ public class AlgorithmProfilePredictor {
      * @param event the parameter change event
      */
     public static void notifyParameterChangedMonitoringEvent(ParameterChangedMonitoringEvent event) {
-        event.getPipeline();
-        event.getPipelineElement();
-        event.getParameter();
-        event.getValue();
-        
-        /*
-         * Use-Case: A Kalman-Instance defining Parameter changes.
-         * Such Paramters are EXECUTORS, TASKS or the monitored/predicted IObservable (e.g. latency).
-         *  
-         * Implementation ideas:
-         * 0. Continue only if one or more Parameters changed, else: break/abort 
-         * 1. Get all data needed to identify the Kalman-Instances (shall be collected through parameter/algorithm chg.)
-         * (old and new Algorithm) 
-         * 2. Store the old Kalman-Instance to ram/disk.
-         * 3. For the new Algorithm:  
-         * 3a. Load the (re)starting Kalman-Instance from ram/disk or 
-         * 3b. Create a new Kalman-Instance 
-         *  (first: from scratch, later: as analogy, based on similar instances)
-         * 
-         * Assumption: Executors may change as other parameters may change. After change, observables may change 
-         * radically. During the lifetime of a Pipeline, the tasks are invariant. The Pipeline, Algorithms and 
-         * monitored/predicted IObservables stay the same.
-         * 
-         */
+        active.setPipeline(event.getPipeline());
+        active.setElement(event.getPipelineElement());
+        active.setParameter(event.getParameter(), event.getValue());
     }
 
     /**
@@ -146,25 +145,19 @@ public class AlgorithmProfilePredictor {
      * @param event the profiling event
      */
     public static void notifyAlgorithmProfilingEvent(AlgorithmProfilingEvent event) {
-        MonitoringConfiguration.getProfilingLogLocation(); 
-        /*
-         * Use-Case: Creating Kalman-Instances for later use.
-         * 
-         * Implementation ideas: 
-         * 1. Get all data needed to identify the Kalman-Instance (shall be collected through parameter/algorithm chg.)
-         * 2a. If START: Create a new Kalman-Instance
-         * 2b. If NEXT:  Store the current one and create a new Kalman-Instance. In profiling, we can assume that
-         *     there is no existing one. 
-         * 2c. If END: Store the actual Kalman-Instance 
-         * 3. If (START or NEXT) while (event.hasValues) updateKalman
-         * 
-         * Assumption: This method is (only) used for the batch-wise creation or 
-         * updating of Kalman-Instances in an non-productive environment (during profiling), i.e. 
-         * the total execution time can be longer than 500ms - in particular if required for profiling, 
-         * the execution time shall then be long enough (to be determined). Running instances are supposed to run
-         * over days, but for demos the execution time may be shorter.
-         * 
-         */
+        if (event.equals(AlgorithmProfilingEvent.Status.START)) {
+            // Remove all currently loaded profiles
+            manager.removeAll();
+            manager.setPathToRootFolder(MonitoringConfiguration.getProfilingLogLocation()); 
+        } 
+        if (event.equals(AlgorithmProfilingEvent.Status.END) || event.equals(AlgorithmProfilingEvent.Status.NEXT)) {
+            // Store all currently loaded/created profiles into MonitoringConfiguration.getProfilingLogLocation()
+            try {
+                manager.storeAll();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
     
     /**
@@ -261,7 +254,12 @@ public class AlgorithmProfilePredictor {
     * Called upon shutdown of the infrastructure. Clean up global resources here.
     */
     public static void stop() {
-       // free resources, store all changed matrices
+        try {
+            manager.storeAll();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        manager = new AlgorithmProfilePredictorManager();
     }
 
     /**
@@ -271,6 +269,6 @@ public class AlgorithmProfilePredictor {
      */
     public static void useTestData(File baseFolder) {
         // so far not called as there is no specific data available
+        manager.setPathToRootFolder(baseFolder.getPath());
     }
-    
 }
