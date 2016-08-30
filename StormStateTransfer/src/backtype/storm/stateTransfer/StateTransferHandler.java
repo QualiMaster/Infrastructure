@@ -49,9 +49,10 @@ public abstract class StateTransferHandler<T> {
      * @throws SecurityException in case that accessing <code>field</code> leads to a security problem
      * @throws IllegalArgumentException in case that accessing <code>field</code> happens with an illegal value
      * @throws IllegalAccessException in case that accessing <code>field</code> happens with an illegal access
+     * @throws InstantiationException if an instance of <code>T</code> cannot be created
      */
     public abstract boolean doStateTransfer(PartOfState annotation, Field field, Object target, T oldValue, T newValue) 
-        throws SecurityException, IllegalArgumentException, IllegalAccessException;
+        throws SecurityException, IllegalArgumentException, IllegalAccessException, InstantiationException;
     
     /**
      * Performs the state transfer from <code>source</code> to <code>target</code>. <code>oldValue</code> and 
@@ -66,9 +67,10 @@ public abstract class StateTransferHandler<T> {
      * @throws SecurityException in case that accessing <code>field</code> leads to a security problem
      * @throws IllegalArgumentException in case that accessing <code>field</code> happens with an illegal value
      * @throws IllegalAccessException in case that accessing <code>field</code> happens with an illegal access
+     * @throws InstantiationException if an instance of <code>T</code> cannot be created
      */
     public boolean transferState(PartOfState annotation, Field field, Object target, Object oldValue, Object newValue) 
-        throws SecurityException, IllegalArgumentException, IllegalAccessException {
+        throws SecurityException, IllegalArgumentException, IllegalAccessException, InstantiationException {
         return doStateTransfer(annotation, field, target, type.cast(oldValue), type.cast(newValue));
     }
     
@@ -103,9 +105,11 @@ public abstract class StateTransferHandler<T> {
      * @throws SecurityException in case that accessing <code>field</code> leads to a security problem
      * @throws IllegalArgumentException in case that accessing <code>field</code> happens with an illegal value
      * @throws IllegalAccessException in case that accessing <code>field</code> happens with an illegal access
+     * @throws InstantiationException if an instance of <code>T</code> cannot be created
      */
     protected static boolean doDefaultObjectStateTransfer(PartOfState annotation, Field field, Object target, 
-        Object oldValue, Object newValue) throws SecurityException, IllegalArgumentException, IllegalAccessException {
+        Object oldValue, Object newValue) throws SecurityException, IllegalArgumentException, IllegalAccessException, 
+        InstantiationException {
         return StateTransferHandlerRegistry.DEFAULT_OBJECT_HANDLER.doStateTransfer(
             annotation, field, target, oldValue, newValue);        
     }

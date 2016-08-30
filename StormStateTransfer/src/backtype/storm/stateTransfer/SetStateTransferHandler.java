@@ -36,33 +36,34 @@ public class SetStateTransferHandler extends StateTransferHandler<Set> {
     @SuppressWarnings("unchecked")
     @Override
     public boolean doStateTransfer(PartOfState annotation, Field field, Object target, Set oldValue, Set newValue)
-        throws SecurityException, IllegalArgumentException, IllegalAccessException {
+        throws SecurityException, IllegalArgumentException, IllegalAccessException, InstantiationException {
         Boolean recurse = null;
         StateHandlingStrategy strategy = getStrategy(annotation);
         Set revisedNewValue = newValue;
         if (null != oldValue && null != newValue) {
             switch (strategy) {
             case CLEAR_AND_FILL:
-                oldValue.clear();
-                oldValue.addAll(newValue);
-                revisedNewValue = oldValue;
+                revisedNewValue = newValue.getClass().newInstance();
+                revisedNewValue.addAll(newValue);
                 recurse = false;
                 break;
             case MERGE:
             case MERGE_AND_KEEP_OLD: // Set type is caring for that
-                oldValue.addAll(newValue);
-                revisedNewValue = oldValue;
+                revisedNewValue = newValue.getClass().newInstance();
+                revisedNewValue.addAll(oldValue);
+                revisedNewValue.addAll(newValue);
                 recurse = false;
                 break;
             default:
                 break;
             }
         }
-        boolean result = doDefaultObjectStateTransfer(annotation, field, target, oldValue, revisedNewValue);
-        if (null != recurse) {
-            result = recurse;
+        if (null == recurse) { // not handled
+            recurse = doDefaultObjectStateTransfer(annotation, field, target, oldValue, newValue);
+        } else {
+            field.set(target, revisedNewValue);
         }
-        return result;
+        return recurse;
     }
 
 }

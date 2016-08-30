@@ -16,14 +16,23 @@
 package tests.backtype.storm.stateTransfer;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import backtype.storm.stateTransfer.PartOfState;
+import backtype.storm.stateTransfer.StateHandlingStrategy;
 import backtype.storm.stateTransfer.StateTransfer;
 import backtype.storm.stateTransfer.StateTransferHandler;
 import backtype.storm.stateTransfer.StateTransferHandlerRegistry;
+import backtype.storm.stateTransfer.Stateful;
 
 /**
  * State transfer tests.
@@ -56,7 +65,8 @@ public class StateTransferTests {
 
         @Override
         public boolean doStateTransfer(PartOfState annotation, Field field, Object target, TestType oldValue,
-            TestType newValue) throws SecurityException, IllegalArgumentException, IllegalAccessException {
+            TestType newValue) throws SecurityException, IllegalArgumentException, IllegalAccessException, 
+            InstantiationException {
             return doDefaultObjectStateTransfer(annotation, field, target, oldValue, newValue);
         }
         
@@ -71,6 +81,46 @@ public class StateTransferTests {
         
         private TestType type;
         private int value;
+        private List<Integer> intList;
+        private Set<Integer> intSet;
+        private Map<String, Integer> map;
+        private transient int value1 = 10;
+    }
+
+    /**
+     * A second test class for testing annotations.
+     * 
+     * @author Holger Eichelberger
+     */
+    @Stateful
+    private static class TestObj {
+        
+        @PartOfState(strategy = StateHandlingStrategy.CLEAR_AND_FILL)
+        private List<Integer> intListCaF = new ArrayList<Integer>();
+
+        @PartOfState(strategy = StateHandlingStrategy.MERGE)
+        private List<Integer> intListMerge = new ArrayList<Integer>();
+
+        @PartOfState(strategy = StateHandlingStrategy.MERGE_AND_KEEP_OLD)
+        private List<Integer> intListMergeKeep = new ArrayList<Integer>();
+
+        @PartOfState(strategy = StateHandlingStrategy.CLEAR_AND_FILL)
+        private Set<Integer> intSetCaF = new HashSet<Integer>();
+
+        @PartOfState(strategy = StateHandlingStrategy.MERGE)
+        private Set<Integer> intSetMerge = new HashSet<Integer>();
+
+        @PartOfState(strategy = StateHandlingStrategy.MERGE_AND_KEEP_OLD)
+        private Set<Integer> intSetMergeKeep = new HashSet<Integer>();
+
+        @PartOfState(strategy = StateHandlingStrategy.CLEAR_AND_FILL)
+        private Map<String, Integer> intMapCaF = new HashMap<String, Integer>();
+
+        @PartOfState(strategy = StateHandlingStrategy.MERGE)
+        private Map<String, Integer> intMapMerge = new HashMap<String, Integer>();
+
+        @PartOfState(strategy = StateHandlingStrategy.MERGE_AND_KEEP_OLD)
+        private Map<String, Integer> intMapMergeKeep = new HashMap<String, Integer>();
         
     }
 
@@ -124,25 +174,112 @@ public class StateTransferTests {
     }
 
     /**
-     * Tests the state transfer functionality.
+     * Tests the state transfer functionality (Object).
      * 
      * @throws IllegalAccessException shall not occur 
      * @throws IllegalArgumentException shall not occur 
      * @throws SecurityException shall not occur
+     * @throws InstantiationException shall not occur
      */
     @Test
-    public void testStateTransfer() throws SecurityException, IllegalArgumentException, IllegalAccessException {
+    public void testStateTransferObject() throws SecurityException, IllegalArgumentException, IllegalAccessException, 
+        InstantiationException {
         Object src = new Object();
         Object tgt = new Object();
         StateTransfer.transferState(tgt, src);
+    }
+
+    /**
+     * Tests the state transfer functionality (no annotations).
+     * 
+     * @throws IllegalAccessException shall not occur 
+     * @throws IllegalArgumentException shall not occur 
+     * @throws SecurityException shall not occur
+     * @throws InstantiationException shall not occur
+     */
+    @Test
+    public void testStateTransferTestAlg() throws SecurityException, IllegalArgumentException, IllegalAccessException, 
+        InstantiationException {
+        TestAlg src = new TestAlg();
+        src.value = 10;
+        src.type = new TestType();
+        src.intList = new ArrayList<Integer>();
+        fill(src.intList, 1, 2, 3, 4, 7);
+        src.intSet = new HashSet<Integer>();
+        fill(src.intSet, 8, 7, 6, 1);
+        src.map = new HashMap<String, Integer>();
+        src.map.put("aaa", 1234);
+        src.value1 = 20;
+
+        TestAlg tgt = new TestAlg();
+
+        StateTransfer.transferState(tgt, src);
+        Assert.assertEquals(src.value, tgt.value);
+        Assert.assertEquals(src.type, tgt.type);
+        Assert.assertEquals(src.intList, tgt.intList);
+        Assert.assertEquals(src.intSet, tgt.intSet);
+        Assert.assertEquals(src.map, tgt.map);
+        Assert.assertEquals(10, tgt.value1); // transient, keep default
+    }
+
+    /**
+     * Tests the state transfer functionality (annotations).
+     * 
+     * @throws IllegalAccessException shall not occur 
+     * @throws IllegalArgumentException shall not occur 
+     * @throws SecurityException shall not occur
+     * @throws InstantiationException shall not occur
+     */
+    @Test
+    public void testStateTransferTestObj() throws SecurityException, IllegalArgumentException, IllegalAccessException, 
+        InstantiationException {
+        TestObj src = new TestObj();
+        fill(src.intListCaF, 1, 2, 3, 4);
+        fill(src.intListMerge, 1, 2, 3, 4);
+        fill(src.intListMergeKeep, 1, 2, 3, 4);
+        fill(src.intSetCaF, 10, 20, 30, 40);
+        fill(src.intSetMerge, 10, 20, 30, 40);
+        fill(src.intSetMergeKeep, 10, 20, 30, 40);
         
-        TestAlg src1 = new TestAlg();
-        src1.value = 10;
-        src1.type = new TestType();
-        TestAlg tgt1 = new TestAlg();
-        StateTransfer.transferState(tgt1, src1);
-        Assert.assertEquals(src1.value, tgt1.value);
-        Assert.assertEquals(src1.type, tgt1.type);
+        TestObj tgt = new TestObj();
+        fill(tgt.intListCaF, 7, 8, 9, 0);
+        fill(tgt.intListMerge, 4, 7, 8, 9, 0);
+        fill(tgt.intListMergeKeep, 1, 2, 7, 8, 9, 0);
+        fill(tgt.intSetCaF, 70, 80, 90, 100);
+        fill(tgt.intSetMerge, 40, 70, 80, 90, 100);
+        fill(tgt.intSetMergeKeep, 10, 20, 70, 80, 90, 100);
+        
+        StateTransfer.transferState(tgt, src);
+        ArrayList<Integer> cmpList = new ArrayList<Integer>();
+        fill(cmpList, 1, 2, 3, 4);
+        Assert.assertEquals(cmpList, tgt.intListCaF);
+        fill(cmpList, 4, 7, 8, 9, 0, 1, 2, 3, 4);
+        Assert.assertEquals(cmpList, tgt.intListMerge);
+        fill(cmpList, 1, 2, 7, 8, 9, 0, 3, 4);
+        Assert.assertEquals(cmpList, tgt.intListMergeKeep);
+
+        Set<Integer> cmpSet = new HashSet<Integer>();
+        fill(cmpSet, 10, 20, 30, 40);
+        Assert.assertEquals(cmpSet, tgt.intSetCaF);
+        fill(cmpSet, 70, 80, 90, 100, 10, 20, 30, 40);
+        Assert.assertEquals(cmpSet, tgt.intSetMerge);
+        fill(cmpSet, 10, 20, 70, 80, 90, 100, 30, 40);
+        Assert.assertEquals(cmpSet, tgt.intSetMergeKeep);
+    }
+    
+    /**
+     * Fills <code>coll</code> with <code>values</code>.
+     * 
+     * @param <T> the entity type
+     * @param coll the collection to fill
+     * @param values the values
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> void fill(Collection<T> coll, T... values) {
+        coll.clear();
+        for (T v: values) {
+            coll.add(v);
+        }
     }
     
 }

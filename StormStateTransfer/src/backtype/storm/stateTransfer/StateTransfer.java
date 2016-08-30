@@ -33,9 +33,10 @@ public class StateTransfer {
      * @throws SecurityException in case that accessing <code>field</code> leads to a security problem
      * @throws IllegalArgumentException in case that accessing <code>field</code> happens with an illegal value
      * @throws IllegalAccessException in case that accessing <code>field</code> happens with an illegal access
+     * @throws InstantiationException if an instance cannot be created
      */
     public static void transferState(Object target, Object state) throws SecurityException, 
-        IllegalArgumentException, IllegalAccessException {
+        IllegalArgumentException, IllegalAccessException, InstantiationException {
         if (null != target) {
             Class<?> targetClass = target.getClass();
             if (targetClass.isInstance(state)) {
@@ -55,9 +56,10 @@ public class StateTransfer {
      * @throws SecurityException in case that accessing <code>field</code> leads to a security problem
      * @throws IllegalArgumentException in case that accessing <code>field</code> happens with an illegal value
      * @throws IllegalAccessException in case that accessing <code>field</code> happens with an illegal access
+     * @throws InstantiationException if an instance cannot be created
      */
     private static void transferState(Field[] fields, Object target, Object state) 
-        throws SecurityException, IllegalArgumentException, IllegalAccessException {
+        throws SecurityException, IllegalArgumentException, IllegalAccessException, InstantiationException {
         if (null != fields) {
             Class<?> targetClass = target.getClass();
             boolean hasExplicitState = targetClass.getAnnotation(Stateful.class) != null;

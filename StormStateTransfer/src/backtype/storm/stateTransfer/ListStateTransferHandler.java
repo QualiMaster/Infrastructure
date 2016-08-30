@@ -37,42 +37,45 @@ public class ListStateTransferHandler extends StateTransferHandler<List> {
     @SuppressWarnings("unchecked")
     @Override
     public boolean doStateTransfer(PartOfState annotation, Field field, Object target, List oldValue, 
-        List newValue) throws SecurityException, IllegalArgumentException, IllegalAccessException {
+        List newValue) throws SecurityException, IllegalArgumentException, IllegalAccessException, 
+        InstantiationException {
         Boolean recurse = null;
         StateHandlingStrategy strategy = getStrategy(annotation);
         List revisedNewValue = newValue;
         if (null != oldValue && null != newValue) {
             switch (strategy) {
             case CLEAR_AND_FILL:
-                oldValue.clear();
-                oldValue.addAll(newValue);
-                revisedNewValue = oldValue;
+                revisedNewValue = newValue.getClass().newInstance();
+                revisedNewValue.addAll(newValue);
                 recurse = false;
                 break;
             case MERGE:
-                oldValue.addAll(newValue);
-                revisedNewValue = oldValue;
+                revisedNewValue = newValue.getClass().newInstance();
+                revisedNewValue.addAll(oldValue);
+                revisedNewValue.addAll(newValue);
                 recurse = false;
                 break;
             case MERGE_AND_KEEP_OLD:
+                revisedNewValue = newValue.getClass().newInstance();
+                revisedNewValue.addAll(oldValue);
                 for (int o = 0; o < newValue.size(); o++) {
                     Object obj = newValue.get(o);
-                    if (!oldValue.contains(obj)) {
-                        oldValue.add(obj);
+                    if (!revisedNewValue.contains(obj)) {
+                        revisedNewValue.add(obj);
                     }
                 }
-                revisedNewValue = oldValue;
                 recurse = false;
                 break;
             default:
                 break;
             }
         }
-        boolean result = doDefaultObjectStateTransfer(annotation, field, target, oldValue, revisedNewValue);
-        if (null != recurse) {
-            result = recurse;
+        if (null == recurse) { // not handled
+            recurse = doDefaultObjectStateTransfer(annotation, field, target, oldValue, newValue);
+        } else {
+            field.set(target, revisedNewValue);
         }
-        return result;
+        return recurse;
     }
 
 }

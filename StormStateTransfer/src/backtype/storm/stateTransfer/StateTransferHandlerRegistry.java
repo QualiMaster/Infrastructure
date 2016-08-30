@@ -31,7 +31,8 @@ public class StateTransferHandlerRegistry {
         
             @Override
             public boolean doStateTransfer(PartOfState annotation, Field field, Object target, Object oldValue, 
-                Object newValue) throws SecurityException, IllegalArgumentException, IllegalAccessException {
+                Object newValue) throws SecurityException, IllegalArgumentException, IllegalAccessException, 
+                InstantiationException {
                 boolean recurse;
                 if (null == oldValue || null == newValue) {
                     // if not present in target or no value, just set
@@ -49,7 +50,8 @@ public class StateTransferHandlerRegistry {
         
             @Override
             public boolean doStateTransfer(PartOfState annotation, Field field, Object target, Object oldValue, 
-                Object newValue) throws SecurityException, IllegalArgumentException, IllegalAccessException {
+                Object newValue) throws SecurityException, IllegalArgumentException, IllegalAccessException, 
+                InstantiationException {
                 if (null != newValue) { // cannot be, just be sure
                     field.set(target, newValue);
                 }
