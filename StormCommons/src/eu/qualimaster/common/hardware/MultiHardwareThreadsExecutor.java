@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.log4j.Logger;
+
 /**
  * Concurrent executor service for creating multiple hardware connections.
  * 
@@ -15,6 +17,7 @@ import java.util.concurrent.Executors;
  *
  */
 public class MultiHardwareThreadsExecutor {
+    private static final Logger LOGGER = Logger.getLogger(MultiHardwareThreadsExecutor.class); 
     private int threadsNum = 0;
     private List<Runnable> threadList = new ArrayList<Runnable>();
     private Map<String, List<Integer>> servers;
@@ -49,6 +52,8 @@ public class MultiHardwareThreadsExecutor {
                 port = ports.get(i);
                 Runnable thread;
                 try {
+                    LOGGER.info("Creating the thread for the hardware connection with the ip: " + ip 
+                            + ", port: " + port);
                     thread = (Runnable) handler.getDeclaredConstructor(String.class, int.class).newInstance(ip, port);
                     threadList.add(thread);
                     executor.execute(thread);
