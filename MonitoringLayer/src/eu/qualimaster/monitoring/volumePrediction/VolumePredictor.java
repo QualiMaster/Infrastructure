@@ -56,6 +56,9 @@ public class VolumePredictor {
 	/** File to temporarily store historical data */
 	private File historicalDataFile;
 	
+	/** Flag indicating whether the class is being used in test mode or not */
+	private boolean test;
+	
 	/** The number of months (in milliseconds) of data to consider when training the model */
 	private static final long NUM_MONTHS = 4 * (1000*60*60*24*30);
 	
@@ -69,9 +72,9 @@ public class VolumePredictor {
 	private static final int REGULAR_INCREASE_SIZE = RECENT_HISTORY_SIZE / 3;
 	
 	/**
-	 * Default constructor of the predictor, no models are trained nor historical data provider are set.
+	 * Default constructor of the predictor, no models are trained yet.
 	 */
-	public VolumePredictor(String pipeline, String source, IHistoricalDataProvider dataProvider)
+	public VolumePredictor(String pipeline, String source, IHistoricalDataProvider dataProvider, boolean test)
 	{
 		this.pipeline = pipeline;
 		this.source = source;
@@ -83,6 +86,15 @@ public class VolumePredictor {
 		this.running = false;
 		this.historyProvider = dataProvider;
 		this.historicalDataFile = null;
+		this.test = test;
+	}
+	
+	/**
+	 * Default constructor of the predictor, no models are trained yet.
+	 */
+	public VolumePredictor(String pipeline, String source, IHistoricalDataProvider dataProvider)
+	{
+		this(pipeline, source, dataProvider, false);
 	}
 	
 	/**
@@ -494,5 +506,19 @@ public class VolumePredictor {
 	 */
 	public HashMap<String, ArrayList<Long>> getRecentVolumes() {
 		return recentVolumes;
+	}
+
+	/**
+	 * @return the test
+	 */
+	public boolean isTest() {
+		return test;
+	}
+
+	/**
+	 * @param test the test to set
+	 */
+	public void setTest(boolean test) {
+		this.test = test;
 	}
 }

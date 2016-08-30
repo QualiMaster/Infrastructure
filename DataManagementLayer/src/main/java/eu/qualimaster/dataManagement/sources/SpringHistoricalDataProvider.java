@@ -33,7 +33,7 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
 	private static final String[] DEFAULT_BLIND_TERMS = {"AAPL","AMAT","AMZN","CHK","CSCO","FB","GOOGL","IBM","MU","VHC","ECA","F","HPQ","MT","SPLS"};
 	
     /**
-     * Obtains historical data from Spring server
+     * Obtains historical data from Spring server (default url)
      * 
      * @param timeHorizon the time horizon in milliseconds into the past
      * @param term the name of the stock for which the historical data is demanded (format: INDEX_NAME·STOCK_NAME)
@@ -42,11 +42,25 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
      */
     public void obtainHistoricalData(long timeHorizon, String term, File target) throws IOException
     {
+    	obtainHistoricalData(timeHorizon, term, target, BASE_URL);
+    }
+    
+    /**
+     * Obtains historical data from a custom server
+     * 
+     * @param timeHorizon the time horizon in milliseconds into the past
+     * @param term the name of the stock for which the historical data is demanded (format: INDEX_NAME·STOCK_NAME)
+     * @param target the target file where to store the data
+     * @param server the url of the server where the data has to be downloaded
+     * @throws IOException in case that obtaining the historical data fails
+     */
+    public void obtainHistoricalData(long timeHorizon, String term, File target, String server) throws IOException
+    {
     	// derive required months of historical data from the input time horizon
     	ArrayList<String> months = getMonths(Calendar.getInstance(), timeHorizon);
     	
     	// download the files containing historical data for each month
-    	ArrayList<ZipInputStream> zipFiles = downloadHistoricalData(term, months);
+    	ArrayList<ZipInputStream> zipFiles = downloadHistoricalData(term, months, server);
     	
     	// uncompress and merge the zip files within the output file
     	storeHistoricalData(zipFiles, target);
@@ -69,11 +83,11 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
     	return months;
     }
     
-    private ArrayList<ZipInputStream> downloadHistoricalData(String term, ArrayList<String> dates) throws IOException
+    private ArrayList<ZipInputStream> downloadHistoricalData(String term, ArrayList<String> dates, String server) throws IOException
     {
     	try{
 	    	ArrayList<ZipInputStream> data = new ArrayList<>();
-	    	for(String date : dates) data.add(downloadHistoricalData(term, date));
+	    	for(String date : dates) data.add(downloadHistoricalData(term, date, server));
 	    	return data;
     	}
     	catch(Exception e){
@@ -82,10 +96,10 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
     	}
     }
     
-    private ZipInputStream downloadHistoricalData(String term, String date) throws IOException
+    private ZipInputStream downloadHistoricalData(String term, String date, String server) throws IOException
     {
 		// download the data (zip file) in a ZipInputStream object
-    	URL url = new URL(BASE_URL + date + "_" + term + "·NoExpiry.zip");
+    	URL url = new URL(server + date + "_" + term + "·NoExpiry.zip");
     	URLConnection urlConnection = url.openConnection();
 		ZipInputStream zin = new ZipInputStream(urlConnection.getInputStream());
 		return zin;
