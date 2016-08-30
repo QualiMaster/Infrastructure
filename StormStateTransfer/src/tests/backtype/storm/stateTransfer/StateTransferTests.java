@@ -243,6 +243,10 @@ public class StateTransferTests {
         fill(src.intSetCaF, 10, 20, 30, 40);
         fill(src.intSetMerge, 10, 20, 30, 40);
         fill(src.intSetMergeKeep, 10, 20, 30, 40);
+        src.intMapCaF.put("aaa", 10);
+        src.intMapMerge.put("aaa", 10);
+        src.intMapMergeKeep.put("aaa", 10);
+        src.intMapMergeKeep.put("aca", 1);
         src.value = 10;
         src.value1 = 0;
         
@@ -253,6 +257,11 @@ public class StateTransferTests {
         fill(tgt.intSetCaF, 70, 80, 90, 100);
         fill(tgt.intSetMerge, 40, 70, 80, 90, 100);
         fill(tgt.intSetMergeKeep, 10, 20, 70, 80, 90, 100);
+        tgt.intMapCaF.put("aba", 15);
+        tgt.intMapMerge.put("aaa", 9);
+        tgt.intMapMerge.put("aba", 15);
+        tgt.intMapMergeKeep.put("aaa", 9);
+        tgt.intMapMergeKeep.put("aba", 15);
         
         Assert.assertEquals(1, tgt.value); // @Stateful, consider only marked attributes, default value
         Assert.assertEquals(10, tgt.value1); // transient, default value
@@ -273,6 +282,18 @@ public class StateTransferTests {
         Assert.assertEquals(cmpSet, tgt.intSetMerge);
         fill(cmpSet, 10, 20, 70, 80, 90, 100, 30, 40);
         Assert.assertEquals(cmpSet, tgt.intSetMergeKeep);
+        
+        Map<String, Integer> cmpMap = new HashMap<String, Integer>();
+        cmpMap.put("aaa", 10);
+        Assert.assertEquals(cmpMap, tgt.intMapCaF);
+        cmpMap.clear();
+        cmpMap.put("aaa", 10);
+        cmpMap.put("aba", 15);
+        Assert.assertEquals(cmpMap, tgt.intMapMerge);
+        cmpMap.put("aaa", 9);
+        cmpMap.put("aba", 15);
+        cmpMap.put("aca", 1);
+        Assert.assertEquals(cmpMap, tgt.intMapMergeKeep);
     }
     
     /**
