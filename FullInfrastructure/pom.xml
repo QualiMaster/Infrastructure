@@ -35,6 +35,10 @@
             <groupId>org.apache.storm</groupId>
             <artifactId>storm-core</artifactId>
         </dependency>
+	    <dependency>
+	      <groupId>org.apache.storm</groupId>
+	      <artifactId>storm-stateTransfer</artifactId>
+	    </dependency>
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>AdaptationLayer</artifactId>

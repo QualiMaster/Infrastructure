@@ -23,6 +23,12 @@
       <version>0.9.5</version>  
       <scope>provided</scope>    
     </dependency>
+    <dependency>
+      <groupId>org.apache.storm</groupId>
+      <artifactId>storm-stateTransfer</artifactId>
+      <version>0.9.5-SNAPSHOT</version>  
+      <scope>provided</scope>    
+    </dependency>
     <!-- comes with storm -->
     <dependency>
       <groupId>com.esotericsoftware.kryo</groupId>
