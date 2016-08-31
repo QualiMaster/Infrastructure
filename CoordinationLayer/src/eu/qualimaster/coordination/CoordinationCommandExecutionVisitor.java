@@ -296,7 +296,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
                 DataManager.disconnectAll(command.getPipeline());
                 break;
             case STOP:
-                failing = handlePipelineStop(command);
+                failing = handlePipelineStop(command, true);
                 break;
             default:
                 knownCommand = false;
@@ -324,25 +324,25 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
      */
     private CoordinationExecutionResult handlePipelineStart(PipelineCommand command) {
         CoordinationExecutionResult failing = null;
+        INameMapping mapping = CoordinationManager.getNameMapping(command.getPipeline());
+        List<String> subPipelines = mapping.getSubPipelines();
+        if (!subPipelines.isEmpty()) {
+            for (int s = 1; s < subPipelines.size(); s++) {
+                CoordinationManager.addToStartSequence(new PipelineCommand(
+                    subPipelines.get(s), command.getStatus(), command.getOptions()));
+            }
+            CoordinationManager.addToStartSequence(command);
+            
+            // reset command
+            command = new PipelineCommand(subPipelines.get(1), command.getStatus(), command.getOptions());
+            mapping = CoordinationManager.getNameMapping(command.getPipeline());
+        }
         String pipelineName = command.getPipeline();
         getLogger().info("Processing pipeline start command for " + pipelineName + " with options " 
             + command.getOptions());
         try {
             String absPath = CoordinationUtils.loadMapping(pipelineName);
-            INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
             doPipelineStart(mapping, absPath, command.getOptions(), command);
-            /*PipelineCache.getCache(pipelineName); // prepare the cache
-            if (!CoordinationManager.isTestingMode()) {
-                StormUtils.submitTopology(CoordinationConfiguration.getNimbus(), mapping, absPath, 
-                    command.getOptions());
-                // cache curator, takes a while, leave namespace as currently legacy
-                SignalMechanism.prepareMechanism(getNamespace(mapping));
-            }
-            EventManager.handle(new PipelineLifecycleEvent(pipelineName, PipelineLifecycleEvent.Status.STARTING, 
-                command.getOptions().getAdaptationFilterName(), command));
-            // if monitoring detects, that all families are initialized, it switches to INITIALIZED causing the 
-            // DataManger to connect the sources
-            */
         } catch (IOException e) { // implies file not found!
             String message = "while starting pipeline '" + command.getPipeline() + "': " +  e.getMessage();
             failing = new CoordinationExecutionResult(command, message, 
@@ -386,41 +386,30 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
      * Handles stopping a pipeline.
      * 
      * @param command the pipeline start command
+     * @param top is this a top-level or a sub-pipeline call
      * @return the pipeline execution result
      */
-    private CoordinationExecutionResult handlePipelineStop(PipelineCommand command) {
+    private CoordinationExecutionResult handlePipelineStop(PipelineCommand command, boolean top) {
         CoordinationExecutionResult failing = null;
         String pipelineName = command.getPipeline();
-        getLogger().info("Processing pipeline stop command for " + pipelineName 
+        INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
+        String pipText = top ? "pipeline" : "sub-pipeline";
+        getLogger().info("Processing " + pipText + " stop command for " + pipelineName 
             + " with options " + command.getOptions());
         try {
-            INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
-            /*EventManager.handle(new PipelineLifecycleEvent(pipelineName, PipelineLifecycleEvent.Status.STOPPING, 
-                command));
-            for (Component c : mapping.getComponents()) {
-                ShutdownSignal signal = new ShutdownSignal(getNamespace(mapping), c.getName());
-                send(command, signal); // ignore failing
-            }
-            Utils.sleep(CoordinationConfiguration.getShutdownSignalWaitTime());
-            SignalMechanism.releaseMechanism(getNamespace(mapping));
-            if (!CoordinationManager.isTestingMode()) {
-                // TODO stop multiple physical sub-topologies
-                StormUtils.killTopology(CoordinationConfiguration.getNimbus(), pipelineName, 
-                    CoordinationConfiguration.getStormCmdWaitingTime(), command.getOptions());
-                // TODO unload MaxFiles (currently assuming exclusive DFE use)
-            }
-            PipelineCache.removeCache(pipelineName);
-            EventManager.handle(new PipelineLifecycleEvent(pipelineName, PipelineLifecycleEvent.Status.STOPPED, 
-                command));*/
             doPipelineStop(mapping, command.getOptions(), command);
             CoordinationManager.unregisterNameMapping(mapping);
             SignalMechanism.getPortManager().clearPortAssignments(pipelineName);
         } catch (IOException e) {
-            String message = "while stopping pipeline '" + command.getPipeline() + "': " +  e.getMessage();
+            String message = "while stopping " + pipText + " '" + command.getPipeline() + "': " +  e.getMessage();
             failing = new CoordinationExecutionResult(command, message, 
                 CoordinationExecutionCode.STOPPING_PIPELINE);
         } catch (SignalException e) {
             getLogger().error(e.getMessage(), e);
+        }
+        List<String> subPipelines = mapping.getSubPipelines();
+        for (String subPipeline : subPipelines) {
+            handlePipelineStop(new PipelineCommand(subPipeline, command.getStatus(), command.getOptions()), false);
         }
         return failing;
     }
@@ -683,10 +672,14 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
     public CoordinationExecutionResult visitShutdownCommand(ShutdownCommand command) {
         CoordinationExecutionResult failing = null;
         commandStack.push(command);
-        for (String pipName : CoordinationManager.getRegisteredPipelines()) {
-            // ignore result for now
-            handlePipelineStop(new PipelineCommand(pipName, PipelineCommand.Status.STOP));
-        }
+        Set<String> pips;
+        do { // as stopping sub-pipelines affects getRegisteredPipelines, do it rather carefully
+            pips = CoordinationManager.getRegisteredPipelines();
+            if (!pips.isEmpty()) {
+                // ignore result for now
+                handlePipelineStop(new PipelineCommand(pips.iterator().next(), PipelineCommand.Status.STOP), true);
+            }
+        } while (!pips.isEmpty());
         Shutdown.shutdown(command);
         return writeCoordinationLog(command, failing);
     }

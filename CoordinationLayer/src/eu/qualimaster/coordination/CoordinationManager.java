@@ -3,7 +3,9 @@ package eu.qualimaster.coordination;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,6 +38,7 @@ public class CoordinationManager {
     private static Map<String, PipelineCommand> pendingStartups = new HashMap<String, PipelineCommand>();
     private static Map<String, AlgorithmProfilingEvent> pendingProfiling 
         = new HashMap<String, AlgorithmProfilingEvent>();
+    private static List<PipelineCommand> startSequence = new ArrayList<PipelineCommand>();
 
     /**
      * The handler for coordination command events (if not passed in directly as commands).
@@ -93,6 +96,10 @@ public class CoordinationManager {
                 AlgorithmProfilingEvent evt = pendingProfiling.remove(pipelineName);
                 if (null != evt) {
                     EventManager.handle(evt);
+                }
+                // and go on with the sub-pipelines
+                if (!startSequence.isEmpty()) {
+                    execute(startSequence.remove(0));
                 }
                 break;
             case STOPPED:
@@ -405,6 +412,15 @@ public class CoordinationManager {
      */
     static void removePendingStartup(String pipeline) {
         pendingStartups.remove(pipeline);
+    }
+    
+    /**
+     * Adds the given command to the start sequence to be processed incrementally after a pipeline started.
+     * 
+     * @param command the command to be added
+     */
+    static void addToStartSequence(PipelineCommand command) {
+        startSequence.add(command);       
     }
     
 }
