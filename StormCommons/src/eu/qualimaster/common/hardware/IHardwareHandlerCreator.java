@@ -4,7 +4,7 @@ package eu.qualimaster.common.hardware;
  * @author Cui Qin
  *
  */
-public interface IHardwareHandlerCreator extends Runnable {
+public interface IHardwareHandlerCreator {
     /**
      * Create a handler.
      * @param host the host
