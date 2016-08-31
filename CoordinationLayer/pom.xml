@@ -137,6 +137,10 @@
          <groupId>eu.qualimaster</groupId>
          <artifactId>SpassMeterIntegration</artifactId>
        </dependency>
+        <dependency>
+          <groupId>org.apache.storm</groupId>
+          <artifactId>storm-stateTransfer</artifactId>
+        </dependency>
        
         <dependency>
             <groupId>junit</groupId>
