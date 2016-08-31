@@ -33,6 +33,12 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
 	/** The default list of terms to be looked up for blind prediction */
 	private static final String[] DEFAULT_BLIND_TERMS = {"NASDAQ·AAPL","NASDAQ·AMAT","NASDAQ·AMZN","NYSE·CHK","NASDAQ·CSCO","NASDAQ·FB","NASDAQ·GOOGL","NYSE·IBM","NASDAQ·MU","NYSE_MKT·VHC","Toronto·ECA","NYSE·F","NYSE·HPQ","Amsterdam·MT","NASDAQ·SPLS"};
 	
+	/** The default set of months used for testing. */
+	private static final String[] TEST_MONTHS = {"201603","201604","201605"};
+	
+	/** Flag indicating whether the instance is running in test mode or not */
+	private boolean test = false;
+	
     /**
      * Obtains historical data from Spring server (default url)
      * 
@@ -58,7 +64,9 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
     public void obtainHistoricalData(long timeHorizon, String term, File target, String server) throws IOException
     {
     	// derive required months of historical data from the input time horizon
-    	ArrayList<String> months = getMonths(Calendar.getInstance(), timeHorizon);
+    	ArrayList<String> months = new ArrayList<>();
+    	if(this.test) for(int i = 0; i < TEST_MONTHS.length; i++) months.add(TEST_MONTHS[i]);
+    	else months = getMonths(Calendar.getInstance(), timeHorizon);
     	
     	// download, uncompress, merge the files containing historical data for each month
     	downloadHistoricalData(term, months, server, target);
@@ -156,5 +164,19 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
 			blindTerms.add(DEFAULT_BLIND_TERMS[i]);
 		}
 		return blindTerms;
+	}
+	
+	/**
+	 * @return the test
+	 */
+	public boolean isTest() {
+		return test;
+	}
+
+	/**
+	 * @param test the test to set
+	 */
+	public void setTest(boolean test) {
+		this.test = test;
 	}
 }

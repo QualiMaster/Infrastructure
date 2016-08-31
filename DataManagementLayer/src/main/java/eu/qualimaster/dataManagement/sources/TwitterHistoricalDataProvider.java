@@ -35,6 +35,9 @@ public class TwitterHistoricalDataProvider implements IHistoricalDataProvider,Se
 	
 	/** The default list of terms to be looked up for blind prediction */
 	private static final String[] DEFAULT_BLIND_TERMS = {"$AAPL","$AMZN","$CHK","$FB","$GOOGL","$IBM","$MU","$VHC","$HPQ","$SPLS"};
+	
+	/** Flag indicating whether the instance is running in test mode or not */
+	private boolean test = false;
 
 	/**
      * Obtains twitter data via the Data Management Layer (data are retrieved from HBase)
@@ -160,5 +163,19 @@ public class TwitterHistoricalDataProvider implements IHistoricalDataProvider,Se
 			blindTerms.add(DEFAULT_BLIND_TERMS[i]);
 		}
 		return blindTerms;
+	}
+	
+	/**
+	 * @return the test
+	 */
+	public boolean isTest() {
+		return test;
+	}
+
+	/**
+	 * @param test the test to set
+	 */
+	public void setTest(boolean test) {
+		this.test = test;
 	}
 }
