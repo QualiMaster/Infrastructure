@@ -192,5 +192,10 @@ public class TestNameMapping implements INameMapping {
     public String getParameterBackMapping(String pipelineNodeName, String parameterName) {
         return pipelineNodeName;
     }
+
+    @Override
+    public List<String> getSubPipelines() {
+        return null;
+    }
     
 }

@@ -126,4 +126,9 @@ public class IdentityMapping implements INameMapping {
         return pipelineNodeName;
     }
 
+    @Override
+    public List<String> getSubPipelines() {
+        return new ArrayList<String>();
+    }
+
 }

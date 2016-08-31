@@ -94,6 +94,11 @@ public class NameMappingTest {
         
         Assert.assertEquals(Naming.NODE_PROCESS, mapping.getParameterMapping(Naming.NODE_PROCESS, "test"));
         Assert.assertEquals(Naming.NODE_PROCESS, mapping.getParameterMapping(Naming.NODE_SOURCE, "test"));
+        
+        List<String> subPipelines = mapping.getSubPipelines();
+        Assert.assertNotNull(subPipelines);
+        Assert.assertEquals(1, subPipelines.size());
+        Assert.assertEquals("other", subPipelines.get(0));
     }
     
     /**

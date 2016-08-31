@@ -65,6 +65,7 @@ public class NameMapping implements INameMapping {
     private Map<String, String> pipelineNodes = new HashMap<String, String>();
     private List<String> containerNames = new ArrayList<String>();
     private List<String> pipelineNames = new ArrayList<String>();
+    private List<String> subPipelines = new ArrayList<String>();
     private Map<String, AlgorithmImpl> algorithms = new HashMap<String, AlgorithmImpl>();
     private Map<String, AlgorithmImpl> algorithmsCls = new HashMap<String, AlgorithmImpl>();
     private Map<String, AlgorithmImpl> algorithmsImpl = new HashMap<String, AlgorithmImpl>();
@@ -388,6 +389,8 @@ public class NameMapping implements INameMapping {
             throws SAXException {
             if (Level.TOP == level && ELEMENT_PIPELINE.equals(qName)) {
                 handlePipeline(attributes);
+            } else if (Level.PIPELINE == level && ELEMENT_PIPELINE.equals(qName)) {
+                handleSubPipeline(attributes);
             } else if ((Level.PIPELINE == level || Level.ALGORITHM == level) && ELEMENT_NODE.equals(qName)) {
                 handleNode(attributes);
             } else if (Level.PIPELINE == level && ELEMENT_PARAMETER.equals(qName)) {
@@ -491,6 +494,16 @@ public class NameMapping implements INameMapping {
                 level = Level.PIPELINE;
                 NameMapping.this.containerName = attributes.getValue(ATTRIBUTE_CLASS);
             }
+        }
+
+        /**
+         * Handles a sub-pipeline.
+         * 
+         * @param attributes the XML attributes
+         */
+        private void handleSubPipeline(Attributes attributes) {
+            String name = attributes.getValue(ATTRIBUTE_NAME);
+            subPipelines.add(name);
         }
 
         /**
@@ -765,6 +778,11 @@ public class NameMapping implements INameMapping {
             + containerNames + " " + pipelineNames + " algs: " + algorithms + " " + algorithmsCls + " " 
             + algorithmsImpl + " comp: " + componentClasses + " " + componentImpl 
             + " params: " + parameterMapping + " " + parameterBackMapping;
+    }
+
+    @Override
+    public List<String> getSubPipelines() {
+        return unmodifiableList(subPipelines);
     }
 
 }

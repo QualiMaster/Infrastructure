@@ -300,4 +300,11 @@ public interface INameMapping {
      */
     public String getParameterBackMapping(String pipelineNodeName, String parameterName);
 
+    /**
+     * Returns the direct sub-pipelines of this pipeline.
+     * 
+     * @return the names of the sub pipelines, may be empty if there are none
+     */
+    public List<String> getSubPipelines();
+    
 }
