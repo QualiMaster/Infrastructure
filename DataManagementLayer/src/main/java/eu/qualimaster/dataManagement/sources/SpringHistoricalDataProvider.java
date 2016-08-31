@@ -4,14 +4,15 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+
 import java.io.Serializable;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.zip.ZipInputStream;
-
 
 /**
  * Provides access to the historical financial data archived in the Spring server.
@@ -27,10 +28,10 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
 	private static final String BASE_URL = "http://84.200.210.254/Qualimaster/history/";
 	
 	/** The default list of terms to be monitored by default */
-	private static final String[] DEFAULT_MONITORED_TERMS = {"AAPL","AMAT","AMZN","CHK","CSCO","FB","GOOGL","IBM","MU","VHC"};
+	private static final String[] DEFAULT_MONITORED_TERMS = {"NASDAQ·AAPL","NASDAQ·AMAT","NASDAQ·AMZN","NYSE·CHK","NASDAQ·CSCO","NASDAQ·FB","NASDAQ·GOOGL","NYSE·IBM","NASDAQ·MU","NYSE_MKT·VHC"};
 	
 	/** The default list of terms to be looked up for blind prediction */
-	private static final String[] DEFAULT_BLIND_TERMS = {"AAPL","AMAT","AMZN","CHK","CSCO","FB","GOOGL","IBM","MU","VHC","ECA","F","HPQ","MT","SPLS"};
+	private static final String[] DEFAULT_BLIND_TERMS = {"NASDAQ·AAPL","NASDAQ·AMAT","NASDAQ·AMZN","NYSE·CHK","NASDAQ·CSCO","NASDAQ·FB","NASDAQ·GOOGL","NYSE·IBM","NASDAQ·MU","NYSE_MKT·VHC","Toronto·ECA","NYSE·F","NYSE·HPQ","Amsterdam·MT","NASDAQ·SPLS"};
 	
     /**
      * Obtains historical data from Spring server (default url)
@@ -59,17 +60,14 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
     	// derive required months of historical data from the input time horizon
     	ArrayList<String> months = getMonths(Calendar.getInstance(), timeHorizon);
     	
-    	// download the files containing historical data for each month
-    	ArrayList<ZipInputStream> zipFiles = downloadHistoricalData(term, months, server);
-    	
-    	// uncompress and merge the zip files within the output file
-    	storeHistoricalData(zipFiles, target);
+    	// download, uncompress, merge the files containing historical data for each month
+    	downloadHistoricalData(term, months, server, target);
     }
     
     private ArrayList<String> getMonths(Calendar reference, Long horizon)
     {
     	ArrayList<String> months = new ArrayList<>();
-    	int numMonths = (int) Math.round((double)horizon / (1000*60*60*24*30));
+    	int numMonths = (int) Math.round((double)horizon / (1000l*60l*60l*24l*30l));
     	
     	// the other required months in the past
     	int currYear = reference.get(Calendar.YEAR);
@@ -83,50 +81,51 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
     	return months;
     }
     
-    private ArrayList<ZipInputStream> downloadHistoricalData(String term, ArrayList<String> dates, String server) throws IOException
+    private void downloadHistoricalData(String term, ArrayList<String> dates, String server, File output) throws IOException
     {
+    	// write the unique entry (file) within each zip file into the same output file
+    	BufferedWriter writer;
     	try{
-	    	ArrayList<ZipInputStream> data = new ArrayList<>();
-	    	for(String date : dates) data.add(downloadHistoricalData(term, date, server));
-	    	return data;
+    		writer = new BufferedWriter(new FileWriter(output));
+	    	for(String date : dates) downloadHistoricalData(term, date, server, writer);
+	    	writer.close();
     	}
     	catch(Exception e){
     		System.out.println("Impossible to download historical data for term " + term);
+    		e.printStackTrace();
     		throw new IOException();
     	}
     }
     
-    private ZipInputStream downloadHistoricalData(String term, String date, String server) throws IOException
+    private void downloadHistoricalData(String term, String date, String server, BufferedWriter writer) throws IOException
     {
 		// download the data (zip file) in a ZipInputStream object
     	URL url = new URL(server + date + "_" + term + "·NoExpiry.zip");
-    	URLConnection urlConnection = url.openConnection();
-		ZipInputStream zin = new ZipInputStream(urlConnection.getInputStream());
-		return zin;
+    	HttpURLConnection con = (HttpURLConnection )url.openConnection();
+		
+    	Charset charset = Charset.forName("CP437");
+		ZipInputStream zin = new ZipInputStream(con.getInputStream(), charset);
+		
+		// store the data in the same output file
+		storeHistoricalData(zin, writer);
     }
     
-    private void storeHistoricalData(ArrayList<ZipInputStream> inputStreams, File file) throws IOException
+    private void storeHistoricalData(ZipInputStream zis, BufferedWriter writer) throws IOException
     {
     	// write the unique entry (file) within each zip file into the same output file
-    	BufferedWriter writer;
-    	
     	try
     	{
-    		writer = new BufferedWriter(new FileWriter(file));
-	    	for(ZipInputStream zis : inputStreams)
-	    	{
-	    		zis.getNextEntry();
-	    		for(int c = zis.read(); c != -1; c = zis.read())
-	    		{
-		            writer.write(c);
-	            }
-		        zis.close();
-	        }
-		    writer.close();
+    		zis.getNextEntry();
+    		for(int c = zis.read(); c != -1; c = zis.read())
+    		{
+	            writer.write(c);
+            }
+	        zis.close();
     	}
     	catch(Exception e)
     	{
-    		System.out.println("Impossible to write historical data in file " + file.getName());
+    		System.out.println("Impossible to write historical data ");
+    		e.printStackTrace();
     		throw new IOException();
     	}
     }
