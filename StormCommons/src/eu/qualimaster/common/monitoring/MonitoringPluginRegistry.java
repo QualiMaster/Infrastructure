@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import backtype.storm.hooks.info.EmitInfo;
+import eu.qualimaster.monitoring.events.FrozenSystemState;
 import eu.qualimaster.observables.IObservable;
 
 /**
@@ -112,6 +113,17 @@ public class MonitoringPluginRegistry {
      */
     public static int getRegisteredPluginCount() {
         return PLUGINS.size();
+    }
+    
+    /**
+     * Called during analysis by the Monitoring Layer.
+     * 
+     * @param state the actual frozen system state
+     */
+    public static void analyze(FrozenSystemState state) {
+        for (int p = 0, n = PLUGINS.size(); p < n; p++) {
+            PLUGINS.get(p).analyze(state);
+        }
     }
 
 }

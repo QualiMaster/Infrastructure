@@ -18,6 +18,7 @@ package eu.qualimaster.common.monitoring;
 import java.util.Map;
 
 import backtype.storm.hooks.info.EmitInfo;
+import eu.qualimaster.monitoring.events.FrozenSystemState;
 import eu.qualimaster.observables.IObservable;
 
 /**
@@ -62,4 +63,11 @@ public interface IMonitoringPlugin {
      */
     public void collectObservations(Map<IObservable, Double> observations);
 
+    /**
+     * Analyzes the actual state. May send adaptation events.
+     * 
+     * @param state the actual system state
+     */
+    public void analyze(FrozenSystemState state);
+    
 }
