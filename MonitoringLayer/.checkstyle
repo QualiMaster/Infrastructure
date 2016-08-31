@@ -6,5 +6,6 @@
   </fileset>
   <filter name="FilesFromPackage" enabled="true">
     <filter-data value="src/eu/qualimaster/monitoring/volumePrediction"/>
+    <filter-data value="src/tests/eu/qualimaster/monitoring/volumePrediction"/>
   </filter>
 </fileset-config>

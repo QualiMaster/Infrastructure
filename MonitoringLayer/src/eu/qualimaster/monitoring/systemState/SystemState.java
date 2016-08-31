@@ -276,7 +276,7 @@ public class SystemState implements Serializable {
         PipelineNodeSystemPart result = null;
         String pipElementName = null;
         Component subC = mapping.getComponentByImplName(implName);
-        if (null != subC && Type.UNKNOWN == subC.getType()) {
+        if (null != subC && (Type.UNKNOWN == subC.getType() || Type.HARDWARE == subC.getType())) {
             Algorithm alg = mapping.getAlgorithmByImplName(subC.getContainer());
             if (null == alg) {
                 alg = mapping.getAlgorithm(subC.getContainer()); // fallback
