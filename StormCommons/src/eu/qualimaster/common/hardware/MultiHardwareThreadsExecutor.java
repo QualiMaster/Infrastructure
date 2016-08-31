@@ -1,6 +1,5 @@
 package eu.qualimaster.common.hardware;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -21,8 +20,8 @@ public class MultiHardwareThreadsExecutor {
     private int threadsNum = 0;
     private List<Runnable> threadList = new ArrayList<Runnable>();
     private Map<String, List<Integer>> servers;
-    private Class<?> handler;
-    private ExecutorService executor;
+    private IHardwareHandlerCreator handler;
+    private ExecutorService executor;   
     
     /**
      * Creates a executor for multiple hardware connections.
@@ -30,7 +29,8 @@ public class MultiHardwareThreadsExecutor {
      * @param handler the hardware thread handler
      * @param threadsNum the number of threads to be created
      */
-    public MultiHardwareThreadsExecutor(Map<String, List<Integer>> servers, Class<?> handler, int threadsNum) {
+    public MultiHardwareThreadsExecutor(Map<String, List<Integer>> servers, IHardwareHandlerCreator handler
+            , int threadsNum) {
         this.servers = servers;
         this.handler = handler;
         this.threadsNum = threadsNum;
@@ -54,11 +54,10 @@ public class MultiHardwareThreadsExecutor {
                 try {
                     LOGGER.info("Creating the thread for the hardware connection with the ip: " + ip 
                             + ", port: " + port);
-                    thread = (Runnable) handler.getDeclaredConstructor(String.class, int.class).newInstance(ip, port);
+                    thread = (Runnable) handler.createHandler(ip, port);
                     threadList.add(thread);
                     executor.execute(thread);
-                } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                        | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                } catch (IllegalArgumentException | SecurityException e) {
                     e.printStackTrace();
                 }
             }
