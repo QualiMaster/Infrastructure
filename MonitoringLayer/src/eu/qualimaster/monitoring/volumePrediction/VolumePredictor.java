@@ -60,7 +60,7 @@ public class VolumePredictor {
 	private boolean test;
 	
 	/** The number of months (in milliseconds) of data to consider when training the model */
-	private static final long NUM_MONTHS = 4 * (1000*60*60*24*30);
+	private static final long NUM_MONTHS = 4l * (1000l*60l*60l*24l*30l);
 	
 	/** The format for storing dates */
 	private static final String DATE_FORMAT = "MM/DD/YYYY,hh:mm:ss";
@@ -70,6 +70,9 @@ public class VolumePredictor {
 	
 	/** The number of recent data points for checking small but regular increases */
 	private static final int REGULAR_INCREASE_SIZE = RECENT_HISTORY_SIZE / 3;
+	
+	/** Url used to retrieve historical data in test mode */
+	private static final String TEST_URL = "";
 	
 	/**
 	 * Default constructor of the predictor, no models are trained yet.
@@ -336,7 +339,8 @@ public class VolumePredictor {
 	private void getHistoricalData(String term, long months, File outputFile)
 	{
 		try{
-			this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile);
+			if(test) this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile, TEST_URL);
+			else this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile);
 		}
 		catch(IOException e){
 			// handle the absence of historical data:

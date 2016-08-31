@@ -24,6 +24,8 @@ import eu.qualimaster.monitoring.utils.IScheduler;
 public class VolumePredictionManager {
 	
 	private static final String DEFAULT_FILE_NAME = "historical_data.txt";
+	
+	private static final String TEST_DATA_FOLDER = "./testdata/volumePrediction/";
 
 	private static final HistoricalDataProviderRegistrationEventHandler HISTORICAL_DATA_REGISTRATION_EVENT_HANDLER 
             = new HistoricalDataProviderRegistrationEventHandler();
@@ -255,7 +257,7 @@ public class VolumePredictionManager {
 	 */
 	public static void handleTest(HistoricalDataProviderRegistrationEvent event) {
     	VolumePredictor predictor = new VolumePredictor(event.getPipeline(), event.getSource(), event.getProvider(), test);
-    	predictor.initialize(MonitoringConfiguration.getVolumeModelLocation() + event.getSource() + "_" + DEFAULT_FILE_NAME);
+    	predictor.initialize(TEST_DATA_FOLDER + event.getSource() + "_" + DEFAULT_FILE_NAME);
     	volumePredictors.put(event.getSource(), predictor);
     }
 
