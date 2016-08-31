@@ -34,6 +34,7 @@ import net.ssehub.easy.instantiation.rt.core.model.rtVil.AbstractAnalyzerVisitor
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.Executor;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.Script;
 import eu.qualimaster.adaptation.events.AdaptationEvent;
+import eu.qualimaster.common.monitoring.MonitoringPluginRegistry;
 import eu.qualimaster.coordination.RepositoryConnector;
 import eu.qualimaster.coordination.RepositoryConnector.Phase;
 import eu.qualimaster.coordination.RuntimeVariableMapping;
@@ -571,6 +572,7 @@ public class ReasoningTask extends TimerTask {
             }
         }
         analyzerVisitor.clearState();
+        MonitoringPluginRegistry.analyze(state);
         provider.endUsing();
         return resultEvent;
     }
