@@ -195,7 +195,7 @@ public class TestNameMapping implements INameMapping {
 
     @Override
     public List<String> getSubPipelines() {
-        return null;
+        return new ArrayList<String>();
     }
     
 }
