@@ -54,18 +54,32 @@ public class MultiHardwareThreadsExecutorTest {
         }
         
     }
+    
+    /**
+     * Handler creator.
+     * @author Cui Qin
+     *
+     */
+    public static class ClientThreadHandlerCreator implements IHardwareHandlerCreator {
+
+        @Override
+        public Runnable createHandler(String host, int port) {
+            return new ClientThreadHandler(host, port);
+        }
+        
+    }
     /**
      * A client thread handler.
      * @author Cui Qin
      *
      */
-    public static class ClientThreadHandler implements IHardwareHandlerCreator {
+    public static class ClientThreadHandler implements Runnable {
         /**
-         * Create the socket.
+         * Create the handler.
          * @param host the host
          * @param port the port
          */
-        public void createSocket(String host, int port) {
+        public ClientThreadHandler(String host, int port) {
             try {
                 @SuppressWarnings({ "unused", "resource" })
                 Socket socket = new Socket(host, port);
@@ -76,11 +90,6 @@ public class MultiHardwareThreadsExecutorTest {
         @Override
         public void run() {
             //do nothing
-        }
-        @Override
-        public Runnable createHandler(String host, int port) {
-            createSocket(host, port);
-            return this;
         }
         
     }
@@ -103,7 +112,7 @@ public class MultiHardwareThreadsExecutorTest {
         servers.put("localhost", ports);
         
         MultiHardwareThreadsExecutor executor = new MultiHardwareThreadsExecutor(servers
-                , new ClientThreadHandler(), ports.size());
+                , new ClientThreadHandlerCreator(), ports.size());
         executor.createMultiThreads();
     }
 
