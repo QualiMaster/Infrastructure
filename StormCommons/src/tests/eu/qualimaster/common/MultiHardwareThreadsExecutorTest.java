@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import eu.qualimaster.common.hardware.IHardwareHandlerCreator;
 import eu.qualimaster.common.hardware.MultiHardwareThreadsExecutor;
 
 /**
@@ -58,16 +59,16 @@ public class MultiHardwareThreadsExecutorTest {
      * @author Cui Qin
      *
      */
-    public static class ClientThreadHandler implements Runnable {
+    public static class ClientThreadHandler implements IHardwareHandlerCreator {
         /**
-         * Creates a client thread handler.
-         * @param ip the ip 
+         * Create the socket.
+         * @param host the host
          * @param port the port
          */
-        public ClientThreadHandler(String ip, int port) {
+        public void createSocket(String host, int port) {
             try {
                 @SuppressWarnings({ "unused", "resource" })
-                Socket socket = new Socket(ip, port);
+                Socket socket = new Socket(host, port);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -75,6 +76,11 @@ public class MultiHardwareThreadsExecutorTest {
         @Override
         public void run() {
             //do nothing
+        }
+        @Override
+        public Runnable createHandler(String host, int port) {
+            createSocket(host, port);
+            return this;
         }
         
     }
@@ -97,7 +103,7 @@ public class MultiHardwareThreadsExecutorTest {
         servers.put("localhost", ports);
         
         MultiHardwareThreadsExecutor executor = new MultiHardwareThreadsExecutor(servers
-                , ClientThreadHandler.class, ports.size());
+                , new ClientThreadHandler(), ports.size());
         executor.createMultiThreads();
     }
 
