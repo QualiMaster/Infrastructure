@@ -81,10 +81,6 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
     	else downloadHistoricalData(term, months, server, target);
     }
     
-    public void getHistoricalDataLocally(String term, ArrayList<String> months, String path, File target) throws IOException {
-        // @Andrea: I left this empty emtpy. It was missing and prevented compiling...
-    }
-    
     private ArrayList<String> getMonths(Calendar reference, Long horizon)
     {
     	ArrayList<String> months = new ArrayList<>();
