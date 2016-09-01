@@ -20,6 +20,8 @@ public class DataManagementConfigurationTests extends ConfigurationTests {
         super.testDirect();
         Assert.assertEquals(DataManagementConfiguration.DEFAULT_URL_HDFS, DataManagementConfiguration.getHdfsUrl());
         Assert.assertEquals(DataManagementConfiguration.DEFAULT_PATH_DFS, DataManagementConfiguration.getDfsPath());
+        // as not configured explicitly
+        Assert.assertEquals(DataManagementConfiguration.getAccountsPath(), DataManagementConfiguration.getDfsPath());
     }
 
     @Override

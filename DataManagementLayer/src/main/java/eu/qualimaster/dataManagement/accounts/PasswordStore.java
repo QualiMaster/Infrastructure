@@ -141,7 +141,7 @@ public class PasswordStore {
     // default init for infrastructure
     static {
         try {
-            PasswordStore.load(new File(DataManagementConfiguration.getDfsPath(), "accounts.properties"));
+            PasswordStore.load(new File(DataManagementConfiguration.getAccountsPath(), "accounts.properties"));
         } catch (IOException e) {
             LogManager.getLogger(DataManager.class).warn("Reading the accounts file: " + e.getMessage());
         }

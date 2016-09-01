@@ -52,6 +52,16 @@ public class DataManagementConfiguration extends Configuration {
     public static final String DEFAULT_PATH_DFS = EMPTY_VALUE;
     
     /**
+     * Denotes the directory for the accounts file. If not given, uses {@link #PATH_DFS} as base path.
+     */
+    public static final String PATH_ACCOUNTS = "accounts.path";
+
+    /**
+     * The default value for {@link #PATH_ACCOUNTS}. Uses {@link #PATH_DFS} if not given explicity.
+     */
+    public static final String DEFAULT_PATH_ACCOUNTS = EMPTY_VALUE;
+    
+    /**
      * Returns the pipeline startup delay from initialized to started.
      */
     public static final String PIPELINE_START_DELAY = "pipeline.start.delay.time";
@@ -64,6 +74,7 @@ public class DataManagementConfiguration extends Configuration {
 
     private static ConfigurationOption<String> hdfsUrl = createStringOption(URL_HDFS, DEFAULT_URL_HDFS);
     private static ConfigurationOption<String> dfsPath = createStringOption(PATH_DFS, DEFAULT_PATH_DFS);
+    private static ConfigurationOption<String> accountsPath = createStringOption(PATH_ACCOUNTS, DEFAULT_PATH_ACCOUNTS);
 
     
     private static ConfigurationOption<Integer> pipelineStartDelay 
@@ -170,6 +181,20 @@ public class DataManagementConfiguration extends Configuration {
     public static String getDfsPath() {
         return dfsPath.getValue();
     }
+    
+    /**
+     * Returns the default path for the accounts file. If not configured, resorts to {@link #getDfsPath()}.
+     * 
+     * @return the DFS path if not configured
+     */
+    public static String getAccountsPath() {
+        String path = accountsPath.getValue();
+        if (isEmpty(path)) {
+            path = getDfsPath();
+        }
+        return path;
+    }
+
     
     /**
      * Returns the pipeline startup delay from initialized to started.
