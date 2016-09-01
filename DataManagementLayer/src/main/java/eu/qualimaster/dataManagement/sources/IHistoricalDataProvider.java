@@ -60,4 +60,14 @@ public interface IHistoricalDataProvider extends Serializable {
      * @return the set of terms to be available for blind prediction by default
      */
     public HashSet<String> getDefaultBlindTerms();
+    
+    /** Checks whether the instance is running in test mode or not.
+	 * @return the test
+	 */
+	public boolean isTest();
+
+	/** Sets the test mode.
+	 * @param test the test to set
+	 */
+	public void setTest(boolean test);
 }

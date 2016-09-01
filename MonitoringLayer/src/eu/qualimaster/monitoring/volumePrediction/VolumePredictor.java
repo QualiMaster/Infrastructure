@@ -72,7 +72,7 @@ public class VolumePredictor {
 	private static final int REGULAR_INCREASE_SIZE = RECENT_HISTORY_SIZE / 3;
 	
 	/** Url used to retrieve historical data in test mode */
-	private static final String TEST_URL = "";
+	private static final String TEST_URL = "http://www.l3s.de/~ceroni/QualiMaster/volumes_test/1/";
 	
 	/**
 	 * Default constructor of the predictor, no models are trained yet.
@@ -339,6 +339,7 @@ public class VolumePredictor {
 	private void getHistoricalData(String term, long months, File outputFile)
 	{
 		try{
+			this.historyProvider.setTest(test);
 			if(test) this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile, TEST_URL);
 			else this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile);
 		}
