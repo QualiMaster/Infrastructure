@@ -70,4 +70,6 @@ public interface IHistoricalDataProvider extends Serializable {
 	 * @param test the test to set
 	 */
 	public void setTest(boolean test);
+	
 }
+
