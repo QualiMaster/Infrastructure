@@ -339,8 +339,8 @@ public class VolumePredictor {
 	private void getHistoricalData(String term, long months, File outputFile)
 	{
 		try{
-			this.historyProvider.setTest(test);
-			if(test) this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile, TEST_URL);
+			this.historyProvider.setTest(this.test);
+			if(this.test) this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile, TEST_URL);
 			else this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile);
 		}
 		catch(IOException e){
