@@ -36,6 +36,9 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
 	/** The default set of months used for testing. */
 	private static final String[] TEST_MONTHS = {"201603","201604","201605"};
 	
+	/** The location of the historical data used for testing. */
+	private static final String TEST_HISTORICAL_DATA_PATH = "./testdata/volumePrediction/historicalData/";
+	
 	/** Flag indicating whether the instance is running in test mode or not */
 	private boolean test = false;
 	
@@ -63,12 +66,16 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
      */
     public void obtainHistoricalData(long timeHorizon, String term, File target, String server) throws IOException
     {
+    	// TODO remove this once the build works again
+    	//this.test = true;
+    	
     	// derive required months of historical data from the input time horizon
     	ArrayList<String> months = new ArrayList<>();
-    	if(this.test) for(int i = 0; i < TEST_MONTHS.length; i++) months.add(TEST_MONTHS[i]);
+    	if(server.compareTo("test") == 0) for(int i = 0; i < TEST_MONTHS.length; i++) months.add(TEST_MONTHS[i]);
     	else months = getMonths(Calendar.getInstance(), timeHorizon);
     	
     	// download, uncompress, merge the files containing historical data for each month
+    	if(server.compareTo("test") == 0) getHistoricalDataLocally(term, months, TEST_HISTORICAL_DATA_PATH, target);
     	downloadHistoricalData(term, months, server, target);
     }
     

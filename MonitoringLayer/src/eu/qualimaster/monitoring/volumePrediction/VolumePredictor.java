@@ -72,7 +72,7 @@ public class VolumePredictor {
 	private static final int REGULAR_INCREASE_SIZE = RECENT_HISTORY_SIZE / 3;
 	
 	/** Url used to retrieve historical data in test mode */
-	private static final String TEST_URL = "http://www.l3s.de/~ceroni/QualiMaster/volumes_test/1/";
+	private static final String TEST_URL = "test";
 	
 	/**
 	 * Default constructor of the predictor, no models are trained yet.
