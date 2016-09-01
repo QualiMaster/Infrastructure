@@ -1,0 +1,222 @@
+/*
+ * Copyright 2009-2016 University of Hildesheim, Software Systems Engineering
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package eu.qualimaster.monitoring.profiling;
+
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
+import eu.qualimaster.monitoring.tracing.Tracing;
+import eu.qualimaster.observables.IObservable;
+import eu.qualimaster.observables.Scalability;
+
+/**
+ * Represents the actual state of a pipeline element.
+ * 
+ * @author Holger Eichelberger
+ */
+class PipelineElement {
+    
+    private Pipeline pipeline;
+    private String name;
+    private String activeAlgorithm;
+    private Map<Object, Serializable> parameters = new HashMap<>();
+    private Map<Object, AlgorithmProfile> profiles = new HashMap<>();
+    
+    /**
+     * Creates a pipeline element.
+     * 
+     * @param pipeline the parent pipeline
+     * @param name the name of the element
+     */
+    PipelineElement(Pipeline pipeline, String name) {
+        this.pipeline = pipeline;
+        this.name = name;
+    }
+    
+    /**
+     * Returns the parent pipeline.
+     * 
+     * @return the parent pipeline
+     */
+    Pipeline getPipeline() {
+        return pipeline;
+    }
+    
+    /**
+     * Sets a current parameter value.
+     * 
+     * @param param the parameter name
+     * @param value the parameter value
+     */
+    void setParameter(String param, Serializable value) {
+        parameters.put(param,  value);
+    }
+    
+    /**
+     * Defines the active algorithm.
+     * 
+     * @param activeAlgorithm the active algorithm
+     */
+    void setActive(String activeAlgorithm) {
+        this.activeAlgorithm = activeAlgorithm;
+    }
+    
+    /**
+     * Returns the name of the active algorithm.
+     * 
+     * @return the name of the algorithm
+     */
+    String getActiveAlgorithm() {
+        return activeAlgorithm;
+    }
+    
+    /**
+     * Returns the name of this pipeline element.
+     * 
+     * @return the name of this pipeline element
+     */
+    String getName() {
+        return name;
+    }
+    
+    /**
+     * Clears this instance.
+     * 
+     * @param path the target path for persisting the predictor instances
+     */
+    void clear(String path) {
+        store(path);
+        profiles.clear();
+        parameters.clear();
+    }
+    
+    /**
+     * Clears this instance.
+     * 
+     * @param path the target path for persisting the predictor instances
+     */
+    void store(String path) {
+        for (AlgorithmProfile profile : profiles.values()) {
+            profile.store(path);
+        }
+    }
+    
+    /**
+     * Creates a key for the predictor. [re-creating the key for each prediction may be inefficient, let's see]
+     * 
+     * @param algorithm the algorithm name (may be <b>null</b> for the active one)
+     * @param override overridable parts of the key (may be <b>null</b>, ignored then)
+     * @return the key
+     */
+    private Map<Object, Serializable> getKey(String algorithm, Map<Object, Serializable> override) {
+        Map<Object, Serializable> result = new HashMap<Object, Serializable>();
+        result.put(Constants.KEY_ALGORITHM, null == algorithm ? activeAlgorithm : algorithm);
+        putAllForKey(parameters, result);
+        putAllForKey(parameters, override);
+        return result;
+    }
+    
+    /**
+     * Puts all quantizable and quantized mappings from <code>source</code> into target.
+     * 
+     * @param target the target map
+     * @param source the source map
+     */
+    private void putAllForKey(Map<Object, Serializable> target, Map<Object, Serializable> source) {
+        if (null != source) {
+            for (Map.Entry<Object, Serializable> ent : source.entrySet()) {
+                Object key = ent.getKey();
+                Serializable value = ent.getValue();
+                Quantizer<?> quantizer;
+                if (key instanceof IObservable) {
+                    quantizer = QuantizerRegistry.getQuantizer((IObservable) key);
+                } else {
+                    quantizer = QuantizerRegistry.getQuantizer(value);
+                }
+                if (null != quantizer) {
+                    target.put(key, quantizer.quantize(value));
+                }
+            }
+        }
+    }
+
+    /**
+     * Obtains an algorithm profile for <code>key</code>, i.e., creates one if there is none.
+     * 
+     * @param key the key
+     * @return the profile
+     */
+    private AlgorithmProfile obtainProfile(Map<Object, Serializable> key) {
+        AlgorithmProfile profile = profiles.get(key);
+        if (null == profile) {
+            profile = new AlgorithmProfile(this, key);
+            profiles.put(key, profile);
+        }
+        return profile;
+    }
+
+    /**
+     * Updates the (internal) parameter for the input rate.
+     * 
+     * @param family the family to take the predecessors from
+     */
+    private void updateInputRate(PipelineNodeSystemPart family) {
+        List<PipelineNodeSystemPart> pred = Tracing.getPredecessors(family);
+        Quantizer<Double> quantizer = QuantizerRegistry.getQuantizer(Scalability.ITEMS);
+        if (null != pred && null != quantizer) {
+            double inputRate = 0;
+            int predCount = pred.size();
+            for (int p = 0; p < predCount; p++) {
+                inputRate += pred.get(p).getObservedValue(Scalability.ITEMS);
+            }
+            inputRate /= predCount;
+            parameters.put(Constants.KEY_INPUT_RATE, quantizer.quantize(inputRate));
+        }
+    }
+    
+    /**
+     * Updates the predictor(s).
+     * 
+     * @param family the actual measurements for this pipeline element / family
+     */
+    void update(PipelineNodeSystemPart family) {
+        updateInputRate(family);
+        Map<Object, Serializable> key = getKey(null, null);
+        AlgorithmProfile profile = obtainProfile(key);
+        profile.update(family);
+    }
+    
+    /**
+     * Predict the next value for this pipeline element. If <code>targetValues</code> (observables or parameter values)
+     * are given, the prediction shall take these into account, either to determine the related profile or to 
+     * interpolate.
+     * 
+     * @param algorithm the name of the algorithm (take the active one if <b>null</b>)
+     * @param observable the observable to predict
+     * @param targetValues the target values for prediction. Predict the next step if <b>null</b> or empty. May contain
+     *   observables ({@link IObservable}-Double) or parameter values (String-value)
+     * @return the predicted value (<code>Double.MIN_VALUE</code> in case of no prediction)
+     */
+    double predict(String algorithm, IObservable observable, Map<Object, Serializable> targetValues) {
+        Map<Object, Serializable> key = getKey(algorithm, targetValues);
+        AlgorithmProfile profile = obtainProfile(key);
+        return profile.predict(observable);
+    }
+    
+}

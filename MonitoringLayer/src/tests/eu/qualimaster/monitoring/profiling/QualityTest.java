@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import org.junit.Assert;
 import org.junit.Test;
 
-import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictorAlgorithm;
+import eu.qualimaster.monitoring.profiling.IAlgorithmProfilePredictorAlgorithm;
 import eu.qualimaster.monitoring.profiling.Kalman;
 
 
@@ -56,7 +56,7 @@ public class QualityTest {
                         e.printStackTrace();
                     }
                 }
-                AlgorithmProfilePredictorAlgorithm filter = new Kalman();
+                IAlgorithmProfilePredictorAlgorithm filter = new Kalman();
                 // The first and second entry define the part of the time-set for which the quality is checked
                 int start = (int) entries[0];
                 int end = (int) entries[1];

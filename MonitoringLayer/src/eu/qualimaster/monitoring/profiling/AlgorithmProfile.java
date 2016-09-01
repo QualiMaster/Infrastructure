@@ -15,16 +15,22 @@
  */
 package eu.qualimaster.monitoring.profiling;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import eu.qualimaster.monitoring.observations.IObservation;
-import eu.qualimaster.monitoring.observations.SingleObservation;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.observables.IObservable;
-import eu.qualimaster.observables.ResourceUsage;
-import eu.qualimaster.observables.Scalability;
-import eu.qualimaster.observables.TimeBehavior;
 
 /**
  * Data class to modulate the relation of
@@ -37,229 +43,254 @@ import eu.qualimaster.observables.TimeBehavior;
  * <p> - and multiple {@link IObservable} and their {@link IObservation}s serving as parameters for the Pipeline,
  * PipelineElement and the Algorithm (e.g. the number of TASKS or EXECUTORS or
  * the current INPUT). They are represented by their values ({@link String} and {@link Double}).
- * <p> Furthermore the {@link AlgorithmProfilePredictorAlgorithm}
+ * <p> Furthermore the {@link IAlgorithmProfilePredictorAlgorithm}
  * instance used to predict the future for the outlined relation is also
  * accessible from this classes instances.
  * 
  * @author Christopher Voges
  *
  */
-public class AlgorithmProfile {
-    // Profiling attributes (inserted via constructor or setter)
-    private String pipeline = null;
-    private String element = null;
-    private String algorithm = null;
-    private Map<String, Double> predicted = null;
-    private Map<String, Double> parameters = null;
+class AlgorithmProfile {
+
+    private static final Logger LOGGER = LogManager.getLogger(AlgorithmProfilePredictionManager.class);
+    private Map<IObservable, IAlgorithmProfilePredictorAlgorithm> predictors = new HashMap<>();
     
-    // Calculated attributes
-    private AlgorithmProfilePredictorAlgorithm predictor = null;
-    /**
-     * If <code>true</code> the generation/loading of a {@link AlgorithmProfilePredictorAlgorithm} is allowed.
-     */
-    private boolean sane = false;
-    /**
-     * If <code>true</code> only the {@link IObservable} 'observed' may change. Other
-     * changes are either ignored or lead to a new {@link AlgorithmProfile} instance, to
-     * which the profiling attributes are copied over.
-     */
-    private boolean used = false;
-    
-    private String key = null;
+    private PipelineElement element;
+    private Map<Object, Serializable> key;
     
     /**
      * Generates an empty {@link AlgorithmProfile}.
+     * 
+     * @param element the pipeline element
+     * @param key the profile key
      */
-    public AlgorithmProfile() {
-    }
-    
-    /**
-     * Generating a {@link AlgorithmProfile} from the given information.
-     * @param pipeline Name of the pipeline
-     * @param element Name of the pipeline element
-     * @param algorithm Name of the algorithm
-     * @param predicted The predicted {@link IObservable} and its {@link IObservation}.
-     * @param parameters All (other) observed {@link IObservable} and their {@link IObservation}s. 
-     */
-    public AlgorithmProfile(String pipeline, String element, String algorithm, Map<String, Double> predicted,
-            Map<String, Double> parameters) {
-        super();
-        this.pipeline = pipeline;
+    public AlgorithmProfile(PipelineElement element, Map<Object, Serializable> key) {
         this.element = element;
-        this.algorithm = algorithm;
-        this.predicted = predicted;
-        this.parameters = parameters;
+        this.key = key;
     }
 
-    /** TODO Additional Method to allow parameter values to differ to a given degree.
-     * Compares two {@link AlgorithmProfile} instances.
-     * @param profile The {@link AlgorithmProfile} instance to compare this instance to.
-     * @return true if both instances have the same attributes (pipeline, element, algorithm, predicted 
-     * (only the {@link IObservable}) and parameter values).
-     */
-    public boolean equalTo(AlgorithmProfile profile) {
-        // TODO refine
-        return this.key.equals(profile.getStringKey());
-    }
-    /**
-     * Dummy.
-     * @param profile Dummy
-     * @param parameters Dummy
-     * @param allowedRelativeDifference Dummy
-     * @return Dummy
-     */
-    @SuppressWarnings("unused")
-    private boolean isSimilar(AlgorithmProfile profile, Map<String, Double> parameters, 
-            Map<String, Double> allowedRelativeDifference) {
-        /* TODO Implement similarity comparison algorithm on basis on the given parameters
-         * To be similar they must have the same pipeline, element, algorithm, predicted values and parameters.
-         * Also the parameter value must (only) be relatively similar to another according to 
-         * the given allowed relative difference for each parameter.
-         */
-        return false;
-    }
-    /**
-     * Calls generateKey if pipeline, element are algorithm not null and at least one value to predict is set.
-     */
-    private void updateKey() {
-        key = null;
-        if (null != pipeline && null != element && null != algorithm && null != predicted) {
-            if (predicted.size() > 0) {
-                key = generateKey();
-            }
-        }
-    }
     /**
      * Generates a string key (identifier) based on the attributes.
+     * 
+     * @param observable the observable to be predicted
+     * 
      * @return The key representing this {@link AlgorithmProfile} instance in its current configuration.
      */
-    private String generateKey() {
-        return "PIPELINE=" + pipeline + ";element=" + element + ";algorithm=" + algorithm
-                + ";predicted=" + predicted + ";parameters=" + parameters;
-    }
-    /**
-     * Generates a String identifier using the set attributes.
-     * @return String identifier representing this attribute combination. 
-     * Can be null if the mandatory atrributes (pipeline, element, algorithm and predicted {@link IObservable}) 
-     * are not set.
-     */
-    public String getStringKey() {
-        updateKey();
-        return key;
+    private String generateKey(IObservable observable) {
+        String pipelineName = element.getPipeline().getName();
+        String elementName = element.getName();
+        String algorithm = keyToString(Constants.KEY_ALGORITHM);
+        TreeMap<String, String> sorted = new TreeMap<>();
+        for (Map.Entry<Object, Serializable> ent : key.entrySet()) {
+            sorted.put(ent.getKey().toString(), ent.getValue().toString());
+        }
+        return "PIPELINE=" + pipelineName + ";element=" + elementName + ";algorithm=" + algorithm
+                + ";predicted=" + observable.name() + ";parameters=" + sorted;
     }
     
     /**
-     * This method updates the predictor algorithm with the last known state/measurement for one value.
+     * Turns a key part into a string.
      * 
-     * @param measured Current measurement.
-     * @return True if the update was successful.
+     * @param part the key part
+     * @return the string representation
      */
-    // If sane, pass update command and set used, if not already.
-    // Else return false.
-    public boolean update(double measured) {
+    private String keyToString(Object part) {
+        Serializable tmp = key.get(part);
+        return null == tmp ? "" : tmp.toString();
+    }
+    
+    /**
+     * Clears this instance.
+     * 
+     * @param path the target path for persisting the predictor instances
+     */
+    void store(String path) {
+        for (Map.Entry<IObservable, IAlgorithmProfilePredictorAlgorithm> ent : predictors.entrySet()) {
+            store(ent.getValue(), path, generateKey(ent.getKey()));
+        }
+    }
+    
+    /**
+     * Stores a given predictor.
+     * 
+     * @param predictor the predictor
+     * @param path the target path for persisting the predictor instances
+     * @param identifier the predictor identifier
+     * @return <code>true</code> if successful, <code>false</code> else
+     */
+    boolean store(IAlgorithmProfilePredictorAlgorithm predictor, String path, String identifier) {
         boolean result = false;
-        if (sane) {
-            preUpdate();
-            result = predictor.update(measured);
+        ArrayList<String> mapData = new ArrayList<>();
+        int id = -1;
+        File folder = new File(path);
+        // Get subfolder from nesting information 
+        String[] nesting = identifier.split(";")[0].split(":");
+        for (String string : nesting) {
+            folder = new File(folder, string);
+        }
+        // set kind of the predictor as subfolder
+        String subfolder = predictor.getIdentifier();
+        folder = new File(folder, subfolder);
+        
+        // Create folders, if needed
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+        // load map-file
+        File mapFile = new File(folder, "_map");
+        if (mapFile.exists()) {
+            mapData = loadTxtFile(mapFile, identifier);
+            id = new Integer(mapData.get(0).trim());
+             
+        } else {
+            mapData.add(String.valueOf(id));
+        }
+        // Check if the current identifier is already used, if so: remember the line and the id
+        // Entries look like 'id|identifier'
+        int entrieNumber = 0;
+        boolean entryFound = false;
+        while (entrieNumber < mapData.size() && !entryFound) {
+            String entry = mapData.get(entrieNumber);
+            // Case 1: Identifier already in map-file: use old id
+            if (entry.split("|")[1].equals(identifier)) {
+                id = new Integer(entry.split("\\|")[0]);
+                entryFound = true;
+            } else {
+                entrieNumber++;
+            }
+            
+        }
+        // Case 1: No entry found: New identifier -> new id
+        if (!entryFound) {
+            id++;
+        } 
+            
+        // generate file
+        File instanceFile = new File(folder, id + "");
+        // write instance to file
+        ArrayList<String> instanceString = predictor.toStringArrayList();
+        result = writeTxtFile(instanceFile, instanceString, identifier);
+        
+        // update map-file, if needed
+        if (!entryFound) {
+            mapData.set(0, String.valueOf(id));
+            mapData.add(id + "|" + identifier);
+            result = writeTxtFile(mapFile, mapData, identifier);
+        } 
+        return result;
+    }
+    
+    /**
+     * Loads the content of the given file into the returned {@link ArrayList}.
+     * @param file {@link File} to load.
+     * @param key the identification key for this profile
+     * @return Content 
+     */
+    private ArrayList<String> loadTxtFile(File file, String key) {
+        ArrayList<String> content = new ArrayList<>();
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            try {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    // No comments or empty lines
+                    if (!(line.startsWith("#")) && !(line.isEmpty())) {
+                        content.add(line);
+                    }
+                }
+            } finally {
+                reader.close();
+            }
+        } catch (IOException e) {
+            LOGGER.error("While storing the predictor of " + key, e);
+        }
+        
+        return content;
+    }
+    /**
+     * Stores the content to the given file.
+     * 
+     * @param file {@link File} to write to.
+     * @param content The lines to write.
+     * @param key the identification key for this profile
+     * @return If the writing was successful. 
+     */
+    private boolean writeTxtFile(File file, ArrayList<String> content, String key) {
+        boolean result = false;
+        try {
+            PrintStream writer = new PrintStream(file);
+            for (String out : content) {
+                writer.println(out);
+            }
+            writer.close();
+            result = true;
+        } catch (IOException e) {
+            LOGGER.error("While storing the predictor of " + key, e);
         }
         return result;
     }
+
     /**
-     * Getter for the currently used Predictor.
-     * @return An instance using {@link AlgorithmProfilePredictorAlgorithm}.
+     * Obtains a predictor and creates one if permissible.
+     * 
+     * @param observable the observable to obtain a predictor for
+     * @return the predictor
      */
-    public AlgorithmProfilePredictorAlgorithm getPredictor() {
+    private IAlgorithmProfilePredictorAlgorithm obtainPredictor(IObservable observable) {
+        IAlgorithmProfilePredictorAlgorithm predictor = predictors.get(observable);
+        if (null == predictor && null != QuantizerRegistry.getQuantizer(observable)) {
+            // TODO try loading
+            predictor = new Kalman();
+            predictors.put(observable, predictor);
+        }
         return predictor;
     }
 
     /**
-     * This method updates the predictor algorithm with the last known state/measurement for two values.
+     * Predicts the next value for <code>observable</code>.
      * 
-     * @param xMeasured Time step of measurement as seconds since midnight, January 1, 1970 UTC.
-     * @param yMeasured Current measurement.
-     * @return True if the update was successful.
+     * @param observable the observable to predict for
+     * @return the predicted value, {@link Constants#NO_PREDICTION} if no prediction is possible
      */
-    public boolean update(long xMeasured, double yMeasured) {
-        boolean result = false;
-        if (sane) {
-            preUpdate();
-            result = predictor.update(xMeasured, yMeasured);
-        }
-        return result;
+    double predict(IObservable observable) {
+        return predict(observable, 0); // TODO really 0?
     }
-    
+
     /**
-     * Before an update it is made sure that the right {@link AlgorithmProfile} and 
-     * the right {@link AlgorithmProfilePredictorAlgorithm} is used.
-     */
-    private void preUpdate() {
-        if (null == predictor) {
-            // 1. Try to load it or else TODO
-            // 2. (Search for a similar one (postponed TODO) or else )
-            // 3. Create new default instance
-            predictor = new Kalman();
-            
-            used = true;
-        }
-    }
-    /**
-     * Predict the state of the monitored value for the given number of time steps ahead.
+     * Predicts a value for the given <code>obserable</code>.
      * 
+     * @param observable the observable to predict for
      * @param steps Number of steps to predict ahead.
      *      <p> steps = 0: Predict one step after the time step of the last update.
      *      <p> steps > 0: Predict X step(s) ahead of 'now'.
-     * @return Prediction for one time step ahead of the last update as {@link Double}.
+     * @return the predicted value, {@link Constants#NO_PREDICTION} if no prediction is possible
      */
-    public double predict(int steps) {
-        double result = Double.MIN_VALUE;
-        if (used) {
-            result = predictor.predict(steps);
+    double predict(IObservable observable, int steps) {
+        double result;
+        IAlgorithmProfilePredictorAlgorithm predictor = obtainPredictor(observable);
+        if (null != predictor) {
+            result = predictor.predict();
+        } else {
+            result = Constants.NO_PREDICTION;
         }
         return result;
     }
+
     /**
-     * Predict the state of the monitored value for one time step ahead.
+     * Updates the profile according to the measurements in <code>family</code>.
      * 
-     * @return Prediction for one time step ahead of the last update as {@link Double}.
+     * @param family the family used to update the predictors
      */
-    public double predict() {
-        return predict(0);
+    void update(PipelineNodeSystemPart family) {
+        for (IObservable obs : family.getObservables()) {
+            if (family.hasValue(obs)) {
+                IAlgorithmProfilePredictorAlgorithm predictor = obtainPredictor(obs);
+                if (null != predictor) {
+                    predictor.update(family.getLastUpdate(obs) / 1000, family.getObservedValue(obs));
+                }
+            }
+        }
     }
-    
-    
 
-
-    /**
-     * Sets the currently used pipeline.
-     * @param pipeline The currently used pipeline
-     */
-    public void setPipeline(String pipeline) {
-        this.pipeline = pipeline;
-        
-    }
-    /**
-     * Sets the currently used pipeline element.
-     * @param element The currently used pipeline element
-     */
-    public void setElement(String element) {
-        this.element = element;
-        
-    }
-    /**
-     * Sets or updates a parameter with a new value.
-     * @param parameter The parameter to set.
-     * @param value The value to set the parameter to. Is casted into double.
-     */
-    public void setParameter(String parameter, Serializable value) {
-        parameters.put(parameter, (double) value);
-        
-    }
-    /**
-     * Sets the currently used algorithm.
-     * @param algorithm The currently used algorithm
-     */
-    public void setAlgorithm(String algorithm) {
-        this.algorithm = algorithm;
-        
-    }
 }

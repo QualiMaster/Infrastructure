@@ -38,7 +38,7 @@ import org.apache.commons.math3.linear.SingularMatrixException;
  * 
  * @author Christopher Voges
  */
-public class Kalman implements AlgorithmProfilePredictorAlgorithm {
+public class Kalman implements IAlgorithmProfilePredictorAlgorithm {
 
     /**
      * Noise is eliminated  beforehand, but it can (for
@@ -411,4 +411,10 @@ public class Kalman implements AlgorithmProfilePredictorAlgorithm {
             }
         }
     }
+    
+    @Override
+    public String getIdentifier() {
+        return "PREDICTOR=kalman";
+    }
+
 }

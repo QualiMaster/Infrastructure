@@ -51,7 +51,7 @@ import eu.qualimaster.monitoring.handlers.PlatformMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.PlatformMultiMonitoringHostEventHandler;
 import eu.qualimaster.monitoring.handlers.SourceVolumeMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.SubTopologyMonitoringEventHandler;
-import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictor;
+import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictionManager;
 import eu.qualimaster.monitoring.storm.StormMonitoringPlugin;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
@@ -436,7 +436,7 @@ public class MonitoringManager {
                     }
                 }
             }
-            AlgorithmProfilePredictor.notifyPipelineLifecycleChange(event);
+            AlgorithmProfilePredictionManager.notifyPipelineLifecycleChange(event);
             VolumePredictionManager.notifyPipelineLifecycleChange(event);
         }
         
@@ -514,7 +514,7 @@ public class MonitoringManager {
                 break;
             }
             logger.info(msgPrefix + " done " + event);
-            AlgorithmProfilePredictor.notifyAlgorithmProfilingEvent(event);
+            AlgorithmProfilePredictionManager.notifyAlgorithmProfilingEvent(event);
         }
         
     }
@@ -594,7 +594,7 @@ public class MonitoringManager {
         for (IMonitoringPlugin plugin : plugins) {
             startPlugin(plugin);
         }
-        AlgorithmProfilePredictor.start();
+        AlgorithmProfilePredictionManager.start();
         VolumePredictionManager.start(scheduler);
     }
     
@@ -758,7 +758,7 @@ public class MonitoringManager {
      */
     public static void stop() {
         VolumePredictionManager.stop();
-        AlgorithmProfilePredictor.stop();
+        AlgorithmProfilePredictionManager.stop();
         if (null != reasoningTask) {
             reasoningTask.cancel();
         }

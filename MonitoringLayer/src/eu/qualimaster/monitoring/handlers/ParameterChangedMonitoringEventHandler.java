@@ -17,7 +17,7 @@ package eu.qualimaster.monitoring.handlers;
 
 import eu.qualimaster.monitoring.MonitoringEventHandler;
 import eu.qualimaster.monitoring.events.ParameterChangedMonitoringEvent;
-import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictor;
+import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictionManager;
 import eu.qualimaster.monitoring.systemState.SystemState;
 
 /**
@@ -38,7 +38,7 @@ public class ParameterChangedMonitoringEventHandler extends MonitoringEventHandl
 
     @Override
     protected void handle(ParameterChangedMonitoringEvent event, SystemState state) {
-        AlgorithmProfilePredictor.notifyParameterChangedMonitoringEvent(event);
+        AlgorithmProfilePredictionManager.notifyParameterChangedMonitoringEvent(event);
     }
 
 }

@@ -116,6 +116,15 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
         }
         return result;
     }
+    
+    /**
+     * Returns all observables supported by this system part.
+     * 
+     * @return all observables
+     */
+    public Collection<IObservable> getObservables() {
+        return parameterValues.keySet();
+    }
 
     /**
      * Adds all elements from <code>data</code> to <code>set</code>.
