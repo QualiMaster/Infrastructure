@@ -1,7 +1,9 @@
 package eu.qualimaster.dataManagement.sources;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -76,7 +78,7 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
     	
     	// download, uncompress, merge the files containing historical data for each month
     	if(server.compareTo("test") == 0) getHistoricalDataLocally(term, months, TEST_HISTORICAL_DATA_PATH, target);
-    	downloadHistoricalData(term, months, server, target);
+    	else downloadHistoricalData(term, months, server, target);
     }
     
     public void getHistoricalDataLocally(String term, ArrayList<String> months, String path, File target) throws IOException {
@@ -103,30 +105,76 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
     private void downloadHistoricalData(String term, ArrayList<String> dates, String server, File output) throws IOException
     {
     	// write the unique entry (file) within each zip file into the same output file
+    	boolean atLeastOneMonth = false;
     	BufferedWriter writer;
-    	try{
-    		writer = new BufferedWriter(new FileWriter(output));
-	    	for(String date : dates) downloadHistoricalData(term, date, server, writer);
-	    	writer.close();
+		writer = new BufferedWriter(new FileWriter(output));
+    	for(String date : dates){
+    		if(downloadHistoricalData(term, date, server, writer)) atLeastOneMonth = true;
     	}
-    	catch(Exception e){
-    		System.out.println("Impossible to download historical data for term " + term);
-    		e.printStackTrace();
+    	writer.close();
+    	
+    	if(!atLeastOneMonth){
+			System.out.println("Impossible to download historical data for term " + term);
     		throw new IOException();
     	}
     }
     
-    private void downloadHistoricalData(String term, String date, String server, BufferedWriter writer) throws IOException
+    private void getHistoricalDataLocally(String term, ArrayList<String> dates, String path, File output) throws IOException
     {
-		// download the data (zip file) in a ZipInputStream object
-    	URL url = new URL(server + date + "_" + term + "·NoExpiry.zip");
-    	HttpURLConnection con = (HttpURLConnection )url.openConnection();
+    	// write the unique entry (file) into the same output file
+    	boolean atLeastOneMonth = false;
+    	BufferedWriter writer;
+		writer = new BufferedWriter(new FileWriter(output));
+    	for(String date : dates){
+    		if(getHistoricalDataLocally(term, date, path, writer)) atLeastOneMonth = true;
+    	}
+    	writer.close();
+    	
+    	if(!atLeastOneMonth){
+			System.out.println("Impossible to download historical data for term " + term);
+    		throw new IOException();
+    	}
+    }
+    
+    private boolean downloadHistoricalData(String term, String date, String server, BufferedWriter writer) throws IOException
+    {
+    	try{
+			// download the data (zip file) in a ZipInputStream object
+	    	URL url = new URL(server + date + "_" + term + "·NoExpiry.zip");
+	    	HttpURLConnection con = (HttpURLConnection )url.openConnection();
+			
+	    	Charset charset = Charset.forName("CP437");
+			ZipInputStream zin = new ZipInputStream(con.getInputStream(), charset);
+			
+			// store the data in the same output file
+			storeHistoricalData(zin, writer);
+			
+			return true;
+    	}
+    	catch(IOException e){
+    		System.out.println("Impossible to download historical data for term " + term + " and date " + date);
+    		return false;
+    	}
+    }
+    
+    private boolean getHistoricalDataLocally(String term, String date, String path, BufferedWriter writer) throws IOException
+    {
+    	try{
+			String fileName = date + "_" + term + "·NoExpiry.his";
+			File folder = new File(path);
+			for(File f : folder.listFiles()){
+				if(f.getName().compareTo(fileName) == 0){
+					storeHistoricalData(f, writer);
+					break;
+				}
+			}
 		
-    	Charset charset = Charset.forName("CP437");
-		ZipInputStream zin = new ZipInputStream(con.getInputStream(), charset);
-		
-		// store the data in the same output file
-		storeHistoricalData(zin, writer);
+			return true;
+    	}
+    	catch(IOException e){
+    		System.out.println("Impossible to download historical data for term " + term + " and date " + date);
+    		return false;
+    	}
     }
     
     private void storeHistoricalData(ZipInputStream zis, BufferedWriter writer) throws IOException
@@ -140,6 +188,28 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
 	            writer.write(c);
             }
 	        zis.close();
+    	}
+    	catch(Exception e)
+    	{
+    		System.out.println("Impossible to write historical data ");
+    		e.printStackTrace();
+    		throw new IOException();
+    	}
+    }
+    
+    private void storeHistoricalData(File input, BufferedWriter writer) throws IOException
+    {
+    	// write the content of the file into the same output file
+    	BufferedReader reader = null;
+    	try
+    	{
+    		reader = new BufferedReader(new FileReader(input));
+    		String line = null;
+    		while((line = reader.readLine()) != null){
+	            writer.write(line);
+	            writer.newLine();
+            }
+	        reader.close();
     	}
     	catch(Exception e)
     	{
