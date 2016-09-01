@@ -11,7 +11,9 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({ManagerTests.class, NameMappingTest.class, 
-    TaskAssignmentTest.class, StormUtilsTests.class, StormTests.class, ProfileControlTests.class,
+    TaskAssignmentTest.class, StormUtilsTests.class, 
+    //StormTests.class, disable for now 
+    ProfileControlTests.class,
     // always at the end
     CoordinationConfigurationTests.class })
 public class AllTests {
