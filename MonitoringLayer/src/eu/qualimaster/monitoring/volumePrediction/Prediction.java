@@ -193,7 +193,7 @@ public class Prediction {
 	
 	private Instance dataToInstance(String time, Long value, Instances dataset) throws ParseException
 	{
-		Instance instance = new DenseInstance(dataset.get(0).numAttributes());
+		Instance instance = new DenseInstance(2);
 		instance.setValue(dataset.attribute(0), dataset.attribute(0).parseDate(time));
 		instance.setValue(dataset.attribute(1), value);
 		

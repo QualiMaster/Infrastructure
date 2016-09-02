@@ -82,7 +82,7 @@ public class BlindPrediction {
 		
 		for(String k : map.keySet())
 		{
-			String time = k.split("'T'")[1];
+			String time = k.split("T")[1];
 			if(mapByTime.containsKey(time)) mapByTime.get(time).add(map.get(k));
 			else
 			{
