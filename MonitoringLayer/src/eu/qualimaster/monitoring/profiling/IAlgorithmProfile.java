@@ -26,11 +26,9 @@ import eu.qualimaster.observables.IObservable;
 public interface IAlgorithmProfile {
     
     /**
-     * Clears this instance.
-     * 
-     * @param path the target path for persisting the predictor instances
+     * Stores this instance.
      */
-    public void store(String path);
+    public void store();
 
     /**
      * Updates the profile according to the measurements in <code>family</code>.

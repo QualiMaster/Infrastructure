@@ -80,8 +80,9 @@ public interface IAlgorithmProfilePredictor extends Cloneable {
      * Loads this predictor from a given file.
      * 
      * @param file the file to load from
+     * @param identifier the profile identifier
      * @throws IOException in case that the file cannot be read for some reason
      */
-    public void load(File file) throws IOException;
+    public void load(File file, String identifier) throws IOException;
     
 }

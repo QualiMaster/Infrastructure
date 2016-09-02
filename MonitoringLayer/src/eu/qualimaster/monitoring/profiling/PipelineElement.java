@@ -87,6 +87,15 @@ class PipelineElement {
     }
     
     /**
+     * Returns the storage path.
+     * 
+     * @return the path
+     */
+    String getPath() {
+        return pipeline.getPath();
+    }
+    
+    /**
      * Returns the name of the active algorithm.
      * 
      * @return the name of the algorithm
@@ -107,22 +116,19 @@ class PipelineElement {
     /**
      * Clears this instance.
      * 
-     * @param path the target path for persisting the predictor instances
      */
-    void clear(String path) {
-        store(path);
+    void clear() {
+        store();
         profiles.clear();
         parameters.clear();
     }
     
     /**
      * Clears this instance.
-     * 
-     * @param path the target path for persisting the predictor instances
      */
-    void store(String path) {
+    void store() {
         for (IAlgorithmProfile profile : profiles.values()) {
-            profile.store(path);
+            profile.store();
         }
     }
     

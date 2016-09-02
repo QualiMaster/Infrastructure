@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 package eu.qualimaster.monitoring.profiling;
-import java.util.ArrayList;
+import java.util.Properties;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.exception.NullArgumentException;
@@ -39,6 +39,20 @@ import org.apache.commons.math3.linear.SingularMatrixException;
  * @author Christopher Voges
  */
 public class Kalman extends AbstractMatrixPredictor {
+
+    private static final String KEY_MEASUREMENT_NOISE = "measurementNoise";
+    private static final String KEY_MATRIX_A = "A";
+    private static final String KEY_MATRIX_B = "B";
+    private static final String KEY_MATRIX_H = "H";
+    private static final String KEY_MATRIX_Q = "Q";
+    private static final String KEY_MATRIX_P = "P";
+    private static final String KEY_MATRIX_R = "R";
+    private static final String KEY_VECTOR_X = "x";
+    private static final String KEY_VECTOR_CONTROL = "controlVector";
+    private static final String KEY_LAST_UPDATED = "lastUpdated";
+    private static final String KEY_LAST_UPDATE = "lastUpdate";
+    private static final String KEY_ALLOWED_GAP = "allowedGap";
+    private static final String KEY_DEFAULT_MEASUREMENT = "defaultMeasurement";
 
     /**
      * Noise is eliminated  beforehand, but it can (for
@@ -134,38 +148,31 @@ public class Kalman extends AbstractMatrixPredictor {
     /**
      * The point in time this Kalman-Instance was last updated as seconds since midnight, January 1, 1970 UTC.
      */
-    private long lastUpdated = Long.MIN_VALUE;    
+    private long lastUpdated = Long.MIN_VALUE;
+    
     /**
      * The latest value used to update the Kalman-Instance.
      */
     private double lastUpdate = Double.MIN_VALUE;
+    
     /**
      * Allowed gap between update and prediction in milliseconds.
      */
     private int allowedGap = 500;
+    
     /**
      * Default measurement value.
      * If an update must be simulated and there is no predicted value to use instead of the measurement,
      * this value is used for the update.
      */
-    private double defaultMeasurenment = 0;
+    private double defaultMeasurement = 0;
+
     /**
      * Default contructor used for a new timeline. 
      * TODO Custom constructors to continue partly predicted timelines 
      */
     public Kalman() {
     }
-    /**
-     * .
-     * @param parameters .
-     */
-    public Kalman(ArrayList<String> parameters) {
-        stringsToAttributes(parameters);
-        reinitialize();
-    }
-    
-    
-
 
     /**
      * This method updates the Kalman-Filter with the current state/measurement of the observed value.
@@ -229,7 +236,7 @@ public class Kalman extends AbstractMatrixPredictor {
                          * If an update must be simulated and there is no predicted value 
                          * to use instead of the measurement, 'defaultMeasurenment' value is used for the update.
                          */
-                        update(lastUpdated + 1 , prediction == Double.MIN_VALUE ? lastUpdate : defaultMeasurenment);
+                        update(lastUpdated + 1 , prediction == Double.MIN_VALUE ? lastUpdate : defaultMeasurement);
                         prediction = predict(0);
                         gap = true;
                     }
@@ -261,33 +268,12 @@ public class Kalman extends AbstractMatrixPredictor {
         return predict(1);
     }
 
-    /** 
-     * Generates a String representation of a {@link Kalman} instance.
-     * @return {@link ArrayList} of {@link String} representing a {@link Kalman} instance.
-     */
-    public ArrayList<String> toStringArrayList() {
-        ArrayList<String> result = new ArrayList<>();
-        result.add("measurementNoise=" + measurementNoise);
-        result.add("A=" + mA);
-        result.add("B=" + mB);
-        result.add("H=" + mH);
-        result.add("Q=" + mQ);
-        result.add("R=" + mR);
-        result.add("P=" + mP);
-        result.add("x=" + xVector);
-        result.add("controlVector=" + controlVector);
-        result.add("lastUpdated=" + lastUpdated);
-        result.add("lastUpdate=" + lastUpdate);
-        result.add("allowedGap=" + allowedGap);
-        result.add("defaultMeasurenment=" + defaultMeasurenment);
-        return result;
-    }
     /**
      * Generates a 2-dimensional {@link RealMatrix} from a given String.
      * @param string The needed form is '{{double,double,...},...,{...}}'.
      * @return A {@link RealMatrix} if the conversion was successful, else <null>.
      */
-    public RealMatrix stringTo2DMatrix(String string) {
+    public static RealMatrix stringTo2DMatrix(String string) {
         RealMatrix result = null;
         try {
             // 2D-> '{{' marks the start and '}}' the end.
@@ -311,12 +297,13 @@ public class Kalman extends AbstractMatrixPredictor {
         }
         return result;
     }
+    
     /**
      * Generates a 2-dimensional {@link RealVector} from a given String.
      * @param string The needed form is '{double;double;...}'.
      * @return A {@link RealVector} if the conversion was successful, else <null>.
      */
-    private RealVector stringTo2DVector(String string) {
+    private static RealVector stringTo2DVector(String string) {
         RealVector result = null;
         
         try {
@@ -336,6 +323,7 @@ public class Kalman extends AbstractMatrixPredictor {
         
         return result;
     }
+    
     /**
      * Update models and the Kalman-Filter after a change in the parameters / matrices.
      */
@@ -344,77 +332,82 @@ public class Kalman extends AbstractMatrixPredictor {
         mm = new DefaultMeasurementModel(mH, mR);
         filter = new KalmanFilter(pm, mm);
     }
-    /**
-     * Update the attributes using given string representations.
-     * @param parameters Content to override the attributes with.
-     */
-    private void stringsToAttributes(ArrayList<String> parameters) {
-        for (String string : parameters) {
-            String entry = string.split("=")[0];
-            String content = string.split("=")[1];
-            RealMatrix tempM = null;
-            RealVector tempV = null;
-            try {
-                switch (entry) {
-                case "measurementNoise":
-                    measurementNoise = Double.parseDouble(content);
-                    break;
-                case "A":
-                    tempM = stringTo2DMatrix(content);
-                    mA = null != tempM ? tempM : mA;
-                    break;
-                case "B":
-                    tempM = stringTo2DMatrix(content);
-                    mB = null != tempM ? tempM : mB;
-                    break;
-                case "H":
-                    tempM = stringTo2DMatrix(content);
-                    mH = null != tempM ? tempM : mH;
-                    break;
-                case "Q":
-                    tempM = stringTo2DMatrix(content);
-                    mQ = null != tempM ? tempM : mQ;
-                    break;
-                case "P":
-                    tempM = stringTo2DMatrix(content);
-                    mP = null != tempM ? tempM : mP;
-                    break;
-                case "R":
-                    tempM = stringTo2DMatrix(content);
-                    mR = null != tempM ? tempM : mR;
-                    break;
-                case "x":
-                    tempV = stringTo2DVector(content);
-                    xVector = null != tempV ? tempV : xVector;
-                    break;
-                case "controlVector":
-                    tempV = stringTo2DVector(content);
-                    controlVector = null != tempV ? tempV : controlVector;
-                    break;
-                case "lastUpdated":
-                    lastUpdated = Long.parseLong(content);
-                    break;
-                case "lastUpdate":
-                    lastUpdate = Double.parseDouble(content);
-                    break;
-                case "allowedGap":
-                    allowedGap = Integer.parseInt(content);
-                    break;
-                case "defaultMeasurenment":
-                    defaultMeasurenment = Double.parseDouble(content);
-                    break;
-                default:
-                    break;
-                }
-            } catch (NullPointerException | NumberFormatException e) {
-                e.printStackTrace();
-            }
-        }
-    }
     
     @Override
     public String getIdentifier() {
         return "PREDICTOR=kalman";
     }
+    
+    @Override
+    protected Properties toProperties() {
+        Properties result = new Properties();
+        result.put(KEY_MEASUREMENT_NOISE, measurementNoise);
+        result.put(KEY_MATRIX_A, mA);
+        result.put(KEY_MATRIX_B, mB);
+        result.put(KEY_MATRIX_H, mH);
+        result.put(KEY_MATRIX_Q, mQ);
+        result.put(KEY_MATRIX_R, mR);
+        result.put(KEY_MATRIX_P, mP);
+        result.put(KEY_VECTOR_X, xVector);
+        result.put(KEY_VECTOR_CONTROL, controlVector);
+        result.put(KEY_LAST_UPDATED, lastUpdated);
+        result.put(KEY_LAST_UPDATE, lastUpdate);
+        result.put(KEY_ALLOWED_GAP, allowedGap);
+        result.put(KEY_DEFAULT_MEASUREMENT, defaultMeasurement);
+        return result;
+    }
 
+    /**
+     * Returns a matrix from a properties file.
+     * 
+     * @param prop the properties file
+     * @param key the key
+     * @param deflt the default value
+     * @return the read matdix or <code>deflt</code>
+     */
+    private static RealMatrix getMatrix(Properties prop, String key, RealMatrix deflt) {
+        RealMatrix tempM = null;
+        String tmp = prop.getProperty(key);
+        if (null != tmp) {
+            tempM = stringTo2DMatrix(tmp);
+        }
+        return null != tempM ? tempM : deflt;
+    }
+
+    /**
+     * Returns a vector from a properties file.
+     * 
+     * @param prop the properties file
+     * @param key the key
+     * @param deflt the default value
+     * @return the read vector or <code>deflt</code>
+     */
+    private static RealVector getVector(Properties prop, String key, RealVector deflt) {
+        RealVector tempV = null;
+        String tmp = prop.getProperty(key);
+        if (null != tmp) {
+            tempV = stringTo2DVector(tmp);
+        }
+        return null != tempV ? tempV : deflt;
+    }
+    
+    
+    @Override
+    protected void setProperties(Properties data) {
+        measurementNoise = Utils.getDouble(data, KEY_MEASUREMENT_NOISE, measurementNoise);
+        mA = getMatrix(data, KEY_MATRIX_A, mA);
+        mB = getMatrix(data, KEY_MATRIX_B, mB);
+        mH = getMatrix(data, KEY_MATRIX_H, mH);
+        mQ = getMatrix(data, KEY_MATRIX_Q, mQ);
+        mP = getMatrix(data, KEY_MATRIX_P, mP);
+        mR = getMatrix(data, KEY_MATRIX_R, mR);
+        xVector = getVector(data, KEY_VECTOR_X, xVector);
+        controlVector = getVector(data, KEY_VECTOR_CONTROL, controlVector);
+        lastUpdated = Utils.getLong(data, KEY_LAST_UPDATED, lastUpdated);
+        lastUpdate = Utils.getDouble(data, KEY_LAST_UPDATE, lastUpdate);
+        allowedGap = Utils.getInt(data, KEY_ALLOWED_GAP, allowedGap);
+        defaultMeasurement = Utils.getDouble(data, KEY_DEFAULT_MEASUREMENT, defaultMeasurement);
+        reinitialize();
+    }
+    
 }

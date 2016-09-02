@@ -18,7 +18,6 @@ package eu.qualimaster.monitoring.profiling;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -86,15 +85,35 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
     }
     
     @Override
-    public void store(String path) {
+    public void store() {
         for (Map.Entry<IObservable, IAlgorithmProfilePredictor> ent : predictors.entrySet()) {
             try {
                 // this is not really efficient
-                store(ent.getValue(), path, generateKey(ent.getKey()));
+                store(ent.getValue(), element.getPath(), generateKey(ent.getKey()));
             } catch (IOException e) {
                 LOGGER.error("While writing profile: " + e.getMessage());
             }
         }
+    }
+    
+    /**
+     * Returns the folder for a predictor.
+     * 
+     * @param path the base path
+     * @param identifier the profile identifier
+     * @param predictor the predictor
+     * @return the folder
+     */
+    private static File getFolder(String path, String identifier, IAlgorithmProfilePredictor predictor) {
+        File folder = new File(path);
+        // Get subfolder from nesting information 
+        String[] nesting = identifier.split(";")[0].split(":");
+        for (String string : nesting) {
+            folder = new File(folder, string);
+        }
+        // set kind of the predictor as subfolder
+        String subfolder = predictor.getIdentifier();
+        return new File(folder, subfolder);
     }
     
     /**
@@ -106,61 +125,48 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
      * @throws IOException if saving the predictor fails
      */
     void store(IAlgorithmProfilePredictor predictor, String path, String identifier) throws IOException {
-        ArrayList<String> mapData = new ArrayList<>();
-        int id = -1;
-        File folder = new File(path);
-        // Get subfolder from nesting information 
-        String[] nesting = identifier.split(";")[0].split(":");
-        for (String string : nesting) {
-            folder = new File(folder, string);
-        }
-        // set kind of the predictor as subfolder
-        String subfolder = predictor.getIdentifier();
-        folder = new File(folder, subfolder);
+        File folder = getFolder(path, identifier, predictor);
         
         // Create folders, if needed
         if (!folder.exists()) {
             folder.mkdirs();
         }
         // load map-file
-        File mapFile = new File(folder, "_map");
-        if (mapFile.exists()) {
-            mapData = Utils.loadTxtFile(mapFile, identifier);
-            id = new Integer(mapData.get(0).trim());
-             
-        } else {
-            mapData.add(String.valueOf(id));
-        }
-        // Check if the current identifier is already used, if so: remember the line and the id
-        // Entries look like 'id|identifier'
-        int entrieNumber = 0;
-        boolean entryFound = false;
-        while (entrieNumber < mapData.size() && !entryFound) {
-            String entry = mapData.get(entrieNumber);
-            // Case 1: Identifier already in map-file: use old id
-            if (entry.split("|")[1].equals(identifier)) {
-                id = new Integer(entry.split("\\|")[0]);
-                entryFound = true;
-            } else {
-                entrieNumber++;
-            }
-            
-        }
-        // Case 1: No entry found: New identifier -> new id
-        if (!entryFound) {
-            id++;
-        } 
+        MapFile mapFile = new MapFile(folder);
+        mapFile.load();
         
-        // generate file
+        boolean newEntry = false;
+        int id = mapFile.get(identifier);
+        if (id < 0) {
+            id = mapFile.size() + 1;
+            newEntry = true;
+        }
+
         File instanceFile = new File(folder, id + "");
         predictor.store(instanceFile, identifier);
         
         // update map-file, if needed
-        if (!entryFound) {
-            mapData.set(0, String.valueOf(id));
-            mapData.add(id + "|" + identifier);
-            Utils.writeTxtFile(mapFile, mapData, identifier);
+        if (newEntry) {
+            mapFile.put(identifier, id);
+            mapFile.store();
         } 
+    }
+    
+    /**
+     * Loads a predictor back if possible.
+     * 
+     * @param predictor the predictor to load into
+     * @param path the target path for persisting the predictor instances
+     * @param identifier the predictor identifier
+     * @throws IOException if saving the predictor fails
+     */
+    void load(IAlgorithmProfilePredictor predictor, String path, String identifier) throws IOException {
+        File folder = getFolder(path, identifier, predictor);
+        MapFile mapFile = new MapFile(folder);
+        mapFile.load();
+        int id = mapFile.get(identifier);
+        File instanceFile = new File(folder, Integer.toString(id));
+        predictor.load(instanceFile, identifier);
     }
 
     /**
@@ -172,8 +178,12 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
     private IAlgorithmProfilePredictor obtainPredictor(IObservable observable) {
         IAlgorithmProfilePredictor predictor = predictors.get(observable);
         if (null == predictor && null != QuantizerRegistry.getQuantizer(observable)) {
-            // TODO try loading
             predictor = element.getProfileCreator().createPredictor();
+            try {
+                load(predictor, element.getPath(), generateKey(observable));
+            } catch (IOException e) {
+                LOGGER.error("While reading predictor: " + e.getMessage());
+            }
             predictors.put(observable, predictor);
         }
         return predictor;

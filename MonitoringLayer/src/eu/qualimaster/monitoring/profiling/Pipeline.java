@@ -81,7 +81,7 @@ class Pipeline {
      */
     void clear()  {
         for (PipelineElement elt : elements.values()) {
-            elt.clear(path);
+            elt.clear();
         }
         elements.clear();
     }
@@ -91,7 +91,7 @@ class Pipeline {
      */
     void store() {
         for (PipelineElement elt : elements.values()) {
-            elt.store(path);
+            elt.store();
         }
     }
     
@@ -111,6 +111,15 @@ class Pipeline {
      */
     IAlgorithmProfileCreator getProfileCreator() {
         return creator;
+    }
+    
+    /**
+     * Returns the profile path.
+     * 
+     * @return the profile path
+     */
+    String getPath() {
+        return path;
     }
 
 }

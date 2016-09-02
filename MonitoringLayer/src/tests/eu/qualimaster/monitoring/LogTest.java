@@ -214,9 +214,9 @@ public class LogTest {
      * @throws IOException in case of I/O problems
      */
     public static void main(String[] args) throws IOException {
-        final String pipName = "TestPip1467640955469";
-        final int maxEventCount = 0; // 0 = all, 40 = initial testing
-        File folder = new File(Utils.getTestdataDir(), "profile2");
+        final String pipName = "TestPip1472558036517";
+        final int maxEventCount = 100; // 0 = all, 40 = initial testing
+        File folder = new File(Utils.getTestdataDir(), "profileHw");
         FileInputStream mappingFile = new FileInputStream(new File(folder, "mapping.xml"));
         final NameMapping nameMapping = new NameMapping(pipName, mappingFile);
         CoordinationManager.registerTestMapping(nameMapping);
@@ -225,22 +225,22 @@ public class LogTest {
         SystemState state = MonitoringManager.getSystemState();
         final PipelineSystemPart pipeline = state.obtainPipeline(pipName);
         final List<Processor> processors = new ArrayList<Processor>();
-        Proc src = new Proc("TestSource", 1, new int[]{16}, processors);
-        Proc fam = new Proc("TestFamily", 1, new int[]{15}, processors);
-        Proc cm = new Proc("CorrelationSWMapper", 1, new int[]{14}, processors);
-        Proc chy = new Proc("CorrelationSWHayashiYoshida", 1, new int[]{1, 13}, processors);
-        Stream srcfam = new Stream("f1", src, fam);
-        Stream famcm = new Stream("f2", fam, cm);
-        Stream cmchy1 = new Stream("f3.1", cm, chy);
-        Stream cmchy2 = new Stream("f3.2", cm, chy);
-        Stream cmchy3 = new Stream("f3.3", cm, chy);
-        src.setOutputs(srcfam);
-        fam.setInputs(srcfam);
+        Proc src = new Proc("TestSource", 1, new int[]{4}, processors);
+        Proc fam = new Proc("TestFamily", 1, new int[]{3}, processors);
+        Proc cb = new Proc("GenTopoHardwareCorrelationFinancialHardwareConnectionBolt", 1, new int[]{1}, processors);
+        Proc cs = new Proc("GenTopoHardwareCorrelationFinancialHardwareConnectionSpout", 1, new int[]{2}, processors);
+        Stream srcfam1 = new Stream("TestSourceSymbolList", src, fam);
+        Stream srcfam2 = new Stream("TestSourcePreprocessedStream", src, fam);
+        Stream famcm = new Stream("TestFamilyGenTopoHardwareCorrelationFinancial", fam, cb);
+        Stream cmchy = new Stream("", cb, cs);
+        src.setOutputs(srcfam1, srcfam2);
+        fam.setInputs(srcfam1, srcfam2);
         fam.setOutputs(famcm);
-        cm.setInputs(famcm);
-        cm.setOutputs(cmchy1, cmchy2, cmchy3);
-        chy.setInputs(cmchy1, cmchy2, cmchy3);
+        cb.setInputs(famcm);
+        cb.setOutputs(cmchy);
+        cs.setInputs(cmchy);
         PipelineTopology topo = new PipelineTopology(processors);
+        System.out.println("TOPOLOGY " + topo);
         pipeline.setTopology(topo);
         pipeline.changeStatus(PipelineLifecycleEvent.Status.STARTING, false, null);
         Timer timer = new Timer();
@@ -257,7 +257,7 @@ public class LogTest {
                 ttask.run();
             }
         }, 0, 1000);
-        Tracing.test(pipName, "TestFamily", "CorrelationSW", System.err, DetailMode.ALGORITHMS);        
+        Tracing.test(pipName, "TestFamily", "GenTopoHardwareCorrelationFinancial", System.err, DetailMode.ALGORITHMS);
         
         LogReader reader = new LogReader(new File(folder, "qmInfra.log"), 
             new EventProcessor<MonitoringEvent>(MonitoringEvent.class) {

@@ -17,7 +17,7 @@ package eu.qualimaster.monitoring.profiling;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Properties;
 
 /**
  * An abstract predictor for matrix-based predictors.
@@ -28,20 +28,29 @@ public abstract class AbstractMatrixPredictor implements IAlgorithmProfilePredic
 
     /** 
      * Generates a String representation of a {@link IAlgorithmProfilePredictor} instance.
-     * @return {@link ArrayList} of {@link String} representing a {@link IAlgorithmProfilePredictor} instance.
+     * 
+     * @return a properties object with the instance data
      */
-    public abstract ArrayList<String> toStringArrayList();
+    protected abstract Properties toProperties();
+    
+    /**
+     * Sets the internal structures based on a string representation. Must fit the structure of 
+     * {@link #toStringArrayList()}.
+     * 
+     * @param data the data to set
+     */
+    protected abstract void setProperties(Properties data);
     
     @Override
     public void store(File file, String identifier) throws IOException {
-        // write instance to file
-        ArrayList<String> instanceString = toStringArrayList();
-        Utils.writeTxtFile(file, instanceString, identifier);
+        Utils.store(file,  toProperties());
     }
 
     @Override
-    public void load(File file) throws IOException {
-        // TODO
+    public void load(File file, String key) throws IOException {
+        Properties prop = new Properties();
+        Utils.load(file, prop);
+        setProperties(prop);
     }
     
 }
