@@ -68,16 +68,13 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
      */
     public void obtainHistoricalData(long timeHorizon, String term, File target, String server) throws IOException
     {
-    	// TODO remove this once the build works again
-    	//this.test = true;
-    	
     	// derive required months of historical data from the input time horizon
     	ArrayList<String> months = new ArrayList<>();
-    	if(server.compareTo("test") == 0) for(int i = 0; i < TEST_MONTHS.length; i++) months.add(TEST_MONTHS[i]);
+    	if(this.test) for(int i = 0; i < TEST_MONTHS.length; i++) months.add(TEST_MONTHS[i]);
     	else months = getMonths(Calendar.getInstance(), timeHorizon);
     	
     	// download, uncompress, merge the files containing historical data for each month
-    	if(server.compareTo("test") == 0) getHistoricalDataLocally(term, months, TEST_HISTORICAL_DATA_PATH, target);
+    	if(this.test) getHistoricalDataLocally(term, months, TEST_HISTORICAL_DATA_PATH, target);
     	else downloadHistoricalData(term, months, server, target);
     }
     

@@ -319,6 +319,7 @@ public class VolumePredictor {
 		allTerms.addAll(this.blindTerms);
 		
 		for(String term : allTerms){
+			System.out.println("Term: " + term);
 			getHistoricalData(term, NUM_MONTHS, this.historicalDataFile);
 			
 			// monitored models
@@ -339,7 +340,7 @@ public class VolumePredictor {
 	private void getHistoricalData(String term, long months, File outputFile)
 	{
 		try{
-			//this.historyProvider.setTest(this.test);
+			this.historyProvider.setTest(this.test);
 			if(this.test) this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile, TEST_URL);
 			else this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile);
 		}
