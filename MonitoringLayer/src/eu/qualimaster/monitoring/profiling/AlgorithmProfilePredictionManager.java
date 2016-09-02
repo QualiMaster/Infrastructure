@@ -22,10 +22,14 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent;
+import eu.qualimaster.events.EventHandler;
+import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent.Status;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
+import eu.qualimaster.monitoring.events.AlgorithmProfilePredictionRequest;
+import eu.qualimaster.monitoring.events.AlgorithmProfilePredictionResponse;
 import eu.qualimaster.monitoring.events.ParameterChangedMonitoringEvent;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.observables.IObservable;
@@ -42,6 +46,10 @@ public class AlgorithmProfilePredictionManager {
     private static IAlgorithmProfileCreator creator = new KalmanProfileCreator(); // currently fixed, may be replaced
  
     private static final Logger LOGGER = LogManager.getLogger(AlgorithmProfilePredictionManager.class);
+    
+    static {
+        EventManager.register(new AlgorithmProfilePredictionRequestHandler());
+    }
     
     /**
      * Called upon startup of the infrastructure.
@@ -196,6 +204,51 @@ public class AlgorithmProfilePredictionManager {
         } else {
             baseFolder = folder;
         }
+    }
+    
+    /**
+     * Handles algorithm profile prediction requests.
+     * 
+     * @author Holger Eichelberger
+     */
+    private static class AlgorithmProfilePredictionRequestHandler 
+        extends EventHandler<AlgorithmProfilePredictionRequest> {
+
+        /**
+         * Creates an algorithm profile prediction request handler.
+         */
+        protected AlgorithmProfilePredictionRequestHandler() {
+            super(AlgorithmProfilePredictionRequest.class);
+        }
+
+        @Override
+        protected void handle(AlgorithmProfilePredictionRequest event) {
+            String pipeline = event.getPipeline();
+            String pipelineElement = event.getPipelineElement();
+            Map<IObservable, Double> weighting = event.getWeighting();
+            if (null == weighting) {
+                double result = predict(pipeline, event.getPipelineElement(), event.getAlgorithm(), 
+                    event.getObservable(), event.getTargetValues());
+                EventManager.send(new AlgorithmProfilePredictionResponse(event, result));
+            } else {
+                Pipeline pip = Pipelines.getPipeline(pipeline);
+                if (null != pip) {
+                    PipelineElement elt = pip.getElement(pipelineElement);
+                    if (null != elt) {
+                        dummy();
+                        // TODO go over all algorithms, obtain profiles, predict
+                    }
+                }
+                EventManager.send(new AlgorithmProfilePredictionResponse(event, Double.MIN_VALUE));
+            }
+        }
+
+        /**
+         * For checkstyle.
+         */
+        private void dummy() {
+        }
+        
     }
     
 }
