@@ -254,6 +254,7 @@ public class VolumePredictionManager {
 	 * @param event the event carrying the historical data handler
 	 * @param folder the folder where to write temporary data
 	 */
+
 	public static void handleHistoricalDataProviderRegistrationEventTest(HistoricalDataProviderRegistrationEvent event, String folder) {
     	VolumePredictor predictor = new VolumePredictor(event.getPipeline(), event.getSource(), event.getProvider(), test);
     	predictor.initialize(folder + event.getSource() + "_" + DEFAULT_FILE_NAME);

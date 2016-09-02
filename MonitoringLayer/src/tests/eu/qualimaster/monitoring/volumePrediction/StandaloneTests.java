@@ -17,19 +17,20 @@ import eu.qualimaster.monitoring.volumePrediction.VolumePredictionManager;
 public class StandaloneTests
 {
 	private static final String TEST_MAIN_FOLDER = "./testdata/volumePrediction/";
+
 	private static final String TEST_WARMUP_FOLDER = TEST_MAIN_FOLDER + "warmupData/";
 	private static final String TEST_STREAMING_FOLDER = TEST_MAIN_FOLDER + "streamingData";
 	
 	private static final String TEST_PIPELINE = "pipeline";
 	private static final String TEST_SOURCE = "spring";
-	
+
 	public static void main(String[] args){
 		// test historical data retrieval
 		testHistoricalDataRetrieval();
 		
 		// test warm up
 		testWarmUp();
-		
+
 		// test monitoring of a source
 		testMonitoring();
 	}
@@ -65,5 +66,7 @@ public class StandaloneTests
 			
 			step++;
 		}
+
+		VolumePredictionManager.handleTest(new HistoricalDataProviderRegistrationEvent("pipeline", "spring", new SpringHistoricalDataProvider()), TEST_MAIN_FOLDER);
 	}
 }
