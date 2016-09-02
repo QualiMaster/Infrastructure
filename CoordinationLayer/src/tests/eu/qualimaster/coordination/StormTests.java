@@ -161,7 +161,7 @@ public class StormTests extends AbstractCoordinationTests {
         sleep(1000);
         cmd = new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.STOP);
         cmd.execute();
-        waitForExecution(1, 0, 2000);
+        waitForExecution(1, 0, 6000);
         Assert.assertTrue(getTracer().contains(cmd));
         Assert.assertEquals(1, getTracer().getLogEntryCount());
         Assert.assertEquals(0, getFailedHandler().getFailedCount());
