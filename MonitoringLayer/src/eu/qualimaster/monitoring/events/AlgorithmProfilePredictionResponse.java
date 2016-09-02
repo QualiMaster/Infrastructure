@@ -28,6 +28,9 @@ public class AlgorithmProfilePredictionResponse extends AbstractResponseEvent<Al
 
     private static final long serialVersionUID = 3749223586800239726L;
 
+    private double prediction;
+    private String algorithm;
+    
     /**
      * Creates the response.
      * 
@@ -36,6 +39,36 @@ public class AlgorithmProfilePredictionResponse extends AbstractResponseEvent<Al
      */
     public AlgorithmProfilePredictionResponse(AlgorithmProfilePredictionRequest request, double prediction) {
         super(request);
+        this.prediction = prediction;
+    }
+    
+    /**
+     * Creates the response.
+     * 
+     * @param request the request
+     * @param algorithm the best algorithm (for algorithm-choice predictions)
+     */
+    public AlgorithmProfilePredictionResponse(AlgorithmProfilePredictionRequest request, String algorithm) {
+        super(request);
+        this.algorithm = algorithm;
+    }
+    
+    /**
+     * The predicted value.
+     * 
+     * @return the predicted value.
+     */
+    public double getPrediction() {
+        return prediction;
+    }
+    
+    /**
+     * The "best" algorithm.
+     * 
+     * @return the best algorithm (may be <b>null</b>)
+     */
+    public String getAlgorithm() {
+        return algorithm;
     }
 
 }
