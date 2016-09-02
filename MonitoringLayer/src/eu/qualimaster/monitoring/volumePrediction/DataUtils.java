@@ -3,6 +3,10 @@ package eu.qualimaster.monitoring.volumePrediction;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.TreeMap;
 
 /**
@@ -59,6 +63,52 @@ public class DataUtils
 		}
 		catch(Exception e)
 		{
+			e.printStackTrace();
+			return data;
+		}
+	}
+	
+	public static HashMap<String,ArrayList<Integer>> readStreamingData(String folder, HashSet<String> terms){
+		HashMap<String,ArrayList<Integer>> data = new HashMap<>();
+		File dir = new File(folder);
+		
+		for(String term : terms){
+			File currFile = null;
+			for(File f : dir.listFiles()){
+				if(f.getName().contains(term)){
+					currFile = f;
+					break;
+				}
+			}
+			
+			if(currFile == null){
+				System.out.println("No streaming data available for term: " + term);
+				continue;
+			}
+			
+			ArrayList<Integer> dataForTerm = readSingleColumnData(currFile);
+			data.put(term, dataForTerm);
+		}
+		
+		return data;
+	}
+	
+	public static ArrayList<Integer> readSingleColumnData(File f){
+		ArrayList<Integer> data = new ArrayList<>();
+		BufferedReader reader = null;
+		
+		try{
+			reader = new BufferedReader(new FileReader(f));
+			String line = null;
+			while((line = reader.readLine()) != null){
+				int value = Integer.valueOf(line);
+				data.add(value);
+			}
+			reader.close();
+			
+			return data;
+		}
+		catch(IOException e){
 			e.printStackTrace();
 			return data;
 		}

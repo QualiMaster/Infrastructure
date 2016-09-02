@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.TreeMap;
 
 import eu.qualimaster.adaptation.events.SourceVolumeAdaptationEvent;
 import eu.qualimaster.dataManagement.DataManager;
@@ -317,6 +318,7 @@ public class VolumePredictor {
 		HashSet<String> allTerms = new HashSet<>();
 		allTerms.addAll(this.monitoredTerms);
 		allTerms.addAll(this.blindTerms);
+		this.historyProvider.setTest(this.test);
 		
 		for(String term : allTerms){
 			System.out.println("Term: " + term);
@@ -340,7 +342,6 @@ public class VolumePredictor {
 	private void getHistoricalData(String term, long months, File outputFile)
 	{
 		try{
-			this.historyProvider.setTest(this.test);
 			if(this.test) this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile, TEST_URL);
 			else this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile);
 		}
@@ -354,6 +355,43 @@ public class VolumePredictor {
 				writer.close();
 			} catch (IOException e1) {
 				e1.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * Warms the predictor up with recent data (only for testing purposes).
+	 * @param dataFolder the folder containing warm up data, one file for each term monitored by the predictor is expected.
+	 */
+	public void warmUp(String dataFolder){
+		// warm the predictor up only in test mode
+		if(!this.test){
+			System.out.println("Predictor not in test mode, warm up is not allowed.");
+			return;
+		}
+		
+		File directory = new File(dataFolder);
+		for(String term : this.monitoredTerms){
+			File file = null;
+			for(File f : directory.listFiles()){
+				if(f.getName().contains(term)){
+					file = f;
+					break;
+				}
+			}
+			
+			if(file == null){
+				System.out.println("No warm up data available for term: " + term);
+				continue;
+			}
+			
+			TreeMap<String,Long> data = DataUtils.readData(file);
+			for(String timestamp : data.keySet()){
+				// feed the recent history within the prediction model (for making predictions)
+				this.models.get(term).updateRecentVolumes(timestamp, data.get(timestamp));
+				
+				// feed the recent history within the predictor (for computing the volume threshold)
+				addRecentVolume(term, data.get(timestamp));
 			}
 		}
 	}
