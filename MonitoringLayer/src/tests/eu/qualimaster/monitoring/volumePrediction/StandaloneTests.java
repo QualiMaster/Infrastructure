@@ -66,7 +66,5 @@ public class StandaloneTests
 			
 			step++;
 		}
-
-		VolumePredictionManager.handleTest(new HistoricalDataProviderRegistrationEvent("pipeline", "spring", new SpringHistoricalDataProvider()), TEST_MAIN_FOLDER);
 	}
 }
