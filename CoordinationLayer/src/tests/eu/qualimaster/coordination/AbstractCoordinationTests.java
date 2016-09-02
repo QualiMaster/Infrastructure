@@ -153,6 +153,82 @@ public class AbstractCoordinationTests {
     }
     
     /**
+     * A command filter interface.
+     * 
+     * @author Holger Eichelberger
+     */
+    public interface ICommandFilter {
+
+        /**
+         * Enables the given command.
+         * 
+         * @param command the command
+         * @return <code>true</code> if <code>command</code> is enabled (shall be in), <code>false</code> else (for out)
+         */
+        public boolean enable(CoordinationCommand command);
+    }
+
+    /**
+     * A class-based command filter.
+     * 
+     * @author Holger Eichelberger
+     */
+    public static class ClassBasedCommandFilter implements ICommandFilter {
+        
+        private Class<?>[] filter;
+
+        /**
+         * Creates an instance.
+         * 
+         * @param filter the classes that describe enabled commands
+         */
+        public ClassBasedCommandFilter(Class<?>... filter) {
+            this.filter = filter;
+        }
+
+        @Override
+        public boolean enable(CoordinationCommand command) {
+            boolean enable = false;
+            for (int f = 0; !enable && f < filter.length; f++) {
+                if (filter[f].isInstance(command)) {
+                    enable = true;
+                }
+            }
+            return enable;
+        }
+        
+    }
+
+    /**
+     * A command filter based on the pipeline status.
+     * 
+     * @author Holger Eichelberger
+     */
+    public static class PipelineCommandFilter implements ICommandFilter {
+        
+        private PipelineCommand.Status status;
+
+        /**
+         * Creates a filter instance.
+         * 
+         * @param status the status that shall be enabled (others will be ignored)
+         */
+        public PipelineCommandFilter(PipelineCommand.Status status) {
+            this.status = status;
+        }
+
+        @Override
+        public boolean enable(CoordinationCommand command) {
+            boolean enable = false;
+            if (command instanceof PipelineCommand) {
+                enable = ((PipelineCommand) command).getStatus().equals(status);
+            }
+            return enable;
+        }
+        
+    }
+    
+    /**
      * Implements a test tracer to follow and test the execution.
      * 
      * @author Holger Eichelberger
@@ -163,23 +239,22 @@ public class AbstractCoordinationTests {
         private List<CoordinationExecutionResult> results = new ArrayList<CoordinationExecutionResult>();
         private int logEntryCount;
 
+        
         /**
          * Returns the number of commands collected by this tracer.
          * 
-         * @param filter the command types to be considered
+         * @param filter the filter to be considered (may be <b>null</b> for all)
          * @return the number of commands
          */
-        public int getCommandCount(Class<?>... filter) {
+        public int getCommandCount(ICommandFilter filter) {
             int count;
-            if (0 == filter.length) {
+            if (null == filter) {
                 count = commands.size();
             } else {
                 count = 0;
                 for (int i = 0; i < commands.size(); i++) {
-                    for (int f = 0; f < filter.length; f++) {
-                        if (filter[f].isInstance(commands.get(i))) {
-                            count++;
-                        }
+                    if (filter.enable(commands.get(i))) {
+                        count++;
                     }
                 }
             }
@@ -399,10 +474,10 @@ public class AbstractCoordinationTests {
      * Checks whether waiting shall be continued due to the command count.
      * 
      * @param expectedCommandCount the expected command count (ignored if not not positive)
-     * @param filter the command types to be considered
+     * @param filter the command filter to be considered (may be <b>null</b> for all commands)
      * @return <code>true</code> if waiting shall be continued, <code>false</code> else
      */
-    protected boolean checkCommandCount(int expectedCommandCount, Class<?>... filter) {
+    protected boolean checkCommandCount(int expectedCommandCount, ICommandFilter filter) {
         return expectedCommandCount <= 0 || tracer.getCommandCount(filter) < expectedCommandCount;
     }
 
@@ -426,29 +501,49 @@ public class AbstractCoordinationTests {
         long now = System.currentTimeMillis();
         return (now - start) < TIMEOUT;
     }
-    
-    /**
-     * Waits for the execution of commands. Stops after {@link #TIMEOUT}.
-     * 
-     * @param expectedCommandCount the number of commands to wait for (ignored if negative)
-     * @param failedCount the number of failed enactments (ignored if not positive)
-     * @param filter the command types to be considered
-     */
-    protected void waitForExecution(int expectedCommandCount, int failedCount, 
-        Class<?>... filter) {
-        waitForExecution(expectedCommandCount, failedCount, 0, filter);
-    }
 
     /**
      * Waits for the execution of commands. Stops after {@link #TIMEOUT}.
      * 
      * @param expectedCommandCount the number of commands to wait for (ignored if negative)
      * @param failedCount the number of failed enactments (ignored if not positive)
+     */
+    protected void waitForExecution(int expectedCommandCount, int failedCount) {
+        waitForExecution(expectedCommandCount, failedCount, null);
+    }
+    
+    /**
+     * Waits for the execution of commands. Stops after {@link #TIMEOUT}.
+     * 
+     * @param expectedCommandCount the number of commands to wait for (ignored if negative)
+     * @param failedCount the number of failed enactments (ignored if not positive)
+     * @param filter the filter to be considered (may be <b>null</b> for all commands)
+     */
+    protected void waitForExecution(int expectedCommandCount, int failedCount, ICommandFilter filter) {
+        waitForExecution(expectedCommandCount, failedCount, 0, filter);
+    }
+    
+    /**
+     * Waits for the execution of commands. Stops after {@link #TIMEOUT}.
+     * 
+     * @param expectedCommandCount the number of commands to wait for (ignored if negative)
+     * @param failedCount the number of failed enactments (ignored if not positive)
      * @param sleepAfter additional time to wait
-     * @param filter the command types to be considered
+     */
+    protected void waitForExecution(int expectedCommandCount, int failedCount, int sleepAfter) {
+        waitForExecution(expectedCommandCount, failedCount, sleepAfter, null);
+    }
+    
+    /**
+     * Waits for the execution of commands. Stops after {@link #TIMEOUT}.
+     * 
+     * @param expectedCommandCount the number of commands to wait for (ignored if negative)
+     * @param failedCount the number of failed enactments (ignored if not positive)
+     * @param sleepAfter additional time to wait
+     * @param filter the filter to be considered (may be <b>null</b> for all commands)
      */
     protected void waitForExecution(int expectedCommandCount, int failedCount, int sleepAfter,
-        Class<?>... filter) {
+        ICommandFilter filter) {
         long timestamp = System.currentTimeMillis();
         while (checkTimestamp(timestamp) && checkCommandCount(expectedCommandCount, filter) 
             && checkFailedCount(failedCount)) {

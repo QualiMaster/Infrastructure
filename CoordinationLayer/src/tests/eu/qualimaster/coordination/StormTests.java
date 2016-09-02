@@ -128,7 +128,7 @@ public class StormTests extends AbstractCoordinationTests {
         PipelineCommand cmd = new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.START);
         cmd.execute();
         fakeCheckedPipeline(Naming.PIPELINE_NAME);
-        waitForExecution(1, 0, 500); // pipeline status tracker <-> monitoring
+        waitForExecution(1, 0, 1000); // pipeline status tracker <-> monitoring
         Assert.assertTrue(getTracer().contains(cmd));
         Assert.assertEquals(1, getTracer().getLogEntryCount());
         Assert.assertEquals(0, getFailedHandler().getFailedCount());
@@ -138,7 +138,7 @@ public class StormTests extends AbstractCoordinationTests {
 
         cmd = new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.CONNECT);
         cmd.execute();
-        waitForExecution(1, 0, 500);
+        waitForExecution(1, 0, 1000);
         Assert.assertTrue(getTracer().contains(cmd));
         Assert.assertEquals(1, getTracer().getLogEntryCount());
         Assert.assertEquals(0, getFailedHandler().getFailedCount());
@@ -152,7 +152,7 @@ public class StormTests extends AbstractCoordinationTests {
 
         cmd = new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.DISCONNECT);
         cmd.execute();
-        waitForExecution(1, 0, 500);
+        waitForExecution(1, 0, 1000);
         Assert.assertTrue(getTracer().contains(cmd));
         Assert.assertEquals(1, getTracer().getLogEntryCount());
         Assert.assertEquals(0, getFailedHandler().getFailedCount());
@@ -161,7 +161,7 @@ public class StormTests extends AbstractCoordinationTests {
         sleep(1000);
         cmd = new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.STOP);
         cmd.execute();
-        waitForExecution(1, 0, 500);
+        waitForExecution(1, 0, 2000);
         Assert.assertTrue(getTracer().contains(cmd));
         Assert.assertEquals(1, getTracer().getLogEntryCount());
         Assert.assertEquals(0, getFailedHandler().getFailedCount());
