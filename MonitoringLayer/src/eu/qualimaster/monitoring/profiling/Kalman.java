@@ -30,15 +30,15 @@ import org.apache.commons.math3.linear.SingularMatrixException;
 
 /**
  * Kalman Implementation for the QualiMaster-Project using the
- * apache-math-library to reengineer the approach used in the RainMon-Project,
+ * Apache-math-library to reengineer the approach used in the RainMon-Project,
  * which is written in Python.
- * The Kalman-Filter can only handle descrete-time controlled processes.
+ * The Kalman-Filter can only handle discrete-time controlled processes.
  * Therefore the correction-prediction cycle has a discrete time interval.
  * If a time step passes without an update, an update will be simulated.
  * 
  * @author Christopher Voges
  */
-public class Kalman implements IAlgorithmProfilePredictorAlgorithm {
+public class Kalman extends AbstractMatrixPredictor {
 
     /**
      * Noise is eliminated  beforehand, but it can (for

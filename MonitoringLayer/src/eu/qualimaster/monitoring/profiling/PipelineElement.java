@@ -36,7 +36,7 @@ class PipelineElement {
     private String name;
     private String activeAlgorithm;
     private Map<Object, Serializable> parameters = new HashMap<>();
-    private Map<Object, AlgorithmProfile> profiles = new HashMap<>();
+    private Map<Object, IAlgorithmProfile> profiles = new HashMap<>();
     
     /**
      * Creates a pipeline element.
@@ -78,6 +78,15 @@ class PipelineElement {
     }
     
     /**
+     * Returns the responsible profile creator.
+     * 
+     * @return the creator
+     */
+    IAlgorithmProfileCreator getProfileCreator() {
+        return pipeline.getProfileCreator();
+    }
+    
+    /**
      * Returns the name of the active algorithm.
      * 
      * @return the name of the algorithm
@@ -112,7 +121,7 @@ class PipelineElement {
      * @param path the target path for persisting the predictor instances
      */
     void store(String path) {
-        for (AlgorithmProfile profile : profiles.values()) {
+        for (IAlgorithmProfile profile : profiles.values()) {
             profile.store(path);
         }
     }
@@ -162,10 +171,10 @@ class PipelineElement {
      * @param key the key
      * @return the profile
      */
-    private AlgorithmProfile obtainProfile(Map<Object, Serializable> key) {
-        AlgorithmProfile profile = profiles.get(key);
+    private IAlgorithmProfile obtainProfile(Map<Object, Serializable> key) {
+        IAlgorithmProfile profile = profiles.get(key);
         if (null == profile) {
-            profile = new AlgorithmProfile(this, key);
+            profile = getProfileCreator().createProfile(this, key);
             profiles.put(key, profile);
         }
         return profile;
@@ -198,7 +207,7 @@ class PipelineElement {
     void update(PipelineNodeSystemPart family) {
         updateInputRate(family);
         Map<Object, Serializable> key = getKey(null, null);
-        AlgorithmProfile profile = obtainProfile(key);
+        IAlgorithmProfile profile = obtainProfile(key);
         profile.update(family);
     }
     
@@ -215,7 +224,7 @@ class PipelineElement {
      */
     double predict(String algorithm, IObservable observable, Map<Object, Serializable> targetValues) {
         Map<Object, Serializable> key = getKey(algorithm, targetValues);
-        AlgorithmProfile profile = obtainProfile(key);
+        IAlgorithmProfile profile = obtainProfile(key);
         return profile.predict(observable);
     }
     

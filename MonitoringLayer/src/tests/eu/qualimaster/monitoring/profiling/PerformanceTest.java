@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import org.junit.Assert;
 import org.junit.Test;
 
-import eu.qualimaster.monitoring.profiling.IAlgorithmProfilePredictorAlgorithm;
+import eu.qualimaster.monitoring.profiling.IAlgorithmProfilePredictor;
 import eu.qualimaster.monitoring.profiling.Kalman;
 
 
@@ -63,7 +63,7 @@ public class PerformanceTest {
                     long startTime = System.nanoTime();
                     
                     // Create Kalman-Instance
-                    IAlgorithmProfilePredictorAlgorithm filter = new Kalman();
+                    IAlgorithmProfilePredictor filter = new Kalman();
 
                     // Run Update-Predict-Cycle
                     for (int i = 1; i < entries.length; i++) {

@@ -15,7 +15,8 @@
  */
 package eu.qualimaster.monitoring.profiling;
 
-import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * This interface serves as the common ground for different implementations 
@@ -23,7 +24,7 @@ import java.util.ArrayList;
  * @author Christopher Voges
  *
  */
-public interface IAlgorithmProfilePredictorAlgorithm extends Cloneable {
+public interface IAlgorithmProfilePredictor extends Cloneable {
 
     /**
      * Predict the state of the monitored value for one time step ahead.
@@ -59,17 +60,28 @@ public interface IAlgorithmProfilePredictorAlgorithm extends Cloneable {
      */
     public boolean update(double measured);
     
-    /** 
-     * Generates a String representation of a {@link IAlgorithmProfilePredictorAlgorithm} instance.
-     * @return {@link ArrayList} of {@link String} representing a {@link IAlgorithmProfilePredictorAlgorithm} instance.
-     */
-    public ArrayList<String> toStringArrayList();
-    
     /**
      * Returns the key identifier for this predictor.
      * 
      * @return the identifier
      */
     public String getIdentifier();
+    
+    /**
+     * Stores this predictor to file.
+     * 
+     * @param file the target file
+     * @param identifier the profile identifier
+     * @throws IOException in case that the file cannot be written for some reason
+     */
+    public void store(File file, String identifier) throws IOException;
+
+    /**
+     * Loads this predictor from a given file.
+     * 
+     * @param file the file to load from
+     * @throws IOException in case that the file cannot be read for some reason
+     */
+    public void load(File file) throws IOException;
     
 }

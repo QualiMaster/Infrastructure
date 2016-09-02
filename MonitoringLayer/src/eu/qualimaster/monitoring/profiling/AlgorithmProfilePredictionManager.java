@@ -39,6 +39,7 @@ import eu.qualimaster.observables.IObservable;
 public class AlgorithmProfilePredictionManager {
     
     private static String baseFolder = MonitoringConfiguration.getProfileLocation();
+    private static IAlgorithmProfileCreator creator = new KalmanProfileCreator(); // currently fixed, may be replaced
  
     private static final Logger LOGGER = LogManager.getLogger(AlgorithmProfilePredictionManager.class);
     
@@ -46,6 +47,16 @@ public class AlgorithmProfilePredictionManager {
      * Called upon startup of the infrastructure.
      */
     public static void start() {
+    }
+    
+    /**
+     * Obtains a pipeline.
+     * 
+     * @param name the name of the pipeline
+     * @return the pipeline
+     */
+    private static Pipeline obtainPipeline(String name) {
+        return Pipelines.obtainPipeline(name, creator);
     }
 
      /**
@@ -61,7 +72,7 @@ public class AlgorithmProfilePredictionManager {
         
         switch (status) {
         case STARTING:
-            Pipelines.obtainPipeline(pipeline).setPath(baseFolder);
+            obtainPipeline(pipeline).setPath(baseFolder);
             break;
         case STOPPED:
             Pipelines.releasePipeline(pipeline);
@@ -114,7 +125,7 @@ public class AlgorithmProfilePredictionManager {
             Pipelines.releasePipeline(pipeline);
             // fallthrough
         case START:
-            Pipeline pip = Pipelines.obtainPipeline(pipeline);
+            Pipeline pip = obtainPipeline(pipeline);
             pip.setPath(MonitoringConfiguration.getProfilingLogLocation());
             break;
         default:

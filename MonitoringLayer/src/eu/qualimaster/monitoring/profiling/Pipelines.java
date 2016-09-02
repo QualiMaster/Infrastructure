@@ -35,12 +35,13 @@ public class Pipelines {
      * Returns a pipeline object and creates a new one if the requested one is not known.
      * 
      * @param name the name of the pipeline
+     * @param creator the profile creator
      * @return the pipeline
      */
-    static Pipeline obtainPipeline(String name) {
+    static Pipeline obtainPipeline(String name, IAlgorithmProfileCreator creator) {
         Pipeline pip = pipelines.get(name);
         if (null == pip) {
-            pip = new Pipeline(name);
+            pip = new Pipeline(name, creator);
             pipelines.put(name, pip);
         }
         return pip;

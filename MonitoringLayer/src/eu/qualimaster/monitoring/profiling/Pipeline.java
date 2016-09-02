@@ -29,14 +29,17 @@ class Pipeline {
     private Map<String, PipelineElement> elements;
     private String name;
     private String path = MonitoringConfiguration.getProfileLocation();
+    private IAlgorithmProfileCreator creator;
     
     /**
      * Creates a new pipeline instance.
      * 
      * @param name the name of the pipeline
+     * @param creator the profile creator
      */
-    Pipeline(String name) {
+    Pipeline(String name, IAlgorithmProfileCreator creator) {
         this.name = name;
+        this.creator = creator;
     }
     
     /**
@@ -100,4 +103,14 @@ class Pipeline {
     void setPath(String path) {
         this.path = path;
     }
+    
+    /**
+     * Returns the responsible profile creator.
+     * 
+     * @return the creator
+     */
+    IAlgorithmProfileCreator getProfileCreator() {
+        return creator;
+    }
+
 }

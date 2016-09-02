@@ -15,11 +15,8 @@
  */
 package eu.qualimaster.monitoring.profiling;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,38 +30,26 @@ import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.observables.IObservable;
 
 /**
- * Data class to modulate the relation of
- * <p> - one Pipeline
- * <p> - one FamilyElement
- * <p> - one Algorithm
- * <p> - the {@link IObservable} to predict and its last {@link IObservation} 
- * represented by their values ({@link String} and {@link Double}).
- * Currently only one {@link IObservable} is predicted therefore this {@link Map} always needs to have the size 1! 
- * <p> - and multiple {@link IObservable} and their {@link IObservation}s serving as parameters for the Pipeline,
- * PipelineElement and the Algorithm (e.g. the number of TASKS or EXECUTORS or
- * the current INPUT). They are represented by their values ({@link String} and {@link Double}).
- * <p> Furthermore the {@link IAlgorithmProfilePredictorAlgorithm}
- * instance used to predict the future for the outlined relation is also
- * accessible from this classes instances.
+ * Handles multiple predictors for various observables (separately, not integrated via the predictor).
  * 
  * @author Christopher Voges
- *
+ * @author Holger Eichelberger
  */
-class AlgorithmProfile {
+class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
 
     private static final Logger LOGGER = LogManager.getLogger(AlgorithmProfilePredictionManager.class);
-    private Map<IObservable, IAlgorithmProfilePredictorAlgorithm> predictors = new HashMap<>();
+    private Map<IObservable, IAlgorithmProfilePredictor> predictors = new HashMap<>();
     
     private PipelineElement element;
     private Map<Object, Serializable> key;
     
     /**
-     * Generates an empty {@link AlgorithmProfile}.
+     * Generates an empty {@link SeparateObservableAlgorithmProfile}.
      * 
      * @param element the pipeline element
      * @param key the profile key
      */
-    public AlgorithmProfile(PipelineElement element, Map<Object, Serializable> key) {
+    public SeparateObservableAlgorithmProfile(PipelineElement element, Map<Object, Serializable> key) {
         this.element = element;
         this.key = key;
     }
@@ -74,7 +59,8 @@ class AlgorithmProfile {
      * 
      * @param observable the observable to be predicted
      * 
-     * @return The key representing this {@link AlgorithmProfile} instance in its current configuration.
+     * @return The key representing this {@link SeparateObservableAlgorithmProfile} instance in its 
+     *     current configuration.
      */
     private String generateKey(IObservable observable) {
         String pipelineName = element.getPipeline().getName();
@@ -99,14 +85,15 @@ class AlgorithmProfile {
         return null == tmp ? "" : tmp.toString();
     }
     
-    /**
-     * Clears this instance.
-     * 
-     * @param path the target path for persisting the predictor instances
-     */
-    void store(String path) {
-        for (Map.Entry<IObservable, IAlgorithmProfilePredictorAlgorithm> ent : predictors.entrySet()) {
-            store(ent.getValue(), path, generateKey(ent.getKey()));
+    @Override
+    public void store(String path) {
+        for (Map.Entry<IObservable, IAlgorithmProfilePredictor> ent : predictors.entrySet()) {
+            try {
+                // this is not really efficient
+                store(ent.getValue(), path, generateKey(ent.getKey()));
+            } catch (IOException e) {
+                LOGGER.error("While writing profile: " + e.getMessage());
+            }
         }
     }
     
@@ -116,10 +103,9 @@ class AlgorithmProfile {
      * @param predictor the predictor
      * @param path the target path for persisting the predictor instances
      * @param identifier the predictor identifier
-     * @return <code>true</code> if successful, <code>false</code> else
+     * @throws IOException if saving the predictor fails
      */
-    boolean store(IAlgorithmProfilePredictorAlgorithm predictor, String path, String identifier) {
-        boolean result = false;
+    void store(IAlgorithmProfilePredictor predictor, String path, String identifier) throws IOException {
         ArrayList<String> mapData = new ArrayList<>();
         int id = -1;
         File folder = new File(path);
@@ -139,7 +125,7 @@ class AlgorithmProfile {
         // load map-file
         File mapFile = new File(folder, "_map");
         if (mapFile.exists()) {
-            mapData = loadTxtFile(mapFile, identifier);
+            mapData = Utils.loadTxtFile(mapFile, identifier);
             id = new Integer(mapData.get(0).trim());
              
         } else {
@@ -164,71 +150,17 @@ class AlgorithmProfile {
         if (!entryFound) {
             id++;
         } 
-            
+        
         // generate file
         File instanceFile = new File(folder, id + "");
-        // write instance to file
-        ArrayList<String> instanceString = predictor.toStringArrayList();
-        result = writeTxtFile(instanceFile, instanceString, identifier);
+        predictor.store(instanceFile, identifier);
         
         // update map-file, if needed
         if (!entryFound) {
             mapData.set(0, String.valueOf(id));
             mapData.add(id + "|" + identifier);
-            result = writeTxtFile(mapFile, mapData, identifier);
+            Utils.writeTxtFile(mapFile, mapData, identifier);
         } 
-        return result;
-    }
-    
-    /**
-     * Loads the content of the given file into the returned {@link ArrayList}.
-     * @param file {@link File} to load.
-     * @param key the identification key for this profile
-     * @return Content 
-     */
-    private ArrayList<String> loadTxtFile(File file, String key) {
-        ArrayList<String> content = new ArrayList<>();
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            try {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    line = line.trim();
-                    // No comments or empty lines
-                    if (!(line.startsWith("#")) && !(line.isEmpty())) {
-                        content.add(line);
-                    }
-                }
-            } finally {
-                reader.close();
-            }
-        } catch (IOException e) {
-            LOGGER.error("While storing the predictor of " + key, e);
-        }
-        
-        return content;
-    }
-    /**
-     * Stores the content to the given file.
-     * 
-     * @param file {@link File} to write to.
-     * @param content The lines to write.
-     * @param key the identification key for this profile
-     * @return If the writing was successful. 
-     */
-    private boolean writeTxtFile(File file, ArrayList<String> content, String key) {
-        boolean result = false;
-        try {
-            PrintStream writer = new PrintStream(file);
-            for (String out : content) {
-                writer.println(out);
-            }
-            writer.close();
-            result = true;
-        } catch (IOException e) {
-            LOGGER.error("While storing the predictor of " + key, e);
-        }
-        return result;
     }
 
     /**
@@ -237,38 +169,25 @@ class AlgorithmProfile {
      * @param observable the observable to obtain a predictor for
      * @return the predictor
      */
-    private IAlgorithmProfilePredictorAlgorithm obtainPredictor(IObservable observable) {
-        IAlgorithmProfilePredictorAlgorithm predictor = predictors.get(observable);
+    private IAlgorithmProfilePredictor obtainPredictor(IObservable observable) {
+        IAlgorithmProfilePredictor predictor = predictors.get(observable);
         if (null == predictor && null != QuantizerRegistry.getQuantizer(observable)) {
             // TODO try loading
-            predictor = new Kalman();
+            predictor = element.getProfileCreator().createPredictor();
             predictors.put(observable, predictor);
         }
         return predictor;
     }
 
-    /**
-     * Predicts the next value for <code>observable</code>.
-     * 
-     * @param observable the observable to predict for
-     * @return the predicted value, {@link Constants#NO_PREDICTION} if no prediction is possible
-     */
-    double predict(IObservable observable) {
+    @Override
+    public double predict(IObservable observable) {
         return predict(observable, 0); // TODO really 0?
     }
 
-    /**
-     * Predicts a value for the given <code>obserable</code>.
-     * 
-     * @param observable the observable to predict for
-     * @param steps Number of steps to predict ahead.
-     *      <p> steps = 0: Predict one step after the time step of the last update.
-     *      <p> steps > 0: Predict X step(s) ahead of 'now'.
-     * @return the predicted value, {@link Constants#NO_PREDICTION} if no prediction is possible
-     */
-    double predict(IObservable observable, int steps) {
+    @Override
+    public double predict(IObservable observable, int steps) {
         double result;
-        IAlgorithmProfilePredictorAlgorithm predictor = obtainPredictor(observable);
+        IAlgorithmProfilePredictor predictor = obtainPredictor(observable);
         if (null != predictor) {
             result = predictor.predict();
         } else {
@@ -277,15 +196,11 @@ class AlgorithmProfile {
         return result;
     }
 
-    /**
-     * Updates the profile according to the measurements in <code>family</code>.
-     * 
-     * @param family the family used to update the predictors
-     */
-    void update(PipelineNodeSystemPart family) {
+    @Override
+    public void update(PipelineNodeSystemPart family) {
         for (IObservable obs : family.getObservables()) {
             if (family.hasValue(obs)) {
-                IAlgorithmProfilePredictorAlgorithm predictor = obtainPredictor(obs);
+                IAlgorithmProfilePredictor predictor = obtainPredictor(obs);
                 if (null != predictor) {
                     predictor.update(family.getLastUpdate(obs) / 1000, family.getObservedValue(obs));
                 }
