@@ -320,7 +320,9 @@ public class StormTests extends AbstractCoordinationTests {
      */
     @Test
     public void testPipelineCommand() throws IOException {
-        testPipelineCommands(ParallelismChangeLevel.NONE);
+        if (!isJenkins()) {
+            testPipelineCommands(ParallelismChangeLevel.NONE);
+        }
     }
 
     /**
