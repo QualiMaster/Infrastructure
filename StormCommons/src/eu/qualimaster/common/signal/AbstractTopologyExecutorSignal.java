@@ -95,7 +95,9 @@ public abstract class AbstractTopologyExecutorSignal extends TopologySignal {
 
     @Override
     public void sendSignal(AbstractSignalConnection connection) throws SignalException {
-        sendSignal(connection.getClient());
+        if (connection.isConnected()) {
+            sendSignal(connection.getClient());
+        }
     }
     
     /**

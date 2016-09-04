@@ -28,6 +28,7 @@ import org.apache.log4j.LogManager;
 import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.storm.curator.framework.api.transaction.CuratorTransaction;
 import org.apache.storm.curator.framework.api.transaction.CuratorTransactionFinal;
+import org.apache.storm.curator.framework.imps.CuratorFrameworkState;
 
 import backtype.storm.utils.Utils;
 
@@ -428,6 +429,15 @@ public class PortManager {
         this.client = client;
         this.range = range;
     }
+    
+    /**
+     * Returns whether the curator framework is connected.
+     * 
+     * @return <code>true</code> for connected, <code>false</code> else
+     */
+    protected boolean isConnected() {
+        return CuratorFrameworkState.STARTED == client.getState();
+    }
 
     /**
      * Creates a port range using logging for exceptions.
@@ -440,7 +450,7 @@ public class PortManager {
         try {
             result = new PortRange(range);
         } catch (IllegalArgumentException e) {
-            LogManager.getLogger(PortManager.class).warn("Parsing port range: " + e.getMessage());
+            LogManager.getLogger(PortManager.class).warn("Parsing port range: " + range + " " + e.getMessage());
             result = null;
         }
         return result;
@@ -452,7 +462,9 @@ public class PortManager {
      * @throws SignalException in case of communication problems
      */
     public void clearAllPortAssignments() throws SignalException {
-        delete(PORTS);
+        if (isConnected()) {
+            delete(PORTS);
+        }
     }
     
     /**
@@ -464,18 +476,20 @@ public class PortManager {
      * @throws SignalException in case of communication problems
      */
     public void clearPortAssignment(String pipeline, String element, PortAssignment assignment) throws SignalException {
-        String path = getNodePath(pipeline, element, assignment.getTaskId());
-        PortsTable portsTable = loadSafe(path, PortsTable.class);
-        if (null != portsTable) {
-            if (portsTable.clearPortAssignment(assignment)) {
-                String hostPath = getHostPath(assignment.getHost());
-                HostTable hostTable = loadSafe(hostPath, HostTable.class);
-                if (null != hostTable) {
-                    hostTable.removeAssignment(assignment.getPort());
+        if (isConnected()) {
+            String path = getNodePath(pipeline, element, assignment.getTaskId());
+            PortsTable portsTable = loadSafe(path, PortsTable.class);
+            if (null != portsTable) {
+                if (portsTable.clearPortAssignment(assignment)) {
+                    String hostPath = getHostPath(assignment.getHost());
+                    HostTable hostTable = loadSafe(hostPath, HostTable.class);
+                    if (null != hostTable) {
+                        hostTable.removeAssignment(assignment.getPort());
+                    }
+                    CuratorTransaction transaction = client.inTransaction();
+                    store(path, portsTable, transaction, false);
+                    store(hostPath, hostTable, transaction, true);
                 }
-                CuratorTransaction transaction = client.inTransaction();
-                store(path, portsTable, transaction, false);
-                store(hostPath, hostTable, transaction, true);
             }
         }
     }
@@ -515,10 +529,12 @@ public class PortManager {
     public PortAssignment getPortAssignment(String pipeline, String element, int taskId, String assignmentId) 
         throws SignalException {
         PortAssignment result = null;
-        String path = getNodePath(pipeline, element, taskId);
-        PortsTable table = loadSafe(path, PortsTable.class);
-        if (null != table) {
-            result = table.getPortAssignment(taskId, assignmentId);
+        if (isConnected()) {
+            String path = getNodePath(pipeline, element, taskId);
+            PortsTable table = loadSafe(path, PortsTable.class);
+            if (null != table) {
+                result = table.getPortAssignment(taskId, assignmentId);
+            }
         }
         return result;
     }
@@ -541,7 +557,7 @@ public class PortManager {
     public void clearPortAssignments(String pipeline) throws SignalException {
         String pipPath = NODES_PREFIX + pipeline;
         try {
-            if (client.checkExists().forPath(pipPath) != null) { 
+            if (isConnected() && client.checkExists().forPath(pipPath) != null) { 
                 CuratorTransaction transaction = client.inTransaction();
                 List<String> children = client.getChildren().forPath(pipPath);
                 if (null != children) {
@@ -715,33 +731,35 @@ public class PortManager {
             throw new IllegalArgumentException("no request given");
         }
         PortAssignment result = null;
-        String nodePath = getNodePath(request.getPipeline(), request.getElement(), request.getTaskId());
-        String hostPath = getHostPath(request.getHost());
-        try {
-            assertExists(nodePath, null, false);
-            assertExists(hostPath, null, false);
-            CuratorTransaction transaction = client.inTransaction();
-            PortsTable portsTable = loadWithInit(nodePath, PortsTable.class, transaction, false);
-            HostTable hostTable = loadWithInit(hostPath, HostTable.class, transaction, false);
-            int candidate = portRange.getLowPort();
-            boolean check = request.doCheck();
-            while (null == result && candidate <= portRange.getHighPort()) {
-                if (null == hostTable.getAssignment(candidate)) {
-                    if (!check || (check && isPortFree(request.getHost(), candidate))) {
-                        result = new PortAssignment(request.getHost(), candidate, request.getTaskId(), 
-                            request.getAssignmentId());
-                        portsTable.registerPortAssignment(request.getTaskId(), result);
-                        hostTable.addAssignment(candidate, request.getPipeline());
+        if (isConnected()) {
+            String nodePath = getNodePath(request.getPipeline(), request.getElement(), request.getTaskId());
+            String hostPath = getHostPath(request.getHost());
+            try {
+                assertExists(nodePath, null, false);
+                assertExists(hostPath, null, false);
+                CuratorTransaction transaction = client.inTransaction();
+                PortsTable portsTable = loadWithInit(nodePath, PortsTable.class, transaction, false);
+                HostTable hostTable = loadWithInit(hostPath, HostTable.class, transaction, false);
+                int candidate = portRange.getLowPort();
+                boolean check = request.doCheck();
+                while (null == result && candidate <= portRange.getHighPort()) {
+                    if (null == hostTable.getAssignment(candidate)) {
+                        if (!check || (check && isPortFree(request.getHost(), candidate))) {
+                            result = new PortAssignment(request.getHost(), candidate, request.getTaskId(), 
+                                request.getAssignmentId());
+                            portsTable.registerPortAssignment(request.getTaskId(), result);
+                            hostTable.addAssignment(candidate, request.getPipeline());
+                        }
+                    }
+                    if (null == result) {
+                        candidate++;
                     }
                 }
-                if (null == result) {
-                    candidate++;
-                }
+                store(nodePath, portsTable, transaction, false);
+                store(hostPath, hostTable, transaction, true);
+            } catch (Exception e) {
+                throw new SignalException(e);
             }
-            store(nodePath, portsTable, transaction, false);
-            store(hostPath, hostTable, transaction, true);
-        } catch (Exception e) {
-            throw new SignalException(e);
         }
         return result;
     }

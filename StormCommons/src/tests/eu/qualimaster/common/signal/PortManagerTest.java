@@ -193,9 +193,34 @@ public class PortManagerTest {
         client.close();
         cluster.shutdown();
         TestHelper.trackTemp(tmpFiles, true);
+        fail = testClosed(client);
         if (null != fail) {
             Assert.fail(fail.getMessage());
         }
+    }
+    
+    /**
+     * Tests a closed client connection.
+     * 
+     * @param client the closed connection
+     * @return exception if occurred
+     */
+    private SignalException testClosed(CuratorFramework client) {
+        SignalException fail = null;
+        try {
+            PortRange range = new PortRange(1000, 1001);
+            PortManager mgr = new PortManager(client, range);
+            mgr.clearAllPortAssignments();
+            mgr.clearPortAssignments("pip");
+            mgr.getPortAssignment("pip", "element", 5, "id");
+            PortAssignmentRequest req = new PortAssignmentRequest("pip", "element", 6, "localhost", null);
+            mgr.registerPortAssignment(req);
+            mgr.close();
+        } catch (SignalException e) {
+            e.printStackTrace();
+            fail = e;
+        }
+        return fail;
     }
     
     /**

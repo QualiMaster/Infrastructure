@@ -63,7 +63,7 @@ public class MapFile {
      * @param id the id
      */
     public void put(String identifier, int id) {
-        mapData.put(identifier, Integer.valueOf(id));
+        mapData.put(identifier, Integer.toString(id));
     }
     
     /**

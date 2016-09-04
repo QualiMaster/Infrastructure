@@ -35,7 +35,7 @@ public class DoubleQuantizer extends Quantizer<Double> {
      */
     public DoubleQuantizer(int step) {
         super(Double.class);
-        step = Math.max(1, step);
+        this.step = Math.max(1, step);
     }
 
     @Override

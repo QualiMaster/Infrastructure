@@ -43,7 +43,7 @@ public abstract class AbstractMatrixPredictor implements IAlgorithmProfilePredic
     
     @Override
     public void store(File file, String identifier) throws IOException {
-        Utils.store(file,  toProperties());
+        Utils.store(file, toProperties());
     }
 
     @Override

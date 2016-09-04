@@ -2,6 +2,7 @@ package eu.qualimaster.common.signal;
 
 import org.apache.log4j.Logger;
 import org.apache.storm.curator.framework.CuratorFramework;
+import org.apache.storm.curator.framework.imps.CuratorFrameworkState;
 import org.apache.storm.zookeeper.WatchedEvent;
 import org.apache.storm.zookeeper.Watcher;
 import org.apache.storm.zookeeper.data.Stat;
@@ -60,14 +61,23 @@ public abstract class AbstractSignalConnection implements Watcher {
      * @throws Exception in case of execution problems
      */
     protected void initWatcher() throws Exception {
-        if (Configuration.getPipelineSignalsCurator()) {
+        if (Configuration.getPipelineSignalsCurator() && isConnected()) {
             String path = getWatchedPath();
             Stat stat = client.checkExists().forPath(path);
             if (stat == null) {
                 client.create().creatingParentsIfNeeded().forPath(path);
             }
-            stat = this.client.checkExists().usingWatcher(this).forPath(path);
+            stat = client.checkExists().usingWatcher(this).forPath(path);
         }
+    }
+    
+    /**
+     * Returns whether the signal framework is connected.
+     * 
+     * @return <code>true</code> for connected, <code>false</code> else
+     */
+    protected boolean isConnected() {
+        return CuratorFrameworkState.STARTED == client.getState();
     }
     
     /**
@@ -86,10 +96,10 @@ public abstract class AbstractSignalConnection implements Watcher {
      * @param we the watched event
      */
     public void process(WatchedEvent we) {
-        if (Configuration.getPipelineSignalsCurator()) {
+        if (Configuration.getPipelineSignalsCurator() && isConnected()) {
             String path = getWatchedPath();
             try {
-                this.client.checkExists().usingWatcher(this).forPath(path);
+                client.checkExists().usingWatcher(this).forPath(path);
             } catch (Exception ex) {
                 LOGGER.error("Error renewing watch." + ex);
             }
@@ -103,7 +113,7 @@ public abstract class AbstractSignalConnection implements Watcher {
                 try {
                     String wePath = we.getPath();
                     LOGGER.info("The path is " + wePath);
-                    byte[] payload = this.client.getData().forPath(wePath);
+                    byte[] payload = client.getData().forPath(wePath);
                     this.listener.onSignal(payload);
                 } catch (Exception e) {
                     LOGGER.error("Warning: Unable to process signal." + e, e);
@@ -131,11 +141,13 @@ public abstract class AbstractSignalConnection implements Watcher {
      */
     public void send(String toPath, byte[] signal) throws Exception {
         if (Configuration.getPipelineSignalsCurator()) {
-            Stat stat = this.client.checkExists().forPath(toPath);
-            if (stat == null) {
-                this.client.create().creatingParentsIfNeeded().forPath(toPath);
+            if (isConnected()) {
+                Stat stat = client.checkExists().forPath(toPath);
+                if (stat == null) {
+                    client.create().creatingParentsIfNeeded().forPath(toPath);
+                }
+                client.setData().forPath(toPath, signal);
             }
-            this.client.setData().forPath(toPath, signal);
         } else {
             LOGGER.warn("attempt to send signal while curator signalling is disabled in this infrastructure: " 
                 + toPath + " " + signal);
@@ -149,7 +161,7 @@ public abstract class AbstractSignalConnection implements Watcher {
      */
     public void close() {
         if (Configuration.getPipelineSignalsCurator()) {
-            this.client.close();
+            client.close();
         }
         if (null != eventManager) {
             eventManager.doCleanup();

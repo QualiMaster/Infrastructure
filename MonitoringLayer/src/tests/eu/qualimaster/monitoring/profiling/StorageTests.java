@@ -15,19 +15,35 @@
  */
 package tests.eu.qualimaster.monitoring.profiling;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import java.io.File;
+import java.io.IOException;
+
+import org.apache.commons.io.FileUtils;
+import org.junit.Test;
+
+import eu.qualimaster.monitoring.profiling.Kalman;
 
 /**
- * The test suite for the Monitoring Profiling support. Do not rename this class.
+ * Some tests storing profiling data.
  * 
- * @author Christopher Voges
+ * @author Holger Eichelberger
  */
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-    InstantiationTest.class, 
-    PerformanceTest.class, 
-    QualityTest.class,
-    StorageTests.class})
-public class ProfilingTests {
+public class StorageTests {
+
+    /**
+     * Tests storing.
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test
+    public void testKalman() throws IOException {
+        File f = new File(FileUtils.getTempDirectory(), "kalman.tmp");
+        f.delete();
+        Kalman k1 = new Kalman();
+        k1.store(f, "abba");
+        
+        Kalman k2 = new Kalman();
+        k2.load(f, "abba");
+    }
+    
 }

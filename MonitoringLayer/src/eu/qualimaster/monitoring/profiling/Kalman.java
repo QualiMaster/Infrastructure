@@ -341,19 +341,19 @@ public class Kalman extends AbstractMatrixPredictor {
     @Override
     protected Properties toProperties() {
         Properties result = new Properties();
-        result.put(KEY_MEASUREMENT_NOISE, measurementNoise);
-        result.put(KEY_MATRIX_A, mA);
-        result.put(KEY_MATRIX_B, mB);
-        result.put(KEY_MATRIX_H, mH);
-        result.put(KEY_MATRIX_Q, mQ);
-        result.put(KEY_MATRIX_R, mR);
-        result.put(KEY_MATRIX_P, mP);
-        result.put(KEY_VECTOR_X, xVector);
-        result.put(KEY_VECTOR_CONTROL, controlVector);
-        result.put(KEY_LAST_UPDATED, lastUpdated);
-        result.put(KEY_LAST_UPDATE, lastUpdate);
-        result.put(KEY_ALLOWED_GAP, allowedGap);
-        result.put(KEY_DEFAULT_MEASUREMENT, defaultMeasurement);
+        result.put(KEY_MEASUREMENT_NOISE, String.valueOf(measurementNoise));
+        result.put(KEY_MATRIX_A, mA.toString());
+        result.put(KEY_MATRIX_B, mB.toString());
+        result.put(KEY_MATRIX_H, mH.toString());
+        result.put(KEY_MATRIX_Q, mQ.toString());
+        result.put(KEY_MATRIX_R, mR.toString());
+        result.put(KEY_MATRIX_P, mP.toString());
+        result.put(KEY_VECTOR_X, xVector.toString());
+        result.put(KEY_VECTOR_CONTROL, controlVector.toString());
+        result.put(KEY_LAST_UPDATED, String.valueOf(lastUpdated));
+        result.put(KEY_LAST_UPDATE, String.valueOf(lastUpdate));
+        result.put(KEY_ALLOWED_GAP, String.valueOf(allowedGap));
+        result.put(KEY_DEFAULT_MEASUREMENT, String.valueOf(defaultMeasurement));
         return result;
     }
 

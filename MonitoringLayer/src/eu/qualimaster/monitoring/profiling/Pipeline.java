@@ -15,6 +15,7 @@
  */
 package eu.qualimaster.monitoring.profiling;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import eu.qualimaster.monitoring.MonitoringConfiguration;
@@ -26,7 +27,7 @@ import eu.qualimaster.monitoring.MonitoringConfiguration;
  */
 class Pipeline {
     
-    private Map<String, PipelineElement> elements;
+    private Map<String, PipelineElement> elements = new HashMap<>();
     private String name;
     private String path = MonitoringConfiguration.getProfileLocation();
     private IAlgorithmProfileCreator creator;
