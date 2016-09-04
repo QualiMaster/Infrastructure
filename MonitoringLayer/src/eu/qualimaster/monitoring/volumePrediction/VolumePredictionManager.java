@@ -24,8 +24,6 @@ import eu.qualimaster.monitoring.utils.IScheduler;
 public class VolumePredictionManager {
 	
 	private static final String DEFAULT_FILE_NAME = "historical_data.txt";
-	
-	private static final String TEST_DATA_FOLDER = "./testdata/volumePrediction/";
 
 	private static final HistoricalDataProviderRegistrationEventHandler HISTORICAL_DATA_REGISTRATION_EVENT_HANDLER 
             = new HistoricalDataProviderRegistrationEventHandler();
@@ -253,13 +251,27 @@ public class VolumePredictionManager {
 	
 	/**
 	 * Simulates the handle of a HistoricalDataProviderRegistrationEvent (for testing purposes)
-	 * @param event
+	 * @param event the event carrying the historical data handler
+	 * @param folder the folder where to write temporary data
 	 */
-	public static void handleTest(HistoricalDataProviderRegistrationEvent event) {
+
+	public static void handleHistoricalDataProviderRegistrationEventTest(HistoricalDataProviderRegistrationEvent event, String folder) {
     	VolumePredictor predictor = new VolumePredictor(event.getPipeline(), event.getSource(), event.getProvider(), test);
-    	predictor.initialize(TEST_DATA_FOLDER + event.getSource() + "_" + DEFAULT_FILE_NAME);
+    	predictor.initialize(folder + event.getSource() + "_" + DEFAULT_FILE_NAME);
     	volumePredictors.put(event.getSource(), predictor);
     }
+	
+	public static void warmUp(String folder){
+		for(VolumePredictor vp : volumePredictors.values()){
+			vp.warmUp(folder);
+		}
+	}
+	
+	public static void handleNotifySourceVolumeMonitoringEventTest(SourceVolumeMonitoringEvent event) {
+		VolumePredictor predictor = volumePredictors.get(event.getPipelineElement());
+		if(predictor != null) predictor.handlePredictionStep(event.getObservations());
+		else System.out.println("ERROR: no volume predictor available for the input source" + event.getPipelineElement());
+	}
 
 	/**
 	 * @return the test
@@ -273,5 +285,14 @@ public class VolumePredictionManager {
 	 */
 	public static void setTest(boolean t) {
 		test = t;
+	}
+	
+	/**
+	 * Gets the predictor corresponding to a given source
+	 * @param source the source
+	 * @return
+	 */
+	public static VolumePredictor getPredictor(String source){
+		return volumePredictors.get(source);
 	}
 }
