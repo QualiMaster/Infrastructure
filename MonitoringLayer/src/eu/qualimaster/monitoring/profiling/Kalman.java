@@ -446,9 +446,20 @@ public class Kalman extends AbstractMatrixPredictor {
         return Double.doubleToLongBits(d1) == Double.doubleToLongBits(d2);
     }
     
+    /**
+     * The hashcode method according to Double (Java 1.8).
+     * 
+     * @param value the double value
+     * @return the hash code
+     */
+    private static int hashCode(double value) {
+        long bits = Double.doubleToLongBits(value);
+        return (int) (bits ^ (bits >>> 32));        
+    }
+    
     @Override
     public int hashCode() {
-        int result = Double.hashCode(measurementNoise);
+        int result = hashCode(measurementNoise);
         result ^= mA.hashCode();
         result ^= mB.hashCode();
         result ^= mH.hashCode();
@@ -457,10 +468,10 @@ public class Kalman extends AbstractMatrixPredictor {
         result ^= mR.hashCode();
         result ^= xVector.hashCode();
         result ^= controlVector.hashCode();
-        result ^= Double.hashCode(lastUpdated);
-        result ^= Double.hashCode(lastUpdate);
+        result ^= hashCode(lastUpdated);
+        result ^= hashCode(lastUpdate);
         result ^= allowedGap;
-        result ^= Double.hashCode(defaultMeasurement);
+        result ^= hashCode(defaultMeasurement);
         return result;
     }
     
