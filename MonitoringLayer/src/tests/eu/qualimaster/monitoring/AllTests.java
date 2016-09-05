@@ -13,8 +13,7 @@ import tests.eu.qualimaster.monitoring.profiling.ProfilingTests;
  * @author Holger Eichelberger
  */
 @RunWith(Suite.class)
-@Suite.SuiteClasses({SimpleMonitoringTests.class, ChangeMonitoringTests.class, 
-    //StormTest.class, disabled for now
+@Suite.SuiteClasses({SimpleMonitoringTests.class, ChangeMonitoringTests.class, StormTest.class,
     HwMonitoringTest.class, SystemStateTest.class, LogTest.class, TopologyTests.class, ReasoningTaskTests.class, 
     StormClusterMonitoringTest.class, ObservationTests.class, 
     CloudEnvironmentTests.class,

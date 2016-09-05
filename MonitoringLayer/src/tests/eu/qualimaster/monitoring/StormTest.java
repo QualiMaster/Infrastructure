@@ -383,9 +383,15 @@ public class StormTest extends AbstractCoordinationTests {
         // there must be the trace file
         File[] pFiles = profileLocation.listFiles();
         Assert.assertNotNull(pFiles);
-        Assert.assertTrue(1 == pFiles.length);
-        Assert.assertTrue(pFiles[0].exists());
-        Assert.assertTrue(pFiles[0].length() > 0);
+        File found = null; // there might be more files due to profiling
+        for (int f = 0; null == found && f < pFiles.length; f++) {
+            if (pFiles[f].getName().endsWith(".csv")) {
+                found = pFiles[f];
+            }
+        }
+        Assert.assertNotNull(found);
+        Assert.assertTrue(found.exists());
+        Assert.assertTrue(found.length() > 0);
 
         FileUtils.deleteQuietly(profileLocation);
         env.cleanup();
