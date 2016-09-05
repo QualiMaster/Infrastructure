@@ -349,7 +349,12 @@ public class HardwareConnectionTest {
                     if (running.contains(id)) {
                         response = new UploadMessageOut(MessageTable.Code.UPLOAD_ERROR.toMsg());
                     } else {
-                        response = new UploadMessageOut(1234, 1235);
+                        int pCount = tmp.getPortCount();
+                        int[] ports = new int[pCount];
+                        for (int p = 0; p < pCount; p++) {
+                            ports[p] = 1235 + p;
+                        }
+                        response = new UploadMessageOut(1234, ports);
                         running.add(id);
                     }
                 }
@@ -503,7 +508,8 @@ public class HardwareConnectionTest {
         UploadMessageOut up = hcc.uploadAlgorithm("HY", y);
         Assert.assertTrue(Utils.isSuccess(up.getErrorMsg()));
         Assert.assertTrue(up.getPortIn() > 0);
-        Assert.assertTrue(up.getPortOut() > 0);
+        Assert.assertEquals(1, up.getPortOutCount()); // we implicitly just requested one port
+        Assert.assertTrue(up.getPortOut(0) > 0);
         
         System.out.println("Querying HY");
         Assert.assertTrue(hcc.isRunning("HY"));

@@ -180,18 +180,33 @@ public class HardwareControlConnection {
 
     /**
      * Sends a non-blocking algorithm upload request to the hardware machine addressed by this connection, shall be 
-     * {@link IHardwareDispatcher#uploaded(int, int)} or {@link IHardwareDispatcher#failed()}.
+     * {@link IHardwareDispatcher#uploaded(int, int)} or {@link IHardwareDispatcher#failed()}. This method requests 1 
+     * output port.
      * 
      * @param id the algorithm id
      * @param executable the executable (preliminary)
      * @throws IOException in case that sending the command fails for some reason
      */
     public void sendAlgorithmUpload(String id, ByteString executable) throws IOException {
+        sendAlgorithmUpload(id, 1, executable);
+    }
+    
+    /**
+     * Sends a non-blocking algorithm upload request to the hardware machine addressed by this connection, shall be 
+     * {@link IHardwareDispatcher#uploaded(int, int)} or {@link IHardwareDispatcher#failed()}.
+     * 
+     * @param id the algorithm id
+     * @param portCount the number of ports to use (numbers less than 1 will be turned to 1)
+     * @param executable the executable (preliminary)
+     * @throws IOException in case that sending the command fails for some reason
+     */
+    public void sendAlgorithmUpload(String id, int portCount, ByteString executable) throws IOException {
         sendToken("ca");
         
         UploadMessageIn message = new UploadMessageIn();
         message.setId(id);
         message.setExecutable(executable);
+        message.setPortCount(portCount);
 
         sendMessage(message, UploadMessageIn.class);        
     }
@@ -272,17 +287,31 @@ public class HardwareControlConnection {
     }
 
     // synchronous
+
+    /**
+     * Uploads an algorithm to the hardware machine addressed by this interface connection. This method requests 
+     * 1 output port (default).
+     * 
+     * @param id the algorithm id
+     * @param executable the Maven URL of the executable 
+     * @return an instance indicating the result of this operation. If successful, in and out ports are returned.
+     * @throws IOException in case that sending the command fails for some reason
+     */
+    public UploadMessageOut uploadAlgorithm(String id, ByteString executable) throws IOException {
+        return uploadAlgorithm(id, 1, executable);
+    }
     
     /**
      * Uploads an algorithm to the hardware machine addressed by this interface connection.
      * 
      * @param id the algorithm id
-     * @param executable the executable (preliminary)
+     * @param executable the Maven URL of the executable
+     * @param portCount the number of ports to use (numbers less than 1 will be turned to 1)
      * @return an instance indicating the result of this operation. If successful, in and out ports are returned.
      * @throws IOException in case that sending the command fails for some reason
      */
-    public UploadMessageOut uploadAlgorithm(String id, ByteString executable) throws IOException {
-        sendAlgorithmUpload(id, executable);
+    public UploadMessageOut uploadAlgorithm(String id, int portCount, ByteString executable) throws IOException {
+        sendAlgorithmUpload(id, portCount, executable);
         receive(DISPATCHER, true);
         UploadMessageOut result = DISPATCHER.uploadMessage;
         DISPATCHER.clear();

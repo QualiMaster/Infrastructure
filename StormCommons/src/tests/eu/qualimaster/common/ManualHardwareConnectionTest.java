@@ -154,7 +154,14 @@ public class ManualHardwareConnectionTest implements IHardwareDispatcher {
         System.out.println("UPLOAD MESSAGE RESPONSE:");
         System.out.println(msg.getErrorMsg());
         System.out.println(msg.getPortIn());
-        System.out.println(msg.getPortOut());
+        int portCount = msg.getPortOutCount();
+        for (int p = 0; p < portCount; p++) {
+            System.out.print(msg.getPortOut(p));
+            if (p < portCount) {
+                System.out.print(", ");
+            }
+        }
+        System.out.println();
     }
 
     @Override

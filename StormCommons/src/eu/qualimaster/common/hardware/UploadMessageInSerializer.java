@@ -25,6 +25,7 @@ class UploadMessageInSerializer implements ISerializer<UploadMessageIn> {
         SUploadIn tmp = SUploadIn.newBuilder()
             .setId(msg.getId())
             .setExecutableCode(msg.getExecutable())
+            .setNoOutputPorts(msg.getPortCount())
             .build();
         tmp.writeDelimitedTo(out);
     }
@@ -35,6 +36,7 @@ class UploadMessageInSerializer implements ISerializer<UploadMessageIn> {
         SUploadIn tmp = SUploadIn.parseDelimitedFrom(in);
         result.setId(tmp.getId());
         result.setExecutable(tmp.getExecutableCode());
+        result.setPortCount(tmp.getNoOutputPorts());
         return result;
     }
 
@@ -42,6 +44,7 @@ class UploadMessageInSerializer implements ISerializer<UploadMessageIn> {
     public void serializeTo(UploadMessageIn object, IDataOutput out) throws IOException {
         out.writeString(object.getId());
         out.writeByteArray(object.getExecutable().toByteArray());
+        out.writeInt(object.getPortCount());
     }
 
     @Override
@@ -49,6 +52,7 @@ class UploadMessageInSerializer implements ISerializer<UploadMessageIn> {
         UploadMessageIn result = new UploadMessageIn();
         result.setId(in.nextString());
         result.setExecutable(ByteString.copyFrom(in.nextByteArray()));
+        result.setPortCount(in.nextInt());
         return result;
     }
 }

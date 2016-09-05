@@ -11,7 +11,7 @@ public class UploadMessageOut {
 
     private String errorMsg;
     private int portIn;
-    private int portOut;
+    private int[] portsOut;
 
     /**
      * Creates an empty instance.
@@ -27,19 +27,23 @@ public class UploadMessageOut {
     public UploadMessageOut(String errorMsg) {
         this.errorMsg = errorMsg;
         this.portIn = -1;
-        this.portOut = -1;
+        this.portsOut = new int[0];
     }
 
     /**
      * Creates an instance signaling a successful execution.
      * 
      * @param portIn the data input port
-     * @param portOut the data output port
+     * @param portsOut the data output ports
+     * @throws IllegalArgumentException if <code>portsOut</code> is <b>null</b>
      */
-    public UploadMessageOut(int portIn, int portOut) {
+    public UploadMessageOut(int portIn, int[] portsOut) {
+        if (null == portsOut) {
+            throw new IllegalArgumentException("portOut must not be null");
+        }
         this.errorMsg = MessageTable.Code.SUCCESS.toMsg();
         this.portIn = portIn;
-        this.portOut = portOut;
+        this.portsOut = portsOut;
     }
     
     /**
@@ -88,21 +92,52 @@ public class UploadMessageOut {
     }
 
     /**
-     * Returns the data output port for running the algorithm (success case).
+     * Returns the (first) data output port for running the algorithm (success case).
      * 
-     * @return the data output port
+     * @return the first data output port, a negative number if no output port is known 
+     * @deprecated use {@link #getPortOutCount()} and {@link #getPortOut(int)} instead.
      */
+    @Deprecated
     public int getPortOut() {
-        return portOut;
+        return portsOut.length > 0 ? portsOut[0] : -1;
+    }
+    
+    /**
+     * Returns the specified output port (success case).
+     * 
+     * @param index the 0-based index of the port number
+     * @return the port number
+     * @throws IndexOutOfBoundsException if <code>index &lt; 0 || index &gt;={@link #getPortOutCount()}</code>
+     */
+    public int getPortOut(int index) {
+        return portsOut[index];
+    }
+    
+    /**
+     * Returns the number of output ports (success case).
+     * 
+     * @return the number
+     */
+    public int getPortOutCount() {
+        return portsOut.length;
     }
 
     /**
-     * Defines the data input port for running the algorithm (success case).
+     * Defines the data output ports for running the algorithm (success case).
      * 
-     * @param portOut the data output port
+     * @param portsOut the data output ports
      */
-    void setPortOut(int portOut) {
-        this.portOut = portOut;
+    void setPortsOut(int[] portsOut) {
+        this.portsOut = portsOut;
+    }
+    
+    /**
+     * Returns the output ports (use only internal for serialization).
+     * 
+     * @return the output ports
+     */
+    int[] getPortsOut() {
+        return portsOut;
     }
 
 }

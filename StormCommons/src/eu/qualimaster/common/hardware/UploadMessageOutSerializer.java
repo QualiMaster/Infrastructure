@@ -20,11 +20,13 @@ class UploadMessageOutSerializer implements ISerializer<UploadMessageOut> {
 
     @Override
     public void serializeTo(UploadMessageOut msg, OutputStream out) throws IOException {
-        SUploadOut tmp = SUploadOut.newBuilder()
+        SUploadOut.Builder builder = SUploadOut.newBuilder()
             .setErrorMsg(msg.getErrorMsg())
-            .setPortIn(msg.getPortIn())
-            .setPortOut(msg.getPortOut())
-            .build();
+            .setPortIn(msg.getPortIn());
+        for (int p = 0; p < msg.getPortOutCount(); p++) {
+            builder.addPortOut(msg.getPortOut(p));
+        }
+        SUploadOut tmp = builder.build();
         tmp.writeDelimitedTo(out);
     }
 
@@ -34,7 +36,12 @@ class UploadMessageOutSerializer implements ISerializer<UploadMessageOut> {
         SUploadOut tmp = SUploadOut.parseDelimitedFrom(in);
         result.setErrorMsg(tmp.getErrorMsg());
         result.setPortIn(tmp.getPortIn());
-        result.setPortOut(tmp.getPortOut());
+        int pCount = tmp.getPortOutCount();
+        int[] ports = new int[pCount];
+        for (int i = 0; i < pCount; i++) {
+            ports[i] = tmp.getPortOut(i);
+        }
+        result.setPortsOut(ports);
         return result;
     }
 
@@ -42,7 +49,7 @@ class UploadMessageOutSerializer implements ISerializer<UploadMessageOut> {
     public void serializeTo(UploadMessageOut object, IDataOutput out) throws IOException {
         out.writeString(object.getErrorMsg());
         out.writeInt(object.getPortIn());
-        out.writeInt(object.getPortOut());
+        out.writeIntArray(object.getPortsOut());
     }
 
     @Override
@@ -50,7 +57,7 @@ class UploadMessageOutSerializer implements ISerializer<UploadMessageOut> {
         UploadMessageOut result = new UploadMessageOut();
         result.setErrorMsg(in.nextString());
         result.setPortIn(in.nextInt());
-        result.setPortOut(in.nextInt());
+        result.setPortsOut(in.nextIntArray());
         return result;
     }
 

@@ -6,12 +6,13 @@ option java_outer_classname = "UploadInterfaceProtos";
 message SUploadIn {
     required string id = 1;
     required bytes executableCode = 2;   
+    required int32 no_output_ports = 3;
 }
 
 message SUploadOut {
     required string errorMsg = 1;
     required int32 portIn = 2;
-    required int32 portOut = 3;
+    repeated int32 portOut = 3;
 }
 
 message SStopIn {
