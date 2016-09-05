@@ -161,6 +161,7 @@ public abstract class AbstractSignalConnection implements Watcher {
      */
     public void close() {
         if (Configuration.getPipelineSignalsCurator()) {
+            client.clearWatcherReferences(this);
             client.close();
         }
         if (null != eventManager) {
