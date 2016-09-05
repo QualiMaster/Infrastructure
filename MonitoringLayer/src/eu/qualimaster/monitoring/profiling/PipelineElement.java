@@ -30,7 +30,7 @@ import eu.qualimaster.observables.Scalability;
  * 
  * @author Holger Eichelberger
  */
-class PipelineElement {
+public class PipelineElement {
     
     private Pipeline pipeline;
     private String name;
@@ -54,7 +54,7 @@ class PipelineElement {
      * 
      * @return the parent pipeline
      */
-    Pipeline getPipeline() {
+    public Pipeline getPipeline() {
         return pipeline;
     }
     
@@ -82,7 +82,7 @@ class PipelineElement {
      * 
      * @return the creator
      */
-    IAlgorithmProfileCreator getProfileCreator() {
+    public IAlgorithmProfileCreator getProfileCreator() {
         return pipeline.getProfileCreator();
     }
     
@@ -91,7 +91,7 @@ class PipelineElement {
      * 
      * @return the path
      */
-    String getPath() {
+    public String getPath() {
         return pipeline.getPath();
     }
     
@@ -100,7 +100,7 @@ class PipelineElement {
      * 
      * @return the name of the algorithm
      */
-    String getActiveAlgorithm() {
+    public String getActiveAlgorithm() {
         return activeAlgorithm;
     }
     
@@ -109,7 +109,7 @@ class PipelineElement {
      * 
      * @return the name of this pipeline element
      */
-    String getName() {
+    public String getName() {
         return name;
     }
     

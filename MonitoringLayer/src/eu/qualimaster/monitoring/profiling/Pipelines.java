@@ -48,12 +48,12 @@ public class Pipelines {
     }
 
     /**
-     * Returns a pipeline object.
+     * Returns a pipeline object. [public for testing]
      * 
      * @param name the name of the pipeline
      * @return the pipeline (may be <b>null</b> if not known)
      */
-    static Pipeline getPipeline(String name) {
+    public static Pipeline getPipeline(String name) {
         return pipelines.get(name);
     }
 

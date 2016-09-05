@@ -25,7 +25,7 @@ import eu.qualimaster.monitoring.MonitoringConfiguration;
  * 
  * @author Holger Eichelberger
  */
-class Pipeline {
+public class Pipeline {
     
     private Map<String, PipelineElement> elements = new HashMap<>();
     private String name;
@@ -49,7 +49,7 @@ class Pipeline {
      * @param name the name of the pipeline element
      * @return the pipeline element (may be <b>null</b> if it does not exist)
      */
-    PipelineElement getElement(String name) {
+    public PipelineElement getElement(String name) {
         return elements.get(name);
     }
     
@@ -58,7 +58,7 @@ class Pipeline {
      * 
      * @return the name
      */
-    String getName() {
+    public String getName() {
         return name;
     }
     
@@ -110,7 +110,7 @@ class Pipeline {
      * 
      * @return the creator
      */
-    IAlgorithmProfileCreator getProfileCreator() {
+    public IAlgorithmProfileCreator getProfileCreator() {
         return creator;
     }
     
@@ -119,7 +119,7 @@ class Pipeline {
      * 
      * @return the profile path
      */
-    String getPath() {
+    public String getPath() {
         return path;
     }
 

@@ -27,6 +27,7 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
     InstantiationTest.class, 
     PerformanceTest.class, 
-    QualityTest.class})
+    QualityTest.class,
+    ManagerTest.class})
 public class ProfilingTests {
 }

@@ -50,6 +50,7 @@ import eu.qualimaster.observables.ResourceUsage;
 import tests.eu.qualimaster.coordination.Utils;
 import tests.eu.qualimaster.logReader.LogReader;
 import tests.eu.qualimaster.logReader.LogReader.EventProcessor;
+import tests.eu.qualimaster.monitoring.genTopo.TestProcessor;
 
 /**
  * Performs tests of the monitoring layer based on infrastructure logs.
@@ -164,7 +165,7 @@ public class LogTest {
      * 
      * @author Holger Eichelberger
      */
-    private static class Proc extends Processor {
+    public static class Proc extends TestProcessor {
 
         /**
          * Creates a processor.
@@ -177,32 +178,6 @@ public class LogTest {
         public Proc(String name, int parallelization, int[] tasks, List<Processor> procs) {
             super(name, parallelization, tasks);
             procs.add(this);
-        }
-
-        /**
-         * Defines the inputs.
-         * 
-         * @param inputs the inputs
-         */
-        protected void setInputs(Stream... inputs) {
-            List<Stream> tmp = new ArrayList<Stream>();
-            for (Stream s : inputs) {
-                tmp.add(s);
-            }
-            super.setInputs(tmp);
-        }
-
-        /**
-         * Defines the outputs.
-         * 
-         * @param outputs the outputs
-         */
-        protected void setOutputs(Stream... outputs) {
-            List<Stream> tmp = new ArrayList<Stream>();
-            for (Stream s : outputs) {
-                tmp.add(s);
-            }
-            super.setOutputs(tmp);
         }
 
     }
