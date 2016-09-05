@@ -44,6 +44,7 @@ import eu.qualimaster.monitoring.topology.PipelineTopology;
 import eu.qualimaster.monitoring.topology.PipelineTopology.Processor;
 import eu.qualimaster.monitoring.topology.PipelineTopology.Stream;
 import eu.qualimaster.observables.IObservable;
+import eu.qualimaster.observables.Scalability;
 import eu.qualimaster.observables.TimeBehavior;
 import tests.eu.qualimaster.monitoring.genTopo.TestProcessor;
 
@@ -53,7 +54,11 @@ import tests.eu.qualimaster.monitoring.genTopo.TestProcessor;
  * @author Holger Eichelberger
  */
 public class ManagerTest {
-    
+
+    // TODO input missing in key, *alg* needed
+    // TODO multi-step prediction
+    // TODO check whether persisted???
+
     private File testFolder = new File(FileUtils.getTempDirectory(), "profilingTest");
     
     /**
@@ -202,18 +207,19 @@ public class ManagerTest {
          * @param famThroughput the family throughput
          */
         private void monitor(double srcLatency, double srcThroughput, double famLatency, double famThroughput) {
-            long last = lastUpdate;
-            src.setValue(TimeBehavior.LATENCY, srcLatency, null);
-            src.setValue(TimeBehavior.THROUGHPUT_ITEMS, srcThroughput, null);
+            StateUtils.setValue(src, TimeBehavior.LATENCY, srcLatency, null);
+            StateUtils.setValue(src, TimeBehavior.THROUGHPUT_ITEMS, srcThroughput, null);
             StateUtils.updateCapacity(src, null, false);
 
-            elt.setValue(TimeBehavior.LATENCY, famLatency, null);
-            elt.setValue(TimeBehavior.THROUGHPUT_ITEMS, famThroughput, null);
+            StateUtils.setValue(elt, TimeBehavior.LATENCY, famLatency, null);
+            StateUtils.setValue(elt, TimeBehavior.THROUGHPUT_ITEMS, famThroughput, null);
             StateUtils.updateCapacity(elt, null, false);
-            lastUpdate = System.currentTimeMillis();
-            if (0 == last || lastUpdate - last >= 1000) {
+            long now = System.currentTimeMillis();
+            if (0 == lastUpdate || now - lastUpdate >= 1000) {
                 AlgorithmProfilePredictionManager.update(pipeline, family, elt);
+                lastUpdate = System.currentTimeMillis();
             }
+                        
         }
         
         /**
@@ -253,7 +259,16 @@ public class ManagerTest {
             Assert.assertEquals(testFolder.getAbsolutePath(), fam.getPath());
             Assert.assertEquals(algorithm, fam.getActiveAlgorithm());
         }
-        
+
+        /**
+         * Returns the system part representing the family node.
+         * 
+         * @return the system part
+         */
+        private PipelineNodeSystemPart getFamily() {
+            return elt;
+        }
+
     }
 
     /**
@@ -276,21 +291,23 @@ public class ManagerTest {
         do {
             desc.start();
             System.out.print(" ");
-            for (int i = 0; i < 10; i++) {
+            double items = 10;
+            for (int i = 0; i < 60; i++) { // > 5 for stabilizing prediction
                 System.out.print(".");
-                desc.monitor(100, 10, 100, 10);
+                desc.monitor(100, items, 100, items - 1);
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
                 }
+                items += 10; // constant rate
             }
             System.out.println();
             desc.assertPipelineStructure();
-            System.out.println(" " + desc.predict(TimeBehavior.LATENCY, null));
-            System.out.println(" " + desc.predict(TimeBehavior.THROUGHPUT_ITEMS, null));
-            /*System.out.println(" " + desc.predict(Scalability.ITEMS, null));*/
+            assertPrediction(desc, TimeBehavior.LATENCY, 0.1);
+            assertPrediction(desc, TimeBehavior.THROUGHPUT_ITEMS, 0.6); // increasing
+            assertPrediction(desc, Scalability.ITEMS, 0.1);
+            
             desc.stop();
-            // TODO check whether persisted???
             if (AlgorithmProfilingEvent.Status.START == profilingStatus) {
                 profilingStatus = desc.sendProfilingEvent(AlgorithmProfilingEvent.Status.NEXT);
                 System.out.println(profilingStatus);
@@ -301,6 +318,21 @@ public class ManagerTest {
             }
         } while (profilingStatus != null);
         AlgorithmProfilePredictionManager.stop();
+    }
+    
+    /**
+     * Asserts the prediction for <code>obs</code> on the family of <code>desc</code> against the measured values.
+     * 
+     * @param desc the descriptor with the actual values
+     * @param obs the observable to assert
+     * @param diffO the allowed difference in percent (0;1)
+     */
+    private void assertPrediction(PipelineDescriptor desc, IObservable obs, double diffO) {
+        PipelineNodeSystemPart fam = desc.getFamily();
+        double p = desc.predict(obs, null);
+        double o = fam.getObservedValue(obs);
+        Assert.assertTrue(p + " " + o + " diff " + Math.abs(o - p) + " is not less than factor " + diffO + " -> "  
+            + (o * diffO), Math.abs(o - p) < o * diffO);
     }
     
 }

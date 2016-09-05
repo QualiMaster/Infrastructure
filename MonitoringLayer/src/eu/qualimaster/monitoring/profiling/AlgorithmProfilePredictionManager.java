@@ -184,6 +184,30 @@ public class AlgorithmProfilePredictionManager {
         }
         return result;
     }
+    
+    /**
+     * Predicts the best algorithm for the given situation.
+     * 
+     * @param pipeline the pipeline name containing <code>element</code>
+     * @param element the pipeline element name running <code>algorithm</code>
+     * @param weighting the weighting of observables
+     * @param targetValues the target values for prediction. Predict the next step if <b>null</b> or empty. May contain
+     *   observables ({@link IObservable}-Double) or parameter values (String-value)
+     * @return the predicted algorithm or <b>null</b> if no one can be predicted
+     */
+    public static String predict(String pipeline, String element, Map<IObservable, Double> weighting, 
+        Map<Object, Serializable> targetValues) {
+        String result = null;
+        Pipeline pip = Pipelines.getPipeline(pipeline);
+        if (null != pip) {
+            PipelineElement elt = pip.getElement(element);
+            if (null != elt) {
+                // TODO go over all algorithms, obtain profiles, predict
+                result = null;
+            }
+        }
+        return result;
+    }
 
     /**
     * Called upon shutdown of the infrastructure. Clean up global resources here.
@@ -226,27 +250,15 @@ public class AlgorithmProfilePredictionManager {
             String pipeline = event.getPipeline();
             String pipelineElement = event.getPipelineElement();
             Map<IObservable, Double> weighting = event.getWeighting();
+            Map<Object, Serializable> targetValues = event.getTargetValues();
             if (null == weighting) {
-                double result = predict(pipeline, event.getPipelineElement(), event.getAlgorithm(), 
-                    event.getObservable(), event.getTargetValues());
+                double result = predict(pipeline, pipelineElement, event.getAlgorithm(), event.getObservable(), 
+                    targetValues);
                 EventManager.send(new AlgorithmProfilePredictionResponse(event, result));
             } else {
-                Pipeline pip = Pipelines.getPipeline(pipeline);
-                if (null != pip) {
-                    PipelineElement elt = pip.getElement(pipelineElement);
-                    if (null != elt) {
-                        dummy();
-                        // TODO go over all algorithms, obtain profiles, predict
-                    }
-                }
-                EventManager.send(new AlgorithmProfilePredictionResponse(event, Double.MIN_VALUE));
+                String result = predict(pipeline, pipelineElement, weighting, targetValues);
+                EventManager.send(new AlgorithmProfilePredictionResponse(event, result));
             }
-        }
-
-        /**
-         * For checkstyle.
-         */
-        private void dummy() {
         }
         
     }

@@ -199,7 +199,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
         double result;
         IAlgorithmProfilePredictor predictor = obtainPredictor(observable);
         if (null != predictor) {
-            result = predictor.predict();
+            result = predictor.predict(steps);
         } else {
             result = Constants.NO_PREDICTION;
         }

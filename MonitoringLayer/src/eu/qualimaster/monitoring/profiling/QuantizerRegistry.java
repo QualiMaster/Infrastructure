@@ -22,6 +22,7 @@ import java.util.Map;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.ResourceUsage;
 import eu.qualimaster.observables.Scalability;
+import eu.qualimaster.observables.TimeBehavior;
 
 /**
  * A registry for quantizers.
@@ -32,9 +33,12 @@ public class QuantizerRegistry {
     
     private static final Map<Class<? extends Serializable>, Quantizer<?>> TYPE_QUANTIZERS = new HashMap<>();
     private static final Map<IObservable, Quantizer<Double>> OBSERVABLE_QUANTIZERS = new HashMap<>();
+    private static final Map<IObservable, Integer> PREDICTION_STEPS = new HashMap<>();
     
     static {
         // observable quantizers
+        registerQuantizer(TimeBehavior.LATENCY, DoubleQuantizer.STEP_100); // ms
+        registerQuantizer(TimeBehavior.THROUGHPUT_ITEMS, DoubleQuantizer.STEP_100);
         registerQuantizer(Scalability.ITEMS, DoubleQuantizer.STEP_100);
         registerQuantizer(ResourceUsage.EXECUTORS, DoubleQuantizer.TO_INT);
         registerQuantizer(ResourceUsage.TASKS, DoubleQuantizer.TO_INT);
@@ -117,4 +121,37 @@ public class QuantizerRegistry {
         }
     }
 
+    /**
+     * Returns the number of prediction steps to apply for <code>observable</code>.
+     * 
+     * @param observable the observable
+     * @return the number of prediction steps
+     */
+    public static int getPredictionSteps(IObservable observable) {
+        Integer result = null;
+        if (null != observable) {
+            result = PREDICTION_STEPS.get(observable);
+        }
+        if (null == result) {
+            result = 0; 
+        }
+        return result;
+    }
+    
+    /**
+     * Registers the desired number of prediction steps.
+     * 
+     * @param observable the observable
+     * @param steps the number of steps
+     */
+    public static void registerPredictionSteps(IObservable observable, int steps) {
+        if (null != observable) {
+            if (steps < 0) {
+                PREDICTION_STEPS.remove(observable);
+            } else {
+                PREDICTION_STEPS.put(observable, steps);
+            }
+        }
+    }
+    
 }

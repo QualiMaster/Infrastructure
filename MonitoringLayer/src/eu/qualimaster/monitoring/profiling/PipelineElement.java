@@ -231,7 +231,7 @@ public class PipelineElement {
     double predict(String algorithm, IObservable observable, Map<Object, Serializable> targetValues) {
         Map<Object, Serializable> key = getKey(algorithm, targetValues);
         IAlgorithmProfile profile = obtainProfile(key);
-        return profile.predict(observable);
+        return profile.predict(observable, QuantizerRegistry.getPredictionSteps(observable));
     }
     
 }
