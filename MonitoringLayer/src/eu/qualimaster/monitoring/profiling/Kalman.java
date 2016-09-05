@@ -27,6 +27,7 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularMatrixException;
+import org.apache.log4j.LogManager;
 
 /**
  * Kalman Implementation for the QualiMaster-Project using the
@@ -206,7 +207,7 @@ public class Kalman extends AbstractMatrixPredictor {
             }
             success = true;
         } catch (NullArgumentException | DimensionMismatchException | SingularMatrixException e) {
-            e.printStackTrace();
+            LogManager.getLogger(Kalman.class).error(e.getMessage(), e);
         }
         return success;
     }
@@ -249,7 +250,7 @@ public class Kalman extends AbstractMatrixPredictor {
                 filter.predict(controlVector);
                 prediction = filter.getStateEstimation()[2];
             } catch (DimensionMismatchException e) {
-                e.printStackTrace();
+                LogManager.getLogger(Kalman.class).error(e.getMessage(), e);
                 prediction = Double.MIN_VALUE;
             }
         } else {
@@ -293,7 +294,7 @@ public class Kalman extends AbstractMatrixPredictor {
             }
             result = MatrixUtils.createRealMatrix(matrix);
         } catch (NullArgumentException | DimensionMismatchException | NumberFormatException e) {
-            e.printStackTrace();
+            LogManager.getLogger(Kalman.class).error(e.getMessage(), e);
         }
         return result;
     }
@@ -318,7 +319,7 @@ public class Kalman extends AbstractMatrixPredictor {
             
             result = MatrixUtils.createRealVector(vector);
         } catch (NumberFormatException | NullPointerException e) {
-            e.printStackTrace();
+            LogManager.getLogger(Kalman.class).error(e.getMessage(), e);
         }
         
         return result;
@@ -408,6 +409,59 @@ public class Kalman extends AbstractMatrixPredictor {
         allowedGap = Utils.getInt(data, KEY_ALLOWED_GAP, allowedGap);
         defaultMeasurement = Utils.getDouble(data, KEY_DEFAULT_MEASUREMENT, defaultMeasurement);
         reinitialize();
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        // for now we focus only on the values that are actually stored - to be checked
+        // double equality follows the implementation of Double.equals
+        boolean result = false;
+        if (obj instanceof Kalman) {
+            Kalman k = (Kalman) obj;
+            result = equals(measurementNoise, k.measurementNoise);
+            result &= mA.equals(k.mA);
+            result &= mB.equals(k.mB);
+            result &= mH.equals(k.mH);
+            result &= mQ.equals(k.mQ);
+            result &= mP.equals(k.mP);
+            result &= mR.equals(k.mR);
+            result &= xVector.equals(k.xVector);
+            result &= controlVector.equals(k.controlVector);
+            result &= equals(lastUpdated, k.lastUpdated);
+            result &= equals(lastUpdate, k.lastUpdate);
+            result &= allowedGap == k.allowedGap;
+            result &= equals(defaultMeasurement, k.defaultMeasurement);
+        }
+        return result;
+    }
+    
+    /**
+     * Compares two doubles using the same approach as <code>Double.equals</code>. 
+     * 
+     * @param d1 the first double value
+     * @param d2 the second double value
+     * @return <code>true</code> if <code>d1==d2</code>, <code>false</code> else
+     */ 
+    private static boolean equals(double d1, double d2) {
+        return Double.doubleToLongBits(d1) == Double.doubleToLongBits(d2);
+    }
+    
+    @Override
+    public int hashCode() {
+        int result = Double.hashCode(measurementNoise);
+        result ^= mA.hashCode();
+        result ^= mB.hashCode();
+        result ^= mH.hashCode();
+        result ^= mQ.hashCode();
+        result ^= mP.hashCode();
+        result ^= mR.hashCode();
+        result ^= xVector.hashCode();
+        result ^= controlVector.hashCode();
+        result ^= Double.hashCode(lastUpdated);
+        result ^= Double.hashCode(lastUpdate);
+        result ^= allowedGap;
+        result ^= Double.hashCode(defaultMeasurement);
+        return result;
     }
     
 }

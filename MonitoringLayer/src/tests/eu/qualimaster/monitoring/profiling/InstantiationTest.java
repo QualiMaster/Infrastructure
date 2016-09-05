@@ -15,6 +15,10 @@
  */
 package tests.eu.qualimaster.monitoring.profiling;
 
+import java.io.File;
+import java.io.IOException;
+
+import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -38,35 +42,53 @@ public class InstantiationTest {
         Kalman filter = new Kalman();
         long runTime = System.nanoTime() - startTime;
         System.out.println(runTime);
-        Assert.assertTrue(runTime <= (100 * 1000000));
+        Assert.assertTrue(runTime <= (100 * 1000000)); // timing test may fail on different system
         for (int i = 0; i < 100; i++) {
             filter = null;
             startTime = System.nanoTime();
             filter = new Kalman();
             runTime = System.nanoTime() - startTime;
-            Assert.assertTrue(runTime <= (1 * 1000000));
+            Assert.assertTrue(runTime <= (1 * 1000000)); // timing test may fail on different system
         }
     }
-    
+
     /**
      * Test storing a Kalman-Instance to the file-system.
      */
     @Test
-    public void testStoreKalmanInstance() {
-      //TODO
+    public void testEqualsKalmanInstance() {
+        Kalman k1 = new Kalman();
+        Kalman k2 = new Kalman();
+        Assert.assertEquals(k1, k2);
+        Assert.assertEquals(k1.hashCode(), k2.hashCode());
+        
+        // just to be sure that it recognizes the update as a new value
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+        }
+        k1.update(50); // shall update at least lastUpdate/lastUpdated
+        Assert.assertNotEquals(k1, k2);
+        // no statement about hashCodes possible!
     }
+    
     /**
-     * Test loading a Kalman-Instance from the file-system.
+     * Test storing a Kalman-Instance to the file-system.
+     * 
+     * @throws IOException shall not occur
      */
     @Test
-    public void testLoadKalmanInstance() {
-        //TODO
-    }
-    /**
-     * Test analogy based instantiation of a Kalman-Filter.
-     */
-    @Test
-    public void testAnalogyBasesKalmanInstance() {
-        //TODO
-    }
+    public void testStoreKalmanInstance() throws IOException {
+        File f = new File(FileUtils.getTempDirectory(), "kalman.tmp");
+        f.delete();
+        Kalman k1 = new Kalman();
+        k1.store(f, "abba");
+        
+        Kalman k2 = new Kalman();
+        k2.load(f, "abba");
+        
+        Assert.assertEquals(k1, k2);
+        f.delete();
+    } // loading without storing makes only sense if we have a prepared kalman instance and can compare its attributes
+
 }

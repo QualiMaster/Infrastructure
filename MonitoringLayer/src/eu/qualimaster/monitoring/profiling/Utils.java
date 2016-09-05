@@ -103,7 +103,7 @@ public class Utils {
             }
         }
     }
-    
+
     /**
      * Stores a properties file to <code>file</code>.
      * 
@@ -112,10 +112,22 @@ public class Utils {
      * @throws IOException in case of I/O problems
      */
     public static void store(File file, Properties data) throws IOException {
+        store(file, data, null);
+    }
+    
+    /**
+     * Stores a properties file to <code>file</code> with leading comment.
+     * 
+     * @param file the file to read
+     * @param data the properties to read into
+     * @param comment the comment to be written into the file (may be <b>null</b> or empty)
+     * @throws IOException in case of I/O problems
+     */
+    public static void store(File file, Properties data, String comment) throws IOException {
         FileWriter fw = null;
         try {
             fw = new FileWriter(file);
-            data.store(fw, "");
+            data.store(fw, comment);
         } finally {
             if (null != fw) {
                 fw.close();
