@@ -40,9 +40,11 @@ public class QualityTest {
      * Afterwards this value is compared to a given maximum. 
      * Should it exceed the maximum, the test fails.
      * The test fails, when a run exceeds the given time.
+     * 
+     * @throws NumberFormatException shall not occur
      */
     @Test
-    public void testAgainstHistory() {
+    public void testAgainstHistory() throws NumberFormatException {
         ArrayList<String> testData = TestTools.loadData("qualityTestData");
         for (String string : testData) {
             // Only numbers and the separation-signs ('.', ',' and ';') are allowed
@@ -50,11 +52,7 @@ public class QualityTest {
                 String[] data = string.replaceAll(",", ".").split(";");
                 double[] entries = new double[data.length];
                 for (int i = 0; i < data.length; i++) {
-                    try {
-                        entries[i] = new Double(data[i]);
-                    } catch (NumberFormatException e) {
-                        e.printStackTrace();
-                    }
+                    entries[i] = new Double(data[i]);
                 }
                 IAlgorithmProfilePredictor filter = new Kalman();
                 // The first and second entry define the part of the time-set for which the quality is checked

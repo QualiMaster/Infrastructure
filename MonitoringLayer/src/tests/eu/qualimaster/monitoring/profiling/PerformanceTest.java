@@ -42,9 +42,11 @@ public class PerformanceTest {
      * It is measured how long the update/predict-cycle needs to run through the given data.
      * Afterwards this time is compared to a given maximum. If more is needed the test fails.
      * The test fails, when a run exceeds the given time.
+     * 
+     * @throws NumberFormatException shall not occur
      */
     @Test
-    public void testAgainstHistory() {
+    public void testAgainstHistory() throws NumberFormatException {
         ArrayList<String> testData = TestTools.loadData("performanceTestData");
         if (testData.size() > 0) {
             for (String string : testData) {
@@ -53,11 +55,7 @@ public class PerformanceTest {
                     String[] data = string.replaceAll(",", ".").split(";");
                     double[] entries = new double[data.length];
                     for (int i = 0; i < data.length; i++) {
-                        try {
-                            entries[i] = new Double(data[i]);
-                        } catch (NumberFormatException e) {
-                            e.printStackTrace();
-                        }
+                        entries[i] = new Double(data[i]);
                     }
                     // Begin time-measurement
                     long startTime = System.nanoTime();

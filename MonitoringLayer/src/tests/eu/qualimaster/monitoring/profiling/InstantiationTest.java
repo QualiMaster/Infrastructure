@@ -89,6 +89,6 @@ public class InstantiationTest {
         
         Assert.assertEquals(k1, k2);
         f.delete();
-    } // loading without storing makes only sense if we have a prepared kalman instance and can compare its attributes
+    } // loading without storing makes only sense if we have a prepared Kalman instance and can compare its attributes
 
 }
