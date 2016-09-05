@@ -211,11 +211,11 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     // intentionally final so that subclasses cannot overwrite required shutdown sequence
     @Override
     public final void notifyShutdown(ShutdownSignal signal) {
+        portManager.close();
+        signalConnection.close();
         prepareShutdown(signal);
         ComponentKeyRegistry.unregister(this);
         monitor.shutdown();
-        portManager.close();
-        signalConnection.close();
         if (Configuration.getPipelineSignalsQmEvents()) {
             EventManager.unregister(parameterEventHandler);
             EventManager.unregister(shutdownEventHandler);

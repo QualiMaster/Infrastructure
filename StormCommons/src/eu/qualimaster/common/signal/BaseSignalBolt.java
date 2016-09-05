@@ -259,11 +259,11 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     // intentionally final so that subclasses cannot overwrite required shutdown sequence
     @Override
     public final void notifyShutdown(ShutdownSignal signal) {
+        portManager.close();
+        signalConnection.close();
         prepareShutdown(signal);
         ComponentKeyRegistry.unregister(this);
         monitor.shutdown();
-        portManager.close();
-        signalConnection.close();
         if (Configuration.getPipelineSignalsQmEvents()) {
             EventManager.unregister(algorithmEventHandler);
             EventManager.unregister(parameterEventHandler);
