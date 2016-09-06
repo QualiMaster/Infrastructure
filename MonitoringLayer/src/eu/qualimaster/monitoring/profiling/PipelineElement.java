@@ -96,6 +96,15 @@ public class PipelineElement {
     }
     
     /**
+     * Returns whether the parent pipeline is in profiling mode.
+     * 
+     * @return <code>true</code> for profiling, <code>false</code> else
+     */
+    public boolean isInProfilingMode() {
+        return pipeline.isInProfilingMode();
+    }
+    
+    /**
      * Returns the name of the active algorithm.
      * 
      * @return the name of the algorithm

@@ -62,6 +62,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
      *     current configuration.
      */
     private String generateKey(IObservable observable) {
+        boolean profiling = element.isInProfilingMode();
         String pipelineName = element.getPipeline().getName();
         String elementName = element.getName();
         String algorithm = keyToString(Constants.KEY_ALGORITHM);
@@ -69,8 +70,14 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
         for (Map.Entry<Object, Serializable> ent : key.entrySet()) {
             sorted.put(ent.getKey().toString(), ent.getValue().toString());
         }
-        return "PIPELINE=" + pipelineName + ";element=" + elementName + ";algorithm=" + algorithm
-                + ";predicted=" + observable.name() + ";parameters=" + sorted;
+        String key;
+        if (profiling) {
+            key = "";
+        } else {
+            key = "PIPELINE=" + pipelineName + ";element=" + elementName + ";";
+        }
+        key += "algorithm=" + algorithm + ";predicted=" + observable.name() + ";parameters=" + sorted;
+        return key;
     }
     
     /**

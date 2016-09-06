@@ -31,6 +31,7 @@ public class Pipeline {
     private String name;
     private String path = MonitoringConfiguration.getProfileLocation();
     private IAlgorithmProfileCreator creator;
+    private boolean profiling;
     
     /**
      * Creates a new pipeline instance.
@@ -121,6 +122,22 @@ public class Pipeline {
      */
     public String getPath() {
         return path;
+    }
+    
+    /**
+     * Enables the profiling mode.
+     */
+    public void enableProfilingMode() {
+        profiling = true;
+    }
+    
+    /**
+     * Returns whether this pipeline is in profiling mode.
+     * 
+     * @return <code>true</code> for profiling, <code>false</code> else
+     */
+    public boolean isInProfilingMode() {
+        return profiling;
     }
 
 }

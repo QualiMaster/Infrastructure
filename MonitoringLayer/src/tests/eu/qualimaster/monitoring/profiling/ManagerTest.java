@@ -235,13 +235,16 @@ public class ManagerTest {
 
         /**
          * Asserts a correct pipeline structure.
+         * 
+         * @param profiling are we in profiling mode?
          */
-        private void assertPipelineStructure() {
+        private void assertPipelineStructure(boolean profiling) {
             Pipeline pip = Pipelines.getPipeline(pipeline);
             Assert.assertNotNull(pip);
             Assert.assertEquals(pipeline, pip.getName());
             Assert.assertNotNull(pip.getProfileCreator());
             Assert.assertEquals(testFolder.getAbsolutePath(), pip.getPath());
+            Assert.assertEquals(profiling, pip.isInProfilingMode());
             
             PipelineElement src = pip.getElement(source);
             Assert.assertNotNull(src);
@@ -250,6 +253,7 @@ public class ManagerTest {
             Assert.assertEquals(pip, src.getPipeline());
             Assert.assertEquals(testFolder.getAbsolutePath(), src.getPath());
             Assert.assertEquals(srcAlgorithm, src.getActiveAlgorithm());
+            Assert.assertEquals(profiling, src.isInProfilingMode());
             
             PipelineElement fam = pip.getElement(family);
             Assert.assertNotNull(fam);
@@ -258,6 +262,7 @@ public class ManagerTest {
             Assert.assertEquals(pip, fam.getPipeline());
             Assert.assertEquals(testFolder.getAbsolutePath(), fam.getPath());
             Assert.assertEquals(algorithm, fam.getActiveAlgorithm());
+            Assert.assertEquals(profiling, fam.isInProfilingMode());
         }
 
         /**
@@ -302,7 +307,7 @@ public class ManagerTest {
                 items += 10; // constant rate
             }
             System.out.println();
-            desc.assertPipelineStructure();
+            desc.assertPipelineStructure(withProfiling);
             assertPrediction(desc, TimeBehavior.LATENCY, 0.1);
             assertPrediction(desc, TimeBehavior.THROUGHPUT_ITEMS, 0.6); // increasing
             assertPrediction(desc, Scalability.ITEMS, 0.1);

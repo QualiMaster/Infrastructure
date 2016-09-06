@@ -135,6 +135,7 @@ public class AlgorithmProfilePredictionManager {
         case START:
             Pipeline pip = obtainPipeline(pipeline);
             pip.setPath(MonitoringConfiguration.getProfilingLogLocation());
+            pip.enableProfilingMode();
             break;
         default:
             break;

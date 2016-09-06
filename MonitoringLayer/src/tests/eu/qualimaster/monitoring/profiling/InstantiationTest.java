@@ -33,7 +33,7 @@ public class InstantiationTest {
     /**
      * Test for the time needed to create a new default Kalman-Instance.
      * Fails if more than 100ms are needed for the first (cold) instantiation
-     * or more than 1ms for following (warm) instantiations.
+     * or more than 10ms for following (warm) instantiations.
      */
     @Test
      public void testNewKalmanInstance() {
@@ -48,7 +48,7 @@ public class InstantiationTest {
             startTime = System.nanoTime();
             filter = new Kalman();
             runTime = System.nanoTime() - startTime;
-            Assert.assertTrue(runTime <= (1 * 1000000)); // timing test may fail on different system
+            Assert.assertTrue(runTime <= (10 * 1000000)); // timing test may fail on different system
         }
     }
 
