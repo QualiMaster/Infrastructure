@@ -89,7 +89,7 @@ public abstract class LoadShedder<T> implements Serializable {
     public boolean isEnabled(Object tuple) {
         boolean result = true;
         if (tupleType.isInstance(tuple)) {
-            result = isEnabled(tupleType.cast(tuple));
+            result = isEnabledImpl(tupleType.cast(tuple));
         }
         return result;
     }
