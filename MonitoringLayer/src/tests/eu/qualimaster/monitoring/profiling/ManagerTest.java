@@ -110,7 +110,7 @@ public class ManagerTest {
     @Test
     public void testManagerProfilingPipelineLifecycle() {
         testLifecycle(true, 0);
-        testLifecycle(true, 1);
+        //testLifecycle(true, 1);
     }
 
     /**
@@ -317,7 +317,7 @@ public class ManagerTest {
         AlgorithmProfilingEvent.Status profilingStatus;
         if (withProfiling) {
             profilingStatus = desc.sendProfilingEvent(AlgorithmProfilingEvent.Status.START);
-            System.out.println(profilingStatus + "at " + steps + " prediction steps");
+            System.out.println(profilingStatus + " at " + steps + " prediction steps");
         } else {
             System.out.println("normal operation at " + steps + " prediction steps");
             profilingStatus = null;

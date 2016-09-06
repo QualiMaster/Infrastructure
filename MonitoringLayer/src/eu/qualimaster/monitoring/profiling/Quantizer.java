@@ -50,7 +50,7 @@ public abstract class Quantizer <T extends Serializable> {
      * @param value the value to be quantized
      * @return the quantized value
      */
-    int quantize(Serializable value) {
+    public int quantize(Serializable value) {
         return quantizeImpl(type.cast(value));
     }
     

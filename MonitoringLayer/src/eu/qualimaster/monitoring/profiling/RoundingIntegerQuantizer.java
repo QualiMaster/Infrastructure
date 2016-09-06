@@ -20,11 +20,10 @@ package eu.qualimaster.monitoring.profiling;
  * 
  * @author Holger Eichelberger
  */
-public class IntegerQuantizer extends Quantizer<Integer> {
+public class RoundingIntegerQuantizer extends Quantizer<Integer> {
 
-    public static final IntegerQuantizer TO_INT = new IntegerQuantizer(1);
-    public static final IntegerQuantizer STEP_100 = new IntegerQuantizer(100);
-    public static final IntegerQuantizer STEP_1000 = new IntegerQuantizer(1000);
+    public static final RoundingIntegerQuantizer STEP_100 = new RoundingIntegerQuantizer(100);
+    public static final RoundingIntegerQuantizer STEP_1000 = new RoundingIntegerQuantizer(1000);
     
     private int step;
     
@@ -33,14 +32,16 @@ public class IntegerQuantizer extends Quantizer<Integer> {
      * 
      * @param step the quantization step (null or negative is ignored)
      */
-    public IntegerQuantizer(int step) {
+    public RoundingIntegerQuantizer(int step) {
         super(Integer.class);
         this.step = Math.max(1, step);
     }
 
     @Override
     protected int quantizeImpl(Integer value) {
-        return value.intValue() % step;
+        int v = value.intValue();
+        int sgn = v < 0 ? -1 : 1;
+        return (int) ((v / (double) step) + sgn * 0.5) * step;
     }
 
 }

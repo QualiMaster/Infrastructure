@@ -16,31 +16,24 @@
 package eu.qualimaster.monitoring.profiling;
 
 /**
- * A quantizer for double values.
+ * An integer quantizer just returning the int value.
  * 
  * @author Holger Eichelberger
  */
-public class DoubleQuantizer extends Quantizer<Double> {
+public class IdentityIntegerQuantizer extends Quantizer<Integer> {
 
-    public static final DoubleQuantizer TO_INT = new DoubleQuantizer(1);
-    public static final DoubleQuantizer STEP_100 = new DoubleQuantizer(100);
-    public static final DoubleQuantizer STEP_1000 = new DoubleQuantizer(1000);
-    
-    private int step;
+    public static final IdentityIntegerQuantizer INSTANCE = new IdentityIntegerQuantizer();
     
     /**
-     * Creates a double quantizer.
-     * 
-     * @param step the quantization step
+     * Creates an integer quantizer.
      */
-    public DoubleQuantizer(int step) {
-        super(Double.class);
-        this.step = Math.max(1, step);
+    private IdentityIntegerQuantizer() {
+        super(Integer.class);
     }
 
     @Override
-    protected int quantizeImpl(Double value) {
-        return ((int) Math.round(value.doubleValue())) % step;
+    protected int quantizeImpl(Integer value) {
+        return value.intValue();
     }
 
 }

@@ -13,22 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package tests.eu.qualimaster.monitoring.profiling;
-
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+package eu.qualimaster.monitoring.profiling;
 
 /**
- * The test suite for the Monitoring Profiling support. Do not rename this class.
+ * A quantizer turning double values into ints.
  * 
- * @author Christopher Voges
+ * @author Holger Eichelberger
  */
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-    InstantiationTest.class, 
-    PerformanceTest.class, 
-    QualityTest.class,
-    QuantizerTest.class,
-    ManagerTest.class})
-public class ProfilingTests {
+public class DoubleIntegerQuantizer extends Quantizer<Double> {
+
+    public static final DoubleIntegerQuantizer INSTANCE = new DoubleIntegerQuantizer();
+    
+    /**
+     * Creates a double quantizer.
+     */
+    private DoubleIntegerQuantizer() {
+        super(Double.class);
+    }
+
+    @Override
+    protected int quantizeImpl(Double value) {
+        return (int) Math.round(value);
+    }
+
 }

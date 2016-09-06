@@ -151,8 +151,8 @@ public class PipelineElement {
     private Map<Object, Serializable> getKey(String algorithm, Map<Object, Serializable> override) {
         Map<Object, Serializable> result = new HashMap<Object, Serializable>();
         result.put(Constants.KEY_ALGORITHM, null == algorithm ? activeAlgorithm : algorithm);
-        putAllForKey(parameters, result);
-        putAllForKey(parameters, override);
+        putAllForKey(result, parameters);
+        putAllForKey(result, override);
         return result;
     }
     

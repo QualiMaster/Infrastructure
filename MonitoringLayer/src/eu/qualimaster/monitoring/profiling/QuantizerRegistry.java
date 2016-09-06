@@ -37,15 +37,15 @@ public class QuantizerRegistry {
     
     static {
         // observable quantizers
-        registerQuantizer(TimeBehavior.LATENCY, DoubleQuantizer.STEP_100); // ms
-        registerQuantizer(TimeBehavior.THROUGHPUT_ITEMS, DoubleQuantizer.STEP_100);
-        registerQuantizer(Scalability.ITEMS, DoubleQuantizer.STEP_100);
-        registerQuantizer(ResourceUsage.EXECUTORS, DoubleQuantizer.TO_INT);
-        registerQuantizer(ResourceUsage.TASKS, DoubleQuantizer.TO_INT);
+        registerQuantizer(TimeBehavior.LATENCY, ScalingDoubleQuantizer.INSTANCE); // ms
+        registerQuantizer(TimeBehavior.THROUGHPUT_ITEMS, ScalingDoubleQuantizer.INSTANCE);
+        registerQuantizer(Scalability.ITEMS, ScalingDoubleQuantizer.INSTANCE);
+        registerQuantizer(ResourceUsage.EXECUTORS, DoubleIntegerQuantizer.INSTANCE);
+        registerQuantizer(ResourceUsage.TASKS, DoubleIntegerQuantizer.INSTANCE);
 
-        // type quantizers
-        registerQuantizer(IntegerQuantizer.TO_INT);
-        registerQuantizer(DoubleQuantizer.TO_INT);
+        // type quantizers for parameters
+        registerQuantizer(IdentityIntegerQuantizer.INSTANCE);
+        registerQuantizer(DoubleIntegerQuantizer.INSTANCE);
     }
     
     /**
