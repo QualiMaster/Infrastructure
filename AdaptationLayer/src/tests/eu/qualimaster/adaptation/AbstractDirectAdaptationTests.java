@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -57,6 +58,7 @@ import net.ssehub.easy.reasoning.core.reasoner.ReasoningResult;
 import net.ssehub.easy.varModel.confModel.AssignmentState;
 import net.ssehub.easy.varModel.confModel.Configuration;
 import net.ssehub.easy.varModel.confModel.ConfigurationException;
+import net.ssehub.easy.varModel.confModel.ContainerVariable;
 import net.ssehub.easy.varModel.confModel.IDecisionVariable;
 import net.ssehub.easy.varModel.management.VarModel;
 import net.ssehub.easy.varModel.model.ModelQueryException;
@@ -315,6 +317,30 @@ public abstract class AbstractDirectAdaptationTests {
                 }
             }
             return matches;
+        }
+        
+        /**
+         * If <code>var.slotName</code> is a container variable, this method filters out all named (dereferenced)
+         * variables with names not listed in <code>filter</code>.
+         * 
+         * @param var the base variable
+         * @param slotName the slot name within <code>var</code>
+         * @param filter the filter of permissible elements
+         */
+        protected void prune(IDecisionVariable var, String slotName, String... filter) {
+            IDecisionVariable slot = var.getNestedElement(slotName);
+            if (slot instanceof ContainerVariable) {
+                Set<String> filterNames = new HashSet<String>();
+                filterNames.addAll(Arrays.asList(filter));
+                ContainerVariable cSlot = (ContainerVariable) slot;
+                for (int n = cSlot.getNestedElementsCount() - 1; n >= 0; n--) {
+                    IDecisionVariable nested = cSlot.getNestedElement(n);
+                    IDecisionVariable deref = Configuration.dereference(nested);
+                    if (!filterNames.contains(VariableHelper.getName(deref))) {
+                        cSlot.removeNestedElement(nested);
+                    }
+                }
+            }
         }
 
         /**
