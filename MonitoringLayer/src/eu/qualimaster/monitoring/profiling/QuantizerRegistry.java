@@ -139,10 +139,19 @@ public class QuantizerRegistry {
     }
     
     /**
+     * Sets the prediction steps to default.
+     * 
+     * @param observable the observable
+     */
+    public static void defaultPredictionSteps(IObservable observable) {
+        registerPredictionSteps(observable, -1);
+    }
+    
+    /**
      * Registers the desired number of prediction steps.
      * 
      * @param observable the observable
-     * @param steps the number of steps
+     * @param steps the number of steps (negative value sets back to default)
      */
     public static void registerPredictionSteps(IObservable observable, int steps) {
         if (null != observable) {

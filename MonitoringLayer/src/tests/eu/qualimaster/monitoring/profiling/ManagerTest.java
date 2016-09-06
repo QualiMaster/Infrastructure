@@ -35,6 +35,7 @@ import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictionManager;
 import eu.qualimaster.monitoring.profiling.Pipeline;
 import eu.qualimaster.monitoring.profiling.PipelineElement;
 import eu.qualimaster.monitoring.profiling.Pipelines;
+import eu.qualimaster.monitoring.profiling.QuantizerRegistry;
 import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
@@ -55,18 +56,21 @@ import tests.eu.qualimaster.monitoring.genTopo.TestProcessor;
  */
 public class ManagerTest {
 
-    // TODO input missing in key, *alg* needed
+    // TODO input missing in key
     // TODO multi-step prediction
     // TODO check whether persisted???
 
+    private static final IObservable[] OBSERVABLES = new IObservable[] {TimeBehavior.LATENCY, 
+        TimeBehavior.THROUGHPUT_ITEMS, Scalability.ITEMS};
     private File testFolder = new File(FileUtils.getTempDirectory(), "profilingTest");
-    
+
     /**
      * Prepares a test.
      */
     @Before
     public void before() {
         FileUtils.deleteQuietly(testFolder);
+        defaultPredictionSteps();
         testFolder.mkdirs();
         AlgorithmProfilePredictionManager.useTestData(testFolder.getAbsolutePath());
     }
@@ -77,6 +81,7 @@ public class ManagerTest {
     @After
     public void after() {
         AlgorithmProfilePredictionManager.useTestData(null);
+        defaultPredictionSteps();
         FileUtils.deleteQuietly(testFolder);
     }
     
@@ -95,7 +100,8 @@ public class ManagerTest {
      */
     @Test
     public void testManagerPipelineLifecycle() {
-        testLifecycle(false);
+        testLifecycle(false, 0);
+        testLifecycle(false, 1);
     }
 
     /**
@@ -103,7 +109,8 @@ public class ManagerTest {
      */
     @Test
     public void testManagerProfilingPipelineLifecycle() {
-        testLifecycle(true);
+        testLifecycle(true, 0);
+        testLifecycle(true, 1);
     }
 
     /**
@@ -275,21 +282,44 @@ public class ManagerTest {
         }
 
     }
+    
+    /**
+     * Registers the actual prediction steps for all relevant observables.
+     * 
+     * @param steps the prediction steps (default number of steps if negative)
+     */
+    private void registerPredictionSteps(int steps) {
+        // see testLifecylce
+        for (IObservable obs : OBSERVABLES) {
+            QuantizerRegistry.registerPredictionSteps(obs, steps);
+        }
+    }
+    
+    /**
+     * Sets the relevant observables back to default prediction steps.
+     */
+    private void defaultPredictionSteps() {
+        for (IObservable obs : OBSERVABLES) {
+            QuantizerRegistry.defaultPredictionSteps(obs);
+        }
+    }
 
     /**
      * Tests the calls related to a pipeline lifecycle - just whether something obvious fails.
      * 
      * @param withProfiling pretend that profiling is running
+     * @param steps the number of prediction steps
      */
-    private void testLifecycle(boolean withProfiling) {
-        
+    private void testLifecycle(boolean withProfiling, int steps) {
+        registerPredictionSteps(steps);
         AlgorithmProfilePredictionManager.start();
         PipelineDescriptor desc = new PipelineDescriptor();
         AlgorithmProfilingEvent.Status profilingStatus;
         if (withProfiling) {
             profilingStatus = desc.sendProfilingEvent(AlgorithmProfilingEvent.Status.START);
-            System.out.println(profilingStatus);
+            System.out.println(profilingStatus + "at " + steps + " prediction steps");
         } else {
+            System.out.println("normal operation at " + steps + " prediction steps");
             profilingStatus = null;
         }
         
@@ -308,6 +338,7 @@ public class ManagerTest {
             }
             System.out.println();
             desc.assertPipelineStructure(withProfiling);
+            // see registerPredictionSteps
             assertPrediction(desc, TimeBehavior.LATENCY, 0.1);
             assertPrediction(desc, TimeBehavior.THROUGHPUT_ITEMS, 0.6); // increasing
             assertPrediction(desc, Scalability.ITEMS, 0.1);
@@ -323,6 +354,7 @@ public class ManagerTest {
             }
         } while (profilingStatus != null);
         AlgorithmProfilePredictionManager.stop();
+        registerPredictionSteps(-1);
     }
     
     /**

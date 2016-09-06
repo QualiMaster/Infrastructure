@@ -68,7 +68,10 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
         String algorithm = keyToString(Constants.KEY_ALGORITHM);
         TreeMap<String, String> sorted = new TreeMap<>();
         for (Map.Entry<Object, Serializable> ent : key.entrySet()) {
-            sorted.put(ent.getKey().toString(), ent.getValue().toString());
+            String key = ent.getKey().toString();
+            if (!Constants.KEY_ALGORITHM.equals(key)) {
+                sorted.put(key, ent.getValue().toString());
+            }
         }
         String key;
         if (profiling) {
