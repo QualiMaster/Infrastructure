@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import eu.qualimaster.monitoring.profiling.quantizers.Quantizer;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.tracing.Tracing;
 import eu.qualimaster.observables.IObservable;

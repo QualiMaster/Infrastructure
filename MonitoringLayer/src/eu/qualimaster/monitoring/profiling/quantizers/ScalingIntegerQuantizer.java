@@ -13,27 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.qualimaster.monitoring.profiling;
+package eu.qualimaster.monitoring.profiling.quantizers;
 
 /**
- * A quantizer turning double values into ints.
+ * A scaling integer quantizer, which determines the quantization step by the logarithm of value - 1.
  * 
  * @author Holger Eichelberger
  */
-public class DoubleIntegerQuantizer extends Quantizer<Double> {
+public class ScalingIntegerQuantizer extends Quantizer<Integer> {
 
-    public static final DoubleIntegerQuantizer INSTANCE = new DoubleIntegerQuantizer();
+    public static final ScalingIntegerQuantizer INSTANCE = new ScalingIntegerQuantizer();
     
     /**
-     * Creates a double quantizer.
+     * Creates an integer quantizer.
      */
-    private DoubleIntegerQuantizer() {
-        super(Double.class);
+    private ScalingIntegerQuantizer() {
+        super(Integer.class);
     }
 
     @Override
-    protected int quantizeImpl(Double value) {
-        return (int) Math.round(value);
+    protected int quantizeImpl(Integer value) {
+        int log10 = (int) Math.log10(value);
+        if (log10 > 1) {
+            log10--;
+        }
+        int step = (int) Math.pow(10, log10);
+        int v = value.intValue();
+        int sgn = v < 0 ? -1 : 1;
+        return (int) ((v / (double) step) + sgn * 0.5) * step;
     }
 
 }

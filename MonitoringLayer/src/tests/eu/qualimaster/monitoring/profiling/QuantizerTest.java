@@ -18,12 +18,12 @@ package tests.eu.qualimaster.monitoring.profiling;
 import org.junit.Assert;
 import org.junit.Test;
 
-import eu.qualimaster.monitoring.profiling.DoubleIntegerQuantizer;
-import eu.qualimaster.monitoring.profiling.IdentityIntegerQuantizer;
-import eu.qualimaster.monitoring.profiling.RoundingDoubleQuantizer;
-import eu.qualimaster.monitoring.profiling.RoundingIntegerQuantizer;
-import eu.qualimaster.monitoring.profiling.ScalingDoubleQuantizer;
-import eu.qualimaster.monitoring.profiling.ScalingIntegerQuantizer;
+import eu.qualimaster.monitoring.profiling.quantizers.DoubleIntegerQuantizer;
+import eu.qualimaster.monitoring.profiling.quantizers.IdentityIntegerQuantizer;
+import eu.qualimaster.monitoring.profiling.quantizers.RoundingDoubleQuantizer;
+import eu.qualimaster.monitoring.profiling.quantizers.RoundingIntegerQuantizer;
+import eu.qualimaster.monitoring.profiling.quantizers.ScalingDoubleQuantizer;
+import eu.qualimaster.monitoring.profiling.quantizers.ScalingIntegerQuantizer;
 
 /**
  * Tests the quantizers.

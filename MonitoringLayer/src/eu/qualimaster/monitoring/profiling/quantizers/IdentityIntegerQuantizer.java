@@ -13,34 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.qualimaster.monitoring.profiling;
+package eu.qualimaster.monitoring.profiling.quantizers;
 
 /**
- * A scaling integer quantizer, which determines the quantization step by the logarithm of value - 1.
+ * An integer quantizer just returning the int value.
  * 
  * @author Holger Eichelberger
  */
-public class ScalingIntegerQuantizer extends Quantizer<Integer> {
+public class IdentityIntegerQuantizer extends Quantizer<Integer> {
 
-    public static final ScalingIntegerQuantizer INSTANCE = new ScalingIntegerQuantizer();
+    public static final IdentityIntegerQuantizer INSTANCE = new IdentityIntegerQuantizer();
     
     /**
      * Creates an integer quantizer.
      */
-    private ScalingIntegerQuantizer() {
+    private IdentityIntegerQuantizer() {
         super(Integer.class);
     }
 
     @Override
     protected int quantizeImpl(Integer value) {
-        int log10 = (int) Math.log10(value);
-        if (log10 > 1) {
-            log10--;
-        }
-        int step = (int) Math.pow(10, log10);
-        int v = value.intValue();
-        int sgn = v < 0 ? -1 : 1;
-        return (int) ((v / (double) step) + sgn * 0.5) * step;
+        return value.intValue();
     }
 
 }

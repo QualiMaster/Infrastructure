@@ -13,27 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.qualimaster.monitoring.profiling;
+package eu.qualimaster.monitoring.profiling.quantizers;
 
 /**
- * An integer quantizer just returning the int value.
+ * A quantizer turning double values into ints.
  * 
  * @author Holger Eichelberger
  */
-public class IdentityIntegerQuantizer extends Quantizer<Integer> {
+public class DoubleIntegerQuantizer extends Quantizer<Double> {
 
-    public static final IdentityIntegerQuantizer INSTANCE = new IdentityIntegerQuantizer();
+    public static final DoubleIntegerQuantizer INSTANCE = new DoubleIntegerQuantizer();
     
     /**
-     * Creates an integer quantizer.
+     * Creates a double quantizer.
      */
-    private IdentityIntegerQuantizer() {
-        super(Integer.class);
+    private DoubleIntegerQuantizer() {
+        super(Double.class);
     }
 
     @Override
-    protected int quantizeImpl(Integer value) {
-        return value.intValue();
+    protected int quantizeImpl(Double value) {
+        return (int) Math.round(value);
     }
 
 }

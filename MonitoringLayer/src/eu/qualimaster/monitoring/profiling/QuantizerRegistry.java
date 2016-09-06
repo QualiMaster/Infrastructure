@@ -19,6 +19,10 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import eu.qualimaster.monitoring.profiling.quantizers.DoubleIntegerQuantizer;
+import eu.qualimaster.monitoring.profiling.quantizers.IdentityIntegerQuantizer;
+import eu.qualimaster.monitoring.profiling.quantizers.Quantizer;
+import eu.qualimaster.monitoring.profiling.quantizers.ScalingDoubleQuantizer;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.ResourceUsage;
 import eu.qualimaster.observables.Scalability;

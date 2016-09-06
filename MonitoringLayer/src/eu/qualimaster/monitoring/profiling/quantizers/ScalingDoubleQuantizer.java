@@ -13,32 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.qualimaster.monitoring.profiling;
+package eu.qualimaster.monitoring.profiling.quantizers;
 
 /**
- * A quantizer for double values.
+ * A quantizer for double values which, which determines the scale (log) based on the given value.
  * 
  * @author Holger Eichelberger
  */
-public class RoundingDoubleQuantizer extends Quantizer<Double> {
+public class ScalingDoubleQuantizer extends Quantizer<Double> {
 
-    public static final RoundingDoubleQuantizer STEP_100 = new RoundingDoubleQuantizer(100);
-    public static final RoundingDoubleQuantizer STEP_1000 = new RoundingDoubleQuantizer(1000);
-    
-    private int step;
+    public static final ScalingDoubleQuantizer INSTANCE = new ScalingDoubleQuantizer();
     
     /**
      * Creates a double quantizer.
-     * 
-     * @param step the quantization step
      */
-    public RoundingDoubleQuantizer(int step) {
+    private ScalingDoubleQuantizer() {
         super(Double.class);
-        this.step = Math.max(1, step);
     }
 
     @Override
     protected int quantizeImpl(Double value) {
+        int log10 = (int) Math.log10(value);
+        if (log10 > 1) {
+            log10--;
+        }
+        int step = (int) Math.pow(10, log10);
         return ((int) Math.round(value.doubleValue() / step)) * step;
     }
 
