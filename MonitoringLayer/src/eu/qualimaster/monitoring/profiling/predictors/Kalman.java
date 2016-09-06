@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.qualimaster.monitoring.profiling;
+package eu.qualimaster.monitoring.profiling.predictors;
 import java.util.Properties;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
@@ -28,6 +28,8 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularMatrixException;
 import org.apache.log4j.LogManager;
+
+import eu.qualimaster.monitoring.profiling.Utils;
 
 /**
  * Kalman Implementation for the QualiMaster-Project using the

@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import org.junit.Assert;
 import org.junit.Test;
 
-import eu.qualimaster.monitoring.profiling.IAlgorithmProfilePredictor;
-import eu.qualimaster.monitoring.profiling.Kalman;
+import eu.qualimaster.monitoring.profiling.predictors.IAlgorithmProfilePredictor;
+import eu.qualimaster.monitoring.profiling.predictors.Kalman;
 
 
 /**

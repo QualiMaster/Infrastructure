@@ -18,6 +18,9 @@ package eu.qualimaster.monitoring.profiling;
 import java.io.Serializable;
 import java.util.Map;
 
+import eu.qualimaster.monitoring.profiling.predictors.IAlgorithmProfilePredictor;
+import eu.qualimaster.monitoring.profiling.predictors.Kalman;
+
 /**
  * Creates profiles and related predictors for the actual Kalman-based approach.
  * 

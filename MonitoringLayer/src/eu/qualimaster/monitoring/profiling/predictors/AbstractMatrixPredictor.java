@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.qualimaster.monitoring.profiling;
+package eu.qualimaster.monitoring.profiling.predictors;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
+
+import eu.qualimaster.monitoring.profiling.Utils;
 
 /**
  * An abstract predictor for matrix-based predictors.

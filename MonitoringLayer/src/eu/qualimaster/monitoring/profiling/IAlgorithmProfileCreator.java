@@ -18,6 +18,8 @@ package eu.qualimaster.monitoring.profiling;
 import java.io.Serializable;
 import java.util.Map;
 
+import eu.qualimaster.monitoring.profiling.predictors.IAlgorithmProfilePredictor;
+
 /**
  * Creates algorithm profile predictors.
  * 

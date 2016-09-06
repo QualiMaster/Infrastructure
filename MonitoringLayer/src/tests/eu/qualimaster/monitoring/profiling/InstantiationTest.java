@@ -22,7 +22,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import eu.qualimaster.monitoring.profiling.Kalman;
+import eu.qualimaster.monitoring.profiling.predictors.Kalman;
 
 /**
  * Collection of test-cases for the creation, storing and loading of Kalman-Filter instances.
