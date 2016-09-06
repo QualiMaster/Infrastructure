@@ -16,6 +16,7 @@
 package eu.qualimaster.monitoring.profiling;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,6 +122,15 @@ public class PipelineElement {
      */
     public String getName() {
         return name;
+    }
+    
+    /**
+     * Returns all profiles. [testing]
+     * 
+     * @return all profiles
+     */
+    public Collection<IAlgorithmProfile> profiles() {
+        return profiles.values();
     }
     
     /**

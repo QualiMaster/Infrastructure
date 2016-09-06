@@ -32,12 +32,12 @@ public class Utils {
     /**
      * Loads a properties file from <code>file</code>.
      * 
-     * @param file the file to load
+     * @param file the file to load (quiet if <b>null</b> or file does not exist)
      * @param data the data read
      * @throws IOException in case of I/O problems
      */
     public static void load(File file, Properties data) throws IOException {
-        if (file.exists()) {
+        if (null != file && file.exists()) {
             FileReader fr = null;
             try {
                 fr = new FileReader(file);

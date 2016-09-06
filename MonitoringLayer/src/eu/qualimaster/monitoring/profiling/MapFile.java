@@ -17,7 +17,10 @@ package eu.qualimaster.monitoring.profiling;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Represents the map file for a certain parameter point.
@@ -99,6 +102,48 @@ public class MapFile {
             } catch (NumberFormatException e) {
                 // ignore, result = -1
             }
+        }
+        return result;
+    }
+    
+    /**
+     * Returns the (default) file name for the profile matching <code>identifier</code> based on the folder the 
+     * map file is located in.
+     * 
+     * @param identifier the identifier to search for
+     * @return the file name or <b>null</b> if no such profile is registered
+     */
+    public File getFile(String identifier) {
+        return getFile(file.getParentFile(), get(identifier));
+    }
+
+    /**
+     * Returns the (default) file name for the profile matching <code>identifier</code> within <code>folder</code>.
+     * 
+     * @param folder the parent folder
+     * @param id the identifier
+     * @return the file name or <b>null</b> if creating the file is not possible (<code>id &lt; 0</code>)
+     */
+    public static File getFile(File folder, int id) {
+        File result;
+        if (id >= 0) {
+            result = new File(folder, Integer.toString(id));
+        } else {
+            result = null;
+        }
+        return result;
+    }
+    
+    /**
+     * Returns the keys.
+     * 
+     * @return the keys
+     */
+    public Set<String> keys() {
+        Set<String> result = new HashSet<String>();
+        Enumeration<Object> e = mapData.keys();
+        while (e.hasMoreElements()) {
+            result.add(e.nextElement().toString());
         }
         return result;
     }

@@ -18,6 +18,7 @@ package tests.eu.qualimaster.monitoring.profiling;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +33,8 @@ import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 import eu.qualimaster.monitoring.events.ParameterChangedMonitoringEvent;
 import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictionManager;
+import eu.qualimaster.monitoring.profiling.IAlgorithmProfile;
+import eu.qualimaster.monitoring.profiling.MapFile;
 import eu.qualimaster.monitoring.profiling.Pipeline;
 import eu.qualimaster.monitoring.profiling.PipelineElement;
 import eu.qualimaster.monitoring.profiling.Pipelines;
@@ -56,9 +59,7 @@ import tests.eu.qualimaster.monitoring.genTopo.TestProcessor;
  */
 public class ManagerTest {
 
-    // TODO input missing in key
-    // TODO multi-step prediction
-    // TODO check whether persisted???
+    // TODO check multi-step prediction (pre-requisites?)
 
     private static final IObservable[] OBSERVABLES = new IObservable[] {TimeBehavior.LATENCY, 
         TimeBehavior.THROUGHPUT_ITEMS, Scalability.ITEMS};
@@ -135,6 +136,16 @@ public class ManagerTest {
         private PipelineNodeSystemPart src;
         private NodeImplementationSystemPart impl;
         private long lastUpdate;
+        private boolean profiling;
+        
+        /**
+         * Creates a pipeline descriptor.
+         * 
+         * @param profiling are we in profiling mode?
+         */
+        private PipelineDescriptor(boolean profiling) {
+            this.profiling = profiling;
+        }
         
         /**
          * Simulates a profiling event.
@@ -242,10 +253,8 @@ public class ManagerTest {
 
         /**
          * Asserts a correct pipeline structure.
-         * 
-         * @param profiling are we in profiling mode?
          */
-        private void assertPipelineStructure(boolean profiling) {
+        private void assertPipelineStructure() {
             Pipeline pip = Pipelines.getPipeline(pipeline);
             Assert.assertNotNull(pip);
             Assert.assertEquals(pipeline, pip.getName());
@@ -280,6 +289,45 @@ public class ManagerTest {
         private PipelineNodeSystemPart getFamily() {
             return elt;
         }
+        
+        /**
+         * Asserts the storage of the algorithm profile.
+         */
+        private void assertStorage() {
+            Pipeline pip = Pipelines.getPipeline(pipeline);
+            Assert.assertNotNull(pip);
+            PipelineElement fam = pip.getElement(family);
+            Assert.assertNotNull(fam);
+            Collection<IAlgorithmProfile> profiles = fam.profiles();
+            for (IAlgorithmProfile profile : profiles) {
+                for (IObservable obs : OBSERVABLES) {
+                    File folder = profile.getFolder(obs);
+                    Assert.assertTrue("Profile folder " + folder + " does not exist", folder.exists());
+                    MapFile mapFile = new MapFile(folder);
+                    for (String key : mapFile.keys()) {
+                        File f = mapFile.getFile(key);
+                        Assert.assertTrue("Profile " + f + " does not exist", f.exists());    
+                    }
+                }
+            }
+        }
+        
+        /**
+         * Stores all active profiles in a pipeline.
+         */
+        private void storeAll() {
+            Pipeline pip = Pipelines.getPipeline(pipeline);
+            Assert.assertNotNull(pip);
+            pip.store();
+        }
+        
+        /**
+         * Asserts the state after stopping the profiling manager.
+         */
+        private void assertStop() {
+            Pipeline pip = Pipelines.getPipeline(pipeline);
+            Assert.assertNull(pip);
+        }
 
     }
     
@@ -313,7 +361,7 @@ public class ManagerTest {
     private void testLifecycle(boolean withProfiling, int steps) {
         registerPredictionSteps(steps);
         AlgorithmProfilePredictionManager.start();
-        PipelineDescriptor desc = new PipelineDescriptor();
+        PipelineDescriptor desc = new PipelineDescriptor(withProfiling);
         AlgorithmProfilingEvent.Status profilingStatus;
         if (withProfiling) {
             profilingStatus = desc.sendProfilingEvent(AlgorithmProfilingEvent.Status.START);
@@ -337,13 +385,17 @@ public class ManagerTest {
                 items += 10; // constant rate
             }
             System.out.println();
-            desc.assertPipelineStructure(withProfiling);
+            desc.assertPipelineStructure();
             // see registerPredictionSteps
             assertPrediction(desc, TimeBehavior.LATENCY, 0.1);
             assertPrediction(desc, TimeBehavior.THROUGHPUT_ITEMS, 0.6); // increasing
             assertPrediction(desc, Scalability.ITEMS, 0.1);
-            
+
+            desc.storeAll();
+            desc.assertStorage();
             desc.stop();
+            desc.assertStop();
+            
             if (AlgorithmProfilingEvent.Status.START == profilingStatus) {
                 profilingStatus = desc.sendProfilingEvent(AlgorithmProfilingEvent.Status.NEXT);
                 System.out.println(profilingStatus);

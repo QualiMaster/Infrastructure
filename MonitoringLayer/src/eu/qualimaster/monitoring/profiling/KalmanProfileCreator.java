@@ -38,4 +38,9 @@ public class KalmanProfileCreator implements IAlgorithmProfileCreator {
         return new SeparateObservableAlgorithmProfile(element, key);
     }
 
+    @Override
+    public String getStorageSubFolder() {
+        return "predictor=kalman";
+    }
+
 }

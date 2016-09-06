@@ -61,13 +61,6 @@ public interface IAlgorithmProfilePredictor extends Cloneable {
     public boolean update(double measured);
     
     /**
-     * Returns the key identifier for this predictor.
-     * 
-     * @return the identifier
-     */
-    public String getIdentifier();
-    
-    /**
      * Stores this predictor to file.
      * 
      * @param file the target file

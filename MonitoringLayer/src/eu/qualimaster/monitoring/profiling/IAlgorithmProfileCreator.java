@@ -43,4 +43,11 @@ public interface IAlgorithmProfileCreator {
      */
     public IAlgorithmProfile createProfile(PipelineElement element, Map<Object, Serializable> key);
     
+    /**
+     * Returns the sub-folder within the storage path for this combination of predictor and profile.
+     * 
+     * @return the sub-folder
+     */
+    public String getStorageSubFolder();
+
 }

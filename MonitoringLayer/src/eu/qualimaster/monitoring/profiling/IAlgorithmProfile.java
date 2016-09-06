@@ -15,6 +15,8 @@
  */
 package eu.qualimaster.monitoring.profiling;
 
+import java.io.File;
+
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.observables.IObservable;
 
@@ -55,5 +57,13 @@ public interface IAlgorithmProfile {
      * @return the predicted value, {@link Constants#NO_PREDICTION} if no prediction is possible
      */
     double predict(IObservable observable);
+
+    /**
+     * Returns the folder where to store the profile of <code>observable</code>.
+     * 
+     * @param observable the observable 
+     * @return the complete folder considering the base path of the {@link #element}
+     */
+    public File getFolder(IObservable observable);
 
 }

@@ -91,7 +91,7 @@ public class Pipeline {
     /**
      * Stores this instance.
      */
-    void store() {
+    public void store() {
         for (PipelineElement elt : elements.values()) {
             elt.store();
         }

@@ -337,11 +337,6 @@ public class Kalman extends AbstractMatrixPredictor {
     }
     
     @Override
-    public String getIdentifier() {
-        return "PREDICTOR=kalman";
-    }
-    
-    @Override
     protected Properties toProperties() {
         Properties result = new Properties();
         result.put(KEY_MEASUREMENT_NOISE, String.valueOf(measurementNoise));

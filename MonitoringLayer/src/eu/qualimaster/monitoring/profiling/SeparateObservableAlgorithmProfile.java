@@ -53,7 +53,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
         this.element = element;
         this.key = key;
     }
-
+    
     /**
      * Generates a string key (identifier) based on the attributes.
      * 
@@ -78,9 +78,9 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
         if (profiling) {
             key = "";
         } else {
-            key = "PIPELINE=" + pipelineName + ";element=" + elementName + ";";
+            key = "pipeline=" + pipelineName + ":element=" + elementName + ":";
         }
-        key += "algorithm=" + algorithm + ";predicted=" + observable.name() + ";parameters=" + sorted;
+        key += "algorithm=" + algorithm + ":predicted=" + observable.name() + ";parameters=" + sorted;
         return key;
     }
     
@@ -107,15 +107,19 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
         }
     }
     
+    @Override
+    public File getFolder(IObservable observable) {
+        return getFolder(element.getPath(), generateKey(observable));
+    }
+    
     /**
      * Returns the folder for a predictor.
      * 
      * @param path the base path
      * @param identifier the profile identifier
-     * @param predictor the predictor
      * @return the folder
      */
-    private static File getFolder(String path, String identifier, IAlgorithmProfilePredictor predictor) {
+    private File getFolder(String path, String identifier) {
         File folder = new File(path);
         // Get subfolder from nesting information 
         String[] nesting = identifier.split(";")[0].split(":");
@@ -123,7 +127,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
             folder = new File(folder, string);
         }
         // set kind of the predictor as subfolder
-        String subfolder = predictor.getIdentifier();
+        String subfolder = element.getProfileCreator().getStorageSubFolder();
         return new File(folder, subfolder);
     }
     
@@ -136,7 +140,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
      * @throws IOException if saving the predictor fails
      */
     void store(IAlgorithmProfilePredictor predictor, String path, String identifier) throws IOException {
-        File folder = getFolder(path, identifier, predictor);
+        File folder = getFolder(path, identifier);
         
         // Create folders, if needed
         if (!folder.exists()) {
@@ -153,7 +157,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
             newEntry = true;
         }
 
-        File instanceFile = new File(folder, id + "");
+        File instanceFile = MapFile.getFile(folder, id);
         predictor.store(instanceFile, identifier);
         
         // update map-file, if needed
@@ -172,11 +176,10 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
      * @throws IOException if saving the predictor fails
      */
     void load(IAlgorithmProfilePredictor predictor, String path, String identifier) throws IOException {
-        File folder = getFolder(path, identifier, predictor);
+        File folder = getFolder(path, identifier);
         MapFile mapFile = new MapFile(folder);
         mapFile.load();
-        int id = mapFile.get(identifier);
-        File instanceFile = new File(folder, Integer.toString(id));
+        File instanceFile = mapFile.getFile(identifier);
         predictor.load(instanceFile, identifier);
     }
 
