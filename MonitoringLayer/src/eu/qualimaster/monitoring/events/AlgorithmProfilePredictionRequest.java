@@ -17,6 +17,7 @@ package eu.qualimaster.monitoring.events;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Set;
 
 import eu.qualimaster.common.QMInternal;
 import eu.qualimaster.events.AbstractReturnableEvent;
@@ -37,6 +38,7 @@ public class AlgorithmProfilePredictionRequest extends AbstractReturnableEvent {
     private Map<IObservable, Double> weighting;
     private IObservable observable;
     private Map<Object, Serializable> targetValues;
+    private Set<String> algorithms;
 
     /**
      * Creates a request (internal).
@@ -91,11 +93,29 @@ public class AlgorithmProfilePredictionRequest extends AbstractReturnableEvent {
      * @param weighting the weighting
      * @param targetValues the target values for a modified situation (may be <b>null</b> if just the algorithm may 
      *     change based on the current situation)
+     * @deprecated use {@link #AlgorithmProfilePredictionRequest(String, String, Set, Map, Map)} instead
      */
+    @Deprecated
     public AlgorithmProfilePredictionRequest(String pipeline, String pipelineElement, 
+        Map<IObservable, Double> weighting, Map<Object, Serializable> targetValues) {
+        this(pipeline, pipelineElement, null, weighting, targetValues);
+    }
+    
+    /**
+     * Creates a request to obtain the best algorithm in this situation.
+     * 
+     * @param pipeline the pipeline to predict for
+     * @param pipelineElement the pipeline element
+     * @param algorithms the algorithms to predict for
+     * @param weighting the weighting
+     * @param targetValues the target values for a modified situation (may be <b>null</b> if just the algorithm may 
+     *     change based on the current situation)
+     */
+    public AlgorithmProfilePredictionRequest(String pipeline, String pipelineElement, Set<String> algorithms, 
         Map<IObservable, Double> weighting, Map<Object, Serializable> targetValues) {
         this(pipeline, pipelineElement, targetValues);
         this.weighting = weighting;
+        this.algorithms = algorithms;
     }
 
     /**
@@ -151,6 +171,15 @@ public class AlgorithmProfilePredictionRequest extends AbstractReturnableEvent {
      */
     public Map<Object, Serializable> getTargetValues() {
         return targetValues;
+    }
+    
+    /**
+     * Returns the algorithms to predict for.
+     * 
+     * @return the algorithms (may be <b>null</b> if {@link #getAlgorithm()} contains a value)
+     */
+    public Set<String> getAlgorithms() {
+        return algorithms;
     }
     
 }
