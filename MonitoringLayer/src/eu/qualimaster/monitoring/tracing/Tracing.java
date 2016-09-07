@@ -277,12 +277,14 @@ public class Tracing {
     public static void traceAlgorithms(PipelineSystemPart pipeline, IParameterProvider parameters) {
         for (PipelineNodeSystemPart node : pipeline.getNodes()) {
             NodeImplementationSystemPart current = node.getCurrent();
+getLogger().info("TRACING " + node.getName()+" "+current);            
             if (null != current) {
                 ITrace trace = current.getTrace();
                 if (null != trace) {
                     trace.traceAlgorithm(node, current, parameters);
                 }
                 String key = getAlgorithmProfileKey(pipeline.getName(), node.getName(), current.getName());
+getLogger().info("TRACING " + key);            
                 trace = profilingTraces.get(key);
                 if (null == trace) { // fallback - for subtopologies
                     Algorithm alg = pipeline.getNameMapping().getAlgorithm(current.getName());
