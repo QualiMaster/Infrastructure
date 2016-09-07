@@ -50,6 +50,8 @@ import eu.qualimaster.pipeline.AlgorithmChangeParameter;
 import net.ssehub.easy.instantiation.core.model.common.VilException;
 import net.ssehub.easy.varModel.confModel.Configuration;
 import net.ssehub.easy.varModel.confModel.IDecisionVariable;
+import net.ssehub.easy.varModel.model.ModelQueryException;
+import net.ssehub.easy.varModel.model.datatypes.Compound;
 
 /**
  * Class for controlling the profiling of an algorithm via its data/profiling script.
@@ -453,30 +455,38 @@ public class ProfileControl implements IProfile {
      */
     private void sendInitialAlgorithmChangeCommand() {
         String pipelineName = getPipeline();
-        String familyName = AlgorithmProfileHelper.FAM_NAME; //getFamilyName();
+        String familyName = getFamilyName();
         String algorithmName = getAlgorithmName();
-        AlgorithmChangeCommand cmd = new AlgorithmChangeCommand(pipelineName, familyName, algorithmName);
-        IDecisionVariable pip = PipelineHelper.obtainPipelineByName(config, pipelineName);
-        IDecisionVariable family = PipelineHelper.obtainFamilyByName(pip, familyName);
-        IDecisionVariable algo = PipelineHelper.obtainAlgorithmFromFamilyByName(family, algorithmName);
-        if (null != algo) {
-            IDecisionVariable hw = algo.getNestedElement(QmConstants.SLOT_HARDWAREALGORITHM_HWNODE);
-            if (null != hw) {
-                String artifact = VariableHelper.getString(hw, QmConstants.SLOT_ALGORITHM_ARTIFACT);
-                if (null != artifact) {
-                    try {
-                        cmd.setStringParameter(AlgorithmChangeParameter.IMPLEMENTING_ARTIFACT, 
-                            HardwareRepositoryHelper.obtainHardwareArtifactUrl(artifact));
-                    } catch (VilException e) {
-                        getLogger().error(e.getMessage());
+        AlgorithmChangeCommand cmd = new AlgorithmChangeCommand(pipelineName, 
+            AlgorithmProfileHelper.FAM_NAME, algorithmName);
+        try {
+            Compound familyType = eu.qualimaster.easy.extension.internal.Utils.findCompound(
+                config.getProject(), QmConstants.TYPE_FAMILY);
+            IDecisionVariable family = eu.qualimaster.easy.extension.internal.Utils.findNamedVariable(
+                config, familyType, familyName);
+            IDecisionVariable algo = PipelineHelper.obtainAlgorithmFromFamilyByName(family, 
+                QmConstants.SLOT_FAMILY_MEMBERS, algorithmName);
+            if (null != algo) {
+                IDecisionVariable hw = algo.getNestedElement(QmConstants.SLOT_HARDWAREALGORITHM_HWNODE);
+                if (null != hw) {
+                    String artifact = VariableHelper.getString(algo, QmConstants.SLOT_ALGORITHM_ARTIFACT);
+                    if (null != artifact) {
+                        try {
+                            cmd.setStringParameter(AlgorithmChangeParameter.IMPLEMENTING_ARTIFACT, 
+                                HardwareRepositoryHelper.obtainHardwareArtifactUrl(artifact));
+                        } catch (VilException e) {
+                            getLogger().error(e.getMessage());
+                        }
                     }
+    
+                    hw = Configuration.dereference(hw);
+                    setStringParameter(cmd, AlgorithmChangeParameter.COPROCESSOR_HOST, hw, "host");
+                    setIntParameter(cmd, AlgorithmChangeParameter.CONTROL_RESPONSE_PORT, hw, "commandSendingPort");
+                    setIntParameter(cmd, AlgorithmChangeParameter.CONTROL_REQUEST_PORT, hw, "commandReceivingPort");
                 }
-
-                hw = Configuration.dereference(hw);
-                setStringParameter(cmd, AlgorithmChangeParameter.COPROCESSOR_HOST, hw, "host");
-                setIntParameter(cmd, AlgorithmChangeParameter.CONTROL_RESPONSE_PORT, hw, "commandSendingPort");
-                setIntParameter(cmd, AlgorithmChangeParameter.CONTROL_REQUEST_PORT, hw, "commandReceivingPort");
             }
+        } catch (ModelQueryException e) {
+            getLogger().error(e.getMessage());
         }
         cmd.execute();
     }
