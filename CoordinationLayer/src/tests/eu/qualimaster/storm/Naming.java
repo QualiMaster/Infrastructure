@@ -13,6 +13,7 @@ public class Naming {
     public static final String PROPERTY_DEFAULT_INIT_ALGORITHMS = "qm.coordination.test.defaultAlgorithm";
     
     public static final String PIPELINE_NAME = "pipeline";
+    public static final String SUB_PIPELINE_NAME = "subPipeline";
     public static final String CONTAINER_CLASS = Topology.class.getName();
     public static final String NODE_SOURCE = "source";
     public static final String NODE_SOURCE_CLASS = Source.class.getName();

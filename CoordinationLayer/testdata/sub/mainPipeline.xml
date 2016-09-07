@@ -12,10 +12,7 @@
     <algorithm name="alg1" implName="alg1" class="tests.eu.qualimaster.storm.Alg1"/>
     <algorithm name="alg2" implName="alg2" class="tests.eu.qualimaster.storm.Alg2"/>
     <parameter parameter="test" name="source" receiver="process"/>
-  </pipeline>
-  <pipeline name="other" class="xxx">
-      <node name="other">
-      </node>
+    <pipeline name="subPipeline"/>
   </pipeline>
 </mapping>
 

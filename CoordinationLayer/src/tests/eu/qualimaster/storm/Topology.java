@@ -31,11 +31,21 @@ public class Topology {
      * @param builder the topology builder
      */
     public static void createTopology(TopologyBuilder builder) {
-        Source<Src> source = new Source<Src>(Src.class, Naming.PIPELINE_NAME); // use Src2.class for fixed rate source
+        createTopology(builder, Naming.PIPELINE_NAME);
+    }
+
+    /**
+     * Creates the testing topology.
+     * 
+     * @param builder the topology builder
+     * @param pipelineName the name of the pipeline
+     */
+    public static void createTopology(TopologyBuilder builder, String pipelineName) {
+        Source<Src> source = new Source<Src>(Src.class, pipelineName); // use Src2.class for fixed rate source
         builder.setSpout(Naming.NODE_SOURCE, source, 1).setNumTasks(1);
-        Process process = new Process(Naming.NODE_PROCESS, Naming.PIPELINE_NAME);
+        Process process = new Process(Naming.NODE_PROCESS, pipelineName);
         builder.setBolt(Naming.NODE_PROCESS, process, 1).setNumTasks(3).shuffleGrouping(Naming.NODE_SOURCE);
-        Sink sink = new Sink();
+        Sink sink = new Sink(pipelineName);
         builder.setBolt(Naming.NODE_SINK, sink, 1).setNumTasks(1).shuffleGrouping(Naming.NODE_PROCESS);
     }
     

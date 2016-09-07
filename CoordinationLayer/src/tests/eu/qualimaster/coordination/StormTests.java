@@ -553,15 +553,4 @@ public class StormTests extends AbstractCoordinationTests {
             found);
     }
     
-    /**
-     * Fakes a checked pipeline without adaptation layer.
-     * 
-     * @param pipeline the pipeline name
-     */
-    private static void fakeCheckedPipeline(String pipeline) {
-        sleep(500);
-        EventManager.send(new PipelineLifecycleEvent(pipeline, 
-            PipelineLifecycleEvent.Status.CHECKED, null)); // fake as we have no adaptation layer started
-    }
-    
 }

@@ -29,9 +29,11 @@ public class Sink extends BaseSignalBolt {
     
     /**
      * Creates a sink instance.
+     * 
+     * @param pipeline the name of the pipeline
      */
-    public Sink() {
-        super(Naming.NODE_SINK, Naming.PIPELINE_NAME);
+    public Sink(String pipeline) {
+        super(Naming.NODE_SINK, pipeline);
     }
     
     @SuppressWarnings("rawtypes")
@@ -39,9 +41,9 @@ public class Sink extends BaseSignalBolt {
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
         this.collector = collector;
-        this.sink = DataManager.DATA_SINK_MANAGER.createDataSink("pipeline", Snk.class, 
+        this.sink = DataManager.DATA_SINK_MANAGER.createDataSink(getPipeline(), Snk.class, 
             NoStorageStrategyDescriptor.INSTANCE);
-        EventManager.send(new AlgorithmChangedMonitoringEvent(Naming.PIPELINE_NAME, Naming.NODE_SINK, "sink"));
+        EventManager.send(new AlgorithmChangedMonitoringEvent(getPipeline(), Naming.NODE_SINK, "sink"));
         if (Naming.defaultInitializeAlgorithms(stormConf)) {
             this.sink.connect();
         }

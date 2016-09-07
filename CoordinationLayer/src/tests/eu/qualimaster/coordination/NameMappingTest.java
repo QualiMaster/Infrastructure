@@ -52,7 +52,7 @@ public class NameMappingTest {
      */
     @Test
     public void testNameMapping() throws IOException {
-        NameMapping mapping = readNameMapping("pipeline.xml", Naming.PIPELINE_NAME);
+        NameMapping mapping = readNameMapping("testPipeline.xml", Naming.PIPELINE_NAME);
         
         Assert.assertEquals(Naming.PIPELINE_NAME, mapping.getPipelineName());
         Assert.assertEquals(Naming.CONTAINER_CLASS, mapping.getContainerName());
@@ -108,7 +108,7 @@ public class NameMappingTest {
      */
     @Test
     public void testNameMappingSubStructure() throws IOException {
-        NameMapping mapping = readNameMapping("pipeline.xml", Naming.PIPELINE_NAME);
+        NameMapping mapping = readNameMapping("testPipeline.xml", Naming.PIPELINE_NAME);
         Map<String, List<String>> structure = new HashMap<String, List<String>>();
         List<String> tmp = new ArrayList<String>();
         final String pipeline = Naming.PIPELINE_NAME;
@@ -303,7 +303,7 @@ public class NameMappingTest {
      */
     @Test
     public void testCoordinationLevelMapping() throws IOException {
-        NameMapping mapping = readNameMapping("pipeline.xml", Naming.PIPELINE_NAME);
+        NameMapping mapping = readNameMapping("testPipeline.xml", Naming.PIPELINE_NAME);
         CoordinationManager.registerTestMapping(mapping);
         
         Assert.assertTrue(mapping == CoordinationManager.getNameMapping(mapping.getPipelineName()));

@@ -260,6 +260,29 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         return writeCoordinationLog(command, failed);
     }
 
+    /**
+     * Handles commands of starting sub-pipelines.
+     * 
+     * @param subPipelines the sub pipelines
+     * @param command the original start command
+     * @return the sub-Pipeline to start (may be <b>null</b>)
+     */
+    private String handleStartSubPipelines(List<String> subPipelines, PipelineCommand command) {
+        String startSub = null;
+        for (int s = 0; s < subPipelines.size(); s++) {
+            String pip = subPipelines.get(s);
+            if (!CoordinationManager.isStarted(pip)) {
+                if (null == startSub) {
+                    startSub = pip;
+                } else {
+                    CoordinationManager.addToStartSequence(new PipelineCommand(
+                        pip, command.getStatus(), command.getOptions()));
+                }
+            }
+        }
+        return startSub;
+    }
+
     @Override
     public CoordinationExecutionResult visitPipelineCommand(PipelineCommand command) {
         CoordinationExecutionResult failing = null;
@@ -276,6 +299,18 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
                     failing = new CoordinationExecutionResult(command, "illegal pipeline name: null", 
                         CoordinationExecutionCode.STARTING_PIPELINE);
                 } else {
+                    INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
+                    List<String> subPipelines = mapping.getSubPipelines();
+                    if (!subPipelines.isEmpty()) {
+                        String startSub = handleStartSubPipelines(subPipelines, command);
+                        if (null != startSub) {
+                            CoordinationManager.addToStartSequence(command);
+                            // reset command and go on with sub pipeline
+                            command = new PipelineCommand(startSub, command.getStatus(), 
+                                command.getOptions());
+                            pipelineName = command.getPipeline();
+                        }
+                    }
                     if (CoordinationManager.isStartupPending(pipelineName)) {
                         CoordinationManager.removePendingStartup(pipelineName);
                         failing = handlePipelineStart(command);
@@ -324,20 +359,8 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
      */
     private CoordinationExecutionResult handlePipelineStart(PipelineCommand command) {
         CoordinationExecutionResult failing = null;
-        INameMapping mapping = CoordinationManager.getNameMapping(command.getPipeline());
-        List<String> subPipelines = mapping.getSubPipelines();
-        if (!subPipelines.isEmpty()) {
-            for (int s = 1; s < subPipelines.size(); s++) {
-                CoordinationManager.addToStartSequence(new PipelineCommand(
-                    subPipelines.get(s), command.getStatus(), command.getOptions()));
-            }
-            CoordinationManager.addToStartSequence(command);
-            
-            // reset command
-            command = new PipelineCommand(subPipelines.get(1), command.getStatus(), command.getOptions());
-            mapping = CoordinationManager.getNameMapping(command.getPipeline());
-        }
         String pipelineName = command.getPipeline();
+        INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
         getLogger().info("Processing pipeline start command for " + pipelineName + " with options " 
             + command.getOptions());
         try {

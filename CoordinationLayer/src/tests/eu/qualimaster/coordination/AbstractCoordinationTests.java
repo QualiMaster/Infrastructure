@@ -37,6 +37,7 @@ import eu.qualimaster.coordination.commands.ScheduleWavefrontAdaptationCommand;
 import eu.qualimaster.coordination.events.CoordinationCommandExecutionEvent;
 import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
+import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.infrastructure.PipelineStatusTracker;
 import net.ssehub.easy.instantiation.core.model.buildlangModel.Script;
 import tests.eu.qualimaster.TestHelper;
@@ -595,5 +596,94 @@ public class AbstractCoordinationTests {
         }
         return JENKINS.contains(hostname);
     }
+
+    
+    /**
+     * Fakes a checked pipeline without adaptation layer.
+     * 
+     * @param pipeline the pipeline name
+     */
+    protected static void fakeCheckedPipeline(String pipeline) {
+        sleep(500);
+        EventManager.send(new PipelineLifecycleEvent(pipeline, 
+            PipelineLifecycleEvent.Status.CHECKED, null)); // fake as we have no adaptation layer started
+    }
+
+    /**
+     * Fakes a checked pipeline without monitoring/adaptation layer.
+     * 
+     * @param pipeline the pipeline name
+     */
+    protected static void fakeStartedPipeline(String pipeline) {
+        sleep(500);
+        EventManager.send(new PipelineLifecycleEvent(pipeline, 
+            PipelineLifecycleEvent.Status.STARTED, null)); // fake as we have no adaptation layer started
+    }
+    
+    /**
+     * The handler for pipeline lifecycle events, in particular to send {@link CoordinationCommandExecutionEvent 
+     * execution events} on completed lifecycle phase.
+     * 
+     * @author Holger Eichelberger
+     */
+    protected static class PipelineLifecycleEventHandler extends EventHandler<PipelineLifecycleEvent> {
+        
+        private PipelineLifecycleEvent.Status[] handle;
+        
+        /**
+         * Creates an adaptation event handler.
+         * 
+         * @param handle the stati handled by this handler
+         */
+        protected PipelineLifecycleEventHandler(PipelineLifecycleEvent.Status... handle) {
+            super(PipelineLifecycleEvent.class);
+            this.handle = handle;
+        }
+
+        @Override
+        protected void handle(PipelineLifecycleEvent event) {
+            boolean found = false;
+            for (int h = 0; !found && h < handle.length; h++) {
+                found = event.getStatus() == handle[h];
+            }
+            if (found) {
+                PipelineLifecycleEvent.Status next = null;
+                switch (event.getStatus()) {
+                case CHECKING:
+                    next = PipelineLifecycleEvent.Status.CHECKED;
+                    break;
+                case CHECKED:
+                    next = PipelineLifecycleEvent.Status.CREATED;
+                    break;
+                case CREATED:
+                    next = PipelineLifecycleEvent.Status.INITIALIZED;
+                    break;
+                case INITIALIZED:
+                    next = PipelineLifecycleEvent.Status.STARTING;
+                    break;
+                case STARTING:
+                    next = PipelineLifecycleEvent.Status.STARTED;
+                    break;
+                case STARTED:
+                    next = PipelineLifecycleEvent.Status.STOPPING;
+                    break;
+                case STOPPING:
+                    next = PipelineLifecycleEvent.Status.STOPPED;
+                    break;
+                case STOPPED:
+                    next = null;
+                    break;
+                default:
+                    next = null;
+                    break;
+                }
+                if (null != next) {
+                    EventManager.send(new PipelineLifecycleEvent(event, next));
+                }
+            }
+        }
+        
+    }
+
     
 }

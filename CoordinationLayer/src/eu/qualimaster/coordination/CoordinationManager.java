@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +32,8 @@ import eu.qualimaster.monitoring.events.IEnactmentCompletedMonitoringEvent;
  */
 public class CoordinationManager {
 
+    public static final boolean HANDLE_SUBPIPELINES = false;
+
     private static final Map<String, INameMapping> NAME_MAPPING = new HashMap<String, INameMapping>();
     private static IExecutionTracer executionTracer;
     private static boolean testingMode = false;
@@ -38,7 +41,9 @@ public class CoordinationManager {
     private static Map<String, PipelineCommand> pendingStartups = new HashMap<String, PipelineCommand>();
     private static Map<String, AlgorithmProfilingEvent> pendingProfiling 
         = new HashMap<String, AlgorithmProfilingEvent>();
+    
     private static List<PipelineCommand> startSequence = new ArrayList<PipelineCommand>();
+    private static Set<String> started = new HashSet<String>();
 
     /**
      * The handler for coordination command events (if not passed in directly as commands).
@@ -91,6 +96,7 @@ public class CoordinationManager {
                 }
                 break;
             case STARTED:
+                started.add(pipelineName);
                 EventManager.handle(new CoordinationCommandExecutionEvent(event));
                 // now monitoring is ready to also handle the profiling event
                 AlgorithmProfilingEvent evt = pendingProfiling.remove(pipelineName);
@@ -101,6 +107,9 @@ public class CoordinationManager {
                 if (!startSequence.isEmpty()) {
                     execute(startSequence.remove(0));
                 }
+                break;
+            case STOPPING:
+                started.remove(pipelineName);
                 break;
             case STOPPED:
                 handleSignalNamespace(pipelineName, NamespaceState.CLEAR);
@@ -117,6 +126,16 @@ public class CoordinationManager {
             }
         }
         
+    }
+    
+    /**
+     * Returns whether the given pipeline was started.
+     * 
+     * @param pipeline the pipeline name
+     * @return <code>true</code> for started, <code>false</code> else
+     */
+    public static boolean isStarted(String pipeline) {
+        return started.contains(pipeline);
     }
     
     /**
@@ -248,9 +267,7 @@ public class CoordinationManager {
         if (null == mapping) {
             try {
                 File topologyJar = CoordinationUtils.obtainPipelineJar(pipelineName);
-                if (null != topologyJar) {
-                    mapping = CoordinationUtils.createMapping(pipelineName, topologyJar);
-                }
+                mapping = CoordinationUtils.createMapping(pipelineName, topologyJar);
             } catch (IOException e) {
                 LogManager.getLogger(CoordinationManager.class).info(e.getMessage());
             }                

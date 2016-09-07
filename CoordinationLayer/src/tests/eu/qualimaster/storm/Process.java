@@ -124,7 +124,7 @@ public class Process extends BaseSignalBolt {
      * @param algorithm the new algorithm
      */
     private void sendAlgorithmChangeEvent(String algorithm) {
-        EventManager.send(new AlgorithmChangedMonitoringEvent(getNamespace(), getName(), algorithm));
+        EventManager.send(new AlgorithmChangedMonitoringEvent(getPipeline(), getName(), algorithm));
     }
     
     @SuppressWarnings("rawtypes")
