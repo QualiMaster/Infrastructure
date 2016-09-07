@@ -453,7 +453,7 @@ public class ProfileControl implements IProfile {
      */
     private void sendInitialAlgorithmChangeCommand() {
         String pipelineName = getPipeline();
-        String familyName = getFamilyName();
+        String familyName = AlgorithmProfileHelper.FAM_NAME; //getFamilyName();
         String algorithmName = getAlgorithmName();
         AlgorithmChangeCommand cmd = new AlgorithmChangeCommand(pipelineName, familyName, algorithmName);
         IDecisionVariable pip = PipelineHelper.obtainPipelineByName(config, pipelineName);
