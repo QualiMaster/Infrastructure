@@ -32,7 +32,7 @@ import eu.qualimaster.monitoring.events.IEnactmentCompletedMonitoringEvent;
  */
 public class CoordinationManager {
 
-    public static final boolean HANDLE_SUBPIPELINES = false;
+    public static final boolean HANDLE_SUBPIPELINES_ON_STARTSTOP = false;
 
     private static final Map<String, INameMapping> NAME_MAPPING = new HashMap<String, INameMapping>();
     private static IExecutionTracer executionTracer;

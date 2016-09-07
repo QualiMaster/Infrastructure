@@ -72,7 +72,7 @@ public class SubPipelineTests extends AbstractCoordinationTests {
      */
     @Test
     public void testSubpipeline() {
-        if (CoordinationManager.HANDLE_SUBPIPELINES) {
+        if (CoordinationManager.HANDLE_SUBPIPELINES_ON_STARTSTOP) {
             LocalStormEnvironment env = new LocalStormEnvironment();
             @SuppressWarnings("rawtypes")
             Map config = createTopologyConfiguration();

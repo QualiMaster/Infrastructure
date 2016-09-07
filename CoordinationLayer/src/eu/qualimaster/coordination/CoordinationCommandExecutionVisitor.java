@@ -282,6 +282,17 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         }
         return startSub;
     }
+    
+    /**
+     * Returns the sub pipelines in <code>mapping</code>.
+     * 
+     * @param mapping the mapping
+     * @return the sub-pipelines (may be empty due to {@link CoordinationManager#HANDLE_SUBPIPELINES_ON_STARTSTOP}
+     */
+    private static List<String> getSubPipelines(INameMapping mapping) {
+        return CoordinationManager.HANDLE_SUBPIPELINES_ON_STARTSTOP 
+            ? mapping.getSubPipelines() : new ArrayList<String>();
+    }
 
     @Override
     public CoordinationExecutionResult visitPipelineCommand(PipelineCommand command) {
@@ -300,7 +311,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
                         CoordinationExecutionCode.STARTING_PIPELINE);
                 } else {
                     INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
-                    List<String> subPipelines = mapping.getSubPipelines();
+                    List<String> subPipelines = getSubPipelines(mapping); // considers HANDLE_SUBPIPELINES_ON_STARTSTOP
                     if (!subPipelines.isEmpty()) {
                         String startSub = handleStartSubPipelines(subPipelines, command);
                         if (null != startSub) {
@@ -430,7 +441,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         } catch (SignalException e) {
             getLogger().error(e.getMessage(), e);
         }
-        List<String> subPipelines = mapping.getSubPipelines();
+        List<String> subPipelines = getSubPipelines(mapping); // considers HANDLE_SUBPIPELINES_ON_STARTSTOP
         for (String subPipeline : subPipelines) {
             handlePipelineStop(new PipelineCommand(subPipeline, command.getStatus(), command.getOptions()), false);
         }
