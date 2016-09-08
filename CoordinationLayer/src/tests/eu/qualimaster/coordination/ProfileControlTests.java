@@ -147,7 +147,8 @@ public class ProfileControlTests {
         
         Assert.assertNotNull(result);
         // no import, shall be the same
-        Assert.assertEquals(dataFile, result.getDataFile());
+        Assert.assertEquals(1, result.getDataFiles().size());
+        Assert.assertEquals(dataFile, result.getDataFiles().get(0));
         // from testdata/profile.ctl
         assertEquals(result.getExecutors(), 1, 1, 2, 3);
         assertEquals(result.getTasks(), 1, 2, 2, 2);
@@ -186,7 +187,8 @@ public class ProfileControlTests {
 
         Assert.assertNotNull(result);
 
-        Assert.assertEquals(dataFile, result.getDataFile());
+        Assert.assertEquals(1, result.getDataFiles().size());
+        Assert.assertEquals(dataFile, result.getDataFiles().get(0));
         // from testdata/profile.ctl, shall not be overridden
         assertEquals(result.getExecutors(), 4, 3, 1, 1, 2, 3);
         assertEquals(result.getTasks(), 4, 3, 1, 2, 2, 2);
@@ -215,7 +217,7 @@ public class ProfileControlTests {
         ArtifactRegistry.defineArtifact(artifactSpec, tmpUrl);
         
         File ctlFile = new File(testDir, "profile3.ctl");
-        File dataFile = new File(testDir, "profile0.data"); // does not exist 
+        File dataFile = new File(testDir, "noExist/profile.data"); // does not exist 
         
         Models models = RepositoryConnector.getModels(Phase.MONITORING);
         IProfile profile = new TestProfile(Naming.NODE_PROCESS_FAMILY, Naming.NODE_PROCESS_ALG1, 
@@ -227,7 +229,8 @@ public class ProfileControlTests {
         ParseResult result = parser.parseControlFile(ctlFile, profile);
 
         Assert.assertNotNull(result);
-        Assert.assertEquals(dataFile, result.getDataFile());
+        Assert.assertEquals(1, result.getDataFiles().size());
+        Assert.assertEquals(dataFile, result.getDataFiles().get(0));
         // from testdata/profile.ctl, shall not be overridden
         assertEquals(result.getExecutors(), 1, 1, 2, 3);
         assertEquals(result.getTasks(), 1, 2, 2, 2);
@@ -272,8 +275,10 @@ public class ProfileControlTests {
 
         // temporary data file has been copied to expected data file
         Assert.assertTrue(dataFile.exists());
-        Assert.assertEquals(dataFile, result.getDataFile());
-        result.getDataFile().delete(); // this is just temporary
+        Assert.assertEquals(1, result.getDataFiles().size());
+        File df = result.getDataFiles().get(0);
+        Assert.assertEquals(dataFile, df);
+        df.delete(); // this is just temporary
         
         // from testdata/profile.ctl, shall not be overridden
         assertEquals(result.getExecutors(), 4, 3, 1, 1, 2, 3);

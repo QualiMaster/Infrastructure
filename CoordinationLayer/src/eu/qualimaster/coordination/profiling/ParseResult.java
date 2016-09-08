@@ -33,7 +33,7 @@ import eu.qualimaster.coordination.profiling.ProcessingEntry.ProjectionType;
  */
 public class ParseResult {
 
-    private File dataFile;
+    private Map<String, File> dataFiles = new HashMap<String, File>();
     private Set<ProcessingEntry> processing = new LinkedHashSet<ProcessingEntry>();
     private Map<String, Set<Serializable>> parameters = new HashMap<String, Set<Serializable>>();
 
@@ -44,21 +44,42 @@ public class ParseResult {
     }
     
     /**
-     * Changes the data file that shall be used.
+     * Adds/changes a data file that shall be used.
      * 
      * @param dataFile the data file
      */
-    void setDataFile(File dataFile) {
-        this.dataFile = dataFile;
+    void addDataFile(File dataFile) {
+        dataFiles.put(dataFile.getName(), dataFile);
     }
     
     /**
-     * Returns the data file that shall be used.
+     * Adds all data files from <code>result</code>, whereby the files in <code>result</code> take precedence.
      * 
-     * @return the data file
+     * @param result the parse result to take the files from
      */
-    public File getDataFile() {
-        return dataFile;
+    void addDataFiles(ParseResult result) {
+        dataFiles.putAll(result.dataFiles);
+    }
+    
+    /**
+     * Returns the data files that shall be used.
+     * 
+     * @return the data files
+     */
+    public List<File> getDataFiles() {
+        List<File> result = new ArrayList<File>();
+        result.addAll(dataFiles.values());
+        return result;
+    }
+    
+    /**
+     * Returns a registered file for <code>file</code> (looking up the name of <code>file</code>).
+     * 
+     * @param file the file to look up the name for
+     * @return the registered file, may be <b>null</b>
+     */
+    File getDataFile(File file) {
+        return dataFiles.get(file.getName());
     }
     
     /**
@@ -164,7 +185,7 @@ public class ParseResult {
      */
     void merge(ParseResult result, boolean includeDataFile) {
         if (includeDataFile) {
-            dataFile = result.dataFile;
+            addDataFiles(result);
         }
         processing.addAll(result.processing);
         for (Map.Entry<String, Set<Serializable>> entry : result.parameters.entrySet()) {
@@ -180,7 +201,7 @@ public class ParseResult {
     
     @Override
     public String toString() {
-        return dataFile + " " + processing + " " + parameters;
+        return getDataFiles() + " " + processing + " " + parameters;
     }
 
 }

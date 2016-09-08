@@ -84,7 +84,7 @@ class SimpleParser implements IProfileControlParser {
         List<Integer> tmpTasks = new ArrayList<Integer>();
         List<Integer> tmpExecutors = new ArrayList<Integer>();
         List<Integer> tmpWorkers = new ArrayList<Integer>();
-        result.setDataFile(profile.getDataFile());
+        result.addDataFile(profile.getDataFile());
         if (file.exists()) {
             LineNumberReader reader = new LineNumberReader(new FileReader(file));
             String line;
@@ -94,7 +94,7 @@ class SimpleParser implements IProfileControlParser {
                     line = line.trim();
                     if (line.startsWith(IMPORT)) {
                         if (considerImport) {
-                            handleImport(line, result.getDataFile(), result, profile);
+                            handleImport(line, result, profile);
                         }
                     } else if (line.startsWith(PROCESSING)) {
                         line = line.substring(PROCESSING.length()).trim();
@@ -118,12 +118,11 @@ class SimpleParser implements IProfileControlParser {
      * Handles an import command.
      * 
      * @param line the line to be parsed
-     * @param dataFile the current data file
      * @param result the parse result to be modified as a side effect
      * @param profile the profile data
      * @throws IOException if parsing fails
      */
-    private void handleImport(String line, File dataFile, ParseResult result, IProfile profile) throws IOException {
+    private void handleImport(String line, ParseResult result, IProfile profile) throws IOException {
         boolean dataOnly = false;
         String artifact = line.substring(IMPORT.length(), line.length()).trim();
         if (artifact.startsWith(DATA + " ")) {
@@ -141,19 +140,53 @@ class SimpleParser implements IProfileControlParser {
                 if (!dataOnly) {
                     result.merge(pResult, false);
                 }
-                File df = AlgorithmProfileHelper.getDataFile(base);
-                getLogger().info("Imported data file " + df + " exists " + df.exists() + " original " + dataFile 
-                    + " exists " + dataFile.exists());
-                if (df.exists() && !dataFile.exists()) {
-                    getLogger().info("Copying and taking over imported data file " + df + " to " + dataFile);
-                    FileUtils.copyFile(df, dataFile);
-                    result.setDataFile(dataFile);
-                }
+                File baseDf = AlgorithmProfileHelper.getDataFile(base);
+                int i = 0;
+                do {
+                    File df = getInstanceFile(baseDf, i);
+                    if (df.exists()) {
+                        File dataFile = result.getDataFile(df);
+                        if (null == dataFile) {
+                            dataFile = getInstanceFile(profile.getDataFile(), i); // assume base
+                        }
+                        getLogger().info("Imported data file " + df + " exists " + df.exists() + " original " 
+                            + dataFile + " exists " + dataFile.exists());
+                        if (!dataFile.exists()) {
+                            getLogger().info("Copying and taking over imported data file " + df + " to " 
+                                + dataFile);
+                            FileUtils.copyFile(df, dataFile);
+                            result.addDataFile(dataFile);
+                        }
+                    } else {
+                        break;
+                    }
+                    i++;
+                } while (i > 0);
             }
         } catch (VilException e) {
             throw new IOException(e);
         }
         base.delete();
+    }
+    
+    /**
+     * Returns the instance file of <code>base</code> by adding <code>index</code> if <code>index &gt; 0</code>.
+     * 
+     * @param base the base file
+     * @param index the index number
+     * @return the instance file
+     */
+    private static File getInstanceFile(File base, int index) {
+        File result = base;
+        if (index > 0) {
+            String name = base.getName();
+            int pos = name.lastIndexOf('.');
+            if (pos >= 0) {
+                name = name.substring(0, pos) + "-" + index + name.substring(pos, name.length());
+            }
+            result = new File(base.getPath(), name);
+        }
+        return result;
     }
 
     /**

@@ -50,9 +50,9 @@ public interface IProfile {
     public Configuration getConfiguration();
     
     /**
-     * Returns the data file that shall be used.
+     * Returns the (base) data file that shall be used.
      * 
-     * @return the data file
+     * @return the (base) data file without index
      */
     public File getDataFile();
 

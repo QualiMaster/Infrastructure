@@ -119,14 +119,14 @@ public class ProfileControl implements IProfile {
     private INameMapping mapping;
     private PipelineOptions lastOptions;
     private boolean useHdfs;
-    private String dataPath;
-    private File dataFile;
+    private List<String> dataPaths;
+    private List<File> dataFiles;
     private IProfileExecution execution;
     
-    private List<ProcessingEntry> processing;
-    private Map<String, List<Serializable>> parameters;
-    private int actVariant = 0;
-    private List<Position> actPos = new ArrayList<Position>();
+    private transient List<ProcessingEntry> processing;
+    private transient Map<String, List<Serializable>> parameters;
+    private transient int actVariant = 0;
+    private transient List<Position> actPos = new ArrayList<Position>();
     
     /**
      * Denotes an iterator position.
@@ -137,22 +137,27 @@ public class ProfileControl implements IProfile {
         
         private String identifier;
         private int position;
+        private String dataPath;
         
         /**
          * Creates a common iterator position for tasks, executors and workers.
+         * 
+         * @param dataPath the data path to use
          */
-        private Position() {
-            this(null);
+        private Position(String dataPath) {
+            this(null, dataPath);
         }
         
         /**
          * Creates a specific iterator position for parameters.
          * 
          * @param identifier the parameter name as identifier
+         * @param dataPath the data path
          */
-        private Position(String identifier) {
+        private Position(String identifier, String dataPath) {
             this.identifier = identifier;
             this.position = 0;
+            this.dataPath = dataPath;
         }
 
         /**
@@ -207,25 +212,28 @@ public class ProfileControl implements IProfile {
         this.familyName = cmd.getFamily();
         this.algorithmName = cmd.getAlgorithm();
         this.data = data;
-        this.dataFile = data.getDataFile();
         this.execution = null == execution ? STORM_EXECUTION : execution;
         mapping = CoordinationUtils.createMapping(data.getPipelineName(), data.getPipeline());
         CoordinationManager.registerNameMapping(mapping);
         File cf = data.getControlFile();
         ParseResult pResult = ProfileControlParserFactory.INSTANCE.getParser(cf).parseControlFile(cf, this);
-        dataFile = pResult.getDataFile();
+        dataFiles = pResult.getDataFiles();
+        dataPaths = new ArrayList<String>(dataFiles.size());
         processing = pResult.getProcessingEntries();
         parameters = pResult.getParameters();
-        dataPath = HdfsUtils.storeToHdfs(dataFile);
-        if (null != dataPath) {
-            useHdfs = true;    
-        } else {
-            dataPath = HdfsUtils.storeToDfs(dataFile);
-            if (null == dataPath) {
-                throw new IOException("Cannot store data files. Check HDFS/DFS configuration.");
+        for (File dataFile : dataFiles) {
+            String dataPath = HdfsUtils.storeToHdfs(dataFile);
+            if (null != dataPath) {
+                useHdfs = true;    
             } else {
-                useHdfs = false;
+                dataPath = HdfsUtils.storeToDfs(dataFile);
+                if (null == dataPath) {
+                    throw new IOException("Cannot store data files. Check HDFS/DFS configuration.");
+                } else {
+                    useHdfs = false;
+                }
             }
+            dataPaths.add(dataPath);
         }
         calcVariants();
         INSTANCES.put(data.getPipelineName(), this);
@@ -238,11 +246,13 @@ public class ProfileControl implements IProfile {
     private void calcVariants() {
         int maxExec = processing.size();
         
-        maxVariants = Math.max(1, maxExec);
-        actPos.add(new Position());
-        for (Map.Entry<String, List<Serializable>> ent : parameters.entrySet()) {
-            maxVariants *= ent.getValue().size();
-            actPos.add(new Position(ent.getKey()));
+        maxVariants = Math.max(1, maxExec) * dataFiles.size();
+        for (String dataPath : dataPaths) {
+            actPos.add(new Position(dataPath));
+            for (Map.Entry<String, List<Serializable>> ent : parameters.entrySet()) {
+                maxVariants *= ent.getValue().size();
+                actPos.add(new Position(ent.getKey(), dataPath));
+            }
         }
     }
     
@@ -356,7 +366,7 @@ public class ProfileControl implements IProfile {
 
             lastOptions.setExecutorArgument(AlgorithmProfileHelper.SRC_NAME, 
                 useHdfs ? AlgorithmProfileHelper.PARAM_HDFS_DATAFILE 
-                : AlgorithmProfileHelper.PARAM_DATAFILE, dataPath);
+                : AlgorithmProfileHelper.PARAM_DATAFILE, actPos.get(0).dataPath);
 
             
             if (0 == actVariant) { // this is the first execution, notify monitoring but defer until pipeline started
@@ -438,7 +448,7 @@ public class ProfileControl implements IProfile {
 
     @Override
     public File getDataFile() {
-        return dataFile;
+        return data.getDataFile(); // just the base data file
     }
     
     /**
