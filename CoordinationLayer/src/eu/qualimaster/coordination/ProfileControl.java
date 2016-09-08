@@ -123,8 +123,10 @@ public class ProfileControl implements IProfile {
     private List<File> dataFiles;
     private IProfileExecution execution;
     
-    private transient List<ProcessingEntry> processing;
-    private transient Map<String, List<Serializable>> parameters;
+    private List<ProcessingEntry> processing;
+    private Map<String, List<Serializable>> parameters;
+    private List<Map<String, Serializable>> settings = new ArrayList<>();
+
     private transient int actVariant = 0;
     private transient List<Position> actPos = new ArrayList<Position>();
     
@@ -135,53 +137,28 @@ public class ProfileControl implements IProfile {
      */
     private class Position {
         
-        private String identifier;
         private int position;
         private String dataPath;
-        
-        /**
-         * Creates a common iterator position for tasks, executors and workers.
-         * 
-         * @param dataPath the data path to use
-         */
-        private Position(String dataPath) {
-            this(null, dataPath);
-        }
+        private ProcessingEntry pEnt;
         
         /**
          * Creates a specific iterator position for parameters.
          * 
-         * @param identifier the parameter name as identifier
+         * @param pEnt the processing entry
+         * @param position the position within {@link ProfileControl#settings}
          * @param dataPath the data path
          */
-        private Position(String identifier, String dataPath) {
-            this.identifier = identifier;
-            this.position = 0;
+        private Position(ProcessingEntry pEnt, int position, String dataPath) {
+            this.pEnt = pEnt;
+            this.position = position;
             this.dataPath = dataPath;
         }
-
-        /**
-         * Advances the current position.
-         * 
-         * @return <code>true</code> in case of an overflow, i.e., position is larger than the amount of elements and
-         *   is reset to <code>0</code> and the next level shall go on iterating, <code>false</code> if the advance
-         *   was done within the number of elements
-         */
-        private boolean advance() {
-            boolean overflow = false;
-            position++;
-            List<?> base;
-            if (null == identifier) {
-                base = processing;
-            } else {
-                base = parameters.get(identifier);
-            }
-            if (position >= base.size()) {
-                position = 0;
-                overflow = true;
-            }
-            return overflow;
+        
+        @Override
+        public String toString() {
+            return pEnt + " " + position + " " + dataPath;
         }
+        
     }
 
     /**
@@ -244,16 +221,46 @@ public class ProfileControl implements IProfile {
      * Calculates the number of variants to process and initializes the actual position counters.
      */
     private void calcVariants() {
-        int maxExec = processing.size();
-        
-        maxVariants = Math.max(1, maxExec) * dataFiles.size();
-        for (String dataPath : dataPaths) {
-            actPos.add(new Position(dataPath));
-            for (Map.Entry<String, List<Serializable>> ent : parameters.entrySet()) {
-                maxVariants *= ent.getValue().size();
-                actPos.add(new Position(ent.getKey(), dataPath));
+
+        Map<String, Serializable> tmp = new HashMap<String, Serializable>();
+        String[] names = new String[parameters.size()];
+        int[] pos = new int[parameters.size()];
+        int i = 0;
+        for (String name : parameters.keySet()) {
+            names[i] = name;
+            pos[i] = 0;
+            tmp.put(name, parameters.get(name).get(0));
+        }
+        boolean cont = true;
+        while (cont) {
+            for (int n = 0; n < names.length; n++) {
+                List<Serializable> paramVals = parameters.get(names[n]);
+                tmp.put(names[n], paramVals.get(pos[n]));
+                Map<String, Serializable> instance = new HashMap<String, Serializable>();
+                instance.putAll(tmp);
+                settings.add(instance);
+                pos[n]++;
+                if (pos[n] >= paramVals.size()) {
+                    if (n < names.length - 1) {
+                        pos[n] = 0;
+                    } else {
+                        cont = false;
+                    }
+                } 
             }
         }
+        for (ProcessingEntry pEnt : processing) {
+            for (String dataPath : dataPaths) {
+                if (settings.isEmpty()) {
+                    actPos.add(new Position(pEnt, -1, dataPath));
+                } else {
+                    for (int s = 0; s < settings.size(); s++) {
+                        actPos.add(new Position(pEnt, s, dataPath));
+                    }
+                }
+            }
+        }
+        maxVariants = actPos.size();
     }
     
     /**
@@ -346,7 +353,8 @@ public class ProfileControl implements IProfile {
     public void startNext() throws IOException {
         if (hasNext()) {
             lastOptions = new PipelineOptions(AdaptationEvent.class);
-            ProcessingEntry proc = processing.get(actPos.get(0).position);
+            Position pos = actPos.get(actVariant);
+            ProcessingEntry proc = pos.pEnt;
             lastOptions.setNumberOfWorkers(proc.getWorkers() + 1);
             lastOptions.enableProfilingMode();
             lastOptions.setWaitTime(0);
@@ -356,17 +364,17 @@ public class ProfileControl implements IProfile {
             if (proc.getExecutors() > 0) {
                 lastOptions.setExecutorParallelism(AlgorithmProfileHelper.FAM_NAME, proc.getExecutors());
             }
-            
-            for (int p = 1; p < actPos.size(); p++) { // 0 is processing entry!
-                Position pos = actPos.get(p);
-                List<Serializable> params = parameters.get(pos.identifier);
-                lastOptions.setExecutorArgument(AlgorithmProfileHelper.FAM_NAME, 
-                    pos.identifier, params.get(pos.position));
+            if (pos.position >= 0) {
+                Map<String, Serializable> args = settings.get(pos.position);
+                for (Map.Entry<String, Serializable> ent : args.entrySet()) {
+                    lastOptions.setExecutorArgument(AlgorithmProfileHelper.FAM_NAME, 
+                        ent.getKey(), ent.getValue());
+                }
             }
 
             lastOptions.setExecutorArgument(AlgorithmProfileHelper.SRC_NAME, 
                 useHdfs ? AlgorithmProfileHelper.PARAM_HDFS_DATAFILE 
-                : AlgorithmProfileHelper.PARAM_DATAFILE, actPos.get(0).dataPath);
+                : AlgorithmProfileHelper.PARAM_DATAFILE, pos.dataPath);
 
             
             if (0 == actVariant) { // this is the first execution, notify monitoring but defer until pipeline started
@@ -376,18 +384,7 @@ public class ProfileControl implements IProfile {
                 sendAlgorithmProfilingEvent(Status.NEXT, lastOptions.toMap());
             }
             execution.start(mapping, data.getPipeline(), lastOptions);
-            
-            int pos = actPos.size() - 1;
-            while (pos >= 0) {
-                if (actPos.get(pos).advance()) {
-                    pos--;
-                    if (pos < 0) {
-                        break; // this is the very end - overflow in [0]
-                    }
-                } else {
-                    break;
-                }
-            }
+
             actVariant++;
         }
     }

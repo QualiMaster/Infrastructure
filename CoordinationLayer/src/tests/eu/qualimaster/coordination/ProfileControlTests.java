@@ -328,22 +328,25 @@ public class ProfileControlTests {
      */
     private static class TestProfileExecution implements IProfileExecution {
         
-        private Map<String, Map<String, List<Serializable>>> counter 
-            = new HashMap<String, Map<String, List<Serializable>>>();
+        private Map<String, Map<String, Set<Serializable>>> counter 
+            = new HashMap<String, Map<String, Set<Serializable>>>();
         private List<String> parameterNames = new ArrayList<String>();
         private ParseResult result;
         private Set<String> running = new HashSet<String>();
         private final String dataFile = AlgorithmProfileHelper.getDataFile(
             new File(CoordinationConfiguration.getDfsPath())).getAbsolutePath();
+        private boolean expectMultiData = false;
 
         /**
          * Creates an instance for a certain parse <code>result</code>.
          * 
+         * @param expectMultiData whether multiple data files are expected
          * @param result the parse result to start with
          */
-        private TestProfileExecution(ParseResult result) {
+        private TestProfileExecution(ParseResult result, boolean expectMultiData) {
             this.result = result;
             parameterNames.addAll(result.getParameterNames());
+            this.expectMultiData = expectMultiData;
         }
 
         @Override
@@ -351,17 +354,17 @@ public class ProfileControlTests {
             running.add(mapping.getPipelineName());
             String key = getProcessingKey(options.getTaskParallelism(AlgorithmProfileHelper.FAM_NAME, 0),
                 options.getExecutorParallelism(AlgorithmProfileHelper.FAM_NAME, 0), options.getNumberOfWorkers(0));
-            Map<String, List<Serializable>> params = counter.get(key);
+            Map<String, Set<Serializable>> params = counter.get(key);
             if (null == params) {
-                params = new HashMap<String, List<Serializable>>();
+                params = new HashMap<String, Set<Serializable>>();
                 counter.put(key, params);
             }
             for (String name : parameterNames) {
                 if (options.hasExecutorArgument(AlgorithmProfileHelper.FAM_NAME, name)) {
                     Serializable val = options.getExecutorArgument(AlgorithmProfileHelper.FAM_NAME, name);
-                    List<Serializable> values = params.get(name);
+                    Set<Serializable> values = params.get(name);
                     if (null == values) {
-                        values = new ArrayList<Serializable>();
+                        values = new HashSet<Serializable>();
                         params.put(name, values);
                     }
                     values.add(val);
@@ -370,8 +373,10 @@ public class ProfileControlTests {
             
             Assert.assertFalse(options.hasExecutorArgument(AlgorithmProfileHelper.SRC_NAME, 
                 AlgorithmProfileHelper.PARAM_HDFS_DATAFILE));
-            Assert.assertEquals(dataFile, options.getExecutorArgument(AlgorithmProfileHelper.SRC_NAME, 
-                AlgorithmProfileHelper.PARAM_DATAFILE));
+            if (!expectMultiData) {
+                Assert.assertEquals(dataFile, options.getExecutorArgument(AlgorithmProfileHelper.SRC_NAME, 
+                    AlgorithmProfileHelper.PARAM_DATAFILE));
+            }
         }
         
         @Override
@@ -385,12 +390,19 @@ public class ProfileControlTests {
         private void assertComplete() {
             Assert.assertTrue("still running pipelines: " + running, running.isEmpty());
             Map<String, List<Serializable>> params = result.getParameters();
+            Map<String, Set<Serializable>> tmp = new HashMap<String, Set<Serializable>>();
+            for (Map.Entry<String, List<Serializable>> ent : params.entrySet()) {
+                Set<Serializable> val = new HashSet<Serializable>();
+                tmp.put(ent.getKey(), val);
+                val.addAll(ent.getValue());
+            }
+            
             for (ProcessingEntry pEntry : result.getProcessingEntries()) {
                 String key = getProcessingKey(pEntry.getTasks(), pEntry.getExecutors(), 
                     ProfileControl.getActualWorkers(pEntry));
                 Assert.assertTrue("key for processing entry " + pEntry + " not registered", counter.containsKey(key));
-                Map<String, List<Serializable>> recParams = counter.get(key);
-                Assert.assertEquals(params, recParams);
+                Map<String, Set<Serializable>> recParams = counter.get(key);
+                Assert.assertEquals(tmp, recParams);
             }
         }
         
@@ -404,9 +416,34 @@ public class ProfileControlTests {
     @Test(timeout = 5000 + 16 * ProfileControl.KILL_WAITING_TIME) 
     public void testProfileControl() throws IOException {
         File testDir = Utils.getTestdataDir();
-        final String pipeline = "TestPip";
         File ctlFile = new File(testDir, "profile.ctl");
         File dataFile = new File(testDir, "profile.data"); 
+        testProfileControl(ctlFile, dataFile, false);
+    }
+
+    /**
+     * Tests a run over a profile control instance with multiple data files.
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test(timeout = 5000 + 48 * ProfileControl.KILL_WAITING_TIME) 
+    public void testProfileControl2() throws IOException {
+        File testDir = new File(Utils.getTestdataDir(), "multiProfile");
+        File ctlFile = new File(testDir, "profile.ctl");
+        File dataFile = new File(testDir, "profile.data"); 
+        testProfileControl(ctlFile, dataFile, true);
+    }
+
+    /**
+     * Tests the profile control for given files. Please set timeout correctly.
+     * 
+     * @param ctlFile the control file
+     * @param dataFile the (base) data file
+     * @param expectMultiData whether this is a test case with multi data files
+     * @throws IOException in case of I/O problems
+     */
+    private void testProfileControl(File ctlFile, File dataFile, boolean expectMultiData) throws IOException {
+        final String pipeline = "TestPip";
 
         File tmp = FileUtils.getTempDirectory();
         Properties prop = new Properties();
@@ -421,7 +458,7 @@ public class ProfileControlTests {
             models.getConfiguration(), dataFile);
         IProfileControlParser parser = ProfileControlParserFactory.INSTANCE.getParser(ctlFile);
         ParseResult parseResult = parser.parseControlFile(ctlFile, profile);
-        TestProfileExecution execution = new TestProfileExecution(parseResult);
+        TestProfileExecution execution = new TestProfileExecution(parseResult, expectMultiData);
         
         Assert.assertNull(ProfileControl.getInstance(pipeline));
         
@@ -438,7 +475,7 @@ public class ProfileControlTests {
             count++;
             control.killActual();
         }
-        Assert.assertEquals(getVariations(parseResult), count);
+        Assert.assertEquals(parseResult.getNumberOfVariations(), count);
         execution.assertComplete();
         
         // very end
@@ -447,20 +484,6 @@ public class ProfileControlTests {
          
         FileUtils.deleteQuietly(AlgorithmProfileHelper.getControlFile(tmp));
         FileUtils.deleteQuietly(AlgorithmProfileHelper.getDataFile(tmp));
-    }
-    
-    /**
-     * Returns the number ofvariations implied by a parsed control file.
-     * 
-     * @param result the parse result
-     * @return the number of variations
-     */
-    private int getVariations(ParseResult result) {
-        int count = result.getProcessingEntries().size();
-        for (Map.Entry<String, List<Serializable>> ent : result.getParameters().entrySet()) {
-            count *= ent.getValue().size();
-        }
-        return count;
     }
     
 }

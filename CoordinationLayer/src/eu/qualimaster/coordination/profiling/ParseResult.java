@@ -203,5 +203,19 @@ public class ParseResult {
     public String toString() {
         return getDataFiles() + " " + processing + " " + parameters;
     }
+    
+    /**
+     * Returns the number of variations implied by this parsed control file.
+     * 
+     * @return the number of variations
+     */
+    public int getNumberOfVariations() {
+        int count = getProcessingEntries().size();
+        count *= dataFiles.size();
+        for (Map.Entry<String, List<Serializable>> ent : getParameters().entrySet()) {
+            count *= ent.getValue().size();
+        }
+        return count;
+    }
 
 }

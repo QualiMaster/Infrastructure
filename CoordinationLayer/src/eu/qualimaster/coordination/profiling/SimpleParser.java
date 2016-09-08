@@ -85,6 +85,7 @@ class SimpleParser implements IProfileControlParser {
         List<Integer> tmpExecutors = new ArrayList<Integer>();
         List<Integer> tmpWorkers = new ArrayList<Integer>();
         result.addDataFile(profile.getDataFile());
+        addDataFiles(profile.getDataFile().getParentFile(), result, profile, false);
         if (file.exists()) {
             LineNumberReader reader = new LineNumberReader(new FileReader(file));
             String line;
@@ -140,33 +141,50 @@ class SimpleParser implements IProfileControlParser {
                 if (!dataOnly) {
                     result.merge(pResult, false);
                 }
-                File baseDf = AlgorithmProfileHelper.getDataFile(base);
-                int i = 0;
-                do {
-                    File df = getInstanceFile(baseDf, i);
-                    if (df.exists()) {
-                        File dataFile = result.getDataFile(df);
-                        if (null == dataFile) {
-                            dataFile = getInstanceFile(profile.getDataFile(), i); // assume base
-                        }
-                        getLogger().info("Imported data file " + df + " exists " + df.exists() + " original " 
-                            + dataFile + " exists " + dataFile.exists());
-                        if (!dataFile.exists()) {
-                            getLogger().info("Copying and taking over imported data file " + df + " to " 
-                                + dataFile);
-                            FileUtils.copyFile(df, dataFile);
-                            result.addDataFile(dataFile);
-                        }
-                    } else {
-                        break;
-                    }
-                    i++;
-                } while (i > 0);
+                addDataFiles(base, result, profile, true);
             }
         } catch (VilException e) {
             throw new IOException(e);
         }
         base.delete();
+    }
+
+    /**
+     * Adds data files.
+     * 
+     * @param base the base file
+     * @param result the parse result to be modified
+     * @param profile the profile
+     * @param copy copy new files or just add them
+     * @throws IOException in case of I/O problems
+     */
+    private void addDataFiles(File base, ParseResult result, IProfile profile, boolean copy) throws IOException {
+        File baseDf = AlgorithmProfileHelper.getDataFile(base);
+        int i = 0;
+        do {
+            File df = getInstanceFile(baseDf, i);
+            if (df.exists()) {
+                if (copy) {
+                    File dataFile = result.getDataFile(df);
+                    if (null == dataFile) {
+                        dataFile = getInstanceFile(profile.getDataFile(), i); // assume base
+                    }
+                    getLogger().info("Imported data file " + df + " exists " + df.exists() + " original " 
+                        + dataFile + " exists " + dataFile.exists());
+                    if (!dataFile.exists()) {
+                        getLogger().info("Copying and taking over imported data file " + df + " to " 
+                            + dataFile);
+                        FileUtils.copyFile(df, dataFile);
+                        result.addDataFile(dataFile);
+                    }
+                } else {
+                    result.addDataFile(df);
+                }
+            } else {
+                break;
+            }
+            i++;
+        } while (i > 0);
     }
     
     /**
@@ -184,7 +202,7 @@ class SimpleParser implements IProfileControlParser {
             if (pos >= 0) {
                 name = name.substring(0, pos) + "-" + index + name.substring(pos, name.length());
             }
-            result = new File(base.getPath(), name);
+            result = new File(base.getParentFile(), name);
         }
         return result;
     }
