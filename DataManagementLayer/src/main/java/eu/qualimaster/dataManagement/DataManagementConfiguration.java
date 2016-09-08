@@ -70,13 +70,23 @@ public class DataManagementConfiguration extends Configuration {
      * The default value for {@link #PIPELINE_START_DELAY}, {@value}.
      */
     public static final int DEFAULT_PIPELINE_START_DELAY = 2000;
+
+    /**
+     * Returns the pipeline startup delay from initialized to started.
+     */
+    public static final String PIPELINE_START_SOURCE_AUTOCONNECT = "pipeline.start.source.autoconnect";
     
+    /**
+     * The default value for {@link #PIPELINE_START_SOURCE_AUTOCONNECT}, {@value}.
+     */
+    public static final boolean DEFAULT_PIPELINE_START_SOURCE_AUTOCONNECT = false;
+
 
     private static ConfigurationOption<String> hdfsUrl = createStringOption(URL_HDFS, DEFAULT_URL_HDFS);
     private static ConfigurationOption<String> dfsPath = createStringOption(PATH_DFS, DEFAULT_PATH_DFS);
     private static ConfigurationOption<String> accountsPath = createStringOption(PATH_ACCOUNTS, DEFAULT_PATH_ACCOUNTS);
-
-    
+    private static ConfigurationOption<Boolean> autoConnect = createBooleanOption(
+        PIPELINE_START_SOURCE_AUTOCONNECT, DEFAULT_PIPELINE_START_SOURCE_AUTOCONNECT);
     private static ConfigurationOption<Integer> pipelineStartDelay 
         = createIntegerOption(PIPELINE_START_DELAY, DEFAULT_PIPELINE_START_DELAY);
 
@@ -203,6 +213,15 @@ public class DataManagementConfiguration extends Configuration {
      */
     public static int getPipelineStartNotificationDelay() {
         return pipelineStartDelay.getValue();
+    }
+    
+    /**
+     * Returns whether data sources shall do auto-connect at startup.
+     * 
+     * @return <code>true</code> for auto-connect, <code>false</code> else
+     */
+    public static boolean getPipelineStartSourceAutoconnect() {
+        return autoConnect.getValue();
     }
 
 }

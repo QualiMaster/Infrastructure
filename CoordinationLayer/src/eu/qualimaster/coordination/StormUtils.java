@@ -19,6 +19,7 @@ import org.apache.log4j.Logger;
 import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.thrift7.TException;
 
+import eu.qualimaster.common.signal.Constants;
 import eu.qualimaster.common.signal.ThriftConnection;
 import eu.qualimaster.easy.extension.internal.AlgorithmProfileHelper.ProfileData;
 import eu.qualimaster.infrastructure.PipelineOptions;
@@ -224,6 +225,20 @@ public class StormUtils {
     }
 
     /**
+     * Does common configuration steps for local cluster and distributed cluster startup.
+     * 
+     * @param stormConf the storm configuration map
+     * @param options the startup pipeline options
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private static void doCommonConfiguration(Map stormConf, PipelineOptions options) {
+        stormConf = options.toConf(stormConf);
+        if (CoordinationConfiguration.getPipelineStartSourceAutoconnect()) {
+            stormConf.put(Constants.CONFIG_KEY_SOURCE_AUTOCONNECT, "true");
+        }
+    }
+
+    /**
      * Submits a Storm topology.
      * 
      * @param host
@@ -261,7 +276,7 @@ public class StormUtils {
             if (null == topology) {
                 throw new IOException("topology '" + topologyName + "' not found");
             }
-            stormConf = options.toConf(stormConf);
+            doCommonConfiguration(stormConf, options);
             try {
                 localCluster.submitTopology(topologyName, stormConf, topology);
             } catch (InvalidTopologyException e) {
@@ -273,7 +288,7 @@ public class StormUtils {
         } else {
             Map stormConf = Utils.readStormConfig();
             stormConf.put(Config.NIMBUS_HOST, host);
-            stormConf = options.toConf(stormConf);
+            doCommonConfiguration(stormConf, options);
             try {
                 // upload topology jar to Cluster using StormSubmitter
                 clearSubmitter();

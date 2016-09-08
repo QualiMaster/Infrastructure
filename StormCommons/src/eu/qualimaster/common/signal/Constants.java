@@ -26,4 +26,9 @@ public class Constants {
     
     // requires startMonitoring()/endMonitoring() rather than aggregateExecutionTime in pipeline code
     public static final boolean MEASURE_BY_TASK_HOOKS = true;
+    
+    /**
+     * Configuration key set by the infrastructure into the storm pipeline conf if data sources shall do autoconnects.
+     */
+    public static final String CONFIG_KEY_SOURCE_AUTOCONNECT = "qm.source.autoconnect";
 }

@@ -21,7 +21,11 @@ public class DataManagementConfigurationTests extends ConfigurationTests {
         Assert.assertEquals(DataManagementConfiguration.DEFAULT_URL_HDFS, DataManagementConfiguration.getHdfsUrl());
         Assert.assertEquals(DataManagementConfiguration.DEFAULT_PATH_DFS, DataManagementConfiguration.getDfsPath());
         // as not configured explicitly
+        Assert.assertEquals(DataManagementConfiguration.DEFAULT_PIPELINE_START_DELAY, 
+            DataManagementConfiguration.getPipelineStartNotificationDelay());
         Assert.assertEquals(DataManagementConfiguration.getAccountsPath(), DataManagementConfiguration.getDfsPath());
+        Assert.assertEquals(DataManagementConfiguration.DEFAULT_PIPELINE_START_SOURCE_AUTOCONNECT, 
+            DataManagementConfiguration.getPipelineStartSourceAutoconnect());
     }
 
     @Override
