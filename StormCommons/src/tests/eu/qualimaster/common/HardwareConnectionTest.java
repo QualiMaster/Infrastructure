@@ -465,6 +465,44 @@ public class HardwareConnectionTest {
         }
         return result;
     }
+
+    /**
+     * Returns a fake sending server for a given <code>port</code>.
+     * 
+     * @param port the port
+     * @return the fake sending server
+     * @throws IOException in case that the server cannot be created
+     */
+    public static FakeServer createFakeSendingServer(int port) throws IOException {
+        FakeServer sendingServer = new FakeServer(port, new IHandlerCreator() {
+
+            @Override
+            public FakeHandler createHandler(Socket sock) {
+                return new ReceivingHandler(sock);
+            }
+            
+        });
+        return sendingServer;
+    }
+
+    /**
+     * Returns a fake receiving server for a given <code>port</code>.
+     * 
+     * @param port the port
+     * @return the fake receiving server
+     * @throws IOException in case that the server cannot be created
+     */
+    public static FakeServer createFakeReceivingServer(int port) throws IOException {
+        FakeServer receivingServer = new FakeServer(port, new IHandlerCreator() {
+
+            @Override
+            public FakeHandler createHandler(Socket sock) {
+                return new SendingHandler(sock);
+            }
+            
+        });
+        return receivingServer;
+    }
     
     /**
      * Tests the hardware control connection.
@@ -473,23 +511,9 @@ public class HardwareConnectionTest {
      */
     @Test(timeout = 5000)
     public void testHardwareConnection() throws IOException {
-        FakeServer sendingServer = new FakeServer(9998, new IHandlerCreator() {
-
-            @Override
-            public FakeHandler createHandler(Socket sock) {
-                return new ReceivingHandler(sock);
-            }
-            
-        });
+        FakeServer sendingServer = createFakeSendingServer(9998);
         sendingServer.start();
-        FakeServer receivingServer = new FakeServer(9999, new IHandlerCreator() {
-
-            @Override
-            public FakeHandler createHandler(Socket sock) {
-                return new SendingHandler(sock);
-            }
-            
-        });
+        FakeServer receivingServer = createFakeReceivingServer(9999);
         receivingServer.start();
         System.out.println("Creating connection control");
         HardwareControlConnection hcc = new HardwareControlConnection("localhost", 9998, 9999);
