@@ -121,6 +121,15 @@ public class Tracing {
      * @return the key
      */
     private static String getAlgorithmProfileKey(String pipeline, String family, String algorithm) {
+        INameMapping nameMapping = CoordinationManager.getNameMapping(pipeline);
+        Component famComp = nameMapping.getPipelineNodeComponent(family);
+        if (null != famComp) {
+            family = famComp.getName();
+        }
+        Algorithm algComp = nameMapping.getAlgorithm(algorithm);
+        if (null != algComp) {
+            algorithm = algComp.getImplName();
+        }
         return pipeline + "_" + family + "_" + algorithm;
     }
 
@@ -130,20 +139,7 @@ public class Tracing {
      * @param event the event
      */
     public static void handleEvent(AlgorithmProfilingEvent event) {
-        String pipName = event.getPipeline();
-        String famName = event.getFamily();
-        String algName = event.getAlgorithm();
-        
-        INameMapping nameMapping = CoordinationManager.getNameMapping(pipName);
-        Component famComp = nameMapping.getPipelineNodeComponent(famName);
-        if (null != famComp) {
-            famName = famComp.getName();
-        }
-        Algorithm algComp = nameMapping.getAlgorithm(algName);
-        if (null != algComp) {
-            algName = algComp.getImplName();
-        }
-        String key = getAlgorithmProfileKey(pipName, famName, algName);
+        String key = getAlgorithmProfileKey(event.getPipeline(), event.getFamily(), event.getAlgorithm());
         ITrace trace;
         switch (event.getStatus()) {
         case START:
@@ -163,7 +159,6 @@ public class Tracing {
             break;
         case END:
             closeAlgorithmProfilingTrace(key);
-            LogManager.getLogger(Tracing.class).info("Closed trace for: " + key);
             break;
         default:
             break;
@@ -184,6 +179,7 @@ public class Tracing {
         ITrace trace = new FileTrace(out);
         trace.setTraceMode(mode);
         profilingTraces.put(key, trace);
+        LogManager.getLogger(Tracing.class).info("Created monitoring trace: " + key + " " + trace);
     }
     
     /**
@@ -196,6 +192,7 @@ public class Tracing {
             ITrace trace = profilingTraces.remove(key);
             if (null != trace) {
                 trace.close();
+                LogManager.getLogger(Tracing.class).info("Closed trace for: " + key);
             }
         }
     }
@@ -277,14 +274,12 @@ public class Tracing {
     public static void traceAlgorithms(PipelineSystemPart pipeline, IParameterProvider parameters) {
         for (PipelineNodeSystemPart node : pipeline.getNodes()) {
             NodeImplementationSystemPart current = node.getCurrent();
-getLogger().info("TRACING " + node.getName()+" "+current);            
             if (null != current) {
                 ITrace trace = current.getTrace();
                 if (null != trace) {
                     trace.traceAlgorithm(node, current, parameters);
                 }
                 String key = getAlgorithmProfileKey(pipeline.getName(), node.getName(), current.getName());
-getLogger().info("TRACING " + key);            
                 trace = profilingTraces.get(key);
                 if (null == trace) { // fallback - for subtopologies
                     Algorithm alg = pipeline.getNameMapping().getAlgorithm(current.getName());

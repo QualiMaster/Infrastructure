@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -433,4 +435,37 @@ public class NameMappingTest {
         assertParameter(mapping, "FinancialCorrelation", "windowSize1", "FinancialCorrelation");
     }
 
+    /**
+     * Test two identical mapping files except for a nested pipeline element.
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test
+    public void testComparison() throws IOException {
+        NameMapping mapping1 = readNameMapping("mappingComparison/mapping1.xml", "TestPip1473329124467");
+        NameMapping mapping2 = readNameMapping("mappingComparison/mapping2.xml", "TestPip1473329124467");
+        
+        // not all considered by now
+        Assert.assertEquals(mapping1.getPipelineName(), mapping2.getPipelineName());
+        Assert.assertEquals(mapping1.getContainerName(), mapping2.getContainerName());
+        assertEqualsBySet(mapping1.getAlgorithms(), mapping2.getAlgorithms());
+        assertEqualsBySet(mapping1.getComponents(), mapping2.getComponents());
+        assertEqualsBySet(mapping1.getContainerNames(), mapping2.getContainerNames());
+        // not sub-pipelines
+    }
+
+    /**
+     * Asserts equality of collections through converting them to sets.
+     * 
+     * @param <T> the element type
+     * @param expected the expected value
+     * @param actual the actual value
+     */
+    private <T> void assertEqualsBySet(Collection<T> expected, Collection<T> actual) {
+        Set<T> e = new HashSet<T>();
+        e.addAll(expected);
+        Set<T> a = new HashSet<T>();
+        a.addAll(actual);
+        Assert.assertEquals(e, a);
+    }
 }

@@ -84,7 +84,8 @@ public class NameMapping implements INameMapping {
         PIPELINE,
         NODE,
         COMPONENT, 
-        ALGORITHM
+        ALGORITHM,
+        SUB_PIPELINE
     }
     
     /**
@@ -212,6 +213,30 @@ public class NameMapping implements INameMapping {
         public void setAlternatives(List<String> alternatives) {
             this.alternatives = alternatives;
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            boolean result = false;
+            if (obj instanceof Component) {
+                Component other = (Component) obj;
+                result = container.equals(other.getContainer());
+                result &= name.equals(other.getName());
+                result &= className.equals(other.getClassName());
+                result &= isReceiver == other.isReceiver();
+                result &= type.equals(other.getType());
+                result &= useThrift == other.useThrift();
+                result &= tasks == other.getTasks();
+                result &= alternatives.equals(alternatives);
+            }
+            return result;
+        }
+        
+        @Override
+        public int hashCode() {
+            return container.hashCode() + name.hashCode() + className.hashCode() + NameMapping.hashCode(isReceiver)
+                + type.hashCode() + NameMapping.hashCode(useThrift)
+                + tasks + alternatives.hashCode();
+        }
         
     }
     
@@ -272,6 +297,24 @@ public class NameMapping implements INameMapping {
         @Override
         public String toString() {
             return "Alg: " + name + " " + implName + " " + className + " " + components;
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            boolean result = false;
+            if (obj instanceof Algorithm) {
+                Algorithm other = (Algorithm) obj;
+                result = name.equals(other.getName());
+                result &= implName.equals(other.getImplName());
+                result &= className.equals(other.getClassName());
+                result &= components.equals(other.getComponents());
+            }
+            return result;
+        }
+        
+        @Override
+        public int hashCode() {
+            return name.hashCode() + implName.hashCode() + className.hashCode() + components.hashCode();
         }
         
     }
@@ -504,6 +547,7 @@ public class NameMapping implements INameMapping {
         private void handleSubPipeline(Attributes attributes) {
             String name = attributes.getValue(ATTRIBUTE_NAME);
             subPipelines.add(name);
+            level = Level.SUB_PIPELINE;
         }
 
         /**
@@ -534,7 +578,9 @@ public class NameMapping implements INameMapping {
         
         @Override
         public void endElement(String uri, String localName, String qName) throws SAXException {
-            if (Level.PIPELINE == level && ELEMENT_PIPELINE.equals(qName)) {
+            if (Level.SUB_PIPELINE == level && ELEMENT_PIPELINE.equals(qName)) {
+                level = Level.PIPELINE;
+            } else if (Level.PIPELINE == level && ELEMENT_PIPELINE.equals(qName)) {
                 level = Level.TOP;
             } else if (Level.NODE == level && ELEMENT_NODE.equals(qName)) {
                 level = Level.PIPELINE;
@@ -783,6 +829,16 @@ public class NameMapping implements INameMapping {
     @Override
     public List<String> getSubPipelines() {
         return unmodifiableList(subPipelines);
+    }
+    
+    /**
+     * Emulates the JDK 1.8 functionality.
+     * 
+     * @param value the boolean value
+     * @return the hashcode
+     */
+    private static int hashCode(boolean value) {
+        return value ? 1231 : 1237;
     }
 
 }

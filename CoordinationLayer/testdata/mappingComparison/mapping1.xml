@@ -1,0 +1,15 @@
+<mapping>
+  <pipeline name="TestPip1473329124467" class="eu.qualimaster.TestPip1473329124467.topology.Topology">
+      <node name="TestSource" type="source">
+          <component name="TestSource" container="TestPip1473329124467" class="eu.qualimaster.TestPip1473329124467.topology.TestSourceSource" receiver="true" thrift="false" tasks="1"/>
+      </node>
+      <node name="TestFamily" type="family">
+          <component name="TestFamily" container="TestPip1473329124467" class="eu.qualimaster.TestPip1473329124467.topology.TestFamilyFamilyElement" receiver="true" thrift="false" tasks="1" alternative0 = "GenTopoHardwareCorrelationFinancial"/>
+      </node>
+      <algorithm name="GenTopoHardwareCorrelationFinancial" implName="GenTopoHardwareCorrelationFinancialSubTopology" class="eu.qualimaster.algorithms.GenTopoHardwareCorrelationFinancial.GenTopoHardwareCorrelationFinancialSubTopology">
+          <component name="GenTopoHardwareCorrelationFinancialHardwareConnectionBolt" container="GenTopoHardwareCorrelationFinancial" class="eu.qualimaster.algorithms.GenTopoHardwareCorrelationFinancial.HardwareConnectionBolt" receiver="true" thrift="false" tasks="1" type="HARDWARE"/>
+          <component name="GenTopoHardwareCorrelationFinancialHardwareConnectionSpout" container="GenTopoHardwareCorrelationFinancial" class="eu.qualimaster.algorithms.GenTopoHardwareCorrelationFinancial.HardwareConnectionSpout" receiver="false" thrift="false" tasks="1" type="HARDWARE"/>
+      </algorithm>
+  </pipeline>
+
+</mapping>

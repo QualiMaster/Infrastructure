@@ -189,7 +189,7 @@ public class LogTest {
      * @throws IOException in case of I/O problems
      */
     public static void main(String[] args) throws IOException {
-        final String pipName = "TestPip1472558036517";
+        final String pipName = "TestPip1473329124467";
         final int maxEventCount = 100; // 0 = all, 40 = initial testing
         File folder = new File(Utils.getTestdataDir(), "profileHw");
         FileInputStream mappingFile = new FileInputStream(new File(folder, "mapping.xml"));

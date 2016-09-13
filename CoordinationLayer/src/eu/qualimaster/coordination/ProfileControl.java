@@ -221,7 +221,6 @@ public class ProfileControl implements IProfile {
      * Calculates the number of variants to process and initializes the actual position counters.
      */
     private void calcVariants() {
-
         Map<String, Serializable> tmp = new HashMap<String, Serializable>();
         String[] names = new String[parameters.size()];
         int[] pos = new int[parameters.size()];
@@ -231,7 +230,7 @@ public class ProfileControl implements IProfile {
             pos[i] = 0;
             tmp.put(name, parameters.get(name).get(0));
         }
-        boolean cont = true;
+        boolean cont = parameters.size() > 0;
         while (cont) {
             for (int n = 0; n < names.length; n++) {
                 List<Serializable> paramVals = parameters.get(names[n]);
