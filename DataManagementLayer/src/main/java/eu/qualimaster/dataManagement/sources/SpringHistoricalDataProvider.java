@@ -30,10 +30,10 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
 	private static final String BASE_URL = "http://84.200.210.254/Qualimaster/history/";
 	
 	/** The default list of terms to be monitored by default */
-	private static final String[] DEFAULT_MONITORED_TERMS = {"NASDAQ·AAPL","NASDAQ·AMAT","NASDAQ·AMZN","NYSE·CHK","NASDAQ·CSCO","NASDAQ·FB","NASDAQ·GOOGL","NYSE·IBM","NASDAQ·MU","NYSE_MKT·VHC"};
+	private static final String[] DEFAULT_MONITORED_TERMS = {"NASDAQ·AAPL","NASDAQ·AMAT","NASDAQ·NFLX"}; //"NYSE·CHK","NASDAQ·CSCO","NASDAQ·FB","NASDAQ·GOOGL","NYSE·IBM","NASDAQ·MU","NYSE_MKT·VHC"};
 	
 	/** The default list of terms to be looked up for blind prediction */
-	private static final String[] DEFAULT_BLIND_TERMS = {"NASDAQ·AAPL","NASDAQ·AMAT","NASDAQ·AMZN","NYSE·CHK","NASDAQ·CSCO","NASDAQ·FB","NASDAQ·GOOGL","NYSE·IBM","NASDAQ·MU","NYSE_MKT·VHC","Toronto·ECA","NYSE·F","NYSE·HPQ","Amsterdam·MT","NASDAQ·SPLS"};
+	private static final String[] DEFAULT_BLIND_TERMS = {"NASDAQ·AAPL","NASDAQ·AMAT","NASDAQ·NFLX","NYSE·CHK","NASDAQ·CSCO","NASDAQ·FB","NASDAQ·GOOGL","NYSE·IBM","NASDAQ·MU","NYSE_MKT·VHC","Toronto·ECA","NYSE·F","NYSE·HPQ","Amsterdam·MT","NASDAQ·SPLS"};
 	
 	/** The default set of months used for testing. */
 	private static final String[] TEST_MONTHS = {"201603","201604","201605"};
