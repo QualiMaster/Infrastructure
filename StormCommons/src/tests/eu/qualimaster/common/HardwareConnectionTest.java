@@ -185,7 +185,7 @@ public class HardwareConnectionTest {
      * 
      * @author Holger Eichelberger
      */
-    private static class FakeServer implements Runnable {
+    public static class FakeServer implements Runnable {
 
         private int port;
         private IHandlerCreator creator;
