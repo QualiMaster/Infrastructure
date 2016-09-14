@@ -132,12 +132,24 @@ public class StormUtils {
          * @param profileData optional profiling data for simulating profiling executions (may be <b>null</b>)
          * @throws TopologyTestInfoException in case that obtaining/instantiating the topology fails
          */
-        @SuppressWarnings("rawtypes")
+        @SuppressWarnings({ "rawtypes", "unchecked" })
         public TopologyTestInfo(String name, File path, Map topologyConfig, ProfileData profileData) 
             throws TopologyTestInfoException {
+            this.topologyConfig = new HashMap();
+            if (null != topologyConfig) {
+                this.topologyConfig.putAll(topologyConfig);
+            }
+            this.profileData = profileData;
             File binPath = path;
             if (path.isFile() && path.getName().endsWith(".jar")) {
                 binPath = new File(path.getParentFile(), "classes");
+                String topoClasspath = path.getAbsolutePath();
+                // make topology available to workers
+                Object tmp = this.topologyConfig.get(Config.TOPOLOGY_CLASSPATH);
+                if (null != tmp) {
+                    topoClasspath = tmp.toString() + File.pathSeparator + topoClasspath;
+                }
+                this.topologyConfig.put(Config.TOPOLOGY_CLASSPATH, topoClasspath);
             }
             mappingFile = new File(binPath, "mapping.xml");
             if (!mappingFile.exists()) {
@@ -167,8 +179,6 @@ public class StormUtils {
             } catch (IOException e) {
                 LogManager.getLogger(getClass()).error("while closing class loader: " + e.getMessage(), e);
             }
-            this.topologyConfig = topologyConfig;
-            this.profileData = profileData;
         }
 
         /**
