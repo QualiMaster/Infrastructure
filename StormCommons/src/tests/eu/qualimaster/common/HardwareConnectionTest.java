@@ -187,6 +187,8 @@ public class HardwareConnectionTest {
      */
     public static class FakeServer implements Runnable {
 
+        public static final int BASE_IN_PORT = 1234;
+        public static final int BASE_OUT_PORT = 1235;
         private int port;
         private IHandlerCreator creator;
         private ServerSocket serverSocket;
@@ -352,9 +354,9 @@ public class HardwareConnectionTest {
                         int pCount = tmp.getPortCount();
                         int[] ports = new int[pCount];
                         for (int p = 0; p < pCount; p++) {
-                            ports[p] = 1235 + p;
+                            ports[p] = FakeServer.BASE_OUT_PORT + p;
                         }
-                        response = new UploadMessageOut(1234, ports);
+                        response = new UploadMessageOut(FakeServer.BASE_IN_PORT, ports);
                         running.add(id);
                     }
                 }
