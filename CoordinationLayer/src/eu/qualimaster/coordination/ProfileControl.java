@@ -29,6 +29,8 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.adaptation.events.AdaptationEvent;
+import eu.qualimaster.coordination.StormUtils.TopologyTestInfo;
+import eu.qualimaster.coordination.StormUtils.TopologyTestInfoException;
 import eu.qualimaster.coordination.commands.AlgorithmChangeCommand;
 import eu.qualimaster.coordination.commands.ProfileAlgorithmCommand;
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent;
@@ -375,7 +377,16 @@ public class ProfileControl implements IProfile {
                 useHdfs ? AlgorithmProfileHelper.PARAM_HDFS_DATAFILE 
                 : AlgorithmProfileHelper.PARAM_DATAFILE, pos.dataPath);
 
-            
+            if (StormUtils.inTesting()) {
+                try {
+                    Map<String, TopologyTestInfo> topologies = new HashMap<String, TopologyTestInfo>();
+                    topologies.put(getPipeline(), new TopologyTestInfo(getPipeline(), data.getPipeline(), 
+                         lastOptions.toMap(), data));
+                    StormUtils.forTesting(StormUtils.getLocalCluster(), topologies);
+                } catch (TopologyTestInfoException e) {
+                    getLogger().error("Testing: " + e.getMessage(), e);
+                }
+            }
             if (0 == actVariant) { // this is the first execution, notify monitoring but defer until pipeline started
                 considerDetails(CoordinationManager.deferProfilingStart(getPipeline(), AlgorithmProfileHelper.FAM_NAME, 
                     getAlgorithmName(), lastOptions.toMap()));

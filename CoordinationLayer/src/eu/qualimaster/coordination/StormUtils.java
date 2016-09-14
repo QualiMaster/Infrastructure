@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -19,6 +20,8 @@ import org.apache.log4j.Logger;
 import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.thrift7.TException;
 
+import eu.qualimaster.base.algorithm.IMainTopologyCreate;
+import eu.qualimaster.base.algorithm.TopologyOutput;
 import eu.qualimaster.common.signal.Constants;
 import eu.qualimaster.common.signal.ThriftConnection;
 import eu.qualimaster.easy.extension.internal.AlgorithmProfileHelper.ProfileData;
@@ -54,6 +57,28 @@ public class StormUtils {
     private static ILocalCluster localCluster;
     private static Map<String, TopologyTestInfo> testTopologies;
 
+
+    /**
+     * A specific exception for failing the creation of topology test infos.
+     * 
+     * @author Holger Eichelberger
+     */
+    public static class TopologyTestInfoException extends Exception {
+
+        private static final long serialVersionUID = -4812832799124323947L;
+
+        /**
+         * Creates the exception.
+         * 
+         * @param message the message
+         * @param cause the cause
+         */
+        public TopologyTestInfoException(String message, Throwable cause) {
+            super(message, cause);
+        }
+        
+    }
+    
     /**
      * Local topology information to be used while testing.
      * 
@@ -94,6 +119,54 @@ public class StormUtils {
         public TopologyTestInfo(StormTopology topology, File mappingFile, Map topologyConfig, ProfileData profileData) {
             this.topology = topology;
             this.mappingFile = mappingFile;
+            this.topologyConfig = topologyConfig;
+            this.profileData = profileData;
+        }
+        
+        /**
+         * Creates a topology test information object from pipeline code.
+         * 
+         * @param name the name of the pipeline
+         * @param path the path to the code (if jar, <code>..\classes</code> will be used for loading the mapping file)
+         * @param topologyConfig the topology configuration
+         * @param profileData optional profiling data for simulating profiling executions (may be <b>null</b>)
+         * @throws TopologyTestInfoException in case that obtaining/instantiating the topology fails
+         */
+        @SuppressWarnings("rawtypes")
+        public TopologyTestInfo(String name, File path, Map topologyConfig, ProfileData profileData) 
+            throws TopologyTestInfoException {
+            File binPath = path;
+            if (path.isFile() && path.getName().endsWith(".jar")) {
+                binPath = new File(path.getParentFile(), "classes");
+            }
+            mappingFile = new File(binPath, "mapping.xml");
+            if (!mappingFile.exists()) {
+                throw new TopologyTestInfoException("Cannot find mapping file " + mappingFile.getAbsolutePath(), null);
+            }
+            String topologyClass = "eu.qualimaster." + name + ".topology.Topology$MainTopologyCreator";
+            URL[] urls = new URL[1];
+            try {
+                urls[0] = path.toURI().toURL();
+            } catch (MalformedURLException e) {
+                throw new TopologyTestInfoException(e.getMessage(), e);
+            }
+            try (URLClassLoader loader = new URLClassLoader(urls)) {
+                Class<?> cls = loader.loadClass(topologyClass);
+                Object obj = cls.newInstance();
+                if (obj instanceof IMainTopologyCreate) {
+                    IMainTopologyCreate tCreator = (IMainTopologyCreate) obj;
+                    TopologyOutput out = tCreator.createMainTopology();
+                    this.topology = out.getBuilder().createTopology();
+                }
+            } catch (ClassNotFoundException e) {
+                throw new TopologyTestInfoException("cannot find topology class " + topologyClass, e);
+            } catch (IllegalAccessException e) {
+                throw new TopologyTestInfoException("cannot instantiate topology class " + topologyClass, e);
+            } catch (InstantiationException e) {
+                throw new TopologyTestInfoException("cannot instantiate topology class " + topologyClass, e);
+            } catch (IOException e) {
+                LogManager.getLogger(getClass()).error("while closing class loader: " + e.getMessage(), e);
+            }
             this.topologyConfig = topologyConfig;
             this.profileData = profileData;
         }
@@ -222,6 +295,15 @@ public class StormUtils {
      */
     public static boolean inTesting() {
         return null != localCluster;
+    }
+    
+    /**
+     * Returns the local cluster in testing.
+     * 
+     * @return the local cluster, may be <b>null</b> but not if {@link #inTesting()} is <code>true</code>
+     */
+    public static ILocalCluster getLocalCluster() {
+        return localCluster;
     }
 
     /**
