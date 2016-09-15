@@ -64,10 +64,13 @@ public class VolumePredictor {
 	private static final long NUM_MONTHS = 4l * (1000l*60l*60l*24l*30l);
 	
 	/** The format for storing dates */
-	private static final String DATE_FORMAT = "MM/DD/YYYY,hh:mm:ss";
+	private static final String DATE_FORMAT = "MM/dd/yyyy','HH:mm:ss";
+	
+	/** The format for storing dates */
+	private static final String DATE_FORMAT_WEKA = "yyyy-MM-dd'T'HH:mm:ss";
 	
 	/** The size of the recent history (number of time points) */
-	private static final int RECENT_HISTORY_SIZE = 30;
+	private static final int RECENT_HISTORY_SIZE = 10;
 	
 	/** The number of recent data points for checking small but regular increases */
 	private static final int REGULAR_INCREASE_SIZE = RECENT_HISTORY_SIZE / 3;
@@ -180,21 +183,30 @@ public class VolumePredictor {
 		for(String term : observations.keySet())
 		{	
 			long currVolume = (long)observations.get(term);
+			System.out.print(currVolume + "\t");
 			Prediction model = this.models.get(term);
 			
 			// add the current observation to the recent volumes for the current term
 			addRecentVolume(term, currVolume);
 			
 			if(model != null && model.getForecaster() != null){
+				// for test cases, derive the current date by incrementing the date of the last observation by the desired granularity
+				if(this.test){
+					long lastTime = (long) model.getRecentVolumes().instance(model.getRecentVolumes().size() - 1).value(0);
+					timestamp = getTimestamp(lastTime + 30000);
+				}
+				
 				// update the recent values within the model
 				model.updateRecentVolumes(timestamp, currVolume);
 				
 				// predict the volume within the next time step
 				double prediction = model.predict();
+				System.out.print((int)prediction + "\t");
 				
 				// check whether the predicted volume is critical and, if so, include the term when raising the alarm
 				double deviation = evaluatePrediction(term, prediction);
 				if(deviation != -1) alarms.put(term, deviation);
+				System.out.print((int)deviation + "\t");
 			}
 			else{
 				if(!this.monitoredTerms.contains(term)) unknownTerms.add(term);
@@ -203,6 +215,7 @@ public class VolumePredictor {
 			// store the current observation in the historical data of the current term (only for twitter)
 			storeInHistoricalData(term, timestamp, currVolume);
 		}
+		System.out.print("\n");
 		
 		// raise an alarm to the adaptation layer containing all the critical terms and their volumes
 		if(!alarms.isEmpty()) raiseAlarms(alarms);
@@ -212,8 +225,14 @@ public class VolumePredictor {
 	}
 	
 	private String getTimestamp(){
-		DateFormat format = new SimpleDateFormat(DATE_FORMAT);
+		DateFormat format = new SimpleDateFormat(DATE_FORMAT_WEKA);
 		Date date = new Date();
+		return format.format(date);
+	}
+	
+	private String getTimestamp(Long time){
+		DateFormat format = new SimpleDateFormat(DATE_FORMAT_WEKA);
+		Date date = new Date(time);
 		return format.format(date);
 	}
 	
@@ -251,13 +270,16 @@ public class VolumePredictor {
 		double[] stats = computeStatistics(recentVolumesForTerm);
 		
 		// compute alarm threshold from avg and std and compare it with the predicted volume
-		double threshold = stats[0] + 3 * stats[1];
+		double threshold = stats[0] + 2 * stats[1];
+		//System.out.print((int)stats[0] + "\t");
+		//System.out.print((int)stats[1] + "\t");
+		System.out.print((int)threshold + "\t");
 		if(prediction > threshold) return (prediction - threshold);
 		
 		// check the trend of the recent volumes and signal if it is always increasing
-		if(checkIncrease(recentVolumesForTerm, REGULAR_INCREASE_SIZE)) return computeIncrease(recentVolumesForTerm);
+		//if(checkIncrease(recentVolumesForTerm, REGULAR_INCREASE_SIZE)) return computeIncrease(recentVolumesForTerm);
 		
-		else return -1;
+		else return 0;
 	}
 	
 	private double[] computeStatistics(ArrayList<Long> data){
@@ -303,12 +325,12 @@ public class VolumePredictor {
 	{
 		// use the event class defined in the infrastructure to send alarms to the adaptation layer
 		SourceVolumeAdaptationEvent svae = new SourceVolumeAdaptationEvent(this.pipeline, this.source, alarms);
-		EventManager.send(svae);
+		//EventManager.send(svae);
 	}
 	
 	private void addRecentVolume(String term, Long volume){
 		if(this.recentVolumes.containsKey(term)){
-			if(this.recentVolumes.get(term).size() > RECENT_HISTORY_SIZE) this.recentVolumes.get(term).remove(0);
+			if(this.recentVolumes.get(term).size() >= RECENT_HISTORY_SIZE) this.recentVolumes.get(term).remove(0);
 			this.recentVolumes.get(term).add(volume);
 		}
 	}
