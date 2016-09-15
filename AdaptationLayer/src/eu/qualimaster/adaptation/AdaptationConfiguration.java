@@ -19,7 +19,6 @@ import java.io.File;
 import java.util.Map;
 import java.util.Properties;
 
-import backtype.storm.Config;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 
 /**
@@ -141,7 +140,8 @@ public class AdaptationConfiguration extends MonitoringConfiguration {
      * @param config the Storm configuration to be modified as a side effect
      * @see #transferConfigurationFrom(Map)
      */
-    public static void transferConfigurationTo(Config config) {
+    @SuppressWarnings("rawtypes")
+    public static void transferConfigurationTo(Map config) {
         MonitoringConfiguration.transferConfigurationFrom(config);
     }
 

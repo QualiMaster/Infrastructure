@@ -22,7 +22,6 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 
-import backtype.storm.Config;
 import eu.qualimaster.coordination.CoordinationConfiguration;
 
 /**
@@ -235,7 +234,8 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
      * @param config the Storm configuration to be modified as a side effect
      * @see #transferConfigurationFrom(Map)
      */
-    public static void transferConfigurationTo(Config config) {
+    @SuppressWarnings("rawtypes")
+    public static void transferConfigurationTo(Map config) {
         CoordinationConfiguration.transferConfigurationFrom(config);
     }
 

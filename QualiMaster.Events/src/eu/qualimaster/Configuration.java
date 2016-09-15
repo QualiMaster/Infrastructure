@@ -613,7 +613,8 @@ public class Configuration {
      * @param config the Storm configuration to be modified as a side effect
      * @see #transferConfigurationFrom(Map)
      */
-    public static void transferConfigurationTo(Config config) {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static void transferConfigurationTo(Map config) {
         config.put(Configuration.HOST_EVENT, getEventHost());
         config.put(Configuration.PORT_EVENT, getEventPort());
         config.put(Configuration.EVENT_DISABLE_LOGGING, getEventDisableLogging());

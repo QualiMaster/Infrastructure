@@ -20,6 +20,7 @@ import org.apache.log4j.Logger;
 import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.thrift7.TException;
 
+import eu.qualimaster.Configuration;
 import eu.qualimaster.base.algorithm.IMainTopologyCreate;
 import eu.qualimaster.base.algorithm.TopologyOutput;
 import eu.qualimaster.common.signal.Constants;
@@ -324,6 +325,7 @@ public class StormUtils {
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private static void doCommonConfiguration(Map stormConf, PipelineOptions options) {
+        Configuration.transferConfigurationTo(stormConf);
         stormConf = options.toConf(stormConf);
         if (CoordinationConfiguration.getPipelineStartSourceAutoconnect()) {
             stormConf.put(Constants.CONFIG_KEY_SOURCE_AUTOCONNECT, "true");
