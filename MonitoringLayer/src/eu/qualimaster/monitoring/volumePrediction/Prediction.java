@@ -105,7 +105,7 @@ public class Prediction {
 		{
 			// Create the instance (according to the structure of the recent volumes) and add it to the recent volumes
 			Instance instance = dataToInstance(time, observation, this.recentVolumes);
-			if(this.recentVolumes.size() > NUM_RECENT_VOLUMES) this.recentVolumes.remove(0);
+			if(this.recentVolumes.size() >= NUM_RECENT_VOLUMES) this.recentVolumes.remove(0);
 			this.recentVolumes.add(instance);
 		}
 		catch (ParseException e) {

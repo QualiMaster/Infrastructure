@@ -2,6 +2,7 @@ package tests.eu.qualimaster.monitoring.volumePrediction;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import eu.qualimaster.dataManagement.events.HistoricalDataProviderRegistrationEvent;
 import eu.qualimaster.dataManagement.sources.SpringHistoricalDataProvider;
@@ -54,12 +55,16 @@ public class StandaloneTests
 		// trigger events simulating the observations from the source
 		int step = 0;
 		while(!streamingData.keySet().isEmpty()){
+			HashSet<String> toRemove = new HashSet<>();
 			HashMap<String,Integer> observations = new HashMap<>();
 			for(String term : streamingData.keySet()){
 				ArrayList<Integer> volumes = streamingData.get(term);
 				if(step < volumes.size()) observations.put(term, volumes.get(step));
-				else streamingData.remove(term);
+				if(step == volumes.size() - 1){
+					toRemove.add(term);
+				}
 			}
+			for(String term : toRemove) streamingData.remove(term);
 			
 			SourceVolumeMonitoringEvent event = new SourceVolumeMonitoringEvent(TEST_PIPELINE, TEST_SOURCE, observations);
 			VolumePredictionManager.handleNotifySourceVolumeMonitoringEventTest(event);
