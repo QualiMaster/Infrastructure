@@ -56,7 +56,11 @@ public class PortManagerTest {
         range = new PortRange("10 - 1000");
         Assert.assertEquals(10, range.getLowPort());
         Assert.assertEquals(1000, range.getHighPort());
-        
+
+        range = new PortRange("10-1000");
+        Assert.assertEquals(10, range.getLowPort());
+        Assert.assertEquals(1000, range.getHighPort());
+
         try {
             new PortRange("1a - 1000");
             Assert.fail("No number format exception.");
