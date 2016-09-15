@@ -352,7 +352,11 @@ public class RepositoryHelper {
     private static URL obtainArtifactUrl(String artifactSpec, String classifier, String suffix, boolean fallback) 
         throws MalformedURLException {
         String urlPart = artifactSpecToPath(artifactSpec, classifier, suffix);
-        URL url = ArtifactRegistry.getArtifactURL(artifactSpec);
+        URL url = ArtifactRegistry.getArtifactURL(artifactSpec + ":" + classifier);
+        if (null == url) {
+            // legacy behavior
+            url = ArtifactRegistry.getArtifactURL(artifactSpec);
+        }
         if (null == url) {
             url = obtainPipelineElementsUrl(urlPart, fallback);
         }
