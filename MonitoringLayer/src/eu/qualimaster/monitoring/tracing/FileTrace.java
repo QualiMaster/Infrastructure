@@ -71,6 +71,7 @@ public class FileTrace implements ITrace {
     private List<PipelineTraceInfo> pipelines; 
     private Map<String, Serializable> settings;
     private DetailMode mode = DetailMode.FALSE;
+    private String name;
     
     /**
      * Information about an already traced pipeline.
@@ -94,9 +95,11 @@ public class FileTrace implements ITrace {
     /**
      * Creates a new trace.
      * 
+     * @param name the name of the trace (for {link {@link #toString()}}, shall be the file name
      * @param out the output stream to trace to
      */
-    public FileTrace(PrintStream out) {
+    public FileTrace(String name, PrintStream out) {
+        this.name = name;
         this.out = out;
     }
     
@@ -583,6 +586,11 @@ public class FileTrace implements ITrace {
         if (null != mode) {
             this.mode = mode;
         }
+    }
+    
+    @Override
+    public String toString() {
+        return "FileTrace " + name;
     }
     
 }

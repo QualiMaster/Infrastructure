@@ -176,7 +176,7 @@ public class Tracing {
      */
     public static final void test(String pipName, String famName, String algName, PrintStream out, DetailMode mode) {
         String key = getAlgorithmProfileKey(pipName, famName, algName);
-        ITrace trace = new FileTrace(out);
+        ITrace trace = new FileTrace(pipName + " " + famName + " " + algName, out);
         trace.setTraceMode(mode);
         profilingTraces.put(key, trace);
         LogManager.getLogger(Tracing.class).info("Created monitoring trace: " + key + " " + trace);
@@ -231,7 +231,7 @@ public class Tracing {
             File logFile = new File(logLocation, getLogTag(prefix) + TRACE_FILE_SUFFIX);
             try {
                 FileOutputStream out = new FileOutputStream(logFile);
-                result = new FileTrace(new PrintStream(out));
+                result = new FileTrace(logFile.getAbsolutePath(), new PrintStream(out));
             } catch (IOException e) {
                 getLogger().error("cannot open output stream for trace " 
                     + prefix + ": " + e.getMessage());
