@@ -164,7 +164,9 @@ public class MonitoringManager {
                 Integer freq = event.getFrequency(frequency);
                 if (null != freq) {
                     AbstractMonitoringTask task = pluginTasks.get(taskName);
-                    task.reschedule(freq);
+                    if (null != task) {
+                        task.reschedule(freq);
+                    }
                 }
             }
         }
