@@ -6,6 +6,8 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import org.apache.log4j.Logger;
+
 
 /**
  * Define the transmitter Specifying the protocol for hareware communication.
@@ -13,7 +15,7 @@ import java.net.Socket;
  *
  */
 public class HardwareTransmitter {
-
+    private static final Logger LOGGER = Logger.getLogger(HardwareTransmitter.class);
     private String ip;
     private int port;
 
@@ -48,7 +50,7 @@ public class HardwareTransmitter {
      * @throws IOException io exception
      */
     public void connect() throws IOException {
-        System.out.println("Connecting to " + ip + " : " + port);
+        LOGGER.info("Connecting to " + ip + " : " + port);
         sock = new Socket(ip, port);
         byteOut = sock.getOutputStream();
         out = new PrintWriter(byteOut, true);
@@ -104,6 +106,55 @@ public class HardwareTransmitter {
      * @throws IOException IO Exception
      */
     public byte[] receiveData() throws IOException {
+        int counter = 0;
+        int temp = 0;
+        int messageLength = 0;
+        byte[] msg = new byte[8192];
+
+        while (true) { // Read the message id
+            temp = sock.getInputStream().read();
+            if (temp != -1) {
+                msg[counter] = (byte) temp;
+                counter++;
+                break;
+            }
+        }
+
+        if (temp == 100) { // only if we receive data, we need to parse the message
+            while (true) { // Read the message length
+                temp = sock.getInputStream().read();
+                if (temp != -1) {
+                    msg[counter] = (byte) temp;
+                    messageLength = temp;
+                    counter++;
+                    break;
+                }
+            }
+
+            while (true) {
+                temp = sock.getInputStream().read();
+                if (temp != -1) {
+                    msg[counter] = (byte) temp;
+                    counter++;
+                    messageLength--;
+                    if (messageLength == 0) {
+                        break;
+                    }    
+                }
+            }
+        }
+
+        while (true) { // Read the ending character
+            temp = sock.getInputStream().read();
+            if (temp != -1) {
+                msg[counter] = (byte) temp;
+                break;
+            }
+        }
+        return (msg);
+    }
+    /* previous one working only with the output in type of String
+    public byte[] receiveData() throws IOException {
         byte[] msg = new byte[1024];
         byte[] temp = new byte[1];
 
@@ -119,7 +170,7 @@ public class HardwareTransmitter {
         }
         return (msg);
     }
-    
+    */
     /**
      * Receives data from Server.
      * @param msg a byte array for storing new data
