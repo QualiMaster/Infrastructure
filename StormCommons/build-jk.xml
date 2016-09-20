@@ -55,9 +55,11 @@
 	<!-- Compile all files without test classes -->
 	<target name="compile" depends="init">
 	    <!-- for protobuf -->
+        <echo message="protobuf"/>
         <mvnPlain options="-U" goal="compile" basedir="."/>
         
         <!-- for tests -->
+        <echo message="compile"/>
         <javac srcdir="${src.dir}:target/generated-sources/" debug="on" destdir="${build.classes.dir}" includeAntRuntime="no" failonerror="true" source="${javacSource}" target="${javacTarget}" encoding="${javac.encoding}">
             <classpath refid="maven.test.compile.classpath" />
             <classpath refid="includes" />  
