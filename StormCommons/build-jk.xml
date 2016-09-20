@@ -44,7 +44,12 @@
         <artifact:dependencies pathId="maven.compile.classpath">
             <pom file="pom.xml" id="pom"/>
             <remoteRepository refid="qm.repository" />
-        </artifact:dependencies>		
+        </artifact:dependencies>
+        
+        <artifact:dependencies pathId="maven.test.compile.classpath" useScope="test">
+            <pom file="pom.xml" id="pom"/>
+            <remoteRepository refid="qm.repository" />
+        </artifact:dependencies>
 	</target>
 	
 	<!-- Compile all files without test classes -->
@@ -54,7 +59,7 @@
         
         <!-- for tests -->
         <javac srcdir="${src.dir}:target/generated-sources/" debug="on" destdir="${build.classes.dir}" includeAntRuntime="no" failonerror="true" source="${javacSource}" target="${javacTarget}" encoding="${javac.encoding}">
-            <classpath refid="maven.compile.classpath" />
+            <classpath refid="maven.test.compile.classpath" />
             <classpath refid="includes" />  
         </javac>
     </target>
@@ -64,7 +69,7 @@
       <jacoco:coverage output="file" destfile="jacoco.exec">
         <junit printsummary="withOutAndErr" dir="${build.base.dir}" fork="true" timeout="240000" forkmode="once">
             <classpath>
-                <path refid="maven.compile.classpath" />
+                <path refid="maven.test.compile.classpath" />
                 <path refid="includes" />
                 <pathelement location="${build.classes.dir}" />
             </classpath>
