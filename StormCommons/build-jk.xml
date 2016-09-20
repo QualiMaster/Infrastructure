@@ -41,10 +41,10 @@
 		<mkdir dir="${build.classes.dir}"/>
 		<mkdir dir="${build.jar.dir}"/>
 		
-        <artifact:dependencies pathId="maven.compile.classpath">
+        <!--artifact:dependencies pathId="maven.compile.classpath">
             <pom file="pom.xml" id="pom"/>
             <remoteRepository refid="qm.repository" />
-        </artifact:dependencies>
+        </artifact:dependencies-->
         
         <artifact:dependencies pathId="maven.test.compile.classpath" useScope="test">
             <pom file="pom.xml" id="pom"/>
@@ -84,7 +84,7 @@
 	<!-- Javadoc -->
     <target name="javadoc" depends="compile">
         <javadoc access="public" author="true" destdir="${doc.dir}" doctitle="QualiMaster EventBus" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="1.7" sourcepath="src" splitindex="true" use="true" version="true">
-          <classpath refid="maven.compile.classpath" />
+          <classpath refid="maven.test.compile.classpath" />
           <classpath refid="includes" />
           <packageset dir="src" defaultexcludes="yes">
             <include name="eu/qualimaster/**"/>
