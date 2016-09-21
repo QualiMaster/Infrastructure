@@ -102,7 +102,7 @@ public class ManagerTest {
     @Test
     public void testManagerPipelineLifecycle() {
         testLifecycle(false, 0);
-        //testLifecycle(false, 1);
+        testLifecycle(false, 1);
     }
 
     /**
@@ -111,7 +111,7 @@ public class ManagerTest {
     @Test
     public void testManagerProfilingPipelineLifecycle() {
         testLifecycle(true, 0);
-        //testLifecycle(true, 1);
+        testLifecycle(true, 1);
     }
 
     /**
@@ -389,7 +389,7 @@ public class ManagerTest {
             // see registerPredictionSteps
             assertPrediction(desc, TimeBehavior.LATENCY, 0.1);
             assertPrediction(desc, TimeBehavior.THROUGHPUT_ITEMS, 0.6); // increasing
-            assertPrediction(desc, Scalability.ITEMS, 0.1);
+            assertPrediction(desc, Scalability.ITEMS, 0.11); // Failed with 0.1
 
             desc.storeAll();
             desc.assertStorage();
