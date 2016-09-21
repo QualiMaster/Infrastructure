@@ -41,6 +41,9 @@ public class VolumePredictionManager {
 	 */
 	private static boolean test = false;
 	
+	/** Indicates the status of the component */
+	private static String status = "idle";
+	
 	/**
 	 * Initializes the volume predictor for a given source (either Spring or Twitter), assuming that the data provider has been already
 	 * set via the proper event. This must be called before feeding the predictor with volume data, with enough advance to let the 
@@ -164,9 +167,11 @@ public class VolumePredictionManager {
 	    protected void handle(HistoricalDataProviderRegistrationEvent event) {
 	        // called when a data source comes up in a pipeline. Carries the historical data provider.
 	        // If the source changes, an event with the same pipeline / element name will occur
+	    	status = "initializing";
 	    	VolumePredictor predictor = new VolumePredictor(event.getPipeline(), event.getSource(), event.getProvider(), test);
 	    	predictor.initialize(MonitoringConfiguration.getVolumeModelLocation() + event.getSource() + "_" + DEFAULT_FILE_NAME);
 	    	volumePredictors.put(event.getSource(), predictor);
+	    	status = "ready";
 	    }
 	}
 
@@ -294,5 +299,12 @@ public class VolumePredictionManager {
 	 */
 	public static VolumePredictor getPredictor(String source){
 		return volumePredictors.get(source);
+	}
+
+	/**
+	 * @return the status
+	 */
+	public static String getStatus() {
+		return status;
 	}
 }

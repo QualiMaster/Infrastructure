@@ -19,6 +19,7 @@ import eu.qualimaster.dataManagement.sources.IHistoricalDataProvider;
 import eu.qualimaster.dataManagement.sources.TwitterHistoricalDataProvider;
 import eu.qualimaster.dataManagement.storage.hbase.HBaseStorageSupport;
 import eu.qualimaster.events.EventManager;
+import eu.qualimaster.monitoring.MonitoringConfiguration;
 
 /**
  * Main class implementing the available methods of the volume prediction.
@@ -77,6 +78,10 @@ public class VolumePredictor {
 	
 	/** Url used to retrieve historical data in test mode */
 	private static final String TEST_URL = "test";
+	
+	private static final String TEST_HISTORICAL_FOLDER = "/historicalData/";
+	private static final String TEST_WARMUP_FOLDER = "/warmupData/";
+	private static final String TEST_STREAMING_FOLDER = "/streamingData/";
 	
 	/**
 	 * Default constructor of the predictor, no models are trained yet.
@@ -325,7 +330,7 @@ public class VolumePredictor {
 	{
 		// use the event class defined in the infrastructure to send alarms to the adaptation layer
 		SourceVolumeAdaptationEvent svae = new SourceVolumeAdaptationEvent(this.pipeline, this.source, alarms);
-		//EventManager.send(svae);
+		EventManager.send(svae);
 	}
 	
 	private void addRecentVolume(String term, Long volume){
@@ -364,7 +369,8 @@ public class VolumePredictor {
 	private void getHistoricalData(String term, long months, File outputFile)
 	{
 		try{
-			if(this.test) this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile, TEST_URL);
+			//if(this.test) this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile, TEST_URL);
+			if(this.test) this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile, MonitoringConfiguration.getVolumeModelLocation() + TEST_HISTORICAL_FOLDER);
 			else this.historyProvider.obtainHistoricalData(NUM_MONTHS, term, this.historicalDataFile);
 		}
 		catch(IOException e){

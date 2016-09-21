@@ -74,7 +74,8 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
     	else months = getMonths(Calendar.getInstance(), timeHorizon);
     	
     	// download, uncompress, merge the files containing historical data for each month
-    	if(this.test) getHistoricalDataLocally(term, months, TEST_HISTORICAL_DATA_PATH, target);
+    	//if(this.test) getHistoricalDataLocally(term, months, TEST_HISTORICAL_DATA_PATH, target);
+    	if(this.test) getHistoricalDataLocally(term, months, server, target);
     	else downloadHistoricalData(term, months, server, target);
     }
     
