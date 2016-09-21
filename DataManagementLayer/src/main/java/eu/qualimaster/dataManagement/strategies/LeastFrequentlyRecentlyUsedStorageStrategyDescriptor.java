@@ -6,7 +6,7 @@ package eu.qualimaster.dataManagement.strategies;
  * 
  * @author Holger Eichelberger
  */
-public class LeastFrequentlyRecentlyUsedStorageStrategyDescriptor {
+public class LeastFrequentlyRecentlyUsedStorageStrategyDescriptor implements IStorageStrategyDescriptor {
 
     private int cutoffCapacity;
     private int aegingTimeline;

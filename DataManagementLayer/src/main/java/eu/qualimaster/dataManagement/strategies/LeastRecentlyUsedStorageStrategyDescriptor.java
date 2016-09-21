@@ -5,7 +5,7 @@ package eu.qualimaster.dataManagement.strategies;
  * 
  * @author Holger Eichelberger
  */
-public class LeastRecentlyUsedStorageStrategyDescriptor {
+public class LeastRecentlyUsedStorageStrategyDescriptor implements IStorageStrategyDescriptor {
 
     // Just assumptions, please adjust if required
     
