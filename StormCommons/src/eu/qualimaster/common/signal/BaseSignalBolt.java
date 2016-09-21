@@ -234,6 +234,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
 
     @Override
     public void onSignal(byte[] data) {
+        LOGGER.info("onSignal: Listening on the signal!");
         boolean done = AlgorithmChangeSignal.notify(data, pipeline, name, this);
         if (!done) {
             done = ParameterChangeSignal.notify(data, pipeline, name, this);
