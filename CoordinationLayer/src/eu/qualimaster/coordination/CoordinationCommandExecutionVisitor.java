@@ -385,7 +385,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
             // just in case that the pipeline was killed manually
             SignalMechanism.getPortManager().clearPortAssignments(pipelineName); 
         } catch (SignalException e) {
-            getLogger().error(e.getMessage(), e);
+            getLogger().error(e.getMessage());
         }
         PipelineCache.getCache(pipelineName); // prepare the cache
         if (!CoordinationManager.isTestingMode()) {
@@ -423,7 +423,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
             failing = new CoordinationExecutionResult(command, message, 
                 CoordinationExecutionCode.STOPPING_PIPELINE);
         } catch (SignalException e) {
-            getLogger().error(e.getMessage(), e);
+            getLogger().error(e.getMessage());
         }
         for (ISubPipeline sp : mapping.getSubPipelines()) {
             handlePipelineStop(new PipelineCommand(sp.getName(), command.getStatus(), command.getOptions()), false);

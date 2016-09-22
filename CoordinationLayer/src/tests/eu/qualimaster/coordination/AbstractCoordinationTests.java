@@ -417,7 +417,7 @@ public class AbstractCoordinationTests {
      */
     @After
     public void tearDown() {
-        CoordinationManager.stop(false);
+        CoordinationManager.stop();
         EventManager.unregister(tracker);
         EventManager.stop();
         EventManager.unregister(failedHandler);

@@ -356,19 +356,8 @@ public class CoordinationManager {
      * Stop this layer.
      */
     public static void stop() {
-        stop(true);
-    }
-    
-    /**
-     * Stop this layer (for testing).
-     * 
-     * @param clearSignalMechanism whether the signal mechanism shall be cleared
-     */
-    public static void stop(boolean clearSignalMechanism) {
         NAME_MAPPING.clear();
-        if (clearSignalMechanism) {
-            SignalMechanism.clear();
-        }
+        SignalMechanism.clear();
     }
     
     /**
