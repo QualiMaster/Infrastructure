@@ -16,6 +16,7 @@
 package tests.eu.qualimaster.monitoring.genTopo;
 
 import eu.qualimaster.common.signal.ShutdownSignal;
+import tests.eu.qualimaster.storm.SendingBolt;
 
 /**
  * The specific hw family element notifying the sub-nodes about shutdown.

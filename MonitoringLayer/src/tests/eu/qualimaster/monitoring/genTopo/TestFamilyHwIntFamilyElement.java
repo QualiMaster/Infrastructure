@@ -22,6 +22,7 @@ import backtype.storm.task.TopologyContext;
 import eu.qualimaster.common.signal.ShutdownSignal;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
+import tests.eu.qualimaster.storm.SendingBolt;
 
 /**
  * The specific hw family element notifying the sub-nodes about shutdown.
