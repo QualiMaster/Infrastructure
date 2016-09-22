@@ -169,6 +169,8 @@ public class Kalman extends AbstractMatrixPredictor {
      * this value is used for the update.
      */
     private double defaultMeasurement = 0;
+    
+    private boolean predictedSinceUpdate = false;
 
     /**
      * Default contructor used for a new timeline. 
@@ -199,7 +201,11 @@ public class Kalman extends AbstractMatrixPredictor {
     public boolean update(long xMeasured, double yMeasured) {
         boolean success = false;
         try {
-            // TODO if first update, reinitialize filter with x = (xMeasured, 1, yMeasured, 0)
+            // Call predict(0), if no prediction was made since the last update
+            // Reason: The Kalman-Filter needs a predict-update(correct)-cycle.
+            if (!predictedSinceUpdate && lastUpdate != Double.MIN_VALUE) {
+                predict(0);
+            }
             
             filter.correct(new double[] {xMeasured, 0, yMeasured, 0 });
             // When an older value is updated/corrected the attributes 'lastUpdated' and 'lastUpdate' do not change.
@@ -208,6 +214,7 @@ public class Kalman extends AbstractMatrixPredictor {
                 lastUpdate = yMeasured;
             }
             success = true;
+            predictedSinceUpdate = false;
         } catch (NullArgumentException | DimensionMismatchException | SingularMatrixException e) {
             LogManager.getLogger(Kalman.class).error(e.getMessage(), e);
         }
@@ -251,6 +258,7 @@ public class Kalman extends AbstractMatrixPredictor {
                 }
                 filter.predict(controlVector);
                 prediction = filter.getStateEstimation()[2];
+                predictedSinceUpdate = true;
             } catch (DimensionMismatchException e) {
                 LogManager.getLogger(Kalman.class).error(e.getMessage(), e);
                 prediction = Double.MIN_VALUE;

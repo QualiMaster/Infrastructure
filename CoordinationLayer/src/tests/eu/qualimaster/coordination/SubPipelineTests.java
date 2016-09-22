@@ -25,14 +25,19 @@ import org.junit.Test;
 
 import backtype.storm.generated.StormTopology;
 import eu.qualimaster.base.pipeline.RecordingTopologyBuilder;
-import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.coordination.StormUtils.TopologyTestInfo;
+import eu.qualimaster.coordination.commands.AlgorithmChangeCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent.Status;
 import tests.eu.qualimaster.storm.Naming;
-import tests.eu.qualimaster.storm.Topology;
+import tests.eu.qualimaster.storm.Process;
+import tests.eu.qualimaster.storm.ReceivingSpout;
+import tests.eu.qualimaster.storm.SendingBolt;
+import tests.eu.qualimaster.storm.Sink;
+import tests.eu.qualimaster.storm.Source;
+import tests.eu.qualimaster.storm.Src;
 
 /**
  * Coordination manager tests for decomposed pipelines. Set environment variable 
@@ -40,6 +45,8 @@ import tests.eu.qualimaster.storm.Topology;
  */
 public class SubPipelineTests extends AbstractCoordinationTests {
 
+    private static final String SUB_RECEIVER = "SubReceiver";
+    private static final String SUB_SENDER = "SubSender";
     private PipelineLifecycleEventHandler handler;
     
     /**
@@ -52,8 +59,10 @@ public class SubPipelineTests extends AbstractCoordinationTests {
         Utils.setModelProvider(Utils.INFRASTRUCTURE_TEST_MODEL_PROVIDER);
         Utils.configure();
         super.setUp();
+        // we have no monitoring layer - jump over lifecycle
         handler = new PipelineLifecycleEventHandler(PipelineLifecycleEvent.Status.CHECKING, 
-            PipelineLifecycleEvent.Status.STARTING);
+            // CHECKED->STARTING by Coordination Layer
+            PipelineLifecycleEvent.Status.STARTING, PipelineLifecycleEvent.Status.INITIALIZED);
         EventManager.register(handler);
     }
     
@@ -68,50 +77,102 @@ public class SubPipelineTests extends AbstractCoordinationTests {
     }
 
     /**
+     * Creates and registers the main topology.
+     * 
+     * @param topologies the topologies structure to register within
+     * @param config the configuration settings
+     */
+    @SuppressWarnings("rawtypes")
+    private void registerMainTopology(Map<String, TopologyTestInfo> topologies, Map config) {
+        RecordingTopologyBuilder builder = new RecordingTopologyBuilder();
+
+        final String senderName = "MainSender";
+        final String receiverName = "MainReceiver";
+        
+        Source<Src> source = new Source<Src>(Src.class, Naming.PIPELINE_NAME);
+        builder.setSpout(Naming.NODE_SOURCE, source, 1).setNumTasks(1);
+        // emulate family, here we just put the sending bolt after -> algorithm change
+        Process process = new Process(Naming.NODE_PROCESS, Naming.PIPELINE_NAME);
+        builder.setBolt(Naming.NODE_PROCESS, process, 1).setNumTasks(3).shuffleGrouping(Naming.NODE_SOURCE);
+        SendingBolt sender = new SendingBolt(senderName, Naming.PIPELINE_NAME, true, false, 9000);
+        builder.setBolt(senderName, sender, 1).setNumTasks(1).shuffleGrouping(Naming.NODE_PROCESS);
+        
+        ReceivingSpout receiver = new ReceivingSpout(receiverName, Naming.PIPELINE_NAME, true, false, 9001);
+        builder.setSpout(receiverName, receiver);
+        Sink sink = new Sink(Naming.PIPELINE_NAME);
+        builder.setBolt(Naming.NODE_SINK, sink, 1).setNumTasks(1).shuffleGrouping(receiverName);
+
+        StormTopology topology = builder.createTopology();
+        builder.close(Naming.PIPELINE_NAME, config);
+        topologies.put(Naming.PIPELINE_NAME, new TopologyTestInfo(topology, 
+            new File(Utils.getTestdataDir(), "sub/mainPipeline.xml"), config));
+    }
+
+    /**
+     * Creates and registers the sub topology.
+     * 
+     * @param topologies the topologies structure to register within
+     * @param config the configuration settings
+     */
+    @SuppressWarnings("rawtypes")
+    private void registerSubTopology(Map<String, TopologyTestInfo> topologies, Map config) {
+        RecordingTopologyBuilder builder = new RecordingTopologyBuilder();
+
+        final String sourceName = SUB_RECEIVER;
+        final String sinkName = SUB_SENDER;
+        
+        ReceivingSpout source = new ReceivingSpout(sourceName, Naming.SUB_PIPELINE_NAME, true, false, 9000);
+        builder.setSpout(sourceName, source, 1).setNumTasks(1);
+        SendingBolt end = new SendingBolt(sinkName, Naming.SUB_PIPELINE_NAME, true, false, 9001);
+        builder.setBolt(sinkName, end, 1).setNumTasks(1).shuffleGrouping(sourceName);
+
+        StormTopology subTopology = builder.createTopology();
+        builder.close(Naming.SUB_PIPELINE_NAME, config);
+        topologies.put(Naming.SUB_PIPELINE_NAME, new TopologyTestInfo(subTopology, 
+            new File(Utils.getTestdataDir(), "sub/subPipeline.xml"), config)); // ignore settings, shall come from infra
+    }
+    
+    /**
      * Tests sub-pipelines.
      */
     @Test
     public void testSubpipeline() {
-        if (CoordinationManager.HANDLE_SUBPIPELINES_ON_STARTSTOP) {
-            LocalStormEnvironment env = new LocalStormEnvironment();
-            @SuppressWarnings("rawtypes")
-            Map config = createTopologyConfiguration();
-    
-            RecordingTopologyBuilder builder = new RecordingTopologyBuilder();
-            Topology.createTopology(builder, Naming.PIPELINE_NAME);
-            StormTopology topology = builder.createTopology();
-            builder.close(Naming.PIPELINE_NAME, config);
-    
-            builder = new RecordingTopologyBuilder();
-            Topology.createTopology(builder, Naming.SUB_PIPELINE_NAME);
-            StormTopology subTopology = builder.createTopology();
-            builder.close(Naming.SUB_PIPELINE_NAME, config);
-    
-            Map<String, TopologyTestInfo> topologies = new HashMap<String, TopologyTestInfo>();
-            topologies.put(Naming.PIPELINE_NAME, new TopologyTestInfo(topology, 
-                new File(Utils.getTestdataDir(), "sub/mainPipeline.xml"), config));
-            topologies.put(Naming.SUB_PIPELINE_NAME, new TopologyTestInfo(subTopology, 
-                new File(Utils.getTestdataDir(), "sub/subPipeline.xml"), config));
-            env.setTopologies(topologies);
-            clear();
-            
-            new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.START).execute();
-    
-            getPipelineStatusTracker().waitFor(Naming.PIPELINE_NAME, Status.STARTED);
-    
-            sleep(4000); // let Storm run for a while and start curator
-            // we have no monitoring layer - jump over lifecylce
-            PipelineLifecycleEvent fake = new PipelineLifecycleEvent(Naming.PIPELINE_NAME, 
-                PipelineLifecycleEvent.Status.CREATED, null);
-            EventManager.send(fake);
-            sleep(1000); // let Storm run for a while and start curator
-            
-            new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.STOP).execute();
-            getPipelineStatusTracker().waitFor(Naming.SUB_PIPELINE_NAME, Status.STOPPED);
-    
-            env.shutdown();
-            env.cleanup();
-        }
+        LocalStormEnvironment env = new LocalStormEnvironment();
+        @SuppressWarnings("rawtypes")
+        Map config = createTopologyConfiguration();
+
+        Map<String, TopologyTestInfo> topologies = new HashMap<String, TopologyTestInfo>();
+        registerMainTopology(topologies, config);
+        registerSubTopology(topologies, config);
+        env.setTopologies(topologies);
+        clear();
+        
+        new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.START).execute();
+
+        sleep(1000);
+        getPipelineStatusTracker().waitFor(Naming.PIPELINE_NAME, Status.CREATED, 5000);
+        sleep(5000);
+        // we have no monitoring layer - let nodes come up
+        EventManager.send(new PipelineLifecycleEvent(Naming.PIPELINE_NAME, 
+            PipelineLifecycleEvent.Status.INITIALIZED, null));
+
+        AlgorithmChangeCommand cmd = new AlgorithmChangeCommand(Naming.PIPELINE_NAME, Naming.NODE_PROCESS, 
+            Naming.NODE_PROCESS_ALG2);
+        EventManager.send(cmd);
+
+        sleep(1000);
+        getPipelineStatusTracker().waitFor(Naming.SUB_PIPELINE_NAME, Status.CREATED, 5000);
+        sleep(5000);
+        EventManager.send(new PipelineLifecycleEvent(Naming.SUB_PIPELINE_NAME, 
+            PipelineLifecycleEvent.Status.INITIALIZED, null));
+
+        sleep(5000); // let Storm run for a while
+        
+        new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.STOP).execute();
+        sleep(4000);
+
+        env.shutdown();
+        env.cleanup();
     }
 
 }

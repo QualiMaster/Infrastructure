@@ -3,10 +3,7 @@ package eu.qualimaster.coordination;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,6 +20,7 @@ import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.EndOfDataEvent;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
+import eu.qualimaster.infrastructure.PipelineOptions;
 import eu.qualimaster.monitoring.events.IEnactmentCompletedMonitoringEvent;
 
 /**
@@ -32,8 +30,6 @@ import eu.qualimaster.monitoring.events.IEnactmentCompletedMonitoringEvent;
  */
 public class CoordinationManager {
 
-    public static final boolean HANDLE_SUBPIPELINES_ON_STARTSTOP = false;
-
     private static final Map<String, INameMapping> NAME_MAPPING = new HashMap<String, INameMapping>();
     private static IExecutionTracer executionTracer;
     private static boolean testingMode = false;
@@ -41,9 +37,7 @@ public class CoordinationManager {
     private static Map<String, PipelineCommand> pendingStartups = new HashMap<String, PipelineCommand>();
     private static Map<String, AlgorithmProfilingEvent> pendingProfiling 
         = new HashMap<String, AlgorithmProfilingEvent>();
-    
-    private static List<PipelineCommand> startSequence = new ArrayList<PipelineCommand>();
-    private static Set<String> started = new HashSet<String>();
+    private static Map<String, PipelineInfo> pipelines = new HashMap<String, PipelineInfo>();
 
     /**
      * The handler for coordination command events (if not passed in directly as commands).
@@ -84,6 +78,7 @@ public class CoordinationManager {
         @Override
         protected void handle(PipelineLifecycleEvent event) {
             String pipelineName = event.getPipeline();
+            PipelineInfo info = pipelines.get(pipelineName);
             switch (event.getStatus()) {
             case CHECKED:
                 // do not remove here! otherwise endless pending cycle
@@ -96,25 +91,23 @@ public class CoordinationManager {
                 }
                 break;
             case STARTED:
-                started.add(pipelineName);
+                if (null == info) { // be careful, don't override
+                    info = obtainPipelineInfo(pipelineName);
+                }
                 EventManager.handle(new CoordinationCommandExecutionEvent(event));
                 // now monitoring is ready to also handle the profiling event
                 AlgorithmProfilingEvent evt = pendingProfiling.remove(pipelineName);
                 if (null != evt) {
                     EventManager.handle(evt);
                 }
-                // and go on with the sub-pipelines
-                if (!startSequence.isEmpty()) {
-                    execute(startSequence.remove(0));
-                }
                 break;
             case STOPPING:
-                started.remove(pipelineName);
                 break;
             case STOPPED:
                 handleSignalNamespace(pipelineName, NamespaceState.CLEAR);
                 EventManager.handle(new CoordinationCommandExecutionEvent(event));
                 pendingProfiling.remove(pipelineName); // throw away
+                pipelines.remove(pipelineName);
                 break;
             case CREATED:
                 // to enable the adaptation layer sending signals
@@ -123,6 +116,9 @@ public class CoordinationManager {
                 break;
             default:
                 break;
+            }
+            if (null != info) {
+                info.changeStatus(event.getStatus());
             }
         }
         
@@ -135,7 +131,14 @@ public class CoordinationManager {
      * @return <code>true</code> for started, <code>false</code> else
      */
     public static boolean isStarted(String pipeline) {
-        return started.contains(pipeline);
+        boolean result = false;
+        PipelineInfo info = pipelines.get(pipeline);
+        if (null != info) {
+            PipelineLifecycleEvent.Status status = info.getStatus();
+            result = status.wasStarted() && status != PipelineLifecycleEvent.Status.STOPPING 
+                && status != PipelineLifecycleEvent.Status.STOPPED;
+        }
+        return result;
     }
     
     /**
@@ -350,7 +353,7 @@ public class CoordinationManager {
     }
 
     /**
-     * Starts this layer.
+     * Stop this layer.
      */
     public static void stop() {
         NAME_MAPPING.clear();
@@ -432,12 +435,58 @@ public class CoordinationManager {
     }
     
     /**
-     * Adds the given command to the start sequence to be processed incrementally after a pipeline started.
+     * Defer a certain action (may be a command).
      * 
-     * @param command the command to be added
+     * @param pipeline the pipeline to defer the pipeline for (may be <b>null</b>, then the call is without effect)
+     * @param status the status when the <code>action</code> shall be executed (may be <b>null</b>, then the call is 
+     *     without effect)
+     * @param action the action to execute (may be <b>null</b>, then the call is without effect)
      */
-    static void addToStartSequence(PipelineCommand command) {
-        startSequence.add(command);       
+    static void deferCommand(String pipeline, PipelineLifecycleEvent.Status status, IAction action) {
+        if (null != pipeline && null != status && null != action) {
+            PipelineInfo info = obtainPipelineInfo(pipeline);
+            info.addAction(status, action);
+        }
+    }
+    
+    /**
+     * Obtains a pipeline information object ensuring that there is an instance although there was none before.
+     * 
+     * @param pipeline the pipeline name
+     * @return the pipeline information instance
+     */
+    private static PipelineInfo obtainPipelineInfo(String pipeline) {
+        PipelineInfo info = pipelines.get(pipeline);
+        if (null == info) {
+            info = new PipelineInfo();
+            pipelines.put(pipeline, info);
+        }
+        return info;
+    }
+    
+    /**
+     * Returns the registered pipeline options for a registered pipeline.
+     * 
+     * @param pipeline the pipeline name
+     * @return the options (may be <b>null</b>)
+     */
+    static PipelineOptions getPipelineOptions(String pipeline) {
+        PipelineOptions result = null;
+        PipelineInfo info = pipelines.get(pipeline);
+        if (null != info) {
+            result = info.getOptions();
+        }
+        return result;
+    }
+    
+    /**
+     * Registers the pipeline options for a given pipeline.
+     * 
+     * @param pipeline the pipeline name
+     * @param options the pipeline options (may be <b>null</b>)
+     */
+    static void registerPipelineOptions(String pipeline, PipelineOptions options) {
+        obtainPipelineInfo(pipeline).setOptions(options);
     }
     
 }

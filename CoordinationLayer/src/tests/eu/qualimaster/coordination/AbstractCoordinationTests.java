@@ -3,6 +3,7 @@ package tests.eu.qualimaster.coordination;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -629,19 +630,34 @@ public class AbstractCoordinationTests {
     protected static class PipelineLifecycleEventHandler extends EventHandler<PipelineLifecycleEvent> {
         
         private PipelineLifecycleEvent.Status[] handle;
+        private Map<PipelineLifecycleEvent.Status, Runnable> handlers = new HashMap<>();
         
         /**
          * Creates an adaptation event handler.
          * 
-         * @param handle the stati handled by this handler
+         * @param handle the static handled by this handler
          */
         protected PipelineLifecycleEventHandler(PipelineLifecycleEvent.Status... handle) {
             super(PipelineLifecycleEvent.class);
             this.handle = handle;
         }
+        
+        /**
+         * Adds a status specific handler.
+         * 
+         * @param status the status
+         * @param handler the handler
+         */
+        protected void addHandler(PipelineLifecycleEvent.Status status, Runnable handler) {
+            handlers.put(status, handler);
+        }
 
         @Override
         protected void handle(PipelineLifecycleEvent event) {
+            Runnable r = handlers.get(event.getStatus());
+            if (null != r) {
+                r.run();
+            }
             boolean found = false;
             for (int h = 0; !found && h < handle.length; h++) {
                 found = event.getStatus() == handle[h];
@@ -653,15 +669,15 @@ public class AbstractCoordinationTests {
                     next = PipelineLifecycleEvent.Status.CHECKED;
                     break;
                 case CHECKED:
+                    next = PipelineLifecycleEvent.Status.STARTING;
+                    break;
+                case STARTING:
                     next = PipelineLifecycleEvent.Status.CREATED;
                     break;
                 case CREATED:
                     next = PipelineLifecycleEvent.Status.INITIALIZED;
                     break;
                 case INITIALIZED:
-                    next = PipelineLifecycleEvent.Status.STARTING;
-                    break;
-                case STARTING:
                     next = PipelineLifecycleEvent.Status.STARTED;
                     break;
                 case STARTED:

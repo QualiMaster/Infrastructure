@@ -263,7 +263,9 @@ public class StormTest extends AbstractCoordinationTests {
      */
     @Test
     public void testHwTopologyIntegrated() {
-        testTopology(new HwTopologyInt(true));
+        if (!isJenkins()) {
+            testTopology(new HwTopologyInt(true));
+        }
     }
 
     /**

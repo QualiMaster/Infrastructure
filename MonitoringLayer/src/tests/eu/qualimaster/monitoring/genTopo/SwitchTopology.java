@@ -24,6 +24,8 @@ import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
 import eu.qualimaster.observables.TimeBehavior;
+import tests.eu.qualimaster.storm.ReceivingSpout;
+import tests.eu.qualimaster.storm.SendingBolt;
 
 /**
  * Creates an alternative (network integrated) sub-path sub-topology.

@@ -58,6 +58,7 @@ public class NameMapping implements INameMapping {
     private static final String ATTRIBUTE_CONTAINER = "container";
     private static final String ATTRIBUTE_REF = "ref";
     private static final String ATTRIBUTE_PARAMETER = "parameter";
+    private static final String ATTRIBUTE_ALGORITHM = "algorithm";
 
     private String pipelineName;
     private String containerName;
@@ -65,7 +66,7 @@ public class NameMapping implements INameMapping {
     private Map<String, String> pipelineNodes = new HashMap<String, String>();
     private List<String> containerNames = new ArrayList<String>();
     private List<String> pipelineNames = new ArrayList<String>();
-    private List<String> subPipelines = new ArrayList<String>();
+    private Map<String, ISubPipeline> subPipelines = new HashMap<String, ISubPipeline>();
     private Map<String, AlgorithmImpl> algorithms = new HashMap<String, AlgorithmImpl>();
     private Map<String, AlgorithmImpl> algorithmsCls = new HashMap<String, AlgorithmImpl>();
     private Map<String, AlgorithmImpl> algorithmsImpl = new HashMap<String, AlgorithmImpl>();
@@ -318,6 +319,60 @@ public class NameMapping implements INameMapping {
         }
         
     }
+
+    /**
+     * Implements the sub-pipeline information.
+     * 
+     * @author Holger Eichelberger
+     */
+    public static class SubPipelineImpl implements ISubPipeline {
+        
+        private String name;
+        private String algorithmName;
+
+        /**
+         * Creates a sub-pipeline information instance.
+         * 
+         * @param name the name of the sub-pipeline
+         * @param algorithmName the name of the algorithm represented
+         */
+        public SubPipelineImpl(String name, String algorithmName) {
+            this.name = name;
+            this.algorithmName = algorithmName;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public String getAlgorithmName() {
+            return algorithmName;
+        }
+
+        @Override
+        public String toString() {
+            return "SubPip: " + name + " " + algorithmName;
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            boolean result = false;
+            if (obj instanceof ISubPipeline) {
+                ISubPipeline other = (ISubPipeline) obj;
+                result = name.equals(other.getName());
+                result &= algorithmName.equals(other.getAlgorithmName());
+            }
+            return result;
+        }
+        
+        @Override
+        public int hashCode() {
+            return name.hashCode() + algorithmName.hashCode();
+        }
+
+    }
     
     /**
      * Creates a pipeline mapping.
@@ -546,7 +601,10 @@ public class NameMapping implements INameMapping {
          */
         private void handleSubPipeline(Attributes attributes) {
             String name = attributes.getValue(ATTRIBUTE_NAME);
-            subPipelines.add(name);
+            String algoName = attributes.getValue(ATTRIBUTE_ALGORITHM);
+            if (stringOk(name) && stringOk(algoName)) {
+                subPipelines.put(algoName, new SubPipelineImpl(name, algoName)); // algoName -> subPip
+            }
             level = Level.SUB_PIPELINE;
         }
 
@@ -823,12 +881,12 @@ public class NameMapping implements INameMapping {
         return pipelineName + " " + containerName + " " + pipelineNodeComponents + " " + pipelineNodes + " " 
             + containerNames + " " + pipelineNames + " algs: " + algorithms + " " + algorithmsCls + " " 
             + algorithmsImpl + " comp: " + componentClasses + " " + componentImpl 
-            + " params: " + parameterMapping + " " + parameterBackMapping;
+            + " params: " + parameterMapping + " " + parameterBackMapping + " subPipelines " + getSubPipelines();
     }
 
     @Override
-    public List<String> getSubPipelines() {
-        return unmodifiableList(subPipelines);
+    public Collection<ISubPipeline> getSubPipelines() {
+        return subPipelines.values();
     }
     
     /**
@@ -839,6 +897,11 @@ public class NameMapping implements INameMapping {
      */
     private static int hashCode(boolean value) {
         return value ? 1231 : 1237;
+    }
+
+    @Override
+    public ISubPipeline getSubPipelineByAlgorithmName(String algorithmName) {
+        return null == algorithmName ? null : subPipelines.get(algorithmName);
     }
 
 }
