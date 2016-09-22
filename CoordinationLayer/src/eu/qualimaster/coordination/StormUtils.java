@@ -142,7 +142,7 @@ public class StormUtils {
             }
             this.profileData = profileData;
             File binPath = path;
-            if (path.isFile() && path.getName().endsWith(".jar")) {
+            if (path.getName().endsWith(".jar")) {
                 binPath = new File(path.getParentFile(), "classes");
                 String topoClasspath = path.getAbsolutePath();
                 // make topology available to workers

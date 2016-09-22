@@ -20,6 +20,7 @@ import eu.qualimaster.coordination.CoordinationUtils;
 import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.INameMapping.Algorithm;
 import eu.qualimaster.coordination.INameMapping.Component;
+import eu.qualimaster.coordination.INameMapping.ISubPipeline;
 import eu.qualimaster.coordination.INameMapping.Component.Type;
 import eu.qualimaster.coordination.NameMapping;
 import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
@@ -97,10 +98,13 @@ public class NameMappingTest {
         Assert.assertEquals(Naming.NODE_PROCESS, mapping.getParameterMapping(Naming.NODE_PROCESS, "test"));
         Assert.assertEquals(Naming.NODE_PROCESS, mapping.getParameterMapping(Naming.NODE_SOURCE, "test"));
         
-        List<String> subPipelines = mapping.getSubPipelines();
+        Collection<ISubPipeline> subPipelines = mapping.getSubPipelines();
         Assert.assertNotNull(subPipelines);
         Assert.assertEquals(1, subPipelines.size());
-        Assert.assertEquals("other", subPipelines.get(0));
+        ArrayList<ISubPipeline> tmp = new ArrayList<ISubPipeline>();
+        tmp.addAll(subPipelines);
+        Assert.assertEquals("other", tmp.get(0).getName());
+        Assert.assertEquals("alg2", tmp.get(0).getAlgorithmName());
     }
     
     /**

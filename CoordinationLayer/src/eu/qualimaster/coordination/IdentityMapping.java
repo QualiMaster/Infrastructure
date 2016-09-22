@@ -127,8 +127,13 @@ public class IdentityMapping implements INameMapping {
     }
 
     @Override
-    public List<String> getSubPipelines() {
-        return new ArrayList<String>();
+    public List<ISubPipeline> getSubPipelines() {
+        return new ArrayList<ISubPipeline>();
+    }
+
+    @Override
+    public ISubPipeline getSubPipelineByAlgorithmName(String algorithmName) {
+        return null;
     }
 
 }

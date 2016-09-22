@@ -194,8 +194,13 @@ public class TestNameMapping implements INameMapping {
     }
 
     @Override
-    public List<String> getSubPipelines() {
-        return new ArrayList<String>();
+    public Collection<ISubPipeline> getSubPipelines() {
+        return new ArrayList<ISubPipeline>();
+    }
+
+    @Override
+    public ISubPipeline getSubPipelineByAlgorithmName(String algorithmName) {
+        return null;
     }
     
 }

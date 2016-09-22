@@ -9,6 +9,7 @@ import eu.qualimaster.common.signal.AlgorithmChangeSignal;
 import eu.qualimaster.common.signal.BaseSignalBolt;
 import eu.qualimaster.common.signal.ParameterChangeSignal;
 import eu.qualimaster.common.signal.ShutdownSignal;
+import eu.qualimaster.common.signal.SignalException;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineOptions;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
@@ -33,9 +34,10 @@ public class Process extends BaseSignalBolt {
     private transient AlgInput input;
     private transient AlgOutput output;
     private transient OutputCollector collector;
+    private String[] shutdown;
     
     /**
-     * Represents a reusable alorithm input.
+     * Represents a reusable algorithm input.
      * 
      * @author Holger Eichelberger
      */
@@ -112,9 +114,11 @@ public class Process extends BaseSignalBolt {
      * 
      * @param elementName the element name
      * @param pipelineName the pipeline name
+     * @param shutdown the other elements to shutdown (just name or pipeline/name)
      */
-    public Process(String elementName, String pipelineName) {
+    public Process(String elementName, String pipelineName, String... shutdown) {
         super(elementName, pipelineName);
+        this.shutdown = shutdown;
     }
     
     /**
@@ -207,6 +211,29 @@ public class Process extends BaseSignalBolt {
     @Override
     protected void prepareShutdown(ShutdownSignal signal) {
         signals.notifyShutdown(signal);
+        for (String s : shutdown) {
+            String pipeline = getPipeline();
+            String element = s;
+            int pos = s.indexOf("/");
+            if (pos > 0) {
+                pipeline = s.substring(0, pos);
+                element = s.substring(pos + 1);
+            }
+            send(new ShutdownSignal(pipeline, element));
+        }
     }
     
+    /**
+     * Sends a shutdown signal.
+     * 
+     * @param signal the signal
+     */
+    private static void send(ShutdownSignal signal) {
+        try {
+            signal.sendSignal();
+        } catch (SignalException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
 }

@@ -6,13 +6,19 @@
     <node name="process" type="family">
         <component name="process" container="pipeline" class="tests.eu.qualimaster.storm.Process" receiver="true" thrift="false" tasks="2" alternative0="alg1" alternative1="alg2"/>
     </node>
+    <node name="MainSender" type="source">
+        <component name="MainSender" container="subPipeline" class="tests.eu.qualimaster.storm.SendingBolt" receiver="true" thrift="false" tasks="1"/>
+    </node>
+    <node name="MainReceiver" type="source">
+        <component name="MainReceiver" container="subPipeline" class="tests.eu.qualimaster.storm.ReceivingSpout" receiver="true" thrift="false" tasks="1"/>
+    </node>
     <node name="sink" type="sink">
         <component name="sink" container="pipeline" class="tests.eu.qualimaster.storm.Sink" receiver="true" thrift="false" tasks="1"/>
     </node>
     <algorithm name="alg1" implName="alg1" class="tests.eu.qualimaster.storm.Alg1"/>
     <algorithm name="alg2" implName="alg2" class="tests.eu.qualimaster.storm.Alg2"/>
     <parameter parameter="test" name="source" receiver="process"/>
-    <pipeline name="subPipeline"/>
+    <pipeline name="subPipeline" algorithm="alg2"/>
   </pipeline>
 </mapping>
 

@@ -384,7 +384,7 @@ public class ProfileControl implements IProfile {
                          lastOptions.toMap(), data));
                     StormUtils.forTesting(StormUtils.getLocalCluster(), topologies);
                 } catch (TopologyTestInfoException e) {
-                    getLogger().error("Testing: " + e.getMessage(), e);
+                    getLogger().error("Testing: " + e.getMessage());
                 }
             }
             if (0 == actVariant) { // this is the first execution, notify monitoring but defer until pipeline started

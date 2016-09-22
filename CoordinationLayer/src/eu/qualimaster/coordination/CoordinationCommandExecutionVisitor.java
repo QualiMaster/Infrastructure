@@ -26,6 +26,7 @@ import eu.qualimaster.common.signal.SignalException;
 import eu.qualimaster.common.signal.SignalMechanism;
 import eu.qualimaster.coordination.INameMapping.Algorithm;
 import eu.qualimaster.coordination.INameMapping.Component;
+import eu.qualimaster.coordination.INameMapping.ISubPipeline;
 import eu.qualimaster.coordination.PipelineCache.PipelineElementCache;
 import eu.qualimaster.coordination.RepositoryConnector.Models;
 import eu.qualimaster.coordination.StormUtils.TopologyTestInfo;
@@ -142,7 +143,9 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
     }
     
     /**
-     * Handles an algorithm change command with optional parameters.
+     * Handles an algorithm change command with optional parameters. While 
+     * {@link #handleAlgorithmChangeImpl(AlgorithmChangeCommand, List)} is actually implementing the handling of an 
+     * algorithm changed command, this method also takes starting related sub-pipelines into account.
      * 
      * @param command the command
      * @param parameters explicit parameters (may be <b>null</b> than only the cached ones will be used)
@@ -150,7 +153,34 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
      */
     CoordinationExecutionResult handleAlgorithmChange(AlgorithmChangeCommand command, 
         List<ParameterChange> parameters) {
+        CoordinationExecutionResult result;
+        String pipelineName = command.getPipeline();
+        INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
+        ISubPipeline subPip = mapping.getSubPipelineByAlgorithmName(command.getAlgorithm());
+        if (null != subPip) {
+            CoordinationManager.deferCommand(pipelineName, PipelineLifecycleEvent.Status.STARTED, 
+                new AlgorithmChangeAction(command, parameters, tracer));
+            PipelineCommand cmd = new PipelineCommand(subPip.getName(), PipelineCommand.Status.START, 
+                CoordinationManager.getPipelineOptions(pipelineName));
+            result = handlePipelineStart(cmd);
+        } else {
+            result = handleAlgorithmChangeImpl(command, parameters);
+        }
+        return result;
+    }
+
+    /**
+     * Handles an algorithm change command with optional parameters. This method may be an entry point for deferred
+     * actions.
+     * 
+     * @param command the command
+     * @param parameters explicit parameters (may be <b>null</b> than only the cached ones will be used)
+     * @return the coordination execution result
+     */
+    CoordinationExecutionResult handleAlgorithmChangeImpl(AlgorithmChangeCommand command, 
+        List<ParameterChange> parameters) {
         CoordinationExecutionResult failing = null;
+        
         commandStack.push(command);
         String pipelineName = command.getPipeline();
         INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
@@ -176,13 +206,12 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
             send(command, signal);
             cache.setAlgorithm(command.getAlgorithm(), parameters);
         }
-        // TODO TSI: change HW implementation in libraries, load MaxFiles if required!
         if (null != tracer) {
             tracer.executedAlgorithmChangeCommand(command, failing);
         }
         return writeCoordinationLog(command, failing);        
     }
-
+    
     @Override
     public CoordinationExecutionResult visitParameterChangeCommand(ParameterChangeCommand<?> command) {
         return handleParameterChange(command, null);
@@ -260,40 +289,6 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         return writeCoordinationLog(command, failed);
     }
 
-    /**
-     * Handles commands of starting sub-pipelines.
-     * 
-     * @param subPipelines the sub pipelines
-     * @param command the original start command
-     * @return the sub-Pipeline to start (may be <b>null</b>)
-     */
-    private String handleStartSubPipelines(List<String> subPipelines, PipelineCommand command) {
-        String startSub = null;
-        for (int s = 0; s < subPipelines.size(); s++) {
-            String pip = subPipelines.get(s);
-            if (!CoordinationManager.isStarted(pip)) {
-                if (null == startSub) {
-                    startSub = pip;
-                } else {
-                    CoordinationManager.addToStartSequence(new PipelineCommand(
-                        pip, command.getStatus(), command.getOptions()));
-                }
-            }
-        }
-        return startSub;
-    }
-    
-    /**
-     * Returns the sub pipelines in <code>mapping</code>.
-     * 
-     * @param mapping the mapping
-     * @return the sub-pipelines (may be empty due to {@link CoordinationManager#HANDLE_SUBPIPELINES_ON_STARTSTOP}
-     */
-    private static List<String> getSubPipelines(INameMapping mapping) {
-        return CoordinationManager.HANDLE_SUBPIPELINES_ON_STARTSTOP 
-            ? mapping.getSubPipelines() : new ArrayList<String>();
-    }
-
     @Override
     public CoordinationExecutionResult visitPipelineCommand(PipelineCommand command) {
         CoordinationExecutionResult failing = null;
@@ -310,18 +305,6 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
                     failing = new CoordinationExecutionResult(command, "illegal pipeline name: null", 
                         CoordinationExecutionCode.STARTING_PIPELINE);
                 } else {
-                    INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
-                    List<String> subPipelines = getSubPipelines(mapping); // considers HANDLE_SUBPIPELINES_ON_STARTSTOP
-                    if (!subPipelines.isEmpty()) {
-                        String startSub = handleStartSubPipelines(subPipelines, command);
-                        if (null != startSub) {
-                            CoordinationManager.addToStartSequence(command);
-                            // reset command and go on with sub pipeline
-                            command = new PipelineCommand(startSub, command.getStatus(), 
-                                command.getOptions());
-                            pipelineName = command.getPipeline();
-                        }
-                    }
                     if (CoordinationManager.isStartupPending(pipelineName)) {
                         CoordinationManager.removePendingStartup(pipelineName);
                         failing = handlePipelineStart(command);
@@ -370,6 +353,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
      */
     private CoordinationExecutionResult handlePipelineStart(PipelineCommand command) {
         CoordinationExecutionResult failing = null;
+        CoordinationManager.registerPipelineOptions(command.getPipeline(), command.getOptions());
         String pipelineName = command.getPipeline();
         INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
         getLogger().info("Processing pipeline start command for " + pipelineName + " with options " 
@@ -441,9 +425,8 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         } catch (SignalException e) {
             getLogger().error(e.getMessage(), e);
         }
-        List<String> subPipelines = getSubPipelines(mapping); // considers HANDLE_SUBPIPELINES_ON_STARTSTOP
-        for (String subPipeline : subPipelines) {
-            handlePipelineStop(new PipelineCommand(subPipeline, command.getStatus(), command.getOptions()), false);
+        for (ISubPipeline sp : mapping.getSubPipelines()) {
+            handlePipelineStop(new PipelineCommand(sp.getName(), command.getStatus(), command.getOptions()), false);
         }
         return failing;
     }

@@ -158,6 +158,29 @@ public interface INameMapping {
     }
     
     /**
+     * Describes a loosely integrated sub-pipeline.
+     * 
+     * @author Holger Eichelberger
+     */
+    public interface ISubPipeline {
+        
+        /**
+         * Returns the name of the sub-pipeline.
+         * 
+         * @return the name
+         */
+        public String getName();
+        
+        /**
+         * Returns the name of the algorithm represented by the sub-pipeline.
+         * 
+         * @return the name of the algorithm
+         */
+        public String getAlgorithmName();
+        
+    }
+    
+    /**
      * String returns the name of the pipeline the mapping is assigned to.
      * 
      * @return the name of the pipeline
@@ -303,8 +326,16 @@ public interface INameMapping {
     /**
      * Returns the direct sub-pipelines of this pipeline.
      * 
-     * @return the names of the sub pipelines, may be empty if there are none
+     * @return the sub pipelines, may be empty if there are none
      */
-    public List<String> getSubPipelines();
+    public Collection<ISubPipeline> getSubPipelines();
+
+    /**
+     * Returns the pipeline realizing the given algorithm.
+     * 
+     * @param algorithmName the name of the algorithm
+     * @return the sub-pipeline or <b>null</b> if there is none
+     */
+    public ISubPipeline getSubPipelineByAlgorithmName(String algorithmName);
     
 }
