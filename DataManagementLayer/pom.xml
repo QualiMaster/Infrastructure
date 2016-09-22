@@ -82,28 +82,13 @@
 			</plugin>
 
 
-            <!--  disabled due to local dependency
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.1</version>
-				<executions>
-					<execution>
-						<id>copy-dependencies</id>
-						<phase>package</phase>
-						<goals>
-							<goal>copy-dependencies</goal>
-						</goals>
-						<configuration>
-							<outputDirectory>${basedir}/lib</outputDirectory>
-							<overWriteReleases>false</overWriteReleases>
-							<overWriteSnapshots>false</overWriteSnapshots>
-							<overWriteIfNewer>true</overWriteIfNewer>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			 -->
+			<!-- disabled due to local dependency <plugin> <groupId>org.apache.maven.plugins</groupId> 
+				<artifactId>maven-dependency-plugin</artifactId> <version>2.1</version> <executions> 
+				<execution> <id>copy-dependencies</id> <phase>package</phase> <goals> <goal>copy-dependencies</goal> 
+				</goals> <configuration> <outputDirectory>${basedir}/lib</outputDirectory> 
+				<overWriteReleases>false</overWriteReleases> <overWriteSnapshots>false</overWriteSnapshots> 
+				<overWriteIfNewer>true</overWriteIfNewer> </configuration> </execution> </executions> 
+				</plugin> -->
 		</plugins>
 
 		<pluginManagement>
@@ -144,41 +129,42 @@
 			<url>https://projects.sse.uni-hildesheim.de/qm/maven/</url>
 			<layout>default</layout>
 		</repository>
-		<!--  preliminary - due to Jenkins -->
+		<!-- preliminary - due to Jenkins -->
 		<repository>
-		    <id>mvnrepository</id>
-		    <name>mvnrepository</name>
-		    <url>http://repo1.maven.org/maven2</url>
+			<id>mvnrepository</id>
+			<name>mvnrepository</name>
+			<url>http://repo1.maven.org/maven2</url>
 		</repository>
-        <repository>
-            <id>mvnrepository.com</id>
-            <name>mvnrepository.com</name>
-            <url>http://www.mvnrepository.com/artifact</url>
-        </repository>		
+		<repository>
+			<id>mvnrepository.com</id>
+			<name>mvnrepository.com</name>
+			<url>http://www.mvnrepository.com/artifact</url>
+		</repository>
 	</repositories>
-	
-  <!-- Depedency Management -->
+
+	<!-- Depedency Management -->
 	<dependencyManagement>
-    <dependencies>
-		<!-- add if infrastructure dependencies(storm, hdfs and hbase) are involved -->
-        <dependency>
-            <groupId>eu.qualimaster</groupId>
-            <artifactId>FullInfrastructureDependencies</artifactId>
-            <version>0.5.0-SNAPSHOT</version>
-            <type>pom</type>
-            <scope>import</scope>
-        </dependency> 
-        <!-- add if pipeline dependencies(StormCommons and QualiMaster.Events) are involved -->		
-        <dependency>
-            <groupId>eu.qualimaster</groupId>
-            <artifactId>PipelineDependencies</artifactId>
-            <version>0.5.0-SNAPSHOT</version>
-            <type>pom</type>
-            <scope>import</scope>
-        </dependency>            
-    </dependencies>
-</dependencyManagement>
-  
+		<dependencies>
+			<!-- add if infrastructure dependencies(storm, hdfs and hbase) are involved -->
+			<dependency>
+				<groupId>eu.qualimaster</groupId>
+				<artifactId>FullInfrastructureDependencies</artifactId>
+				<version>0.5.0-SNAPSHOT</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<!-- add if pipeline dependencies(StormCommons and QualiMaster.Events) 
+				are involved -->
+			<dependency>
+				<groupId>eu.qualimaster</groupId>
+				<artifactId>PipelineDependencies</artifactId>
+				<version>0.5.0-SNAPSHOT</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<dependencies>
 		<!-- Storm Dependency -->
 		<dependency>
@@ -198,8 +184,8 @@
 			<artifactId>hbase-client</artifactId>
 		</dependency>
 		<dependency>
-	      <groupId>org.apache.hadoop</groupId>
-	      <artifactId>hadoop-hdfs</artifactId>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-hdfs</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.avro</groupId>
@@ -222,17 +208,17 @@
 			<groupId>eu.qualimaster</groupId>
 			<artifactId>QualiMaster.Events</artifactId>
 		</dependency>
-		
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-        </dependency>
-       <dependency>
-         <groupId>eu.qualimaster</groupId>
-         <artifactId>QualiMaster.Events</artifactId>
-         <type>test-jar</type>
-         <scope>test</scope>
-       </dependency>		
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>eu.qualimaster</groupId>
+			<artifactId>QualiMaster.Events</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 </project>
