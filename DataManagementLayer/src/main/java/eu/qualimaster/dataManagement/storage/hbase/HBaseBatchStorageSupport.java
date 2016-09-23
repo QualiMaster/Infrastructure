@@ -45,7 +45,8 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 	public HBaseBatchStorageSupport(String tableName) {
 		super(tableName);
 		
-		Configuration config = HBaseConfiguration.create();
+		//Configuration config = HBaseConfiguration.create();
+		config = HBaseConfiguration.create();
 		config.set("zookeeper.znode.parent", HBASE_NODE);
 		config.set("hbase.zookeeper.quorum", HBASE_QUORUM);		
 		
