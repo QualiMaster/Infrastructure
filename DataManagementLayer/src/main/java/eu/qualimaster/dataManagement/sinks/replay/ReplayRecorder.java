@@ -54,6 +54,7 @@ public class ReplayRecorder<T> {
 	
 	public ReplayRecorder(Class<T> cls, Tuple schema, String location,
 			IStorageStrategyDescriptor d) {
+		System.out.println("constructing replay recorder");
 		
 		// The storage strategy is for in-memory, as
 		// we never remove data in the permanent store
