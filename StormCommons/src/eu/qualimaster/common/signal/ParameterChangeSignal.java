@@ -19,6 +19,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import eu.qualimaster.common.QMInternal;
 
 /**
@@ -29,7 +31,7 @@ import eu.qualimaster.common.QMInternal;
  */
 @QMInternal
 public class ParameterChangeSignal extends AbstractTopologyExecutorSignal {
-
+    private static final Logger logger = Logger.getLogger(ParameterChangeSignal.class);
     private static final String MARKER = "param";
     private static final String CHANGE_SEPARATOR = "|";
     private static final String CHANGE_DETAIL_SEPARATOR = "=";
@@ -265,12 +267,16 @@ public class ParameterChangeSignal extends AbstractTopologyExecutorSignal {
      * @return <code>true</code> if handled, <code>false</code> else
      */
     public static boolean notify(byte[] payload, String topology, String executor, IParameterChangeListener listener) {
+logger.info("Notifying the signal!");
         boolean done = false;
         String sPayload = new String(payload);
         String[] parts = sPayload.split(":");
+logger.info("Payload: " + sPayload);
         if (3 == parts.length && MARKER.equals(parts[0])) {
             List<ParameterChange> changes = readChanges(parts[2]);
+logger.info("Changes: " + changes);
             if (null != changes) {
+logger.info("Invoking the parameter notify on the listener: " + listener.getClass() + ", topoloy: " + topology + ", executor: " + executor);
                 listener.notifyParameterChange(new ParameterChangeSignal(topology, executor, changes, parts[1]));
                 done = true;
             }

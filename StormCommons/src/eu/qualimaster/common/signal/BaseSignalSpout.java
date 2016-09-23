@@ -197,6 +197,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     @Override
     public void notifyParameterChange(ParameterChangeSignal signal) {
         // empty: keep interface/implementations stable
+LOGGER.info("This notifyParameterChange is being called!");
     }
     
     /**
