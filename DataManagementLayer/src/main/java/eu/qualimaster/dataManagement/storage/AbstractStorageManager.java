@@ -97,32 +97,15 @@ public abstract class AbstractStorageManager<T extends AbstractStorageTable> ext
 			key = key + tablePrefix;
 		}
 		key = key + tableSeperator + tableName;
-
-		StringBuilder msg = new StringBuilder();
-		for (String k : tables.keySet()) {
-			msg.append(k);
-			msg.append(": ");
-			msg.append(tables.get(k).getClass().toString());
-		}
-		T result = tables.get(key);
-
-		if (null != result) {
-			throw new RuntimeException("The table mapping: " + msg.toString());
-		}
-
-		/*
-		 * if (null == result) {
-		 * 
-		 * result = createTable(validateTableName(key)); // we do not use create
-		 * here / parameters System.out.println("result " + result); if (null !=
-		 * result) { result.setStrategy(strategy); register(unit, new
-		 * LocalReference<T>(result)); } } return result;
-		 */
-
-		else {
-			result = createTable(validateTableName(key));
-			throw new RuntimeException(
-					"The table mapping: " + msg.toString() + ". The result type: " + result.getClass().toString());
-		}
+	        T result = tables.get(key);
+	        if (null == result) {
+	            result = createTable(validateTableName(key)); // we do not use create here / parameters
+	            System.out.println("result " + result);
+	            if (null != result) {
+	                result.setStrategy(strategy);
+	                register(unit, new LocalReference<T>(result));
+	            }
+	        }
+	        return result;
 	}
 }
