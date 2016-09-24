@@ -41,7 +41,7 @@ public class HdfsUtils {
     public static FileSystem getFilesystem() throws IOException {
         return getFilesystem(null);
     }
-
+    
     /**
      * Returns the default file system.
      * 
@@ -55,7 +55,7 @@ public class HdfsUtils {
             fsUrl = DataManagementConfiguration.getHdfsUrl();
         }
         Configuration c = new Configuration();
-        c.set("fs.defaultFS", defaultFs);
+        c.set("fs.defaultFS", fsUrl);
         c.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
         c.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
         return FileSystem.get(c);
