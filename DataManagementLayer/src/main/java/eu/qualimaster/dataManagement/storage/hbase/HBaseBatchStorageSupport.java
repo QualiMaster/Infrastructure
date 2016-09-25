@@ -222,7 +222,8 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 	}
 
 	@Override
-	public IStorageSupport getStorageSupport() {
-		return this; // this may also be an HBase specific implementation
-	}
+ 	public IStorageSupport getStorageSupport() {
+  		throw new RuntimeException("HBaseBatchStoreSupport has been declared and called.");
+  		// return this;
+ 	}
 }
