@@ -140,5 +140,21 @@ public class ParameterChangeSignalTest {
         ParameterChangeSignal.notify(sig.createPayload(), namespace, executor, listener);
         Assert.assertTrue(listener.receivedSignal());
     }
-    
+
+    /**
+     * Tests handling a signal in the Time travel pipeline (based on A. Nydriotis).
+     */
+    @Test
+    public void testTimeTravelPipelineSignal() {
+        final String namespace = "TimeTravelPip";
+        final String executor = "TimeTravel_Source0";
+        final String parameter = "snapshotQuery";
+        final String value = "09/16/2016,11:25:00,09/11/2016,11:25:00";
+        TestListener listener = new TestListener();
+        ParameterChangeSignal sig = new ParameterChangeSignal(namespace, executor, parameter, value, "");
+        listener.expect(sig);
+        ParameterChangeSignal.notify(sig.createPayload(), namespace, executor, listener);
+        Assert.assertTrue(listener.receivedSignal());
+    }
+
 }
