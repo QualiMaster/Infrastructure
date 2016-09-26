@@ -21,8 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
 import eu.qualimaster.common.QMInternal;
 import eu.qualimaster.pipeline.AlgorithmChangeParameter;
 
@@ -35,10 +33,7 @@ import eu.qualimaster.pipeline.AlgorithmChangeParameter;
 @QMInternal
 public class AlgorithmChangeSignal extends AbstractTopologyExecutorSignal {
 
-    private static final String MARKER = "alg";
-    private static final String CHANGE_SEPARATOR = "|";
-    private static final String PARAM_SEPARATOR = ";";
-    private static final String VALUE_SEPARATOR = "=";
+    private static final String IDENTIFIER = "alg";
     private static final long serialVersionUID = 3573667327144368263L;
     private String algorithm;
     private Map<String, Serializable> parameters = new HashMap<String, Serializable>();
@@ -202,17 +197,7 @@ public class AlgorithmChangeSignal extends AbstractTopologyExecutorSignal {
 
     @Override
     public byte[] createPayload() {
-        String result = MARKER  + ":" + algorithm + ":" + getCauseMessageId() + ":" + CHANGE_SEPARATOR 
-            + ParameterChangeSignal.createPayload(changes) + CHANGE_SEPARATOR;
-        boolean first = true;
-        for (Map.Entry<String, Serializable> entry : parameters.entrySet()) {
-            if (!first) {
-                result += PARAM_SEPARATOR;
-            }
-            result += entry.getKey() + VALUE_SEPARATOR + entry.getValue();
-            first = false;
-        }
-        return result.getBytes();
+        return defaultSerialize(IDENTIFIER);
     }
     
     /**
@@ -226,54 +211,9 @@ public class AlgorithmChangeSignal extends AbstractTopologyExecutorSignal {
      */
     public static boolean notify(byte[] payload, String topology, String executor, IAlgorithmChangeListener listener) {
         boolean done = false;
-        String sPayload = new String(payload);
-        List<ParameterChange> changes = null;
-        String paramPayload = null;
-        int pos = sPayload.indexOf(CHANGE_SEPARATOR);
-        if (pos > 0) {
-            if (pos + 1 < sPayload.length()) {
-                changes = ParameterChangeSignal.readChanges(sPayload.substring(pos + 1));
-            }
-            int paramPos = sPayload.lastIndexOf(CHANGE_SEPARATOR);
-            if (paramPos > 0 && paramPos < sPayload.length()) {
-                paramPayload = sPayload.substring(paramPos + 1);
-            }
-            sPayload = sPayload.substring(0, pos);
-        }
-        if (null == changes) {
-            changes = new ArrayList<ParameterChange>();
-        }
-        String[] parts = sPayload.split(":");
-        if (2 == parts.length && sPayload.endsWith(":")) {
-            String[] tmp = new String[3];
-            tmp[0] = parts[0];
-            tmp[1] = parts[1];
-            tmp[2] = "";
-            parts = tmp;
-        }
-        if (3 == parts.length && MARKER.equals(parts[0])) {
-            AlgorithmChangeSignal signal = new AlgorithmChangeSignal(topology, executor, parts[1], changes, parts[2]);
-            if (null != paramPayload) {
-                String[] pParts = paramPayload.split(PARAM_SEPARATOR);
-                for (int p = 0; p < pParts.length; p++) {
-                    String[] pPart = pParts[p].split(VALUE_SEPARATOR);
-                    if (2 == pPart.length) {
-                        try {
-                            AlgorithmChangeParameter param = AlgorithmChangeParameter.valueOf(pPart[0]);
-                            if (Integer.class == param.getType()) {
-                                int value = Integer.parseInt(pPart[1]);
-                                signal.setIntParameter(param, value);
-                            } else {
-                                signal.setStringParameter(param, pPart[1]);
-                            }
-                        } catch (IllegalArgumentException e) { // also NumberFormatException
-                            Logger.getLogger(AlgorithmChangeSignal.class).error("cannot parse parameter: " + pParts[p] 
-                                + ":" + e.getMessage());
-                        }
-                    }
-                }
-            }
-            listener.notifyAlgorithmChange(signal);
+        AlgorithmChangeSignal sig = defaultDeserialize(payload, IDENTIFIER, AlgorithmChangeSignal.class);
+        if (null != sig) {
+            listener.notifyAlgorithmChange(sig);
             done = true;
         }
         return done;

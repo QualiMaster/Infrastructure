@@ -31,10 +31,8 @@ import eu.qualimaster.common.QMInternal;
  */
 @QMInternal
 public class ParameterChangeSignal extends AbstractTopologyExecutorSignal {
-    private static final Logger logger = Logger.getLogger(ParameterChangeSignal.class);
-    private static final String MARKER = "param";
-    private static final String CHANGE_SEPARATOR = "|";
-    private static final String CHANGE_DETAIL_SEPARATOR = "=";
+    private static final Logger LOGGER = Logger.getLogger(ParameterChangeSignal.class);
+    private static final String IDENTIFIER = "param";
     private static final long serialVersionUID = 3036809569625332550L;
     private List<ParameterChange> changes = new ArrayList<ParameterChange>();
 
@@ -196,66 +194,8 @@ public class ParameterChangeSignal extends AbstractTopologyExecutorSignal {
     
     @Override
     public byte[] createPayload() {
-        String tmp = MARKER + ":" + getCauseMessageId() + ":" + createPayload(changes);
-        return tmp.getBytes();
+        return defaultSerialize(IDENTIFIER);
     }
-    
-    // >> move back to cratePayload after cleanup of deprecated -> algorithmChange
-    
-    /**
-     * Creates the payload.
-     * 
-     * @param changes the parameter changes
-     * @return the payload
-     */
-    static String createPayload(List<ParameterChange> changes) {
-        String result = "";
-        result += changes.size();
-        for (int c = 0; c < changes.size(); c++) {
-            ParameterChange change = changes.get(c);
-            result += CHANGE_SEPARATOR;
-            result += change.getName() + CHANGE_DETAIL_SEPARATOR + change.getValue();
-        }
-        return result;        
-    }
-
-    /**
-     * Reads the changes from <code>payload</code>.
-     * 
-     * @param payload the payload to read
-     * @return the changes, <b>null</b> if there are none
-     */
-    static List<ParameterChange> readChanges(String payload) {
-        List<ParameterChange> changes = null;
-        int pos = payload.indexOf(CHANGE_SEPARATOR);
-        if (pos > 0) {
-            changes = new ArrayList<ParameterChange>();
-            try {
-                final int paramCount = Integer.parseInt(payload.substring(0, pos));
-                pos++;
-                int p = 0;
-                while (p < paramCount && pos > 0 && pos < payload.length()) {
-                    int end = payload.indexOf(CHANGE_SEPARATOR, pos);
-                    if (end < 0) {
-                        end = payload.length();
-                    }
-                    String[] parts = payload.substring(pos, end).split(CHANGE_DETAIL_SEPARATOR);
-                    if (2 == parts.length) {
-                        changes.add(new ParameterChange(parts[0], parts[1]));
-                    }
-                    pos = end + 1;
-                    p++;
-                }
-            } catch (NumberFormatException e) {
-            }
-            if (changes.isEmpty()) {
-                changes = null;
-            }
-        }
-        return changes;
-    }
-    
-    // << move back to cratePayload after cleanup of deprecated -> algorithmChange
     
     /**
      * Interprets the payload and sends it to the given listener if appropriate. [public for testing]
@@ -267,19 +207,12 @@ public class ParameterChangeSignal extends AbstractTopologyExecutorSignal {
      * @return <code>true</code> if handled, <code>false</code> else
      */
     public static boolean notify(byte[] payload, String topology, String executor, IParameterChangeListener listener) {
-logger.info("Notifying the signal!");
         boolean done = false;
-        String sPayload = new String(payload);
-        String[] parts = sPayload.split(":");
-logger.info("Payload: " + sPayload);
-        if (3 == parts.length && MARKER.equals(parts[0])) {
-            List<ParameterChange> changes = readChanges(parts[2]);
-logger.info("Changes: " + changes);
-            if (null != changes) {
-logger.info("Invoking the parameter notify on the listener: " + listener.getClass() + ", topoloy: " + topology + ", executor: " + executor);
-                listener.notifyParameterChange(new ParameterChangeSignal(topology, executor, changes, parts[1]));
-                done = true;
-            }
+        LOGGER.info("Notifying the signal!");
+        ParameterChangeSignal sig = defaultDeserialize(payload, IDENTIFIER, ParameterChangeSignal.class);
+        if (null != sig) {
+            listener.notifyParameterChange(sig);
+            done = true;
         }
         return done;
     }
