@@ -184,6 +184,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
 
     @Override
     public void onSignal(byte[] data) {
+        LOGGER.info("onSignal: Listening on the signal!");
         boolean done = ParameterChangeSignal.notify(data, pipeline, name, this);
         if (!done) {
             done = ShutdownSignal.notify(data, pipeline, name, this);
@@ -196,6 +197,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     @Override
     public void notifyParameterChange(ParameterChangeSignal signal) {
         // empty: keep interface/implementations stable
+LOGGER.info("This notifyParameterChange is being called!");
     }
     
     /**
