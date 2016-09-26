@@ -107,50 +107,54 @@ public class HardwareTransmitter {
      */
     public byte[] receiveData() throws IOException {
         int counter = 0;
-        int temp = 0;
+        int tempCounter = 0;
         int messageLength = 0;
         byte[] msg = new byte[8192];
+        byte[] temp = new byte[1];
 
         while (true) { // Read the message id
-            temp = sock.getInputStream().read();
-            if (temp != -1) {
-                msg[counter] = (byte) temp;
+            tempCounter = sock.getInputStream().read(temp, 0, 1);
+            if (tempCounter == 1) {
+                msg[counter] = (byte) temp[0];
                 counter++;
                 break;
             }
         }
 
-        if (temp == 100) { // only if we receive data, we need to parse the message
+        if (temp[0] == 'd') { // only if we receive data, we need to parse the
+                              // message
             while (true) { // Read the message length
-                temp = sock.getInputStream().read();
-                if (temp != -1) {
-                    msg[counter] = (byte) temp;
-                    messageLength = temp;
+                tempCounter = sock.getInputStream().read(temp, 0, 1);
+                if (tempCounter == 1) {
+                    msg[counter] = (byte) temp[0];
+                    messageLength = temp[0];
                     counter++;
                     break;
                 }
             }
 
             while (true) {
-                temp = sock.getInputStream().read();
-                if (temp != -1) {
-                    msg[counter] = (byte) temp;
+                tempCounter = sock.getInputStream().read(temp, 0, 1);
+                if (tempCounter == 1) {
+                    msg[counter] = (byte) temp[0];
                     counter++;
                     messageLength--;
                     if (messageLength == 0) {
                         break;
-                    }    
+                    }
                 }
             }
+        } else if (temp[0] == 'o') {
+            System.out.println("Flush message and stop sending!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        } else if (temp[0] == 'f') {
+            System.out.println("Flush message and continue sending!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         }
 
-        while (true) { // Read the ending character
-            temp = sock.getInputStream().read();
-            if (temp != -1) {
-                msg[counter] = (byte) temp;
-                break;
-            }
-        }
+        /*
+         * while (true) { // Read the ending character temp_counter =
+         * sock.getInputStream().read(temp, 0, 1); if (temp_counter == 1) {
+         * msg[counter] = (byte) temp[0]; break; } }
+         */
         return (msg);
     }
     /* previous one working only with the output in type of String
