@@ -253,6 +253,9 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
         IStorageStrategyDescriptor strategy, ITupleEmitter<T> emitter) {
         TupleHandler<T> handler = new TupleHandler<T>(tupleClass, schema, location, strategy, this);
         handler.setEmitter(emitter);
+        if (null == handlers) {
+            handlers = new HashMap<Class<?>, TupleHandler<?>>();
+        }
         handlers.put(tupleClass, handler);
     }
 
@@ -276,8 +279,10 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
     @Override
     public void notifyReplay(ReplaySignal signal) {
         int streamerCount = 0;
-        for (TupleHandler<?> handler : handlers.values()) {
-            streamerCount += handler.notifyReplay(signal);
+        if (null != handlers) {
+            for (TupleHandler<?> handler : handlers.values()) {
+                streamerCount += handler.notifyReplay(signal);
+            }
         }
         if (null == replayRunnable && streamerCount > 0) {
             replayRunnable = new ReplayRunnable();
@@ -292,8 +297,10 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
     @Override
     protected void prepareShutdown(ShutdownSignal signal) {
         super.prepareShutdown(signal);
-        for (TupleHandler<?> handler : handlers.values()) {
-            handler.prepareShutdown(signal);
+        if (null != handlers) {
+            for (TupleHandler<?> handler : handlers.values()) {
+                handler.prepareShutdown(signal);
+            }
         }
     }
 
@@ -311,7 +318,7 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
      * @param tuple the tuple
      */
     protected void store(Object tuple) {
-        if (null != tuple) {
+        if (null != tuple && null != handlers) {
             TupleHandler<?> handler = handlers.get(tuple.getClass());
             if (null != handler) {
                 handler.store(tuple);
@@ -331,8 +338,10 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
         @Override
         public void run() {
             while (running) {
-                for (TupleHandler<?> handler : handlers.values()) {
-                    handler.stream();
+                if (null != handlers) {
+                    for (TupleHandler<?> handler : handlers.values()) {
+                        handler.stream();
+                    }
                 }
                 try {
                     Thread.sleep(1);
