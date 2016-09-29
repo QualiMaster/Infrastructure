@@ -6,11 +6,15 @@ import eu.qualimaster.dataManagement.serialization.IDataOutput;
 import eu.qualimaster.dataManagement.serialization.ISerializer;
 import eu.qualimaster.dataManagement.serialization.SerializerRegistry;
 import eu.qualimaster.dataManagement.storage.AbstractStorageTable;
+import eu.qualimaster.dataManagement.storage.hbase.HBaseBatchStorageSupport;
 import eu.qualimaster.dataManagement.storage.support.IStorageSupport;
 import eu.qualimaster.dataManagement.strategies.IStorageStrategyDescriptor;
 import eu.qualimaster.dataManagement.strategies.NoStorageStrategyDescriptor;
 
 import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The intercepter between the sink in the execution layer
@@ -52,9 +56,11 @@ public class ReplayRecorder<T> {
 	private ReplayDataOutput output;
 	private ISerializer<T> serializer;
 	
+	private static final Logger log = LoggerFactory.getLogger(ReplayRecorder.class);
+	
 	public ReplayRecorder(Class<T> cls, Tuple schema, String location,
 			IStorageStrategyDescriptor d) {
-		System.out.println("constructing replay recorder");
+		log.info("Replay: constructing ReplayRecorder");
 		
 		// The storage strategy is for in-memory, as
 		// we never remove data in the permanent store
@@ -80,10 +86,12 @@ public class ReplayRecorder<T> {
 	 * Call by the replay sink in the asynchronous manner to push data into the replay store
 	 */
 	public void store(T data) throws IOException {
+		log.info("storing data");
 		serializer.serializeTo(data, output);
 	}
 
 	public void close() throws IOException {
+		log.info("closing output");
 		output.close();
 	}
 }
