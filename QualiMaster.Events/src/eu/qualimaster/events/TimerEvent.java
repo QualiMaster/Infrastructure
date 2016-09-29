@@ -40,5 +40,10 @@ public final class TimerEvent implements ILocalEvent {
     public String getChannel() {
         return CHANNEL;
     }
+    
+    @Override
+    public String toString() {
+        return getClass().getName();
+    }
 
 }
