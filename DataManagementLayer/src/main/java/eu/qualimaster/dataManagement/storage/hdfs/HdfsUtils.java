@@ -124,7 +124,9 @@ public class HdfsUtils {
         if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getHdfsUrl())) {
             FileSystem fs = HdfsUtils.getFilesystem();
             Path target = new Path(DataManagementConfiguration.getDfsPath() + "/" + folder);
-            fs.delete(target, recursive);
+            if (fs.exists(target)) {
+                fs.delete(target, recursive);
+            }
         } else if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getDfsPath())) {
             File targetPath = new File(DataManagementConfiguration.getDfsPath(), folder.getName());
             if (recursive) {
@@ -147,7 +149,9 @@ public class HdfsUtils {
         if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getHdfsUrl())) {
             FileSystem fs = HdfsUtils.getFilesystem();
             Path target = new Path(DataManagementConfiguration.getDfsPath() + "/" + folder);
-            fs.create(target);
+            if (!fs.exists(target)) {
+                fs.create(target);
+            }
         } else if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getDfsPath())) {
             File targetPath = new File(DataManagementConfiguration.getDfsPath(), folder.getName());
             targetPath.mkdirs();
