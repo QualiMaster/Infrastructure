@@ -141,7 +141,15 @@
                 <include name="org.eclipse*.jar"/>
             </fileset>
         </copy>
-        <zip destfile="infra_maven-${NOW}-stamped.zip">
+        <copy file="${commons-cli:commons-cli:jar}" todir="build/stamp/infrastructure-libs"/>
+        <copy file="${commons-configuration:commons-configuration:jar}" todir="build/stamp/infrastructure-libs"/>
+        <copy file="${org.apache.hadoop:hadoop-common:jar}" todir="build/stamp/infrastructure-libs"/>
+        <copy file="${com.google.protobuf:protobuf-java:jar}" todir="build/stamp/infrastructure-libs"/>
+        <copy file="${commons-collections:commons-collections:jar}" todir="build/stamp/infrastructure-libs"/>
+        <copy file="${org.apache.hadoop:hadoop-auth:jar}" todir="build/stamp/infrastructure-libs"/>
+        <copy file="${org.apache.hadoop:hadoop-hdfs:jar}" todir="build/stamp/infrastructure-libs"/>
+    	
+    	<zip destfile="infra_maven-${NOW}-stamped.zip">
             <fileset dir="build/stamp" />
         </zip>
         <zip destfile="infra-${NOW}-stamped.zip"> 
