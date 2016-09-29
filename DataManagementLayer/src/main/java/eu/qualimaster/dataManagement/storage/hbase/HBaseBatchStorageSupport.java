@@ -71,7 +71,9 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 			// If the table exists, we need to check if it has column family
 			// named "cf",
 			// and add if not found
-			if (!admin.tableExists(getTableName())) {
+			// if (!admin.tableExists(getTableName())) {
+			log.info("check table existence: Table" + getTableName() + " result = " + admin.tableExists(getTableName()));
+			if (admin.tableExists(getTableName())) {
 				log.info("Table " + getTableName() + " already exists. Check for column family " + COLUMN_FAMILY);
 				for (HColumnDescriptor hcd : admin.getTableDescriptor(htd.getTableName()).getColumnFamilies()) {
 					if (hcd.getNameAsString().equalsIgnoreCase(COLUMN_FAMILY)) {
@@ -222,8 +224,9 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 	}
 
 	@Override
- 	public IStorageSupport getStorageSupport() {
-  		//throw new RuntimeException("HBaseBatchStoreSupport has been declared and called.");
-  		return this;
- 	}
+	public IStorageSupport getStorageSupport() {
+		// throw new RuntimeException("HBaseBatchStoreSupport has been declared
+		// and called.");
+		return this;
+	}
 }
