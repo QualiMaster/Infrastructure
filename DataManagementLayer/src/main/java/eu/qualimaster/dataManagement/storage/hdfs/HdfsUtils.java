@@ -189,7 +189,7 @@ public class HdfsUtils {
             FileSystem fs = getFilesystem();
             Path target = new Path(getDfsPath() + "/" + folder);
             if (!fs.exists(target)) {
-                fs.create(target);
+                fs.mkdirs(target);
                 fs.setPermission(target, FsPermission.valueOf("drwxrwxrwx"));
             }
         } else if (!isEmpty(getDfsPath())) {
@@ -279,7 +279,7 @@ public class HdfsUtils {
             }
             Path bpp = new Path(bp);
             if (!fs.exists(bpp)) {
-                fs.create(bpp);
+                fs.mkdirs(bpp);
                 fs.setPermission(bpp, FsPermission.valueOf("drwxrwxrwx"));
             }
             File[] files = source.listFiles();
