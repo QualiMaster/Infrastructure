@@ -136,6 +136,7 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 	@Override
 	// This implementation is fail-fast
 	protected void doWrite(Object key, Object object) {
+		log.info("Replay: doWrite");
 		if (!(object instanceof HBaseRow)) {
 			String msg = "HBaseBatchSupport can only write " + "object of type HBaseRow";
 			log.error(msg);
@@ -147,6 +148,7 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 			table.put(put);
 			counter++;
 			if (counter % batchSize == 0) {
+				log.info("Replay: flushCommits");
 				table.flushCommits();
 				counter = 0;
 			}
