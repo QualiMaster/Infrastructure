@@ -32,331 +32,378 @@ import eu.qualimaster.dataManagement.sinks.replay.ReplayStreamer;
 import eu.qualimaster.dataManagement.strategies.IStorageStrategyDescriptor;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.monitoring.events.ReplayChangedMonitoringEvent;
+import jline.internal.Log;
 
 /**
- * The base bolt class for replay sinks. Implementing classes shall register the individual tuple handlers 
- * in {@link #registerHandlers(Map, TopologyContext)}. Emitting the data via replay streamers is handled by this class.
+ * The base bolt class for replay sinks. Implementing classes shall register the
+ * individual tuple handlers in {@link #registerHandlers(Map, TopologyContext)}.
+ * Emitting the data via replay streamers is handled by this class.
  * 
  * @author Holger Eichelberger
  */
 public abstract class AbstractReplaySink extends BaseSignalBolt implements IReplayListener {
-    
-    private static final long serialVersionUID = 2348634834739948474L;
-    private transient Map<Class<?>, TupleHandler<?>> handlers = new HashMap<Class<?>, TupleHandler<?>>();
-    private transient ReplayRunnable replayRunnable;
 
-    /**
-     * Implements a tuple handler, i.e., a combination of {@link ReplayRecorder} and related 
-     * {@link ReplayStreamer streamers}.
-     * 
-     * @param <T> the tuple type
-     * @author Holger Eichelberger
-     */
-    private static class TupleHandler<T> {
-        
-        private Class<T> tupleClass;
-        private Tuple schema;
-        private Map<Integer, ReplayStreamer<T>> streamers = Collections.synchronizedMap(
-            new HashMap<Integer, ReplayStreamer<T>>());
-        private ReplayRecorder<T> recorder;
-        private String location;
-        private IStorageStrategyDescriptor strategy;
-        private AbstractReplaySink sink;
-        private ITupleEmitter<T> emitter;
-        
-        /**
-         * Creates a replay handler. Call {@link #setEmitter(ITupleEmitter)} afterwards!
-         * 
-         * @param tupleClass the tuple class handled by this handler.
-         * @param schema the database meta information (schema) describing <code>tupleClass</code>
-         * @param location the storage location
-         * @param strategy the storage strategy
-         * @param sink the parent sink
-         */
-        private TupleHandler(Class<T> tupleClass, Tuple schema, String location, IStorageStrategyDescriptor strategy, 
-            AbstractReplaySink sink) {
-            this.tupleClass = tupleClass;
-            this.schema = schema;
-            this.location = location;
-            this.strategy = strategy;
-            this.sink = sink;
-            this.recorder = new ReplayRecorder<T>(tupleClass, schema, location, strategy);
-        }
-        
-        /**
-         * Defines the tuple emitter.
-         * 
-         * @param emitter the emitter
-         */
-        private void setEmitter(ITupleEmitter<T> emitter) {
-            this.emitter = emitter;
-        }
-        
-        /**
-         * Stores the given <code>tuple</code> using the recorder.
-         * 
-         * @param tuple the tuple
-         */
-        private void store(Object tuple) {
-            if (null != recorder) {
-                try {
-                    recorder.store(tupleClass.cast(tuple));
-                } catch (IOException e) {
-                    getLogger().error(e.getMessage(), e);
-                }
-            }
-        }
+	private static final long serialVersionUID = 2348634834739948474L;
+	private transient Map<Class<?>, TupleHandler<?>> handlers = new HashMap<Class<?>, TupleHandler<?>>();
+	private transient ReplayRunnable replayRunnable;
 
-        /**
-         * Prepares this handler for shutdown of the pipeline.
-         * 
-         * @param signal the pipeline shutdown signal
-         */
-        private void prepareShutdown(ShutdownSignal signal) {
-            if (null != recorder) {
-                try {
-                    recorder.close();
-                } catch (IOException e) {
-                    getLogger().error(e.getMessage(), e);
-                }
-                recorder = null;
-            }
-            for (Map.Entry<Integer, ReplayStreamer<T>> entry : streamers.entrySet()) {
-                close(entry.getValue());
-                entry.setValue(null);
-            }
-            streamers.clear();
-        }
+	/**
+	 * Implements a tuple handler, i.e., a combination of {@link ReplayRecorder}
+	 * and related {@link ReplayStreamer streamers}.
+	 * 
+	 * @param <T>
+	 *            the tuple type
+	 * @author Holger Eichelberger
+	 */
+	private static class TupleHandler<T> {
 
-        /**
-         * Close the given streamer.
-         * 
-         * @param streamer the streamer (may be <b>null</b>)
-         */
-        private void close(ReplayStreamer<T> streamer) {
-            if (null != streamer) {
-                try {
-                    streamer.close();
-                } catch (IOException e) {
-                    getLogger().error(e.getMessage(), e);
-                }
-            }
-        }
+		private Class<T> tupleClass;
+		private Tuple schema;
+		private Map<Integer, ReplayStreamer<T>> streamers = Collections
+				.synchronizedMap(new HashMap<Integer, ReplayStreamer<T>>());
+		private ReplayRecorder<T> recorder;
+		private String location;
+		private IStorageStrategyDescriptor strategy;
+		private AbstractReplaySink sink;
+		private ITupleEmitter<T> emitter;
 
-        /**
-         * Returns the logger for this class.
-         * 
-         * @return the logger
-         */
-        private Logger getLogger() {
-            return LogManager.getLogger(getClass());
-        }
-        
-        /**
-         * Notifies this tuple handler about a received replay signal.
-         * 
-         * @param signal the signal
-         * @return the actual number of replay streamers
-         */
-        private int notifyReplay(ReplaySignal signal) {
-            int result;
-            synchronized (streamers) {
-                ReplayStreamer<T> streamer = streamers.get(signal.getTicket());
-                if (signal.getStartReplay()) {
-                    // create streamer for ticket, configure stream
-                    if (null == streamer) {
-                        streamer = new ReplayStreamer<T>(tupleClass, schema, location, strategy);
-                        streamers.put(signal.getTicket(), streamer);
-                    }
-                    streamer.setStart(signal.getStart());
-                    streamer.setEnd(signal.getEnd());
-                    streamer.setSpeed(signal.getSpeed());
-                    streamer.setQuery(signal.getQuery());
-                } else {
-                    streamers.remove(signal.getTicket());
-                    if (null != streamer) {
-                        close(streamer);
-                    }
-                }
-                EventManager.send(new ReplayChangedMonitoringEvent(sink.getPipeline(), sink.getName(), 
-                    signal.getTicket(), signal.getStartReplay(), signal.getCauseMessageId()));
-                result = streamers.size();
-            }
-            return result;
-        }
+		/**
+		 * Creates a replay handler. Call {@link #setEmitter(ITupleEmitter)}
+		 * afterwards!
+		 * 
+		 * @param tupleClass
+		 *            the tuple class handled by this handler.
+		 * @param schema
+		 *            the database meta information (schema) describing
+		 *            <code>tupleClass</code>
+		 * @param location
+		 *            the storage location
+		 * @param strategy
+		 *            the storage strategy
+		 * @param sink
+		 *            the parent sink
+		 */
+		private TupleHandler(Class<T> tupleClass, Tuple schema, String location, IStorageStrategyDescriptor strategy,
+				AbstractReplaySink sink) {
+			this.tupleClass = tupleClass;
+			this.schema = schema;
+			this.location = location;
+			this.strategy = strategy;
+			this.sink = sink;
+			this.recorder = new ReplayRecorder<T>(tupleClass, schema, location, strategy);
+		}
 
-        /**
-         * Streams the tuple for replay.
-         */
-        private void stream() {
-            synchronized (streamers) {
-                Iterator<Map.Entry<Integer, ReplayStreamer<T>>> iter = streamers.entrySet().iterator();
-                while (iter.hasNext()) {
-                    Map.Entry<Integer, ReplayStreamer<T>> entry = iter.next();
-                    ReplayStreamer<T> streamer = entry.getValue();
-                    if (!streamer.isEOD()) {
-                        iter.remove();
-                        close(streamer);
-                    } else {
-                        T tuple = entry.getValue().getData();
-                        if (null != tuple) {
-                            emitter.emit(entry.getKey(), tuple);
-                        }
-                    }
-                }
-            }
-        }
+		/**
+		 * Defines the tuple emitter.
+		 * 
+		 * @param emitter
+		 *            the emitter
+		 */
+		private void setEmitter(ITupleEmitter<T> emitter) {
+			this.emitter = emitter;
+		}
 
-    }
-    
-    /**
-     * Defines the interface for a replay tuple emitter.
-     * 
-     * @param <T> the tuple type
-     * @author Holger Eichelberger
-     */
-    protected interface ITupleEmitter<T> {
-        
-        /**
-         * Emits the given tuple.
-         * 
-         * @param ticket the ticket number
-         * @param tuple the tuple
-         */
-        public void emit(int ticket, T tuple);
-        
-    }
+		/**
+		 * Stores the given <code>tuple</code> using the recorder.
+		 * 
+		 * @param tuple
+		 *            the tuple
+		 */
+		private void store(Object tuple) {
+			if (null != recorder) {
+				try {
+					recorder.store(tupleClass.cast(tuple));
+				} catch (IOException e) {
+					getLogger().error(e.getMessage(), e);
+				}
+			} else {
+				Log.info("recorder is null");
+			}
+		}
 
-    /**
-     * Creates a base signal Bolt.
-     * 
-     * @param name the name of the bolt
-     * @param namespace the namespace of the bolt
-     * @param sendRegular whether this monitor shall care for sending regular events (<code>true</code>) or 
-     *     not (<code>false</code>, for thrift-based monitoring)
-     */
-    protected AbstractReplaySink(String name, String namespace, boolean sendRegular) {
-        super(name, namespace, sendRegular);
-    }
-    
-    /**
-     * Adds a new tuple handler. This method shall only be called during {@link #registerHandlers(Map,TopologyContext)}.
-     * 
-     * @param <T> the tuple type
-     * @param tupleClass the tuple class being handled
-     * @param schema the database meta information (schema) describing <code>tupleClass</code>
-     * @param location the storage location
-     * @param strategy the storage strategy
-     * @param emitter the tuple emitter
-     */
-    protected <T> void addTupleHandler(Class<T> tupleClass, Tuple schema, String location, 
-        IStorageStrategyDescriptor strategy, ITupleEmitter<T> emitter) {
-        TupleHandler<T> handler = new TupleHandler<T>(tupleClass, schema, location, strategy, this);
-        handler.setEmitter(emitter);
-        if (null == handlers) {
-            handlers = new HashMap<Class<?>, TupleHandler<?>>();
-        }
-        handlers.put(tupleClass, handler);
-    }
+		/**
+		 * Prepares this handler for shutdown of the pipeline.
+		 * 
+		 * @param signal
+		 *            the pipeline shutdown signal
+		 */
+		private void prepareShutdown(ShutdownSignal signal) {
+			if (null != recorder) {
+				try {
+					recorder.close();
+				} catch (IOException e) {
+					getLogger().error(e.getMessage(), e);
+				}
+				recorder = null;
+			}
+			for (Map.Entry<Integer, ReplayStreamer<T>> entry : streamers.entrySet()) {
+				close(entry.getValue());
+				entry.setValue(null);
+			}
+			streamers.clear();
+		}
 
-    /**
-     * Registers the tuple handlers for this replay sink. Call 
-     * {@link #addTupleHandler(Class, Tuple, String, IStorageStrategyDescriptor)}.
-     * 
-     * @param conf the topology configuration
-     * @param context the topology contect
-     */
-    @SuppressWarnings("rawtypes")
-    protected abstract void registerHandlers(Map conf, TopologyContext context);
-    
-    @SuppressWarnings("rawtypes")
-    @Override
-    public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
-        super.prepare(conf, context, collector);
-        registerHandlers(conf, context);
-    }
-    
-    @Override
-    public void notifyReplay(ReplaySignal signal) {
-        int streamerCount = 0;
-        if (null != handlers) {
-            for (TupleHandler<?> handler : handlers.values()) {
-                streamerCount += handler.notifyReplay(signal);
-            }
-        }
-        if (null == replayRunnable && streamerCount > 0) {
-            replayRunnable = new ReplayRunnable();
-            Thread t = new Thread(replayRunnable);
-            t.start();
-        } else if (null != replayRunnable && 0 == streamerCount) {
-            replayRunnable.end();
-            replayRunnable = null;
-        }
-    }
+		/**
+		 * Close the given streamer.
+		 * 
+		 * @param streamer
+		 *            the streamer (may be <b>null</b>)
+		 */
+		private void close(ReplayStreamer<T> streamer) {
+			if (null != streamer) {
+				try {
+					streamer.close();
+				} catch (IOException e) {
+					getLogger().error(e.getMessage(), e);
+				}
+			}
+		}
 
-    @Override
-    protected void prepareShutdown(ShutdownSignal signal) {
-        super.prepareShutdown(signal);
-        if (null != handlers) {
-            for (TupleHandler<?> handler : handlers.values()) {
-                handler.prepareShutdown(signal);
-            }
-        }
-    }
+		/**
+		 * Returns the logger for this class.
+		 * 
+		 * @return the logger
+		 */
+		private Logger getLogger() {
+			return LogManager.getLogger(getClass());
+		}
 
-    /**
-     * Emits a data tuple from a replay streamer.
-     * 
-     * @param ticket the streamer ticket number
-     * @param tuple the data tuple
-     */
-//    protected abstract void emit(int ticket, T tuple);
+		/**
+		 * Notifies this tuple handler about a received replay signal.
+		 * 
+		 * @param signal
+		 *            the signal
+		 * @return the actual number of replay streamers
+		 */
+		private int notifyReplay(ReplaySignal signal) {
+			int result;
+			synchronized (streamers) {
+				ReplayStreamer<T> streamer = streamers.get(signal.getTicket());
+				if (signal.getStartReplay()) {
+					// create streamer for ticket, configure stream
+					if (null == streamer) {
+						streamer = new ReplayStreamer<T>(tupleClass, schema, location, strategy);
+						streamers.put(signal.getTicket(), streamer);
+					}
+					streamer.setStart(signal.getStart());
+					streamer.setEnd(signal.getEnd());
+					streamer.setSpeed(signal.getSpeed());
+					streamer.setQuery(signal.getQuery());
+				} else {
+					streamers.remove(signal.getTicket());
+					if (null != streamer) {
+						close(streamer);
+					}
+				}
+				EventManager.send(new ReplayChangedMonitoringEvent(sink.getPipeline(), sink.getName(),
+						signal.getTicket(), signal.getStartReplay(), signal.getCauseMessageId()));
+				result = streamers.size();
+			}
+			return result;
+		}
 
-    /**
-     * Stores the given <code>tuple</code> using the recorder.
-     * 
-     * @param tuple the tuple
-     */
-    protected void store(Object tuple) {
-        if (null != tuple && null != handlers) {
-            TupleHandler<?> handler = handlers.get(tuple.getClass());
-            if (null != handler) {
-                handler.store(tuple);
-            }
-        }
-    }
+		/**
+		 * Streams the tuple for replay.
+		 */
+		private void stream() {
+			synchronized (streamers) {
+				Iterator<Map.Entry<Integer, ReplayStreamer<T>>> iter = streamers.entrySet().iterator();
+				while (iter.hasNext()) {
+					Map.Entry<Integer, ReplayStreamer<T>> entry = iter.next();
+					ReplayStreamer<T> streamer = entry.getValue();
+					if (!streamer.isEOD()) {
+						iter.remove();
+						close(streamer);
+					} else {
+						T tuple = entry.getValue().getData();
+						if (null != tuple) {
+							emitter.emit(entry.getKey(), tuple);
+						}
+					}
+				}
+			}
+		}
 
-    /**
-     * Implements a runnable emitting data from the streamers.
-     * 
-     * @author Holger Eichelberger
-     */
-    private class ReplayRunnable implements Runnable {
+	}
 
-        private boolean running = true;
-        
-        @Override
-        public void run() {
-            while (running) {
-                if (null != handlers) {
-                    for (TupleHandler<?> handler : handlers.values()) {
-                        handler.stream();
-                    }
-                }
-                try {
-                    Thread.sleep(1);
-                } catch (InterruptedException e) {
-                }
-            }
-        }
+	/**
+	 * Defines the interface for a replay tuple emitter.
+	 * 
+	 * @param <T>
+	 *            the tuple type
+	 * @author Holger Eichelberger
+	 */
+	protected interface ITupleEmitter<T> {
 
-        /**
-         * Ends this runnable.
-         */
-        private void end() {
-            running = false;
-        }
-        
-    }
-    
+		/**
+		 * Emits the given tuple.
+		 * 
+		 * @param ticket
+		 *            the ticket number
+		 * @param tuple
+		 *            the tuple
+		 */
+		public void emit(int ticket, T tuple);
+
+	}
+
+	/**
+	 * Creates a base signal Bolt.
+	 * 
+	 * @param name
+	 *            the name of the bolt
+	 * @param namespace
+	 *            the namespace of the bolt
+	 * @param sendRegular
+	 *            whether this monitor shall care for sending regular events
+	 *            (<code>true</code>) or not (<code>false</code>, for
+	 *            thrift-based monitoring)
+	 */
+	protected AbstractReplaySink(String name, String namespace, boolean sendRegular) {
+		super(name, namespace, sendRegular);
+	}
+
+	/**
+	 * Adds a new tuple handler. This method shall only be called during
+	 * {@link #registerHandlers(Map,TopologyContext)}.
+	 * 
+	 * @param <T>
+	 *            the tuple type
+	 * @param tupleClass
+	 *            the tuple class being handled
+	 * @param schema
+	 *            the database meta information (schema) describing
+	 *            <code>tupleClass</code>
+	 * @param location
+	 *            the storage location
+	 * @param strategy
+	 *            the storage strategy
+	 * @param emitter
+	 *            the tuple emitter
+	 */
+	protected <T> void addTupleHandler(Class<T> tupleClass, Tuple schema, String location,
+			IStorageStrategyDescriptor strategy, ITupleEmitter<T> emitter) {
+		TupleHandler<T> handler = new TupleHandler<T>(tupleClass, schema, location, strategy, this);
+		handler.setEmitter(emitter);
+		if (null == handlers) {
+			handlers = new HashMap<Class<?>, TupleHandler<?>>();
+		}
+		handlers.put(tupleClass, handler);
+	}
+
+	/**
+	 * Registers the tuple handlers for this replay sink. Call
+	 * {@link #addTupleHandler(Class, Tuple, String, IStorageStrategyDescriptor)}.
+	 * 
+	 * @param conf
+	 *            the topology configuration
+	 * @param context
+	 *            the topology contect
+	 */
+	@SuppressWarnings("rawtypes")
+	protected abstract void registerHandlers(Map conf, TopologyContext context);
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
+		super.prepare(conf, context, collector);
+		registerHandlers(conf, context);
+	}
+
+	@Override
+	public void notifyReplay(ReplaySignal signal) {
+		int streamerCount = 0;
+		if (null != handlers) {
+			for (TupleHandler<?> handler : handlers.values()) {
+				streamerCount += handler.notifyReplay(signal);
+			}
+		}
+		if (null == replayRunnable && streamerCount > 0) {
+			replayRunnable = new ReplayRunnable();
+			Thread t = new Thread(replayRunnable);
+			t.start();
+		} else if (null != replayRunnable && 0 == streamerCount) {
+			replayRunnable.end();
+			replayRunnable = null;
+		}
+	}
+
+	@Override
+	protected void prepareShutdown(ShutdownSignal signal) {
+		super.prepareShutdown(signal);
+		if (null != handlers) {
+			for (TupleHandler<?> handler : handlers.values()) {
+				handler.prepareShutdown(signal);
+			}
+		}
+	}
+
+	/**
+	 * Emits a data tuple from a replay streamer.
+	 * 
+	 * @param ticket
+	 *            the streamer ticket number
+	 * @param tuple
+	 *            the data tuple
+	 */
+	// protected abstract void emit(int ticket, T tuple);
+
+	/**
+	 * Stores the given <code>tuple</code> using the recorder.
+	 * 
+	 * @param tuple
+	 *            the tuple
+	 */
+	protected void store(Object tuple) {
+		if (null != tuple && null != handlers) {
+			TupleHandler<?> handler = handlers.get(tuple.getClass());
+			if (null != handler) {
+				handler.store(tuple);
+			} else {
+				Log.info("handlers does not contain tuple.class");
+			}
+		} else {
+			if (null == tuple) {
+				Log.info("tuple is null");
+			}
+
+			if (null == handlers) {
+				Log.info("handlers is null");
+			}
+		}
+	}
+
+	/**
+	 * Implements a runnable emitting data from the streamers.
+	 * 
+	 * @author Holger Eichelberger
+	 */
+	private class ReplayRunnable implements Runnable {
+
+		private boolean running = true;
+
+		@Override
+		public void run() {
+			while (running) {
+				if (null != handlers) {
+					for (TupleHandler<?> handler : handlers.values()) {
+						handler.stream();
+					}
+				}
+				try {
+					Thread.sleep(1);
+				} catch (InterruptedException e) {
+				}
+			}
+		}
+
+		/**
+		 * Ends this runnable.
+		 */
+		private void end() {
+			running = false;
+		}
+
+	}
+
 }
