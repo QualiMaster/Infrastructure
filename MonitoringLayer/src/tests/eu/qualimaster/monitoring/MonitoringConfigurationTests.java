@@ -2,6 +2,7 @@ package tests.eu.qualimaster.monitoring;
 
 import java.util.Properties;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import eu.qualimaster.monitoring.MonitoringConfiguration;
@@ -13,6 +14,14 @@ import tests.eu.qualimaster.coordination.CoordinationConfigurationTests;
  * @author Holger Eichelberger
  */
 public class MonitoringConfigurationTests extends CoordinationConfigurationTests {
+    
+    /**
+     * Initialize tests.
+     */
+    @BeforeClass
+    public static void start() {
+        MonitoringConfiguration.getProperties(); // force creation of options
+    }
     
     @Override
     protected void testDirect() {

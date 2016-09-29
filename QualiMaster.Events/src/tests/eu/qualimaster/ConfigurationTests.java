@@ -103,7 +103,7 @@ public class ConfigurationTests {
         // expected values see test.properties
         File file = new File(TESTDATA, "test.properties");
         Assert.assertTrue("Configuration test file " + file.getAbsolutePath() + "does not exist", file.exists());
-        System.out.println("Reading " + file);
+        System.out.println("Reading " + file.getAbsolutePath());
         Configuration.configure(file);
         System.out.println("Direct test");
         testDirect();

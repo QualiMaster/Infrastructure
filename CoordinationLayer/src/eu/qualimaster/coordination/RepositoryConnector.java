@@ -446,9 +446,10 @@ public class RepositoryConnector {
                     File settingsFolderF = new File(modelPathF, "settings");
                     if (settingsFolderF.exists()) {
                         File settingsTargetF = new File(settingsTarget);
-                        HdfsUtils.deleteFolder(settingsTargetF, true);
-                        HdfsUtils.createFolder(settingsTargetF);
-                        String tgt = HdfsUtils.copy(settingsFolderF, settingsTargetF, true);
+                        HdfsUtils.createFolder(settingsTargetF); // initial, be sure
+                        HdfsUtils.clearFolder(settingsTargetF);
+                        //HdfsUtils.deleteFolder(settingsTargetF, true);
+                        String tgt = HdfsUtils.copy(settingsFolderF, settingsTargetF, true, false);
                         getLogger().info("unpacked settings to (" + tgt + ")");
                     } else {
                         getLogger().info("no settings folder in model (" + settingsFolderF.getAbsolutePath() + ")");

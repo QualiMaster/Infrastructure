@@ -37,7 +37,28 @@ public class DataManagementConfiguration extends Configuration {
      * The default value for {@link #URL_HDFS}.
      */
     public static final String DEFAULT_URL_HDFS = EMPTY_VALUE;
+    
+    /**
+     * Denotes the default HDFS user (String).
+     */
+    public static final String URL_HDFS_USER = "hdfs.user";
 
+    /**
+     * The default value for {@link #URL_HDFS_USER}.
+     */
+    public static final String DEFAULT_URL_HDFS_USER = EMPTY_VALUE;
+
+    /**
+     * Denotes the default HDFS user (String, user=group comma separated for multiple groups, semicolon 
+     * separated for user/group combinations).
+     */
+    public static final String URL_HDFS_GROUPMAPPING = "hdfs.groupMapping";
+
+    /**
+     * The default value for {@link #URL_HDFS_GROUPMAPPING}.
+     */
+    public static final String DEFAULT_URL_HDFS_GROUPMAPPING = EMPTY_VALUE;
+    
     /**
      * Denotes the default distributed file system (DFS) path (String).
      * Please note that an explicit HDFS path {@link #URL_HDFS} takes precendence
@@ -82,6 +103,9 @@ public class DataManagementConfiguration extends Configuration {
 
 
     private static ConfigurationOption<String> hdfsUrl = createStringOption(URL_HDFS, DEFAULT_URL_HDFS);
+    private static ConfigurationOption<String> hdfsUser = createStringOption(URL_HDFS_USER, DEFAULT_URL_HDFS_USER);
+    private static ConfigurationOption<String> hdfsGroupMapping = createStringOption(URL_HDFS_GROUPMAPPING, 
+        DEFAULT_URL_HDFS_GROUPMAPPING);
     private static ConfigurationOption<String> dfsPath = createStringOption(PATH_DFS, DEFAULT_PATH_DFS);
     private static ConfigurationOption<String> accountsPath = createStringOption(PATH_ACCOUNTS, DEFAULT_PATH_ACCOUNTS);
     private static ConfigurationOption<Boolean> autoConnect = createBooleanOption(
@@ -222,6 +246,24 @@ public class DataManagementConfiguration extends Configuration {
      */
     public static boolean getPipelineStartSourceAutoconnect() {
         return autoConnect.getValue();
+    }
+
+    /**
+     * Returns the HDFS user.
+     * 
+     * @return the HDFS use (may be empty if none is defined, may relate to {@link #getHdfsGroupMapping()})
+     */
+    public static String getHdfsUser() {
+        return hdfsUser.getValue(); //"storm"
+    }
+
+    /**
+     * Returns the HDFS group mapping.
+     * 
+     * @return the HDFS group mapping (may be empty if none is defined)
+     */
+    public static String getHdfsGroupMapping() {
+        return hdfsGroupMapping.getValue();       //"storm=hdfs" 
     }
 
 }
