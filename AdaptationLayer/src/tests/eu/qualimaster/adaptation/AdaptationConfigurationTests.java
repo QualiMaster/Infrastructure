@@ -3,6 +3,7 @@ package tests.eu.qualimaster.adaptation;
 import java.util.Properties;
 
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import eu.qualimaster.adaptation.AdaptationConfiguration;
@@ -14,6 +15,14 @@ import tests.eu.qualimaster.monitoring.MonitoringConfigurationTests;
  * @author Holger Eichelberger
  */
 public class AdaptationConfigurationTests extends MonitoringConfigurationTests {
+    
+    /**
+     * Initialize tests.
+     */
+    @BeforeClass
+    public static void start() {
+        AdaptationConfiguration.getProperties(); // force creation of options
+    }
     
     @Override
     protected void testDirect() {

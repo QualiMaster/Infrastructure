@@ -21,7 +21,10 @@ import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
+import org.apache.hadoop.fs.permission.FsPermission;
 
 import eu.qualimaster.dataManagement.DataManagementConfiguration;
 
@@ -32,6 +35,34 @@ import eu.qualimaster.dataManagement.DataManagementConfiguration;
  */
 public class HdfsUtils {
 
+    /**
+     * Returns the default HDFS URL.
+     * 
+     * @return the default HDFS URL (empty if not configured)
+     */
+    private static String getHdfsUrl() {
+        return DataManagementConfiguration.getHdfsUrl();
+    }
+    
+    /**
+     * Returns the default DFS path.
+     * 
+     * @return the default DFS path (empty if not configured)
+     */
+    private static String getDfsPath() {
+        return DataManagementConfiguration.getDfsPath();
+    }
+    
+    /**
+     * Returns whether <code>value</code> is empty (@link {@link #EMPTY_VALUE}).
+     * 
+     * @param value the value to be tested
+     * @return <code>true</code> if empty, <code>false</code> else
+     */
+    public static boolean isEmpty(String value) {
+        return DataManagementConfiguration.isEmpty(value);
+    }
+    
     /**
      * Returns the default file system according to {@link DataManagementConfiguration#getHdfsUrl()}.
      * 
@@ -52,12 +83,20 @@ public class HdfsUtils {
     public static FileSystem getFilesystem(String defaultFs) throws IOException {
         String fsUrl = defaultFs;
         if (null == fsUrl || 0 == fsUrl.length()) {
-            fsUrl = DataManagementConfiguration.getHdfsUrl();
+            fsUrl = getHdfsUrl();
         }
         Configuration c = new Configuration();
         c.set("fs.defaultFS", fsUrl);
         c.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
         c.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+        String user = DataManagementConfiguration.getHdfsUser();
+        if (!isEmpty(user)) {
+            c.set("hadoop.security.service.user.name.key", user);
+        }
+        String groupMapping = DataManagementConfiguration.getHdfsGroupMapping();
+        if (!isEmpty(groupMapping)) {
+            c.set("hadoop.security.group.mapping", groupMapping);
+        }
         return FileSystem.get(c);
     }
 
@@ -88,9 +127,9 @@ public class HdfsUtils {
      */
     public static String storeToHdfs(File dataFile) throws IOException {
         String dataPath = null;
-        if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getHdfsUrl())) {
-            String basePath = DataManagementConfiguration.getDfsPath() + "/";
-            FileSystem fs = HdfsUtils.getFilesystem();
+        if (!isEmpty(getHdfsUrl())) {
+            String basePath = getDfsPath() + "/";
+            FileSystem fs = getFilesystem();
             Path target = new Path(basePath, dataFile.getName()); 
             fs.copyFromLocalFile(new Path(dataFile.getAbsolutePath()), target);
             dataPath = target.toString();
@@ -106,8 +145,8 @@ public class HdfsUtils {
      */
     public static String storeToDfs(File dataFile) throws IOException {
         String dataPath = null;
-        if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getDfsPath())) {
-            File targetPath = new File(DataManagementConfiguration.getDfsPath(), dataFile.getName());
+        if (!isEmpty(getDfsPath())) {
+            File targetPath = new File(getDfsPath(), dataFile.getName());
             FileUtils.copyFile(dataFile, targetPath);
             dataPath = targetPath.getAbsolutePath().toString();
         }
@@ -121,14 +160,14 @@ public class HdfsUtils {
      * @throws IOException in case that the creation fails
      */
     public static void deleteFolder(File folder, boolean recursive) throws IOException {
-        if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getHdfsUrl())) {
-            FileSystem fs = HdfsUtils.getFilesystem();
-            Path target = new Path(DataManagementConfiguration.getDfsPath() + "/" + folder);
+        if (!isEmpty(getHdfsUrl())) {
+            FileSystem fs = getFilesystem();
+            Path target = new Path(getDfsPath() + "/" + folder);
             if (fs.exists(target)) {
                 fs.delete(target, recursive);
             }
-        } else if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getDfsPath())) {
-            File targetPath = new File(DataManagementConfiguration.getDfsPath(), folder.getName());
+        } else if (!isEmpty(getDfsPath())) {
+            File targetPath = new File(getDfsPath(), folder.getName());
             if (recursive) {
                 FileUtils.deleteDirectory(targetPath);
             } else {
@@ -146,17 +185,52 @@ public class HdfsUtils {
      * @throws IOException in case that the creation fails
      */
     public static void createFolder(File folder) throws IOException {
-        if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getHdfsUrl())) {
-            FileSystem fs = HdfsUtils.getFilesystem();
-            Path target = new Path(DataManagementConfiguration.getDfsPath() + "/" + folder);
+        if (!isEmpty(getHdfsUrl())) {
+            FileSystem fs = getFilesystem();
+            Path target = new Path(getDfsPath() + "/" + folder);
             if (!fs.exists(target)) {
-                fs.create(target);
+                fs.mkdirs(target);
+                fs.setPermission(target, FsPermission.valueOf("drwxrwxrwx"));
             }
-        } else if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getDfsPath())) {
-            File targetPath = new File(DataManagementConfiguration.getDfsPath(), folder.getName());
+        } else if (!isEmpty(getDfsPath())) {
+            File targetPath = new File(getDfsPath(), folder.getName());
             targetPath.mkdirs();
         } else {
-            throw new IOException("Cannot crete folder. Check HDFS/DFS configuration.");            
+            throw new IOException("Cannot create folder. Check HDFS/DFS configuration.");            
+        }
+    }
+    
+    /**
+     * Deletes all files in <code>folder</code>.
+     * 
+     * @param folder the folder to delete the files within
+     * @throws IOException in case that deleting fails
+     */
+    public static void clearFolder(File folder) throws IOException {
+        if (!isEmpty(getHdfsUrl())) {
+            FileSystem fs = getFilesystem();
+            Path target = new Path(getDfsPath() + "/" + folder);
+            if (fs.exists(target)) {
+                RemoteIterator<LocatedFileStatus> iter = fs.listFiles(target, false);
+                while (iter.hasNext()) {
+                    LocatedFileStatus file = iter.next();
+                    if (!file.isDirectory()) {
+                        fs.delete(file.getPath(), false);
+                    }
+                }
+            }
+        } else if (!isEmpty(getDfsPath())) {
+            File targetPath = new File(getDfsPath(), folder.getName());
+            File[] files = targetPath.listFiles();
+            if (null != files) {
+                for (File f : files) {
+                    if (!f.isDirectory()) {
+                        f.delete();
+                    }
+                }
+            }
+        } else {
+            throw new IOException("Cannot cleanup folder. Check HDFS/DFS configuration.");            
         }
     }
     
@@ -166,19 +240,20 @@ public class HdfsUtils {
      * @param source the source file
      * @param target the target file
      * @param targetBase shell target be considered as the base path in HDFS or shall the Dfs path be prefixed
+     * @param includeTopLevel include the top folder to be copied, i.e., created
      * @return the target path used 
      * @throws IOException in case that copying fails
      */
-    public static String copy(File source, File target, boolean absolute) throws IOException {
+    public static String copy(File source, File target, boolean absolute, boolean includeTopLevel) throws IOException {
         String result;
-        if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getHdfsUrl())) {
+        if (!isEmpty(getHdfsUrl())) {
             String basePath = absolute ? target + "/" : 
-                DataManagementConfiguration.getDfsPath() + "/" + target + "/";
-            FileSystem fs = HdfsUtils.getFilesystem();
-            copy(fs, basePath, source);
+                getDfsPath() + "/" + target + "/";
+            FileSystem fs = getFilesystem();
+            copy(fs, basePath, source, includeTopLevel);
             result = basePath;
-        } else if (!DataManagementConfiguration.isEmpty(DataManagementConfiguration.getDfsPath())) {
-            File tgt = new File(DataManagementConfiguration.getDfsPath(), target.toString());
+        } else if (!isEmpty(getDfsPath())) {
+            File tgt = new File(getDfsPath(), target.toString());
             FileUtils.copyDirectory(source, tgt);
             result = tgt.getAbsolutePath();
         } else {
@@ -193,16 +268,24 @@ public class HdfsUtils {
      * @param fs the file system
      * @param basePath the actual base path
      * @param source the source file/directory
+     * @param includeTopLevel include the top folder to be copied, i.e., created
      * @throws IOException in case that copying fails
      */
-    private static void copy(FileSystem fs, String basePath, File source) throws IOException {
+    private static void copy(FileSystem fs, String basePath, File source, boolean includeTopLevel) throws IOException {
         if (source.isDirectory()) {
-            String bp = basePath + "/" + source.getName();
-            fs.create(new Path(bp));
+            String bp = basePath;
+            if (includeTopLevel) {
+                bp += "/" + source.getName();
+            }
+            Path bpp = new Path(bp);
+            if (!fs.exists(bpp)) {
+                fs.mkdirs(bpp);
+                fs.setPermission(bpp, FsPermission.valueOf("drwxrwxrwx"));
+            }
             File[] files = source.listFiles();
             if (null != files) {
                 for (File f : files) {
-                    copy(fs, bp, f);
+                    copy(fs, bp, f, true);
                 }
             }
         } else {
