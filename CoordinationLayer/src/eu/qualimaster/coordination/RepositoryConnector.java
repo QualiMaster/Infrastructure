@@ -447,7 +447,7 @@ public class RepositoryConnector {
                     if (settingsFolderF.exists()) {
                         unpackSpecificSettingsArtifact(settingsFolderF);
                         File settingsTargetF = new File(settingsTarget);
-                        HdfsUtils.createFolder(settingsTargetF); // initial, be sure
+                        //HdfsUtils.createFolder(settingsTargetF); // initial, be sure
                         HdfsUtils.clearFolder(settingsTargetF);
                         //HdfsUtils.deleteFolder(settingsTargetF, true);
                         String tgt = HdfsUtils.copy(settingsFolderF, settingsTargetF, true, false);
