@@ -424,4 +424,12 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
 
     }
 
+    @Override
+    public void onSignal(byte[] data) {
+        boolean done = ReplaySignal.notify(data, getPipeline(), getName(), this);
+        if (!done) {
+            super.onSignal(data);
+        }
+    }
+
 }
