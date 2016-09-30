@@ -48,7 +48,7 @@ public class ReplayDataOutput implements IDataOutput, Closeable {
 
 	public ReplayDataOutput(Tuple schema, IStorageSupport storer) {
 
-		log.info("Replay: constructing ReplayDataOutput");
+		//log.info("Replay: constructing ReplayDataOutput");
 		// Current version hooks with HBaseBatchStorageSupport
 		if (!(storer instanceof HBaseBatchStorageSupport)) {
 			throw new RuntimeException("Invalid replay store: "

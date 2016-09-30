@@ -67,7 +67,7 @@ public class ReplayRecorder<T> {
 
 	public ReplayRecorder(Class<T> cls, Tuple schema, String location, IStorageStrategyDescriptor d) {
 		this.cls = cls;
-		log.info("Replay: constructing ReplayRecorder");
+		//log.info("Replay: constructing ReplayRecorder");
 
 		// The storage strategy is for in-memory, as
 		// we never remove data in the permanent store
@@ -97,9 +97,9 @@ public class ReplayRecorder<T> {
 	 * replay store
 	 */
 	public void store(T data) throws IOException {
-		log.info("storing data = " + data.toString());
+		//log.info("storing data = " + data.toString());
 		if(serializer == null){
-			log.info("serializer is null");
+			//log.info("serializer is null");
 			serializer = getSerializer(cls);
 			//return;
 		}
@@ -114,8 +114,8 @@ public class ReplayRecorder<T> {
      * @return the serializer or <b>null</b> of none was found
      */
     public static  <T> ISerializer<T> getSerializer(Class<T> cls) {
-    	LogManager.getLogger(SerializerRegistry.class).info(
-                "get serializer instance: cls.getName() = "+ cls.getSimpleName());
+    	//LogManager.getLogger(SerializerRegistry.class).info(
+        //        "get serializer instance: cls.getName() = "+ cls.getSimpleName());
         return SerializerRegistry.getSerializer(cls.getSimpleName(), cls);    	
     }
 	
