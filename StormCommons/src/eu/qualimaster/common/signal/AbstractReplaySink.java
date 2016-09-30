@@ -289,6 +289,7 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
 		if (null == handlers) {
 			handlers = new HashMap<Class<?>, TupleHandler<?>>();
 		}
+		LogManager.getLogger(getClass()).info("registering class " + tupleClass.toString() + " to handlers");
 		handlers.put(tupleClass, handler);
 	}
 
@@ -313,6 +314,9 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
 
 	@Override
 	public void notifyReplay(ReplaySignal signal) {
+		String signalStr = String.format("ticket = %d, startDate = %s endDate = %s speed = %f query = %s",
+				signal.getTicket(), signal.getStart().toString(), signal.getEnd().toString(), signal.getQuery());
+		LogManager.getLogger(getClass()).info("notifying with:" + signalStr);
 		int streamerCount = 0;
 		if (null != handlers) {
 			for (TupleHandler<?> handler : handlers.values()) {
