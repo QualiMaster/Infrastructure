@@ -1,6 +1,7 @@
 package eu.qualimaster.dataManagement.storage.hbase;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -143,12 +144,16 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 			throw new RuntimeException(msg);
 		}
 		final HBaseRow row = (HBaseRow) object;
+		
+		byte[] keyBytes = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).putLong(System.currentTimeMillis()).array();
+		row.setKey(keyBytes);
+		
 		Put put = row.createPut();
 		try {
 			table.put(put);
 			counter++;
 			if (counter % batchSize == 0) {
-				log.info("Replay: flushCommits");
+				//log.info("Replay: flushCommits");
 				table.flushCommits();
 				counter = 0;
 			}

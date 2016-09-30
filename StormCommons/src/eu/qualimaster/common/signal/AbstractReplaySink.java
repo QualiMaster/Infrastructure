@@ -113,7 +113,7 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
                 try {
                     recorder.store(tupleClass.cast(tuple));
                 } catch (IOException e) {
-                    getLogger().info("recorder.store error: " + e.getMessage());
+                    //getLogger().info("recorder.store error: " + e.getMessage());
                     getLogger().error(e.getMessage(), e);
                 }
             } else {
@@ -288,7 +288,7 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
         if (null == handlers) {
             handlers = new HashMap<Class<?>, TupleHandler<?>>();
         }
-        LogManager.getLogger(getClass()).info("registering class " + tupleClass.toString() + " to handlers");
+        //LogManager.getLogger(getClass()).info("registering class " + tupleClass.toString() + " to handlers");
         handlers.put(tupleClass, handler);
     }
 
@@ -371,8 +371,8 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
                 handler.store(tuple);
             } else { // TODO remove - debug code
                 LogManager.getLogger(getClass()).info("handlers does not contain tuple.class");
-                LogManager.getLogger(getClass()).info("tuple.getClass() = " + tuple.getClass().toString());
-                LogManager.getLogger(getClass()).info("handlers.size = " + handlers.size());
+                //LogManager.getLogger(getClass()).info("tuple.getClass() = " + tuple.getClass().toString());
+                //LogManager.getLogger(getClass()).info("handlers.size = " + handlers.size());
             }
         } else { // TODO remove - debug code
             if (null == tuple) {
