@@ -362,17 +362,10 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
      */
     protected void store(Object tuple) {
         if (null != tuple && null != handlers) {
-            TupleHandler<?> handler = null;
-            Class<?> origCls = tuple.getClass();
-            Class<?> cls = origCls;
-            while (null == handler && null != cls) { // super class of object == null
-                handler = handlers.get(cls);
-                if (null == handler) {
-                    cls = cls.getSuperclass();
-                }
-            }
-            if (null != handler && cls != origCls) { // speed up lookup
-                handlers.put(origCls, handler);
+            Class<?> cls = tuple.getClass();
+            TupleHandler<?> handler = checkClass(cls);
+            if (null != handler && null == handlers.get(cls)) { // speed up lookup
+                handlers.put(cls, handler);
             }
             if (null != handler) {
                 handler.store(tuple);
@@ -389,6 +382,26 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
                 LogManager.getLogger(getClass()).info("handlers is null");
             }
         }
+    }
+    
+    /**
+     * Checks <code>cls</code> for the first registered handler including super classes and super interfaces.
+     * 
+     * @param cls the class to check
+     * @return the handler or <b>null</b> if none is registered
+     */
+    private TupleHandler<?> checkClass(Class<?> cls) {
+        TupleHandler<?> handler = handlers.get(cls);
+        if (null == handler && !cls.isInterface() && null != cls.getSuperclass()) {
+            handler = checkClass(cls.getSuperclass());
+        }
+        if (null == handler) {
+            Class<?>[] ifs = cls.getInterfaces();
+            for (int i = 0; null == handler && i < ifs.length; i++) {
+                handler = checkClass(ifs[i]);
+            }
+        }
+        return handler;
     }
 
     /**
