@@ -362,8 +362,8 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
 				handler.store(tuple);
 			} else {
 				LogManager.getLogger(getClass()).info("handlers does not contain tuple.class");
-				LogManager.getLogger("tuple.getClass() = " + tuple.getClass().toString());
-				LogManager.getLogger(getClass()).info("handlers.size = " + handlers.size());				
+				LogManager.getLogger(getClass()).info("tuple.getClass() = " + tuple.getClass().toString());
+				LogManager.getLogger(getClass()).info("handlers.size = " + handlers.size());
 			}
 		} else {
 			if (null == tuple) {
