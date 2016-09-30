@@ -131,10 +131,25 @@ public class HdfsUtils {
             String basePath = getDfsPath() + "/";
             FileSystem fs = getFilesystem();
             Path target = new Path(basePath, dataFile.getName()); 
+            createPath(fs, target);
             fs.copyFromLocalFile(new Path(dataFile.getAbsolutePath()), target);
             dataPath = target.toString();
         }
         return dataPath;
+    }
+    
+    /**
+     * Creates a path if it does not exist.
+     * 
+     * @param fs the file system
+     * @param target the target path
+     * @throws IOException in case that I/O fails
+     */
+    private static void createPath(FileSystem fs, Path target) throws IOException {
+        if (!fs.exists(target)) {
+            fs.mkdirs(target);
+            fs.setPermission(target, FsPermission.valueOf("drwxrwxrwx"));
+        }
     }
     
     /**
@@ -188,10 +203,7 @@ public class HdfsUtils {
         if (!isEmpty(getHdfsUrl())) {
             FileSystem fs = getFilesystem();
             Path target = new Path(getDfsPath() + "/" + folder);
-            if (!fs.exists(target)) {
-                fs.mkdirs(target);
-                fs.setPermission(target, FsPermission.valueOf("drwxrwxrwx"));
-            }
+            createPath(fs, target);
         } else if (!isEmpty(getDfsPath())) {
             File targetPath = new File(getDfsPath(), folder.getName());
             targetPath.mkdirs();
@@ -277,11 +289,7 @@ public class HdfsUtils {
             if (includeTopLevel) {
                 bp += "/" + source.getName();
             }
-            Path bpp = new Path(bp);
-            if (!fs.exists(bpp)) {
-                fs.mkdirs(bpp);
-                fs.setPermission(bpp, FsPermission.valueOf("drwxrwxrwx"));
-            }
+            createPath(fs, new Path(bp));
             File[] files = source.listFiles();
             if (null != files) {
                 for (File f : files) {

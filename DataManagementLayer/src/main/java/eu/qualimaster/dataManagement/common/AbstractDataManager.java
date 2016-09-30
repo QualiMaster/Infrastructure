@@ -235,10 +235,12 @@ public abstract class AbstractDataManager <E extends IDataElement> {
         if (null != unit && null != elementId) {
             synchronized (units) {
                 List<IReference<E>> elements = units.get(unit);
-                for (int e = 0, n = elements.size(); null == result && e < n; e++) {
-                    IReference<E> element = elements.get(e);
-                    if (elementId.equals(element.getId())) {
-                        result = element;
+                if (null != elements) {
+                    for (int e = 0, n = elements.size(); null == result && e < n; e++) {
+                        IReference<E> element = elements.get(e);
+                        if (elementId.equals(element.getId())) {
+                            result = element;
+                        }
                     }
                 }
             }

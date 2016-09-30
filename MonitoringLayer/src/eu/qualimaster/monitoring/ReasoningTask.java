@@ -594,7 +594,7 @@ public class ReasoningTask extends TimerTask {
                 IObservable observable = deviation.getObservable();
                 if (AnalysisObservables.IS_VALID == deviation.getObservable()) {
                     deviation.setObservation(state, 1.0, null); // reset to valid
-                } else {
+                } else if (null != deviation) {
                     violating.add(new ViolatingClause(observable, deviation.getVariable(), deviation.getOperation(), 
                          ViolatingClause.CLEARED, ViolatingClause.CLEARED));
                 }

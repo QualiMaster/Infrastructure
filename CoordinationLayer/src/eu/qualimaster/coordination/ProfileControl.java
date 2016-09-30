@@ -201,17 +201,18 @@ public class ProfileControl implements IProfile {
         processing = pResult.getProcessingEntries();
         parameters = pResult.getParameters();
         for (File dataFile : dataFiles) {
-            String dataPath = HdfsUtils.storeToHdfs(dataFile);
+            String dataPath;
+            /*String dataPath = HdfsUtils.storeToHdfs(dataFile);
             if (null != dataPath) {
                 useHdfs = true;    
+            } else {*/
+            dataPath = HdfsUtils.storeToDfs(dataFile);
+            if (null == dataPath) {
+                throw new IOException("Cannot store data files. Check HDFS/DFS configuration.");
             } else {
-                dataPath = HdfsUtils.storeToDfs(dataFile);
-                if (null == dataPath) {
-                    throw new IOException("Cannot store data files. Check HDFS/DFS configuration.");
-                } else {
-                    useHdfs = false;
-                }
+                useHdfs = false;
             }
+            //}
             dataPaths.add(dataPath);
         }
         calcVariants();
