@@ -61,6 +61,8 @@ public class ReplayRecorder<T> {
 	private ISerializer<T> serializer;
 
 	private static final Logger log = LoggerFactory.getLogger(ReplayRecorder.class);
+	
+	private Class<T> cls;
 
 	public ReplayRecorder(Class<T> cls, Tuple schema, String location, IStorageStrategyDescriptor d) {
 		log.info("Replay: constructing ReplayRecorder");
@@ -85,6 +87,7 @@ public class ReplayRecorder<T> {
 		IStorageSupport storage = table.getStorageSupport();
 		output = new ReplayDataOutput(schema, storage);
 		this.serializer = SerializerRegistry.getSerializer(cls);
+		this.cls = cls;
 	}
 
 	/**
@@ -93,6 +96,11 @@ public class ReplayRecorder<T> {
 	 */
 	public void store(T data) throws IOException {
 		log.info("storing data = " + data.toString());
+		if(serializer == null){
+			log.info("serializer is null");
+			//serializer = SerializerRegistry.getSerializer(cls);
+			return;
+		}
 		serializer.serializeTo(data, output);
 	}
 
