@@ -39,7 +39,9 @@ public class SerializerRegistry {
      * @return the serializer or <b>null</b> of none was found
      */
     public static synchronized <T> ISerializer<T> getSerializer(Class<T> cls) {
-        return getSerializer(cls.getName(), cls);
+    	LogManager.getLogger(SerializerRegistry.class).info(
+                "get serializer instance: cls.getName() = "+ cls.getSimpleName());
+        return getSerializer(cls.getName(), cls);    	
     }
     
     /**
@@ -55,8 +57,16 @@ public class SerializerRegistry {
         ISerializer<T> result;
         if (null == clsName) {
             result = null;
-        } else {
+            LogManager.getLogger(SerializerRegistry.class).info(
+                    "clsName is null");
+        } else {        	
             result = (ISerializer<T>) SERIALIZERS.get(clsName);
+            if(null == result){
+            	 LogManager.getLogger(SerializerRegistry.class).info(
+                         "SERIALIZERS does not contain clsName = "+ clsName);
+            	 LogManager.getLogger(SerializerRegistry.class).info(
+                         "SERIALIZERS size  = "+ SERIALIZERS.size());
+            }
         }
         return result;
     }
@@ -134,6 +144,8 @@ public class SerializerRegistry {
         boolean successful;
         try {
             successful = register(cls, serializer.newInstance());
+            LogManager.getLogger(SerializerRegistry.class).info(
+                    "register serializer successfully: cls = "+ cls+ "SERIALIZERS size = "+ SERIALIZERS.size());
         } catch (InstantiationException e) {
             LogManager.getLogger(SerializerRegistry.class).error(
                 "Cannot create serializer instance: " + e.getMessage());

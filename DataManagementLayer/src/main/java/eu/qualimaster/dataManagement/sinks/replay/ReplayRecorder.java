@@ -13,6 +13,7 @@ import eu.qualimaster.dataManagement.strategies.NoStorageStrategyDescriptor;
 
 import java.io.IOException;
 
+import org.apache.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +66,7 @@ public class ReplayRecorder<T> {
 	private Class<T> cls;
 
 	public ReplayRecorder(Class<T> cls, Tuple schema, String location, IStorageStrategyDescriptor d) {
+		this.cls = cls;
 		log.info("Replay: constructing ReplayRecorder");
 
 		// The storage strategy is for in-memory, as
@@ -86,8 +88,8 @@ public class ReplayRecorder<T> {
 		AbstractStorageTable table = DataManager.REPLAY_STORAGE_MANAGER.getTable(location, schema.getName(), d);
 		IStorageSupport storage = table.getStorageSupport();
 		output = new ReplayDataOutput(schema, storage);
-		this.serializer = SerializerRegistry.getSerializer(cls);
-		this.cls = cls;
+		this.serializer = getSerializer(cls);
+		
 	}
 
 	/**
@@ -98,12 +100,26 @@ public class ReplayRecorder<T> {
 		log.info("storing data = " + data.toString());
 		if(serializer == null){
 			log.info("serializer is null");
-			//serializer = SerializerRegistry.getSerializer(cls);
-			return;
+			serializer = getSerializer(cls);
+			//return;
 		}
 		serializer.serializeTo(data, output);
 	}
 
+	/**
+     * Returns a serializer for <code>cls</code>.
+     *
+     * @param <T> the object type
+     * @param cls the class to return the serializer for
+     * @return the serializer or <b>null</b> of none was found
+     */
+    public static  <T> ISerializer<T> getSerializer(Class<T> cls) {
+    	LogManager.getLogger(SerializerRegistry.class).info(
+                "get serializer instance: cls.getName() = "+ cls.getSimpleName());
+        return SerializerRegistry.getSerializer(cls.getSimpleName(), cls);    	
+    }
+	
+	
 	public void close() throws IOException {
 		log.info("closing output");
 		output.close();
