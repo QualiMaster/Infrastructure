@@ -61,8 +61,6 @@ public class DataManagementConfiguration extends Configuration {
     
     /**
      * Denotes the default distributed file system (DFS) path (String).
-     * Please note that an explicit HDFS path {@link #URL_HDFS} takes precendence
-     * and uses then {@link #PATH_DFS} as base path.
      */
     public static final String PATH_DFS = "dfs.path";
 
@@ -70,6 +68,16 @@ public class DataManagementConfiguration extends Configuration {
      * The default value for {@link #PATH_DFS}.
      */
     public static final String DEFAULT_PATH_DFS = EMPTY_VALUE;
+
+    /**
+     * Denotes the base path within HDFS.
+     */
+    public static final String PATH_HDFS = "hdfs.path";
+
+    /**
+     * The default value for {@link #PATH_HDFS}.
+     */
+    public static final String DEFAULT_PATH_HDFS = EMPTY_VALUE;
     
     /**
      * Denotes the directory for the accounts file. If not given, uses {@link #PATH_DFS} as base path.
@@ -107,6 +115,7 @@ public class DataManagementConfiguration extends Configuration {
     private static ConfigurationOption<String> hdfsGroupMapping = createStringOption(URL_HDFS_GROUPMAPPING, 
         DEFAULT_URL_HDFS_GROUPMAPPING);
     private static ConfigurationOption<String> dfsPath = createStringOption(PATH_DFS, DEFAULT_PATH_DFS);
+    private static ConfigurationOption<String> hdfsPath = createStringOption(PATH_HDFS, DEFAULT_PATH_HDFS);
     private static ConfigurationOption<String> accountsPath = createStringOption(PATH_ACCOUNTS, DEFAULT_PATH_ACCOUNTS);
     private static ConfigurationOption<Boolean> autoConnect = createBooleanOption(
         PIPELINE_START_SOURCE_AUTOCONNECT, DEFAULT_PIPELINE_START_SOURCE_AUTOCONNECT);
@@ -214,6 +223,15 @@ public class DataManagementConfiguration extends Configuration {
      */
     public static String getDfsPath() {
         return dfsPath.getValue();
+    }
+    
+    /**
+     * Returns the default HDFS path.
+     * 
+     * @return the default HDFS path
+     */
+    public static String getHdfsPath() {
+        return hdfsPath.getValue();
     }
     
     /**

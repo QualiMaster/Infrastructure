@@ -43,6 +43,15 @@ public class HdfsUtils {
     private static String getHdfsUrl() {
         return DataManagementConfiguration.getHdfsUrl();
     }
+
+    /**
+     * Returns the default DFS path.
+     * 
+     * @return the default DFS path (empty if not configured)
+     */
+    private static String getHdfsPath() {
+        return DataManagementConfiguration.getHdfsPath();
+    }
     
     /**
      * Returns the default DFS path.
@@ -128,7 +137,7 @@ public class HdfsUtils {
     public static String storeToHdfs(File dataFile) throws IOException {
         String dataPath = null;
         if (!isEmpty(getHdfsUrl())) {
-            String basePath = getDfsPath() + "/";
+            String basePath = getHdfsPath() + "/";
             FileSystem fs = getFilesystem();
             Path target = new Path(basePath, dataFile.getName()); 
             createPath(fs, target);
@@ -177,7 +186,7 @@ public class HdfsUtils {
     public static void deleteFolder(File folder, boolean recursive) throws IOException {
         if (!isEmpty(getHdfsUrl())) {
             FileSystem fs = getFilesystem();
-            Path target = new Path(getDfsPath() + "/" + folder);
+            Path target = new Path(getHdfsPath() + "/" + folder);
             if (fs.exists(target)) {
                 fs.delete(target, recursive);
             }
@@ -202,7 +211,7 @@ public class HdfsUtils {
     public static void createFolder(File folder) throws IOException {
         if (!isEmpty(getHdfsUrl())) {
             FileSystem fs = getFilesystem();
-            Path target = new Path(getDfsPath() + "/" + folder);
+            Path target = new Path(getHdfsPath() + "/" + folder);
             createPath(fs, target);
         } else if (!isEmpty(getDfsPath())) {
             File targetPath = new File(getDfsPath(), folder.getName());
@@ -221,7 +230,7 @@ public class HdfsUtils {
     public static void clearFolder(File folder) throws IOException {
         if (!isEmpty(getHdfsUrl())) {
             FileSystem fs = getFilesystem();
-            Path target = new Path(getDfsPath() + "/" + folder);
+            Path target = new Path(getHdfsPath() + "/" + folder);
             if (fs.exists(target)) {
                 RemoteIterator<LocatedFileStatus> iter = fs.listFiles(target, false);
                 while (iter.hasNext()) {
@@ -259,8 +268,7 @@ public class HdfsUtils {
     public static String copy(File source, File target, boolean absolute, boolean includeTopLevel) throws IOException {
         String result;
         if (!isEmpty(getHdfsUrl())) {
-            String basePath = absolute ? target + "/" : 
-                getDfsPath() + "/" + target + "/";
+            String basePath = absolute ? target + "/" : getHdfsPath() + "/" + target + "/";
             FileSystem fs = getFilesystem();
             copy(fs, basePath, source, includeTopLevel);
             result = basePath;
