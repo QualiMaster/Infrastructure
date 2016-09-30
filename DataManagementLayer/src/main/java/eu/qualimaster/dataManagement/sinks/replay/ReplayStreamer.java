@@ -126,6 +126,7 @@ public class ReplayStreamer<T> {
         if (startDate == null || endDate == null ||query == null ||
                 query.isEmpty() || speedFactor == -1) {
             LOG.warn("The streamer is not ready. Set the parameters first !!");
+            return;
         }
         resultWrapper.updateQuery(query, startDate, endDate);
     }
