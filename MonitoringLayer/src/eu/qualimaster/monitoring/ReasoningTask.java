@@ -76,6 +76,7 @@ import net.ssehub.easy.varModel.model.values.EnumValue;
 import net.ssehub.easy.varModel.model.values.IntValue;
 import net.ssehub.easy.varModel.model.values.StringValue;
 import net.ssehub.easy.varModel.model.values.Value;
+import net.ssehub.easy.varModel.persistency.StringProvider;
 
 /**
  * The reasoning task for detecting SLA violations on the infrastructure configuration.
@@ -99,6 +100,7 @@ public class ReasoningTask extends TimerTask {
     private transient Set<String> currentDeviations = new HashSet<String>();
     private IReasoningListener listener;
     private IReasoningModelProvider provider;
+    private double minDevDifference = MonitoringConfiguration.getAnalysisMinDeviationDifference() / 100.0;
     
     private IDatatype typePipeline;
     private IDatatype typePipelineElement;
@@ -544,12 +546,10 @@ public class ReasoningTask extends TimerTask {
             listener.notifyReasoningResult(config, result);
         }
         List<ViolatingClause> violating;
-        if (null != result && result.hasConflict()) {
+        if (null != result && result.hasConflict()) { //debugPrintReasoningResult(result);
             analyzerVisitor.setState(state, pipStatus);
-            currentDeviations.clear();
             violating = analyzerVisitor.analyze(config, result);
         } else {
-            currentDeviations.clear();
             violating = new ArrayList<ViolatingClause>();
         }
         purgeActualDeviations(state, violating);
@@ -571,10 +571,29 @@ public class ReasoningTask extends TimerTask {
                 }
             }
         }
+        currentDeviations.clear();
         analyzerVisitor.clearState();
         MonitoringPluginRegistry.analyze(state);
         provider.endUsing();
         return resultEvent;
+    }
+    
+    /**
+     * Prints the relevant contents of a reasoning result (for debugging).
+     * 
+     * @param result the result to be printed
+     */
+    static void debugPrintReasoningResult(ReasoningResult result) {
+        if (null != result) {
+            System.out.println("CONFLICT");     
+            for (int m = 0; m < result.getMessageCount(); m++) {
+                System.out.println(result.getMessage(m));
+                List<Constraint> csts = result.getMessage(m).getProblemConstraints();
+                for (int c = 0; c < csts.size(); c++) {
+                    System.out.println("  " + StringProvider.toIvmlString(csts.get(c).getConsSyntax()));
+                }
+            }
+        }
     }
 
     /**
@@ -748,8 +767,8 @@ public class ReasoningTask extends TimerTask {
                     activeDeviations.put(devKey, deviation);
                     currentDeviations.add(devKey);
                 } else {
-                    if (!isUserConstraint && Math.abs(newDevPercent - oldDeviation.getPercentage()) > 0.05) { 
-                        // TODO check, configure?
+                    if (!isUserConstraint && Math.abs(newDevPercent - oldDeviation.getPercentage()) 
+                        > minDevDifference) { 
                         oldDeviation.setPercentage(newDevPercent);
                         deviation = oldDeviation;
                     } else {

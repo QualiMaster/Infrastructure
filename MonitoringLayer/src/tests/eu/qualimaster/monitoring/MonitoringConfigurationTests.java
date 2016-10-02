@@ -39,6 +39,8 @@ public class MonitoringConfigurationTests extends CoordinationConfigurationTests
         Assert.assertTrue(MonitoringConfiguration.debugThriftMonitoring());
         Assert.assertEquals(MonitoringConfiguration.DEFAULT_VOLUME_MODEL_LOCATION, 
             MonitoringConfiguration.getProfileLocation());
+        Assert.assertEquals(MonitoringConfiguration.DEFAULT_MONITORING_ANALYSIS_MINDEVDIFF.intValue(), 
+            MonitoringConfiguration.getAnalysisMinDeviationDifference());
     }
 
     @Override

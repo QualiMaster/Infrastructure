@@ -42,6 +42,17 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
      * The default value for {@link #MONITORING_ANALYSIS_DISABLED}, {@link #EMPTY_VALUE}.
      */
     public static final String DEFAULT_MONITORING_ANALYSIS_DISABLED = EMPTY_VALUE;
+
+    /**
+     * Denotes the minimum difference between two deviations in percent in analysis to cause re-sending an adaptation 
+     * event.
+     */
+    public static final String MONITORING_ANALYSIS_MINDEVDIFF = "monitoring.analysis.minDeviationDifference";
+
+    /**
+     * The default value for {@link #MONITORING_ANALYSIS_MINDEVDIFF}, ({@value}).
+     */
+    public static final Integer DEFAULT_MONITORING_ANALYSIS_MINDEVDIFF = 5;
     
     /**
      * Denotes a filter for hardware resources, i.e., included names / network addresses will considered to be absent 
@@ -151,6 +162,8 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
 
     private static ConfigurationOption<String> monitoringAnalysisDisabled
         = createStringOption(MONITORING_ANALYSIS_DISABLED, DEFAULT_MONITORING_ANALYSIS_DISABLED);
+    private static ConfigurationOption<Integer> monitoringAnalysisMinDevDifference
+        = createIntegerOption(MONITORING_ANALYSIS_MINDEVDIFF, DEFAULT_MONITORING_ANALYSIS_MINDEVDIFF);
     private static ConfigurationOption<String> monitoringHardwareFilter 
         = createStringOption(MONITORING_HW_FILTER, DEFAULT_MONITORING_HW_FILTER);
     private static ConfigurationOption<String> monitoringLogLocation 
@@ -375,6 +388,15 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
      */
     public static String getVolumeModelLocation() {
         return volumeModelLocation.getValue();
+    }
+
+    /**
+     * The minimum difference between two deviations during analysis causing re-sending of adaptation events.
+     * 
+     * @return the difference in percent
+     */
+    public static int getAnalysisMinDeviationDifference() {
+        return monitoringAnalysisMinDevDifference.getValue();
     }
 
 }
