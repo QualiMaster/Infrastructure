@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 /**
  * A registry for (external) serializers. Automatically registers default built-in serializers for
@@ -39,8 +40,6 @@ public class SerializerRegistry {
      * @return the serializer or <b>null</b> of none was found
      */
     public static synchronized <T> ISerializer<T> getSerializer(Class<T> cls) {
-    	//LogManager.getLogger(SerializerRegistry.class).info(
-         //       "get serializer instance: cls.getName() = "+ cls.getSimpleName());
         return getSerializer(cls.getName(), cls);    	
     }
     
@@ -57,15 +56,10 @@ public class SerializerRegistry {
         ISerializer<T> result;
         if (null == clsName) {
             result = null;
-           // LogManager.getLogger(SerializerRegistry.class).info(
-            //        "clsName is null");
         } else {        	
             result = (ISerializer<T>) SERIALIZERS.get(clsName);
-            if(null == result){
-            	 LogManager.getLogger(SerializerRegistry.class).info(
-                         "SERIALIZERS does not contain clsName = "+ clsName);
-            	 //LogManager.getLogger(SerializerRegistry.class).info(
-                  //       "SERIALIZERS size  = "+ SERIALIZERS.size());
+            if (null == result){
+            	getLogger().warn("No serializer for clsName = "+ clsName);
             }
         }
         return result;
@@ -144,18 +138,23 @@ public class SerializerRegistry {
         boolean successful;
         try {
             successful = register(cls, serializer.newInstance());
-            //LogManager.getLogger(SerializerRegistry.class).info(
-            //        "register serializer successfully: cls = "+ cls+ "SERIALIZERS size = "+ SERIALIZERS.size());
         } catch (InstantiationException e) {
-            LogManager.getLogger(SerializerRegistry.class).error(
-                "Cannot create serializer instance: " + e.getMessage());
+            getLogger().error("Cannot create serializer instance: " + e.getMessage());
             successful = false;
         } catch (IllegalAccessException e) {
-            LogManager.getLogger(SerializerRegistry.class).error(
-                "Cannot create serializer instance: " + e.getMessage());
+            getLogger().error("Cannot create serializer instance: " + e.getMessage());
             successful = false;
         }
         return successful;
+    }
+    
+    /**
+     * Returns the logger for this class.
+     * 
+     * @return the logger
+     */
+    private static Logger getLogger() {
+        return LogManager.getLogger(SerializerRegistry.class);
     }
 
     /**
