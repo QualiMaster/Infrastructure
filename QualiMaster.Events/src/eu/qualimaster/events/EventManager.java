@@ -613,6 +613,7 @@ public class EventManager {
                 }
             }
         }
+        disableLoggingFor(TimerEvent.class); // don't show internal regular events which can be consumed locally
         disableLoggingFor(Configuration.getEventDisableLogging());
     }
 
