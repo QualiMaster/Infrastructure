@@ -167,9 +167,10 @@ public class VolumePredictionManager {
 	    protected void handle(HistoricalDataProviderRegistrationEvent event) {
 	        // called when a data source comes up in a pipeline. Carries the historical data provider.
 	        // If the source changes, an event with the same pipeline / element name will occur
+	    	System.out.println("HistoricalDataProviderRegistrationEvent received...");
 	    	status = "initializing";
 	    	VolumePredictor predictor = new VolumePredictor(event.getPipeline(), event.getSource(), event.getProvider(), test);
-	    	predictor.initialize(MonitoringConfiguration.getVolumeModelLocation() + event.getSource() + "_" + DEFAULT_FILE_NAME);
+	    	predictor.initialize(MonitoringConfiguration.getVolumeModelLocation() + "/" + event.getSource() + "_" + DEFAULT_FILE_NAME);
 	    	volumePredictors.put(event.getSource(), predictor);
 	    	status = "ready";
 	    }
@@ -217,9 +218,11 @@ public class VolumePredictionManager {
 		// TODO handle exceptions like: source map does not contain an input term; the model for a source is not available (null);
 		
 		// use the right predictor (based on the source) to handle the prediction for the incoming terms
+		status = "monitoring";
 		VolumePredictor predictor = volumePredictors.get(event.getPipelineElement());
 		if(predictor != null) predictor.handlePredictionStep(event.getObservations());
 		else System.out.println("ERROR: no volume predictor available for the input source" + event.getPipelineElement());
+		status = "ready";
 	}
 	    
 	/**

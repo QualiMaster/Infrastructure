@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeMap;
 
+import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.adaptation.events.SourceVolumeAdaptationEvent;
 import eu.qualimaster.dataManagement.DataManager;
 import eu.qualimaster.dataManagement.sources.IHistoricalDataProvider;
@@ -60,6 +61,9 @@ public class VolumePredictor {
 	
 	/** Flag indicating whether the class is being used in test mode or not */
 	private boolean test;
+	
+	/** Alarm event at the current time point (null if there was no event) */
+	AdaptationEvent adaptationEvent;
 	
 	/** The number of months (in milliseconds) of data to consider when training the model */
 	private static final long NUM_MONTHS = 4l * (1000l*60l*60l*24l*30l);
@@ -228,6 +232,7 @@ public class VolumePredictor {
 		
 		// raise an alarm to the adaptation layer containing all the critical terms and their volumes
 		if(!alarms.isEmpty()) raiseAlarms(alarms, normalizedAlarms);
+		else this.adaptationEvent = null;
 		
 		// initialize one predictor for each unknown term that was observed in the source
 		for(String term : unknownTerms) addMonitoredTerm(term);
@@ -285,7 +290,8 @@ public class VolumePredictor {
 		System.out.print((int)threshold + "\t");
 		if(prediction > threshold){
 			Long current = recentVolumesForTerm.get(recentVolumesForTerm.size()-1);
-			return (double)(prediction - current);
+			if(prediction > current) return (double)(prediction - current);
+			else return -1;
 			//return (prediction - threshold);
 		}
 		
@@ -338,6 +344,7 @@ public class VolumePredictor {
 	{
 		// use the event class defined in the infrastructure to send alarms to the adaptation layer
 		SourceVolumeAdaptationEvent svae = new SourceVolumeAdaptationEvent(this.pipeline, this.source, alarms, normalizedAlarms);
+		this.adaptationEvent = svae;
 		EventManager.send(svae);
 	}
 	
@@ -600,5 +607,12 @@ public class VolumePredictor {
 	 */
 	public void setTest(boolean test) {
 		this.test = test;
+	}
+	
+	/**
+	 * @return the adaptation event
+	 */
+	public AdaptationEvent getAdaptationEvent(){
+		return this.adaptationEvent;
 	}
 }
