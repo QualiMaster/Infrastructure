@@ -116,7 +116,6 @@ public class SignalMechanism {
          * @throws SignalException if the signal cannot be sent
          */
         private void cacheSignal(CachedSignal signal) throws SignalException {
-System.out.println(signal + ", state:" + state);        
             switch (state) {
             case ENABLE:
                 signal.send();
@@ -340,7 +339,6 @@ System.out.println(signal + ", state:" + state);
      */
     static void sendSignal(CuratorFramework framework, String topology, String executor, byte[] payload) 
         throws SignalException {
-System.out.println("In the method - sendSignal.");       
         try {
             String namespace = framework.getNamespace();
             String path = getTopologyExecutorPath(topology, executor);
@@ -355,7 +353,6 @@ System.out.println("In the method - sendSignal.");
                 throw new Exception("component does not exist " + namespace + ":" + path);
             }
             getLogger().info(System.currentTimeMillis() + " sending " + payload + " to " + namespace + ":" + path);
-System.out.println(System.currentTimeMillis() + " sending " + payload + " to " + namespace + ":" + path);            
             framework.setData().forPath(path, payload);
         } catch (Exception e) {
             getLogger().error(e.getMessage(), e);
@@ -395,10 +392,7 @@ System.out.println(System.currentTimeMillis() + " sending " + payload + " to " +
      * @throws SignalException in case that obtaining the mechanism fails or that sending fails
      */
     static void sendSignal(CuratorFramework mechanism, AbstractTopologyExecutorSignal signal) throws SignalException {
-System.out.println("CuratorFramework Sending signal..." + signal);
-//changeSignalNamespaceState(signal.getNamespace(), NamespaceState.ENABLE);
         Namespace space = obtainNamespace(signal.getNamespace());
-System.out.println("Namespace: " + space.getName() + ", State: " + space.getState());        
         if (Configuration.getPipelineSignalsCurator()) {
             if (null == mechanism) {
                 try {
@@ -413,7 +407,6 @@ System.out.println("Namespace: " + space.getName() + ", State: " + space.getStat
                     @Override
                     protected void send() throws SignalException {
                         AbstractTopologyExecutorSignal signal = getSignal();
-                        System.out.println("send()");
                         sendSignal(getMechanism(), signal.getTopology(), signal.getExecutor(), signal.createPayload());
                     }
                     
