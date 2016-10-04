@@ -43,7 +43,7 @@ import static eu.qualimaster.common.signal.SignalMechanism.PATH_SEPARATOR;
  */
 public class PortManager {
 
-    private static final String PORTS = "ports";
+    private static final String PORTS = PATH_SEPARATOR + "ports";
     private static final String PORTS_PREFIX = PORTS + PATH_SEPARATOR;
     private static final String NODES = PORTS_PREFIX + "nodes";
     private static final String NODES_PREFIX = NODES + PATH_SEPARATOR;

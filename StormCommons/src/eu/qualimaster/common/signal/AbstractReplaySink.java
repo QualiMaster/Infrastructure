@@ -314,10 +314,7 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
 
     @Override
     public void notifyReplay(ReplaySignal signal) {
-        String signalStr = String.format("ticket = %d, startDate = %s endDate = %s speed = %f query = %s",
-                        signal.getTicket(), signal.getStart().toString(), signal.getEnd().toString(),
-                        signal.getQuery());
-        LogManager.getLogger(getClass()).info("notifying with:" + signalStr);
+        LogManager.getLogger(getClass()).info("notifying with:" + signal);
         int streamerCount = 0;
         if (null != handlers) {
             for (TupleHandler<?> handler : handlers.values()) {
@@ -369,17 +366,8 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
             }
             if (null != handler) {
                 handler.store(tuple);
-            } else { // TODO remove - debug code
-                LogManager.getLogger(getClass()).info("handlers does not contain tuple.class");
-                //LogManager.getLogger(getClass()).info("tuple.getClass() = " + tuple.getClass().toString());
-                //LogManager.getLogger(getClass()).info("handlers.size = " + handlers.size());
-            }
-        } else { // TODO remove - debug code
-            if (null == tuple) {
-                LogManager.getLogger(getClass()).info("tuple is null");
-            }
-            if (null == handlers) {
-                LogManager.getLogger(getClass()).info("handlers is null");
+            } else {
+                LogManager.getLogger(getClass()).info("no handler for " + cls.getName());
             }
         }
     }
