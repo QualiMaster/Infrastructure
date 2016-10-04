@@ -23,6 +23,8 @@ import java.io.ObjectOutputStream;
 
 import org.apache.storm.curator.framework.CuratorFramework;
 
+import com.jcraft.jsch.Logger;
+
 import eu.qualimaster.common.QMInternal;
 
 /**
@@ -32,7 +34,7 @@ import eu.qualimaster.common.QMInternal;
  */
 @QMInternal
 public abstract class AbstractTopologyExecutorSignal extends TopologySignal {
-
+    
     public static final String SEPARATOR = "/";
     private static final long serialVersionUID = 7262999433585164281L;
     private String topology;
@@ -96,6 +98,7 @@ public abstract class AbstractTopologyExecutorSignal extends TopologySignal {
     @Override
     public void sendSignal(AbstractSignalConnection connection) throws SignalException {
         if (connection.isConnected()) {
+System.out.println("Sending signal.." + connection);            
             sendSignal(connection.getClient());
         }
     }
