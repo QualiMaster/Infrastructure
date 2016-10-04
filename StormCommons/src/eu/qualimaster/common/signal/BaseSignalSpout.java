@@ -75,7 +75,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
             context.addTaskHook(monitor);
         }
         try {
-            LOGGER.info("Prepare--basesignalspout....");
+            LOGGER.info("Prepare--basesignalspout.... " + pipeline + "/" + this.name);
             signalConnection = new StormSignalConnection(this.name, this, pipeline);
             signalConnection.init(conf);
             if (Configuration.getPipelineSignalsQmEvents()) {
@@ -184,7 +184,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
 
     @Override
     public void onSignal(byte[] data) {
-        LOGGER.info("onSignal: Listening on the signal!");
+        LOGGER.info("onSignal: Listening on the signal! " + pipeline + "/" + name);
         boolean done = ParameterChangeSignal.notify(data, pipeline, name, this);
         if (!done) {
             done = ShutdownSignal.notify(data, pipeline, name, this);
@@ -197,7 +197,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     @Override
     public void notifyParameterChange(ParameterChangeSignal signal) {
         // empty: keep interface/implementations stable
-LOGGER.info("This notifyParameterChange is being called!");
+        LOGGER.info("This notifyParameterChange is being called!");
     }
     
     /**

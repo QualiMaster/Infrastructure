@@ -33,6 +33,7 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
     private String pipeline;
     private String source;
     private Map<String, Double> findings = new HashMap<String, Double>();
+    private Map<String, Double> normalizedFindings = new HashMap<String, Double>();
 
     /**
      * Creates a source volume adaptation event.
@@ -63,6 +64,26 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
         this.pipeline = pipeline;
         this.source = source;
         this.findings = findings;
+    }
+    
+    /**
+     * Creates a source volume adaptation event.
+     * 
+     * @param pipeline the pipeline name
+     * @param source the source name
+     * @param findings the findings
+     * @param normFindings the normalized findings
+     * @throws IllegalArgumentException if <code>findings</code> is <b>null</b> or empty
+     */
+    @QMInternal
+    public SourceVolumeAdaptationEvent(String pipeline, String source, Map<String, Double> findings, Map<String,Double> normFindings) {
+        if (null == findings || findings.isEmpty() || null == normFindings || normFindings.isEmpty()) {
+            throw new IllegalArgumentException("no findings");
+        }
+        this.pipeline = pipeline;
+        this.source = source;
+        this.findings = findings;
+        this.normalizedFindings = normFindings;
     }
     
     /**
@@ -99,6 +120,15 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
      */
     public Map<String, Double> getFindings() {
         return findings;
+    }
+    
+    /**
+     * Returns the normalized findings.
+     * 
+     * @return the findings
+     */
+    public Map<String, Double> getNormalizedFindings() {
+        return normalizedFindings;
     }
     
     /**

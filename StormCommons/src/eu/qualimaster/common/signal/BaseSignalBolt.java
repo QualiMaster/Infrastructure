@@ -77,7 +77,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
             context.addTaskHook(monitor);
         }
         try {
-            LOGGER.info("Prepare--basesignalbolt....");
+            LOGGER.info("Prepare--basesignalbolt.... " + pipeline + "/" + this.name);
             signalConnection = new StormSignalConnection(this.name, this, pipeline);
             signalConnection.init(conf);
             if (Configuration.getPipelineSignalsQmEvents()) {
@@ -234,7 +234,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
 
     @Override
     public void onSignal(byte[] data) {
-        LOGGER.info("onSignal: Listening on the signal!");
+        LOGGER.info("onSignal: Listening on the signal! " + pipeline + "/" + name);
         boolean done = AlgorithmChangeSignal.notify(data, pipeline, name, this);
         if (!done) {
             done = ParameterChangeSignal.notify(data, pipeline, name, this);

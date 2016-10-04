@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 /**
  * A registry for (external) serializers. Automatically registers default built-in serializers for
@@ -39,7 +40,7 @@ public class SerializerRegistry {
      * @return the serializer or <b>null</b> of none was found
      */
     public static synchronized <T> ISerializer<T> getSerializer(Class<T> cls) {
-        return getSerializer(cls.getName(), cls);
+        return getSerializer(cls.getName(), cls);    	
     }
     
     /**
@@ -55,8 +56,11 @@ public class SerializerRegistry {
         ISerializer<T> result;
         if (null == clsName) {
             result = null;
-        } else {
+        } else {        	
             result = (ISerializer<T>) SERIALIZERS.get(clsName);
+            if (null == result){
+            	getLogger().warn("No serializer for clsName = "+ clsName);
+            }
         }
         return result;
     }
@@ -135,15 +139,22 @@ public class SerializerRegistry {
         try {
             successful = register(cls, serializer.newInstance());
         } catch (InstantiationException e) {
-            LogManager.getLogger(SerializerRegistry.class).error(
-                "Cannot create serializer instance: " + e.getMessage());
+            getLogger().error("Cannot create serializer instance: " + e.getMessage());
             successful = false;
         } catch (IllegalAccessException e) {
-            LogManager.getLogger(SerializerRegistry.class).error(
-                "Cannot create serializer instance: " + e.getMessage());
+            getLogger().error("Cannot create serializer instance: " + e.getMessage());
             successful = false;
         }
         return successful;
+    }
+    
+    /**
+     * Returns the logger for this class.
+     * 
+     * @return the logger
+     */
+    private static Logger getLogger() {
+        return LogManager.getLogger(SerializerRegistry.class);
     }
 
     /**

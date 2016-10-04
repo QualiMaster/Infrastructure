@@ -3,6 +3,7 @@ package tests.eu.qualimaster.coordination;
 import java.util.Properties;
 
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import eu.qualimaster.coordination.CoordinationConfiguration;
@@ -16,6 +17,14 @@ import tests.eu.qualimaster.dataManagement.DataManagementConfigurationTests;
 public class CoordinationConfigurationTests extends DataManagementConfigurationTests {
     
     private static final String MODEL_LOC = "/usr/local/model.jar";
+
+    /**
+     * Initialize tests.
+     */
+    @BeforeClass
+    public static void start() {
+        CoordinationConfiguration.getProperties(); // force creation of options
+    }
     
     @Override
     protected void testDirect() {
@@ -44,6 +53,8 @@ public class CoordinationConfigurationTests extends DataManagementConfigurationT
              CoordinationConfiguration.getProfilingMode());
         Assert.assertEquals(CoordinationConfiguration.DEFAULT_PROFILE_LOCATION, 
              CoordinationConfiguration.getProfileLocation());
+        Assert.assertEquals(CoordinationConfiguration.DEFAULT_SPECIFICPIPSETTINGS_ARTIFACT_SPEC, 
+             CoordinationConfiguration.getSpecificPipelineSettingsArtifactSpecification());
     }
 
     @Override

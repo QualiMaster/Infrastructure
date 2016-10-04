@@ -8,12 +8,14 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TimerTask;
 import java.util.TreeMap;
 
 import org.junit.After;
@@ -47,7 +49,10 @@ import eu.qualimaster.monitoring.ReasoningTask;
 import eu.qualimaster.monitoring.ReasoningTask.IReasoningListener;
 import eu.qualimaster.monitoring.ReasoningTask.IReasoningModelProvider;
 import eu.qualimaster.monitoring.ReasoningTask.SimpleReasoningModelProvider;
+import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictionManager;
 import eu.qualimaster.monitoring.systemState.SystemState;
+import eu.qualimaster.monitoring.utils.IScheduler;
+import eu.qualimaster.monitoring.volumePrediction.VolumePredictionManager;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.pipeline.AlgorithmChangeParameter;
 import net.ssehub.easy.basics.modelManagement.ModelInitializer;
@@ -81,6 +86,14 @@ import tests.eu.qualimaster.adaptation.TimeMeasurementTracerFactory.Measure;
 public abstract class AbstractDirectAdaptationTests {
 
     private static final Set<String> JENKINS = new HashSet<String>();
+    private static IScheduler scheduler = new IScheduler() {
+        
+        @Override
+        public void schedule(TimerTask task, Date firstTime, long period) {
+            // avoid the nightly tasks of the volume prediction in the tests
+        }
+
+    };
 
     private Configuration monConfig;
     private Script monRtVilModel;
@@ -137,6 +150,8 @@ public abstract class AbstractDirectAdaptationTests {
         ModelInitializer.removeLocation(getModelLocation(), ProgressObserver.NO_OBSERVER);
         
         CoordinationHelper.setInTesting(true);
+        VolumePredictionManager.start(scheduler);
+        AlgorithmProfilePredictionManager.start();
     }
     
     /**
@@ -146,6 +161,8 @@ public abstract class AbstractDirectAdaptationTests {
      */
     @After
     public void tearDown() throws ModelManagementException {
+        AlgorithmProfilePredictionManager.stop();
+        VolumePredictionManager.stop();
         tmp.delete();
         ModelInitializer.unregisterLoader(ProgressObserver.NO_OBSERVER);
     }

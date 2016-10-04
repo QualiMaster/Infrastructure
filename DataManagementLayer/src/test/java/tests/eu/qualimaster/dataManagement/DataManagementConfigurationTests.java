@@ -3,6 +3,7 @@ package tests.eu.qualimaster.dataManagement;
 import java.util.Properties;
 
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import eu.qualimaster.dataManagement.DataManagementConfiguration;
@@ -15,17 +16,28 @@ import tests.eu.qualimaster.ConfigurationTests;
  */
 public class DataManagementConfigurationTests extends ConfigurationTests {
 
+    /**
+     * Initialize tests.
+     */
+    @BeforeClass
+    public static void start() {
+        DataManagementConfiguration.getProperties(); // force creation of options
+    }
+    
     @Override
     protected void testDirect() {
         super.testDirect();
         Assert.assertEquals(DataManagementConfiguration.DEFAULT_URL_HDFS, DataManagementConfiguration.getHdfsUrl());
         Assert.assertEquals(DataManagementConfiguration.DEFAULT_PATH_DFS, DataManagementConfiguration.getDfsPath());
+        Assert.assertEquals(DataManagementConfiguration.DEFAULT_PATH_HDFS, DataManagementConfiguration.getHdfsPath());
         // as not configured explicitly
         Assert.assertEquals(DataManagementConfiguration.DEFAULT_PIPELINE_START_DELAY, 
             DataManagementConfiguration.getPipelineStartNotificationDelay());
         Assert.assertEquals(DataManagementConfiguration.getAccountsPath(), DataManagementConfiguration.getDfsPath());
         Assert.assertEquals(DataManagementConfiguration.DEFAULT_PIPELINE_START_SOURCE_AUTOCONNECT, 
             DataManagementConfiguration.getPipelineStartSourceAutoconnect());
+        Assert.assertEquals("storm", DataManagementConfiguration.getHdfsUser());
+        Assert.assertEquals("storm=hdfs", DataManagementConfiguration.getHdfsGroupMapping());
     }
 
     @Override

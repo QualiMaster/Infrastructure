@@ -1,6 +1,7 @@
 package eu.qualimaster.dataManagement.storage.hbase;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +24,7 @@ import eu.qualimaster.dataManagement.storage.support.IStorageSupport;
  */
 public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStorageSupport {
 
-	private static final Logger LOG = LoggerFactory.getLogger(HBaseBatchStorageSupport.class);
+	//private static final Logger LOG = LoggerFactory.getLogger(HBaseBatchStorageSupport.class);
 
 	private Configuration config;
 	private HConnection conn;
@@ -37,15 +38,16 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 	public static final byte[] COLUMN_FAMILY_BYTES = Bytes.toBytes(COLUMN_FAMILY);
 
 	/** Default batch size is 500 */
-	private int batchSize = 500;
+	//private int batchSize = 500;
+	private int batchSize = 10;
 
 	private int counter;
 
 	private static final Logger log = LoggerFactory.getLogger(HBaseBatchStorageSupport.class);
 
-	public HBaseBatchStorageSupport(String tableName) {
+	public HBaseBatchStorageSupport(String tableName) {		
 		super(tableName);
-
+		log.info("Replay: constructing HBaseBatchStorageSupport");
 		// Configuration config = HBaseConfiguration.create();
 		config = HBaseConfiguration.create();
 		config.set("zookeeper.znode.parent", HBASE_NODE);
@@ -65,13 +67,16 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 	 * Declare an HBase table based on a given schema
 	 */
 	private void createIfNotExist() {
+		log.info("Replay: createIfNotExist");
 		try (HBaseAdmin admin = new HBaseAdmin(config)) {
 			HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(getTableName()));
 
 			// If the table exists, we need to check if it has column family
 			// named "cf",
 			// and add if not found
-			if (!admin.tableExists(getTableName())) {
+			// if (!admin.tableExists(getTableName())) {
+			log.info("check table existence: Table " + getTableName() + " result = " + admin.tableExists(getTableName()));
+			if (admin.tableExists(getTableName())) {
 				log.info("Table " + getTableName() + " already exists. Check for column family " + COLUMN_FAMILY);
 				for (HColumnDescriptor hcd : admin.getTableDescriptor(htd.getTableName()).getColumnFamilies()) {
 					if (hcd.getNameAsString().equalsIgnoreCase(COLUMN_FAMILY)) {
@@ -98,6 +103,7 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 	@Override
 	public void connect() {
 		super.connect();
+		log.info("Replay: connect");
 		try {
 			conn = HConnectionManager.createConnection(config);
 			table = conn.getTable(getTableName());
@@ -131,17 +137,23 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 	@Override
 	// This implementation is fail-fast
 	protected void doWrite(Object key, Object object) {
+		log.info("Replay: doWrite");
 		if (!(object instanceof HBaseRow)) {
 			String msg = "HBaseBatchSupport can only write " + "object of type HBaseRow";
 			log.error(msg);
 			throw new RuntimeException(msg);
 		}
 		final HBaseRow row = (HBaseRow) object;
+		
+		byte[] keyBytes = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).putLong(System.currentTimeMillis()).array();
+		row.setKey(keyBytes);
+		
 		Put put = row.createPut();
 		try {
 			table.put(put);
 			counter++;
 			if (counter % batchSize == 0) {
+				//log.info("Replay: flushCommits");
 				table.flushCommits();
 				counter = 0;
 			}
@@ -222,8 +234,9 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 	}
 
 	@Override
- 	public IStorageSupport getStorageSupport() {
-  		//throw new RuntimeException("HBaseBatchStoreSupport has been declared and called.");
-  		return this;
- 	}
+	public IStorageSupport getStorageSupport() {
+		// throw new RuntimeException("HBaseBatchStoreSupport has been declared
+		// and called.");
+		return this;
+	}
 }

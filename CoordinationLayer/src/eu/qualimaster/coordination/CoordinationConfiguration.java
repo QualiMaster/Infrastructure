@@ -177,6 +177,17 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
      * The default value for {@link #PROFILE_LOCATION} (temp).
      */
     public static final String DEFAULT_PROFILE_LOCATION = FileUtils.getTempDirectoryPath();
+
+    /**
+     * Denotes the specific pipeline settings artifact specification.
+     */
+    public static final String SPECIFICPIPSETTINGS_ARTIFACT_SPEC = "repository.specificPipelineSettings.artifact";
+    
+    /**
+     * The default value for {@link #SPECIFICPIPSETTINGS_ARTIFACT_SPEC}. 
+     */
+    public static final String DEFAULT_SPECIFICPIPSETTINGS_ARTIFACT_SPEC = EMPTY_VALUE;
+    
     
     static final PropertyReader<DetailMode> DETAIL_MODE_READER = new PropertyReader<DetailMode>() {
 
@@ -223,6 +234,8 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
         = new ConfigurationOption<DetailMode>(DETAILED_PROFILING, DEFAULT_DETAILED_PROFILING, DETAIL_MODE_READER);
     private static ConfigurationOption<String> profileLocation 
         = createStringOption(PROFILE_LOCATION, DEFAULT_PROFILE_LOCATION);
+    private static ConfigurationOption<String> specificPipelineSettingsArtifactLocation
+        = createStringOption(SPECIFICPIPSETTINGS_ARTIFACT_SPEC, DEFAULT_SPECIFICPIPSETTINGS_ARTIFACT_SPEC);
 
     /**
      * Reads the configuration settings from the file.
@@ -436,6 +449,15 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
      */
     public static String getProfileLocation() {
         return profileLocation.getValue();
+    }
+
+    /**
+     * Returns the specific pipeline settings artifact specification.
+     * 
+     * @return the artifact specification, may be empty of there is none
+     */
+    public static String getSpecificPipelineSettingsArtifactSpecification() {
+        return specificPipelineSettingsArtifactLocation.getValue();
     }
     
 }

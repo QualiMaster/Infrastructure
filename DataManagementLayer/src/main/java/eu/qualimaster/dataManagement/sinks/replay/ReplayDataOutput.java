@@ -12,6 +12,8 @@ import eu.qualimaster.dataManagement.serialization.IDataOutput;
 import eu.qualimaster.dataManagement.storage.hbase.HBaseBatchStorageSupport;
 import eu.qualimaster.dataManagement.storage.support.IStorageSupport;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The data output that buffers data from the replay recorder and puts them into
@@ -42,8 +44,11 @@ public class ReplayDataOutput implements IDataOutput, Closeable {
 
 	private long timestamp;
 
+	private static final Logger log = LoggerFactory.getLogger(ReplayDataOutput.class);
+
 	public ReplayDataOutput(Tuple schema, IStorageSupport storer) {
 
+		//log.info("Replay: constructing ReplayDataOutput");
 		// Current version hooks with HBaseBatchStorageSupport
 		if (!(storer instanceof HBaseBatchStorageSupport)) {
 			throw new RuntimeException("Invalid replay store: "

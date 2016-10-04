@@ -40,7 +40,7 @@ public class SignalMechanism {
 
     public static final String PATH_SEPARATOR = "/";
     public static final String GLOBAL_NAMESPACE = "qm";
-    public static final String PIPELINES_PREFIX = "pipelines" + PATH_SEPARATOR;
+    public static final String PIPELINES_PREFIX = PATH_SEPARATOR + "pipelines" + PATH_SEPARATOR;
     
     private static final Map<String, CuratorFramework> FRAMEWORKS = 
         Collections.synchronizedMap(new HashMap<String, CuratorFramework>());
@@ -348,12 +348,11 @@ public class SignalMechanism {
                 getLogger().info("created path " + path);
                 stat = framework.checkExists().forPath(path);
             }
-            getLogger().info("path " + stat);
             if (stat == null) {
                 throw new Exception("component does not exist " + namespace + ":" + path);
             }
-            getLogger().info(System.currentTimeMillis() + " sending " + payload + " to " + namespace + ":" + path);
             framework.setData().forPath(path, payload);
+            getLogger().info(System.currentTimeMillis() + " sent " + payload + " to " + namespace + ":" + path);
         } catch (Exception e) {
             getLogger().error(e.getMessage(), e);
             throw new SignalException(e);
@@ -500,6 +499,7 @@ public class SignalMechanism {
      * @param state the new state
      */
     public static void changeSignalNamespaceState(String namespace, NamespaceState state) {
+        getLogger().info("Changing namespace state: " + namespace + " " + state);
         if (null != namespace) {
             Namespace space = NAMESPACES.get(namespace); // do not create per se
             switch(state) {

@@ -445,10 +445,12 @@ public class RepositoryConnector {
                 if (null != settingsTarget && !CoordinationConfiguration.isEmpty(settingsTarget)) {
                     File settingsFolderF = new File(modelPathF, "settings");
                     if (settingsFolderF.exists()) {
+                        unpackSpecificSettingsArtifact(settingsFolderF);
                         File settingsTargetF = new File(settingsTarget);
-                        HdfsUtils.deleteFolder(settingsTargetF, true);
-                        HdfsUtils.createFolder(settingsTargetF);
-                        String tgt = HdfsUtils.copy(settingsFolderF, settingsTargetF, true);
+                        //HdfsUtils.createFolder(settingsTargetF); // initial, be sure
+                        HdfsUtils.clearFolder(settingsTargetF);
+                        //HdfsUtils.deleteFolder(settingsTargetF, true);
+                        String tgt = HdfsUtils.copy(settingsFolderF, settingsTargetF, false, false);
                         getLogger().info("unpacked settings to (" + tgt + ")");
                     } else {
                         getLogger().info("no settings folder in model (" + settingsFolderF.getAbsolutePath() + ")");
@@ -464,6 +466,27 @@ public class RepositoryConnector {
             getLogger().warn("No infrastructure configuration artifact specification given");
         }
         return result;
+    }
+    
+    /**
+     * Unpacks the specific pipeline settings from their specific artifact.
+     * 
+     * @param target the target folder to unpack to
+     */
+    private static void unpackSpecificSettingsArtifact(File target) {
+        String specificSettingsSpec = 
+            CoordinationConfiguration.getSpecificPipelineSettingsArtifactSpecification();
+        if (!CoordinationConfiguration.isEmpty(specificSettingsSpec)) {
+            File artifact = RepositoryHelper.obtainArtifact(specificSettingsSpec, "specific_settings", "settingsSpec", 
+                ".zip", null);
+            if (null != artifact) {
+                try {
+                    Utils.unjar(artifact, target);
+                } catch (IOException e) {
+                    getLogger().info("unpacking specific pipeline settings: " + e.getMessage());
+                }
+            }
+        }
     }
     
     /**

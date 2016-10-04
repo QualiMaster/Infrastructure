@@ -134,19 +134,27 @@ public class ParameterChangeSignalTest {
         final String executor = "PriorityPip_Source0";
         final String parameter = "playerList";
         final String value = "addMarketplayer/1,2,3";
-        IParameterChangeListener listener = new IParameterChangeListener() {
-            
-            @Override
-            public void notifyParameterChange(ParameterChangeSignal signal) {
-                Assert.assertEquals(namespace, signal.getNamespace());
-                Assert.assertEquals(executor, signal.getExecutor());
-                Assert.assertEquals(1, signal.getChangeCount());
-                Assert.assertEquals(parameter, signal.getChange(0).getName());
-                Assert.assertEquals(value, signal.getChange(0).getStringValue());
-            }
-        };
-        ParameterChangeSignal.notify("param:1|playerList:addMarketplayer/1,2,3".getBytes(), 
-            namespace, executor, listener);
+        TestListener listener = new TestListener();
+        ParameterChangeSignal sig = new ParameterChangeSignal(namespace, executor, parameter, value, "");
+        listener.expect(sig);
+        ParameterChangeSignal.notify(sig.createPayload(), namespace, executor, listener);
+        Assert.assertTrue(listener.receivedSignal());
     }
-    
+
+    /**
+     * Tests handling a signal in the Time travel pipeline (based on A. Nydriotis).
+     */
+    @Test
+    public void testTimeTravelPipelineSignal() {
+        final String namespace = "TimeTravelPip";
+        final String executor = "TimeTravel_Source0";
+        final String parameter = "snapshotQuery";
+        final String value = "09/16/2016,11:25:00,09/11/2016,11:25:00";
+        TestListener listener = new TestListener();
+        ParameterChangeSignal sig = new ParameterChangeSignal(namespace, executor, parameter, value, "");
+        listener.expect(sig);
+        ParameterChangeSignal.notify(sig.createPayload(), namespace, executor, listener);
+        Assert.assertTrue(listener.receivedSignal());
+    }
+
 }
