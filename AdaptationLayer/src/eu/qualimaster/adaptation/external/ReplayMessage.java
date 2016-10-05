@@ -156,4 +156,16 @@ public class ReplayMessage extends RequestMessage {
         return new InformationMessage(pipeline, null, text, null);
     }
 
+    @Override
+    public String toString() {
+        String text = "ReplayMessage " + pipeline + " " + pipelineElement + " ";
+        if (startReplay) {
+            text = "start replay # " + ticket + (null != start ? " from " + start : "") 
+                + (null != end ? " to " + end : "") + " speed " + speed  + " query " + query;
+        } else {
+            text = "stop replay # " + ticket;
+        }
+        return text;
+    }
+
 }
