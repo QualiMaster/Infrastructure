@@ -266,12 +266,6 @@ public class EventManager {
      */
     private void doHandleImpl(IEvent event) {
         if (null != event) {
-            
-                if (event.getClass().getSimpleName().contains("AlgorithmMonitoring")) {
-                    LOGGER.info(LOG_PREFIX_RECEIVED + " " + event);
-                }
-            
-            
             if (isLoggingEnabled(event)) {
                 LOGGER.info(LOG_PREFIX_RECEIVED + " " + event);
             }

@@ -207,6 +207,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      * @throws SignalException in case that the execution / signal sending fails
      */
     protected void sendSignal(TopologySignal signal) throws SignalException {
+LOGGER.info("Sending signal :" + signal.toString() + ", signalConnection: " + this.signalConnection);        
         signal.sendSignal(this.signalConnection);
     }
 
