@@ -76,7 +76,9 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
      * @throws IllegalArgumentException if <code>findings</code> is <b>null</b> or empty
      */
     @QMInternal
-    public SourceVolumeAdaptationEvent(String pipeline, String source, Map<String, Double> findings, Map<String,Double> normFindings) {
+    public SourceVolumeAdaptationEvent(String pipeline, String source, Map<String, Double> findings,
+        Map<String, Double> normFindings) {
+        
         if (null == findings || findings.isEmpty() || null == normFindings || normFindings.isEmpty()) {
             throw new IllegalArgumentException("no findings");
         }
