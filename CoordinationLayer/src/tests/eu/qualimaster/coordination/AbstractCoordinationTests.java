@@ -17,6 +17,7 @@ import backtype.storm.Config;
 import backtype.storm.Testing;
 import backtype.storm.testing.MkClusterParam;
 import backtype.storm.testing.TestJob;
+import eu.qualimaster.common.signal.SignalMechanism;
 import eu.qualimaster.coordination.CoordinationConfiguration;
 import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.coordination.CoordinationUtils;
@@ -417,6 +418,7 @@ public class AbstractCoordinationTests {
      */
     @After
     public void tearDown() {
+        SignalMechanism.clear(true);
         CoordinationManager.stop();
         EventManager.unregister(tracker);
         EventManager.stop();
