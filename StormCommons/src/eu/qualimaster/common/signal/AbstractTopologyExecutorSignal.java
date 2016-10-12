@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import org.apache.log4j.Logger;
 import org.apache.storm.curator.framework.CuratorFramework;
 
 import eu.qualimaster.common.QMInternal;
@@ -39,7 +38,7 @@ public abstract class AbstractTopologyExecutorSignal extends TopologySignal {
     private String topology;
     private String executor;
     private String causeMsgId;
-private static final Logger LOGGER = Logger.getLogger(AbstractTopologyExecutorSignal.class);
+
     /**
      * Creates a topology executor signal.
      * 
@@ -97,7 +96,6 @@ private static final Logger LOGGER = Logger.getLogger(AbstractTopologyExecutorSi
     @Override
     public void sendSignal(AbstractSignalConnection connection) throws SignalException {
         if (connection.isConnected()) {
-LOGGER.info("Sending signal.." + connection);            
             sendSignal(connection.getClient());
         }
     }
@@ -109,7 +107,6 @@ LOGGER.info("Sending signal.." + connection);
      * @throws SignalException in case that the execution / signal sending fails
      */
     void sendSignal(CuratorFramework mechanism) throws SignalException {
-LOGGER.info("Sending signal with mechanism: " + mechanism + ", topology: " + this.topology + ", executor: " + this.executor);  
         SignalMechanism.sendSignal(mechanism, this);
     }
     

@@ -353,7 +353,6 @@ public class SignalMechanism {
             }
             framework.setData().forPath(path, payload);
             getLogger().info(System.currentTimeMillis() + " sent " + payload + " to " + namespace + ":" + path);
-System.out.println(System.currentTimeMillis() + " sent " + payload + " to " + namespace + ":" + path);            
         } catch (Exception e) {
             getLogger().error(e.getMessage(), e);
             throw new SignalException(e);
@@ -393,8 +392,7 @@ System.out.println(System.currentTimeMillis() + " sent " + payload + " to " + na
      */
     static void sendSignal(CuratorFramework mechanism, AbstractTopologyExecutorSignal signal) throws SignalException {
         Namespace space = obtainNamespace(signal.getNamespace());
-        space.setState(NamespaceState.ENABLE); //ENABLE THE SIGNAL FOR THE MOMENT!!
-System.out.println("Namespace: " + space.getName() + ", State: " + space.getState() + ", curator: " + Configuration.getPipelineSignalsCurator() + ", mechanism:" + mechanism);
+        space.setState(NamespaceState.ENABLE); //TODO revert debug: ENABLE SIGNALS FOR THE MOMENT!!
         if (Configuration.getPipelineSignalsCurator()) {
             if (null == mechanism) {
                 try {

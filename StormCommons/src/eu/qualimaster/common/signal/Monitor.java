@@ -76,11 +76,6 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     private TimerEventHandler timerHandler;
     private boolean collectVolume = false; // TODO activate by default?
     
-    static {
-        LogManager.getLogger(Monitor.class).warn("Monitor " + System.getProperty("os.name")
-            + " " + System.getProperty("os.arch"));
-    }
-    
     /**
      * Creates a monitor and sends once the executors resource usage event.
      * 
@@ -117,6 +112,9 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
             EventManager.setTimerPeriod(sendInterval + 100); // allow for tolerances
             EventManager.register(timerHandler);
         }
+        // TODO remove debug
+        LogManager.getLogger(Monitor.class).warn("Monitor " + System.getProperty("os.name")
+            + " " + System.getProperty("os.arch"));
     }
     
     /**
