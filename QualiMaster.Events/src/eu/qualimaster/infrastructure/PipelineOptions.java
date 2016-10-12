@@ -24,6 +24,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.adaptation.events.AdaptationEvent;
+import eu.qualimaster.common.QMSupport;
 
 /**
  * Stores pipeline startup / shutdown options. Please note that the names used in this
@@ -33,6 +34,7 @@ import eu.qualimaster.adaptation.events.AdaptationEvent;
  * 
  * @author Holger Eichelberger
  */
+@QMSupport
 public class PipelineOptions implements Serializable {
     
     public static final String SEPARATOR = ".";
@@ -111,6 +113,16 @@ public class PipelineOptions implements Serializable {
                 a++; // advance if successful
             }
         }
+    }
+
+    /**
+     * Creates a pipeline options object from <code>opts</code> by copying the settings (for now, just the mappings 
+     * are copied, not the values).
+     * 
+     * @param opts the pipeline options
+     */
+    public PipelineOptions(PipelineOptions opts) {
+        this.options.putAll(opts.options);
     }
 
     /**
@@ -758,6 +770,18 @@ public class PipelineOptions implements Serializable {
             result = value.toString();
         }
         return result;
+    }
+    
+    /**
+     * Merges the given options into this options set. <code>opts</code> take precedence over already specified 
+     * options!
+     * 
+     * @param opts the options to merge into (may be <b>null</b>, then nothing happens)
+     */
+    public void merge(PipelineOptions opts) {
+        if (null != opts) {
+            options.putAll(opts.options);
+        }
     }
     
 }
