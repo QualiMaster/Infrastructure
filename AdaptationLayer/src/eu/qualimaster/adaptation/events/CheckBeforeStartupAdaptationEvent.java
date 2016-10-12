@@ -3,6 +3,7 @@ package eu.qualimaster.adaptation.events;
 import eu.qualimaster.common.QMInternal;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
+import eu.qualimaster.infrastructure.PipelineOptions;
 
 /**
  * Notifies the adaptation that a resource check of a pipeline to be started shall be done.
@@ -13,6 +14,7 @@ public class CheckBeforeStartupAdaptationEvent extends AdaptationEvent {
 
     private static final long serialVersionUID = -6707728566855995516L;
     private PipelineLifecycleEvent event;
+    private PipelineOptions options;
 
     /**
      * Creates a startup check adaptation event.
@@ -31,6 +33,15 @@ public class CheckBeforeStartupAdaptationEvent extends AdaptationEvent {
      */
     public String getPipeline() {
         return event.getPipeline();
+    }
+
+    /**
+     * Returns the actual pipeline options (modifiable, will be passed back to caller).
+     * 
+     * @return the actual pipeline options (may be <b>null</b>)
+     */
+    public PipelineOptions getOptions() {
+        return options;
     }
     
     @QMInternal
