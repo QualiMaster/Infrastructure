@@ -206,18 +206,29 @@ public class SignalMechanism {
         protected abstract void send() throws SignalException;
         
     }
-    
+
     /**
      * Clears the internal state of this class.
      */
     public static void clear() {
+        clear(false);
+    }
+    
+    /**
+     * Clears the internal state of this class.
+     * 
+     * @param test clears in testing mode
+     */
+    public static void clear(boolean test) {
         for (CuratorFramework framework: FRAMEWORKS.values()) {
             if (CuratorFrameworkState.STARTED == framework.getState()) {
-                PortManager mgr = new PortManager(framework);
-                try {
-                    mgr.clearAllPortAssignments();
-                } catch (SignalException e) {
-                    getLogger().error(e.getMessage());
+                if (!test) {
+                    PortManager mgr = new PortManager(framework);
+                    try {
+                        mgr.clearAllPortAssignments();
+                    } catch (SignalException e) {
+                        getLogger().error(e.getMessage());
+                    }
                 }
                 framework.close();
             }
@@ -392,7 +403,7 @@ public class SignalMechanism {
      */
     static void sendSignal(CuratorFramework mechanism, AbstractTopologyExecutorSignal signal) throws SignalException {
         Namespace space = obtainNamespace(signal.getNamespace());
-        space.setState(NamespaceState.ENABLE); //TODO revert debug: ENABLE SIGNALS FOR THE MOMENT!!
+        //space.setState(NamespaceState.ENABLE); //TODO revert debug: ENABLE SIGNALS FOR THE MOMENT!!
         if (Configuration.getPipelineSignalsCurator()) {
             if (null == mechanism) {
                 try {
