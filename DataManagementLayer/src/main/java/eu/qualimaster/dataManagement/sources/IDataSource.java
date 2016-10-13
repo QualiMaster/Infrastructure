@@ -1,5 +1,7 @@
 package eu.qualimaster.dataManagement.sources;
 
+import java.util.Map;
+
 import eu.qualimaster.dataManagement.common.IDataElement;
 import eu.qualimaster.observables.IMeasurable;
 
@@ -25,5 +27,12 @@ public interface IDataSource extends IDataElement, IMeasurable {
      * @return the data provider (may be <b>null</b> if not implemented)
      */
     public IHistoricalDataProvider getHistoricalDataProvider();
+    
+    /**
+     * Provides access to the mapping between ids and names of source keys (e.g. stocks or hashtags).
+     * 
+     * @return the id-name mapping of source keys (may be <b>null</b> if such mapping does not exist)
+     */
+    public Map<String, String> getIdsNamesMap();
     
 }

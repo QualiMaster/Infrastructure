@@ -16,6 +16,7 @@ import org.apache.log4j.Logger;
 import java.io.*;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * A generic data replay mechanism. For using HSDFS, please set {@link DataManagementConfiguration#URL_HDFS} properly.
@@ -334,5 +335,9 @@ public class ReplayMechanism implements IDataSource {
     public IHistoricalDataProvider getHistoricalDataProvider() {
         return null;
     }
-
+    
+    @Override
+	public Map<String, String> getIdsNamesMap() {
+    	return null;
+	}
 }
