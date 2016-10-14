@@ -206,6 +206,7 @@ public class ReplayMechanism implements IDataSource {
                 try {
                     DateTime now = new DateTime();
                     while (prevTimeStampNow > now.getMillis()) {
+                        // TODO this is original code, increases the response time and capacity. Better return null
                         Thread.sleep(1);
                         now = new DateTime();
                     }
@@ -337,7 +338,13 @@ public class ReplayMechanism implements IDataSource {
     }
     
     @Override
-	public Map<String, String> getIdsNamesMap() {
+    public Map<String, String> getIdsNamesMap() {
     	return null;
-	}
+    }
+
+    @Override
+    public void setDataSourceListener(IDataSourceListener listener) {
+        // no mapping, no listener needed
+    }
+    
 }

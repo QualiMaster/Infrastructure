@@ -13,6 +13,7 @@ import eu.qualimaster.observables.IMeasurable;
  * Data sinks must have a public no-argument constructor.
  * 
  * @author Holger Eichelberger
+ * @author Andrea Ceroni
  */
 public interface IDataSource extends IDataElement, IMeasurable {
 
@@ -34,5 +35,12 @@ public interface IDataSource extends IDataElement, IMeasurable {
      * @return the id-name mapping of source keys (may be <b>null</b> if such mapping does not exist)
      */
     public Map<String, String> getIdsNamesMap();
+    
+    /**
+     * Defines the data source listener.
+     *  
+     * @param listener the listener instance, <b>null</b> for revoking a previously defined listener
+     */
+    public void setDataSourceListener(IDataSourceListener listener);
     
 }
