@@ -15,7 +15,10 @@
  */
 package tests.eu.qualimaster.storm;
 
+import java.util.Map;
+
 import backtype.storm.utils.Utils;
+import eu.qualimaster.dataManagement.sources.IDataSourceListener;
 import eu.qualimaster.dataManagement.sources.IHistoricalDataProvider;
 import eu.qualimaster.dataManagement.strategies.IStorageStrategyDescriptor;
 import eu.qualimaster.dataManagement.strategies.NoStorageStrategyDescriptor;
@@ -76,6 +79,16 @@ public class Src implements ISrc {
     @Override
     public IHistoricalDataProvider getHistoricalDataProvider() {
         return null;
+    }
+
+    @Override
+    public Map<String, String> getIdsNamesMap() {
+        return null;
+    }
+
+    @Override
+    public void setDataSourceListener(IDataSourceListener listener) {
+        // no mapping, no listener needed
     }
 
 }

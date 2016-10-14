@@ -15,7 +15,10 @@
  */
 package tests.eu.qualimaster.storm;
 
+import java.util.Map;
+
 import eu.qualimaster.dataManagement.sources.FixedRateSource;
+import eu.qualimaster.dataManagement.sources.IDataSourceListener;
 import eu.qualimaster.dataManagement.sources.IHistoricalDataProvider;
 
 /**
@@ -53,5 +56,15 @@ public class Src2 extends FixedRateSource<Integer> implements ISrc {
     public IHistoricalDataProvider getHistoricalDataProvider() {
         return null;
     }
-    
+
+    @Override
+    public Map<String, String> getIdsNamesMap() {
+        return null;
+    }
+
+    @Override
+    public void setDataSourceListener(IDataSourceListener listener) {
+        // no mapping, no listener needed
+    }
+
 }
