@@ -15,12 +15,15 @@
  */
 package eu.qualimaster.dataManagement.sources;
 
+import java.io.Serializable;
+
 /**
  * Callback for components holding data sources so that a data source can inform the holder about certain changes.
+ * A data source listener must be serializable as it is typically part of the state of the holder.
  * 
  * @author Holger Eichelberger
  */
-public interface IDataSourceListener {
+public interface IDataSourceListener extends Serializable {
     
     /**
      * Notifies the holder about a change of {@link IDataSource#getIdsNamesMap()}.
