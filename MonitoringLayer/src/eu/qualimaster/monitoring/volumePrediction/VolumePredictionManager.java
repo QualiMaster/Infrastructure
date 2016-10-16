@@ -169,7 +169,7 @@ public class VolumePredictionManager {
 	        // If the source changes, an event with the same pipeline / element name will occur
 	    	System.out.println("HistoricalDataProviderRegistrationEvent received...");
 	    	status = "initializing";
-	    	VolumePredictor predictor = new VolumePredictor(event.getPipeline(), event.getSource(), event.getProvider(), test);
+	    	VolumePredictor predictor = new VolumePredictor(event.getPipeline(), event.getSource(), event.getProvider(), event.getIdsNamesMap(), test);
 	    	predictor.initialize(MonitoringConfiguration.getVolumeModelLocation() + "/" + event.getSource() + "_" + DEFAULT_FILE_NAME);
 	    	volumePredictors.put(event.getSource(), predictor);
 	    	status = "ready";
@@ -264,7 +264,7 @@ public class VolumePredictionManager {
 	 */
 
 	public static void handleHistoricalDataProviderRegistrationEventTest(HistoricalDataProviderRegistrationEvent event, String folder) {
-    	VolumePredictor predictor = new VolumePredictor(event.getPipeline(), event.getSource(), event.getProvider(), test);
+    	VolumePredictor predictor = new VolumePredictor(event.getPipeline(), event.getSource(), event.getProvider(), event.getIdsNamesMap(), test);
     	predictor.initialize(folder + event.getSource() + "_" + DEFAULT_FILE_NAME);
     	volumePredictors.put(event.getSource(), predictor);
     }
