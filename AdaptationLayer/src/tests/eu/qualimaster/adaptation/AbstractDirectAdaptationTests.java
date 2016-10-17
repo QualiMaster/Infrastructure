@@ -457,8 +457,17 @@ public abstract class AbstractDirectAdaptationTests {
          * @param config the configuration used while testing
          */
         protected abstract void assertAdaptation(int step, Configuration config);
+
+        /**
+         * Notifies the test specification about starting the given <code>step</code>.
+         * 
+         * @param step the simulation step (positive integer)
+         */
+        protected void start(int step) {
+        }
         
         /**
+         * Notifies the test specification about stopping/ending the given <code>step</code>.
          * Allows to stop the simulation process. Called after {@link #assertAdaptation(int, Configuration)}.
          * 
          * @param step the simulation step (positive integer)
@@ -539,6 +548,7 @@ public abstract class AbstractDirectAdaptationTests {
         rTask.setReasoningListener(testSpec);
         testSpec.initialize(adaptConfig);
         for (int step = 1; step <= testSpec.getStepCount(); step++) {
+            testSpec.start(step);
             String id = testSpec.getTimeIdentifier();
             if (testSpec.getStepCount() > 1) {
                 id = testSpec.getTimeIdentifier() + " step " + step;
