@@ -77,7 +77,7 @@ public class ReplayDataOutput implements IDataOutput, Closeable {
 	private void writeIfNeeded() throws UnsupportedEncodingException {
 		idx++;
 		if (idx == fields.length) {
-			log.info("Update the key: " + keyBuilder.toString());
+			// log.info("Update the key: " + keyBuilder.toString());
 			keyBuilder.append(DELIMITER);
 
 			/*

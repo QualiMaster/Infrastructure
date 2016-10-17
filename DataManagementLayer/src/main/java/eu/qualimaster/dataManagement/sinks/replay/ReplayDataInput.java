@@ -102,10 +102,34 @@ public class ReplayDataInput implements IDataInput, Closeable {
     /**
      * Parse the query: We assume the query is just the key (composite key
      * possible, where individual keys are delimited by char 183) */
+
+    /*
     private void parseQuery(String query, Date startDate, Date endDate) {
         long begin = ReplayUtils.getTimestamp(startDate);
         long end = ReplayUtils.getTimestamp(endDate);
         StringBuilder sb = new StringBuilder(query);
+        try {
+            filter[0] = sb.append(DELIMITER).append(String.valueOf(begin))
+                    .toString().getBytes("UTF-8");
+            filter[1] = sb.append(DELIMITER).append(String.valueOf(end))
+                    .toString().getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            LOG.error("Error processing query: " + query);
+            throw new RuntimeException(e);
+        }
+    }
+    */
+    private void parseQuery(String query, Date startDate, Date endDate) {
+        long begin = ReplayUtils.getTimestamp(startDate);
+        long end = ReplayUtils.getTimestamp(endDate);
+        StringBuilder sb = null;
+        if (query.indexOf(' ') >= 0) {
+            sb = new StringBuilder(query.split(" ")[0]);
+        }
+        else {
+            sb = new StringBuilder(query);
+        }
+        LOG.info("Parsing query: " + sb.toString());
         try {
             filter[0] = sb.append(DELIMITER).append(String.valueOf(begin))
                     .toString().getBytes("UTF-8");

@@ -20,7 +20,8 @@ public class Field {
 	 * is represented as a string.
 	 * We use the middle dot as delimiter.
 	 */
-	public static final char DELIMITER = (char) 183;
+	// public static final char DELIMITER = (char) 183;
+	public static final char DELIMITER = '-';
 
 	/** 
 	 * Name of the field. This is used to match to the column

@@ -36,15 +36,15 @@ public class ReplayUtils {
 
     /* Variants of the timestamp converters with primitive inputs to avoid (un-)boxing */
     public static long getTimestamp(Field field, long timeValue) {
-        return 0L;
+        return timeValue;
     }
 
     public static long getTimestamp(Field field, int timeValue) {
-        return 0L;
+        return timeValue;
     }
 
     public static long getTimestamp(Field field, short timeValue) {
-        return 0L;
+        return timeValue;
     }
 
     /***************************************************************************
