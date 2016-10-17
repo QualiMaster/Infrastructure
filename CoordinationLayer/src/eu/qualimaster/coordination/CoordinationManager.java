@@ -84,6 +84,8 @@ public class CoordinationManager {
                 // do not remove here! otherwise endless pending cycle
                 PipelineCommand cmd = pendingStartups.get(pipelineName);
                 if (null != cmd) {
+                    PipelineOptions opts = cmd.getOptions();
+                    opts.merge(event.getOptions());
                     execute(cmd);
                 } else {
                     LogManager.getLogger(CoordinationManager.class).error(

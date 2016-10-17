@@ -49,6 +49,21 @@ public class Topology {
         builder.setBolt(Naming.NODE_SINK, sink, 1).setNumTasks(1).shuffleGrouping(Naming.NODE_PROCESS);
     }
     
+    /**
+     * Creates the testing topology with replay sink instead of usual sink.
+     * 
+     * @param builder the topology builder
+     * @param pipelineName the name of the pipeline
+     */
+    public static void createReplayTopology(TopologyBuilder builder, String pipelineName) {
+        Source<Src> source = new Source<Src>(Src.class, pipelineName); // use Src2.class for fixed rate source
+        builder.setSpout(Naming.NODE_SOURCE, source, 1).setNumTasks(1);
+        Process process = new Process(Naming.NODE_PROCESS, pipelineName);
+        builder.setBolt(Naming.NODE_PROCESS, process, 1).setNumTasks(3).shuffleGrouping(Naming.NODE_SOURCE);
+        RSink sink = new RSink(Naming.NODE_SINK, pipelineName, false);
+        builder.setBolt(Naming.NODE_SINK, sink, 1).setNumTasks(1).shuffleGrouping(Naming.NODE_PROCESS);
+    }
+    
     // checkstyle: stop exception type check
 
     /**

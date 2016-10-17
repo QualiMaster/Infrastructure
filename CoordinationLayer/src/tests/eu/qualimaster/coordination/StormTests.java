@@ -34,6 +34,7 @@ import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.coordination.commands.ParameterChangeCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand;
 import eu.qualimaster.coordination.commands.ProfileAlgorithmCommand;
+import eu.qualimaster.coordination.commands.ReplayCommand;
 import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineOptions;
@@ -323,6 +324,59 @@ public class StormTests extends AbstractCoordinationTests {
         if (!isJenkins()) {
             testPipelineCommands(ParallelismChangeLevel.NONE);
         }
+    }
+
+    /**
+     * Tests sending a replay command.
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test
+    public void testReplayCommand() throws IOException {
+        // System.setProperty("storm.conf.file", "test.yaml"); -> QMstormVersion
+        LocalStormEnvironment env = new LocalStormEnvironment();
+        // build the test topology
+        RecordingTopologyBuilder builder = new RecordingTopologyBuilder();
+        Topology.createReplayTopology(builder, Naming.PIPELINE_NAME);
+        StormTopology topology = builder.createTopology();
+        Map<String, TopologyTestInfo> topologies = new HashMap<String, TopologyTestInfo>();
+        @SuppressWarnings("rawtypes")
+        Map topoCfg = createTopologyConfiguration();
+        topologies.put(Naming.PIPELINE_NAME, new TopologyTestInfo(topology, 
+            new File(Utils.getTestdataDir(), "pipeline.xml"), topoCfg));
+        env.setTopologies(topologies);
+        clear();
+        
+        PipelineCommand cmd = new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.START);
+        cmd.execute();
+        fakeCheckedPipeline(Naming.PIPELINE_NAME);
+        waitForExecution(1, 0, 1000); // pipeline status tracker <-> monitoring
+        Assert.assertTrue(getTracer().contains(cmd));
+        Assert.assertEquals(1, getTracer().getLogEntryCount());
+        Assert.assertEquals(0, getFailedHandler().getFailedCount());
+        clear();
+
+        sleep(3000); // let Storm run for a while
+
+        PipelineLifecycleEvent fake = new PipelineLifecycleEvent(Naming.PIPELINE_NAME, 
+            PipelineLifecycleEvent.Status.CREATED, null);
+        EventManager.send(fake);
+
+        sleep(3000); // let Storm run for a while
+        
+        ReplayCommand rCommand = new ReplayCommand(Naming.PIPELINE_NAME, Naming.NODE_SINK, true, 1);
+        rCommand.execute();
+        
+        waitForExecution(1, 0, 1000);
+
+        sleep(1000);
+        cmd = new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.STOP);
+        cmd.execute();
+        
+        sleep(2000); // let Storm run for a while
+        env.shutdown();
+        env.cleanup();
+        
     }
 
     /**

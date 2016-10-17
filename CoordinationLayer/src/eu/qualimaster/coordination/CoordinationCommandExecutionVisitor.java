@@ -312,8 +312,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
                         getLogger().info("Deferring pipeline start command for " + pipelineName);
                         CoordinationManager.deferStartup(command);
                         EventManager.handle(new PipelineLifecycleEvent(pipelineName, 
-                            PipelineLifecycleEvent.Status.CHECKING,
-                            command.getOptions().getAdaptationFilterName(), command));
+                            PipelineLifecycleEvent.Status.CHECKING, command.getOptions(), command));
                         deferred = true;
                     }
                 }
