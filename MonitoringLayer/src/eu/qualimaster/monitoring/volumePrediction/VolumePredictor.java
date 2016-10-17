@@ -59,6 +59,9 @@ public class VolumePredictor {
 	/** File to temporarily store historical data */
 	private File historicalDataFile;
 	
+	/** Mapping between ids and names of source terms */
+	private Map<String,String> idsToNamesMap;
+	
 	/** Flag indicating whether the class is being used in test mode or not */
 	private boolean test;
 	
@@ -88,9 +91,9 @@ public class VolumePredictor {
 	private static final String TEST_STREAMING_FOLDER = "/streamingData/";
 	
 	/**
-	 * Default constructor of the predictor, no models are trained yet.
+	 * Constructor of the predictor, no models are trained yet.
 	 */
-	public VolumePredictor(String pipeline, String source, IHistoricalDataProvider dataProvider, boolean test)
+	public VolumePredictor(String pipeline, String source, IHistoricalDataProvider dataProvider, Map<String,String> idsToNamesMap, boolean test)
 	{
 		this.pipeline = pipeline;
 		this.source = source;
@@ -102,15 +105,16 @@ public class VolumePredictor {
 		this.running = false;
 		this.historyProvider = dataProvider;
 		this.historicalDataFile = null;
+		this.idsToNamesMap = formatMap(idsToNamesMap);
 		this.test = test;
 	}
 	
 	/**
-	 * Default constructor of the predictor, no models are trained yet.
+	 * Constructor of the predictor, no models are trained yet.
 	 */
-	public VolumePredictor(String pipeline, String source, IHistoricalDataProvider dataProvider)
+	public VolumePredictor(String pipeline, String source, IHistoricalDataProvider dataProvider, Map<String,String> idsToNamesMap)
 	{
-		this(pipeline, source, dataProvider, false);
+		this(pipeline, source, dataProvider, idsToNamesMap, false);
 	}
 	
 	/**
@@ -190,14 +194,17 @@ public class VolumePredictor {
 		HashMap<String,Double> alarms = new HashMap<>();
 		HashMap<String,Double> normalizedAlarms = new HashMap<>();
 		ArrayList<String> unknownTerms = new ArrayList<>();
-		for(String term : observations.keySet())
+		for(String termId : observations.keySet())
 		{	
-			long currVolume = (long)observations.get(term);
+			// get the name of the source term from its id
+			String termName = this.idsToNamesMap.get(termId);
+			
+			long currVolume = (long)observations.get(termId);
 			System.out.print(currVolume + "\t");
-			Prediction model = this.models.get(term);
+			Prediction model = this.models.get(termName);
 			
 			// add the current observation to the recent volumes for the current term
-			addRecentVolume(term, currVolume);
+			addRecentVolume(termName, currVolume);
 			
 			if(model != null && model.getForecaster() != null){
 				// for test cases, derive the current date by incrementing the date of the last observation by the desired granularity
@@ -214,19 +221,19 @@ public class VolumePredictor {
 				System.out.print((int)prediction + "\t");
 				
 				// check whether the predicted volume is critical and, if so, include the term when raising the alarm
-				double deviation = evaluatePrediction(term, prediction);
+				double deviation = evaluatePrediction(termName, prediction);
 				if(deviation != -1){
-					alarms.put(term, deviation);
-					normalizedAlarms.put(term, deviation / currVolume);
+					alarms.put(termId, deviation);
+					normalizedAlarms.put(termId, deviation / currVolume);
 				}
 				System.out.print(deviation + "\t");
 			}
 			else{
-				if(!this.monitoredTerms.contains(term)) unknownTerms.add(term);
+				if(!this.monitoredTerms.contains(termName)) unknownTerms.add(termName);
 			}
 			
 			// store the current observation in the historical data of the current term (only for twitter)
-			storeInHistoricalData(term, timestamp, currVolume);
+			storeInHistoricalData(termName, timestamp, currVolume);
 		}
 		System.out.print("\n");
 		
@@ -510,6 +517,18 @@ public class VolumePredictor {
 //		if(this.monitoredTerms.containsKey(term)) this.monitoredTerms.put(term, threshold);
 //		else System.out.println("ERROR: the required term is not monitored.");
 //	}
+	
+	private Map<String, String> formatMap(Map<String, String> inputMap){
+		Map<String, String> newMap = new HashMap<>();
+		for(String id : inputMap.keySet()){
+			String name = inputMap.get(id);
+			String[] fields = name.split("ï¿½");
+			if(fields.length > 1) name = fields[0] + "·" + fields[1];
+			else name = fields[0];
+			newMap.put(id, name);
+		}
+		return newMap;
+	}
 
 	/**
 	 * @return the running
@@ -614,5 +633,12 @@ public class VolumePredictor {
 	 */
 	public AdaptationEvent getAdaptationEvent(){
 		return this.adaptationEvent;
+	}
+	
+	/**
+	 * @return the idsToNamesMap
+	 */
+	public Map<String, String> getIdsToNamesMap() {
+		return this.idsToNamesMap;
 	}
 }
