@@ -24,12 +24,14 @@ import net.ssehub.easy.instantiation.core.model.buildlangModel.ITracer;
  */
 public class AdaptationLoggerFactory {
 
+    private static IAdaptationLogger logger = createLogger();
+    
     /**
      * Returns the adaptation logger.
      * 
      * @return the adaptation logger (may be <b>null</b> for none)
      */
-    public static IAdaptationLogger createLogger() {
+    private static IAdaptationLogger createLogger() {
         return null;
     }
     
@@ -40,8 +42,16 @@ public class AdaptationLoggerFactory {
      * @return the delegating tracer
      */
     public static DelegatingLogTracer createTracer(ITracer tracer) {
-        IAdaptationLogger logger = createLogger();
         return new DelegatingLogTracer(tracer, logger); // null is not a problem for the logger
+    }
+    
+    /**
+     * Returns the adaptation logger.
+     * 
+     * @return the logger (may be <b>null</b>)
+     */
+    public static IAdaptationLogger getLogger() {
+        return logger;
     }
     
 }

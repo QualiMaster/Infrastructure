@@ -17,6 +17,7 @@ package eu.qualimaster.adaptation.internal;
 
 import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
+import eu.qualimaster.coordination.events.CoordinationCommandExecutionEvent;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
 
 /**
@@ -55,9 +56,11 @@ public interface IAdaptationLogger {
     public void executedTactic(String name, boolean successful);
 
     /**
-     * Notifies the logger that a coordination command is being executed as part of the enactment.
+     * Notifies the logger that a coordination command is being executed as part of the enactment. Please note that
+     * this does not mean that the command has been (completely) executed, just that it is scheduled for execution.
      * 
-     * @param command the coordination comman
+     * @param command the coordination command
+     * @see #enacted(CoordinationCommand, CoordinationCommandExecutionEvent)
      */
     public void enacting(CoordinationCommand command);
     
@@ -68,4 +71,17 @@ public interface IAdaptationLogger {
      */
     public void endAdaptation(boolean successful);
 
+    /**
+     * Called when an execution command actually has been processed. Please note that this method may be called after
+     * {@link #endAdaptation(boolean)} as the commands are executed asynchronously. You may correlate the command/event
+     * id of {@link #enacting(CoordinationCommand)}, the adaptation execution and the actual enactment indicated by
+     * this method.
+     * 
+     * @param command the command (may be <b>null</b> if the execution took too long and the relation between 
+     *     <code>command</code> and <code>event</code> is already deleted).
+     * @param event the execution event indicating the execution status and also the id of the command that has been
+     *     executed
+     */
+    public void enacted(CoordinationCommand command, CoordinationCommandExecutionEvent event);
+    
 }

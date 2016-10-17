@@ -29,6 +29,7 @@ import eu.qualimaster.adaptation.events.IPipelineAdaptationEvent;
 import eu.qualimaster.adaptation.events.WrappingRequestMessageAdaptationEvent;
 import eu.qualimaster.adaptation.external.RequestMessage;
 import eu.qualimaster.adaptation.internal.AdaptationLoggerFactory;
+import eu.qualimaster.adaptation.internal.IAdaptationLogger;
 import eu.qualimaster.adaptation.internal.ReasoningHook;
 import eu.qualimaster.adaptation.internal.RtVilValueMapping;
 import eu.qualimaster.coordination.RepositoryConnector;
@@ -434,6 +435,10 @@ public class AdaptationEventQueue {
         if (null != command) {
             cmdVisitor.setResponse(event);
             command.accept(cmdVisitor);
+        }
+        IAdaptationLogger logger = AdaptationLoggerFactory.getLogger();
+        if (null != logger) {
+            logger.enacted(command, event);
         }
         return command;
     }

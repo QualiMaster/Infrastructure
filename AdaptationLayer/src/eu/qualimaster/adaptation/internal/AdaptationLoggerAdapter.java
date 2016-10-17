@@ -17,6 +17,7 @@ package eu.qualimaster.adaptation.internal;
 
 import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
+import eu.qualimaster.coordination.events.CoordinationCommandExecutionEvent;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
 
 /**
@@ -44,6 +45,10 @@ public class AdaptationLoggerAdapter implements IAdaptationLogger {
 
     @Override
     public void endAdaptation(boolean successful) {
+    }
+
+    @Override
+    public void enacted(CoordinationCommand command, CoordinationCommandExecutionEvent event) {
     }
 
 }
