@@ -121,6 +121,7 @@ public class PipelineLifecycleEvent extends InfrastructureEvent {
     private String adaptationFilterName;
     private String causeSenderId;
     private String causeMessageId;
+    private PipelineOptions options;
 
     /**
      * Creates a pipeline lifecycle event with no options (adaptation enabled).
@@ -165,6 +166,20 @@ public class PipelineLifecycleEvent extends InfrastructureEvent {
             this.causeMessageId = cause.getMessageId();
         }
     }
+
+    /**
+     * Creates a pipeline lifecycle event with pipeline options.
+     * 
+     * @param pipeline the name of the pipeline
+     * @param status the actual status
+     * @param options the pipeline options
+     * @param cause the causing returnable event (may be <b>null</b> if not known)
+     */
+    public PipelineLifecycleEvent(String pipeline, Status status, PipelineOptions options, 
+        IReturnableEvent cause) {
+        this(pipeline, status, options.getAdaptationFilterName(), cause);
+        this.options = options;
+    }
     
     /**
      * Creates a pipeline lifecycle event based on an existing event. Takes over all information
@@ -176,6 +191,7 @@ public class PipelineLifecycleEvent extends InfrastructureEvent {
     public PipelineLifecycleEvent(PipelineLifecycleEvent event, Status status) {
         this.pipeline = event.pipeline;
         this.adaptationFilterName = event.adaptationFilterName;
+        this.options = event.options;
         this.causeSenderId = event.causeSenderId;
         this.causeMessageId = event.causeMessageId;
         this.status = status;
@@ -233,6 +249,15 @@ public class PipelineLifecycleEvent extends InfrastructureEvent {
      */
     public Status getStatus() {
         return status;
+    }
+    
+    /**
+     * The actual pipeline options.
+     * 
+     * @return the pipeline options (may be <b>null</b>)
+     */
+    public PipelineOptions getOptions() {
+        return options;
     }
     
 }
