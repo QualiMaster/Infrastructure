@@ -123,7 +123,7 @@ public class TestTracerFactory extends TracerFactory {
         }
 
         @Override
-        public void visitScript(Script arg0) {
+        public void visitScript(Script arg0, RuntimeEnvironment env) {
             System.out.println("executing " + arg0.getName());
         }
 
