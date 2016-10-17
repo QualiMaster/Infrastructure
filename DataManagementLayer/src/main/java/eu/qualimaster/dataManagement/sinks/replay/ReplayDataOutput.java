@@ -64,6 +64,12 @@ public class ReplayDataOutput implements IDataOutput, Closeable {
 			if (!f.isKey() && !f.isTimesamp()) {
 				row.addColumn(Bytes.toBytes(f.getName()));
 			}
+
+			// Tuan - 2016-10-17 17:52:00
+			// Hard code to test the random sink
+			else if (f.getName().equals("randomInteger")) {
+				row.addColumn(Bytes.toBytes(f.getName()));
+			}
 		}
 		keyBuilder = new StringBuilder();
 	}
@@ -169,6 +175,13 @@ public class ReplayDataOutput implements IDataOutput, Closeable {
 		byte[] bytes = Bytes.toBytes(value);
 		if (fields[idx].isKey()) {
 			appendToKey(String.valueOf(value));
+
+			// Tuan - 2016-10-17 17:56:00
+			// Hard code for the RandomSink
+			if (fields[idx].getName().equals("randomInteger")) {
+				row.addValue(bytes);
+			}
+
 		} else if (fields[idx].isTimesamp()) {
 			timestamp = ReplayUtils.getTimestamp(fields[idx], value);
 		} else {

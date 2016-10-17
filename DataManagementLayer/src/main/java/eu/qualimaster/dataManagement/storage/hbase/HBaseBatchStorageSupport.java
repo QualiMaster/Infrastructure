@@ -1,7 +1,6 @@
 package eu.qualimaster.dataManagement.storage.hbase;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,7 +10,6 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +22,7 @@ import eu.qualimaster.dataManagement.storage.support.IStorageSupport;
  */
 public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStorageSupport {
 
-	//private static final Logger LOG = LoggerFactory.getLogger(HBaseBatchStorageSupport.class);
+	private static final Logger log = LoggerFactory.getLogger(HBaseBatchStorageSupport.class);
 
 	private Configuration config;
 	private HConnection conn;
@@ -42,8 +40,6 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 	private int batchSize = 10;
 
 	private int counter;
-
-	private static final Logger log = LoggerFactory.getLogger(HBaseBatchStorageSupport.class);
 
 	public HBaseBatchStorageSupport(String tableName) {		
 		super(tableName);
@@ -145,8 +141,8 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 		}
 		final HBaseRow row = (HBaseRow) object;
 		
-		byte[] keyBytes = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).putLong(System.currentTimeMillis()).array();
-		row.setKey(keyBytes);
+		// byte[] keyBytes = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).putLong(System.currentTimeMillis()).array();
+		// row.setKey(keyBytes);
 		
 		Put put = row.createPut();
 		try {
