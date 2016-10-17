@@ -20,7 +20,10 @@ import eu.qualimaster.events.EventManager.EventSender;
 import eu.qualimaster.events.IEvent;
 import eu.qualimaster.events.IResponseEvent;
 import eu.qualimaster.events.IReturnableEvent;
+import eu.qualimaster.infrastructure.EndOfDataEvent;
+import eu.qualimaster.infrastructure.InfrastructurePart;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
+import eu.qualimaster.infrastructure.PipelineOptions;
 import eu.qualimaster.logging.events.LoggingEvent;
 import eu.qualimaster.logging.events.LoggingFilterEvent;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
@@ -398,6 +401,14 @@ public class EventsTests {
         Assert.assertEquals(PipelineLifecycleEvent.Status.STOPPED, lEvt.getStatus());
         Assert.assertEquals("1234", lEvt.getCauseMessageId());
         Assert.assertEquals("abcd", lEvt.getCauseSenderId());
+        
+        PipelineOptions opts = new PipelineOptions();
+        lEvt = new PipelineLifecycleEvent("pip", PipelineLifecycleEvent.Status.CHECKING, opts, evt);
+        Assert.assertEquals("pip", lEvt.getPipeline());
+        Assert.assertEquals(PipelineLifecycleEvent.Status.CHECKING, lEvt.getStatus());
+        Assert.assertEquals(opts, lEvt.getOptions());
+        Assert.assertEquals("1234", lEvt.getCauseMessageId());
+        Assert.assertEquals("abcd", lEvt.getCauseSenderId());
     }
 
     /**
@@ -451,6 +462,27 @@ public class EventsTests {
         EventManager.cleanup();
         EventManager.stop();
         Assert.assertEquals(2, handler.getEventCount());
+    }
+    
+    /**
+     * Tests the end-of-data event.
+     */
+    @Test
+    public void testEndOfDataEvent() {
+        EndOfDataEvent eod = new EndOfDataEvent("pip", "src");
+        Assert.assertEquals("pip", eod.getPipeline());
+        Assert.assertEquals("src", eod.getSource());
+    }
+    
+    /**
+     * "Tests" the forward declaration.
+     */
+    @Test
+    public void testInfrastructurePart() {
+        InfrastructurePart[] parts = InfrastructurePart.values();
+        for (int i = 0; i < parts.length; i++) {
+            Assert.assertNotNull(InfrastructurePart.valueOf(parts[i].name()));
+        }
     }
     
 }
