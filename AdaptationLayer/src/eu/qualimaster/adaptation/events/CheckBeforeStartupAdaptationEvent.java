@@ -24,6 +24,8 @@ public class CheckBeforeStartupAdaptationEvent extends AdaptationEvent {
     @QMInternal
     public CheckBeforeStartupAdaptationEvent(PipelineLifecycleEvent event) {
         this.event = event;
+        PipelineOptions opts = event.getOptions();
+        this.options = null == opts ? null : new PipelineOptions(opts);
     }
     
     /**
@@ -49,7 +51,7 @@ public class CheckBeforeStartupAdaptationEvent extends AdaptationEvent {
     public boolean adjustLifecycle(String failReason, Integer failCode) {
         boolean adjusted = false;
         if (null == failReason && null == failCode) {
-            EventManager.send(new PipelineLifecycleEvent(event, PipelineLifecycleEvent.Status.CHECKED));
+            EventManager.send(new PipelineLifecycleEvent(event, PipelineLifecycleEvent.Status.CHECKED, options));
             adjusted = true;
         } 
         return adjusted;
