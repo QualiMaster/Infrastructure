@@ -101,7 +101,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
 
     /**
      * Parse the query: We assume the query is just the key (composite key
-     * possible, where individual keys are delimited by char 183 */
+     * possible, where individual keys are delimited by char 183) */
     private void parseQuery(String query, Date startDate, Date endDate) {
         long begin = ReplayUtils.getTimestamp(startDate);
         long end = ReplayUtils.getTimestamp(endDate);
