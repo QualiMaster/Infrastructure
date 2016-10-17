@@ -15,6 +15,7 @@
  */
 package tests.eu.qualimaster.adaptation;
 
+import eu.qualimaster.adaptation.internal.AdaptationLoggerFactory;
 import net.ssehub.easy.instantiation.core.model.buildlangModel.ITracer;
 import net.ssehub.easy.instantiation.core.model.tracing.ConsoleTracerFactory;
 import net.ssehub.easy.instantiation.core.model.vilTypes.configuration.AbstractIvmlVariable;
@@ -101,7 +102,8 @@ public class DebugTimeMeasurementTracerFactory extends TimeMeasurementTracerFact
     
     @Override
     public ITracer createBuildLanguageTracerImpl() {
-        return new DebugTimeDelegatingTracer(getFactory().createBuildLanguageTracerImpl());
+        return AdaptationLoggerFactory.createTracer(
+            new DebugTimeDelegatingTracer(getFactory().createBuildLanguageTracerImpl()));
     }
 
 }

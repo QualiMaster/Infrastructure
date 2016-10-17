@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import eu.qualimaster.adaptation.internal.AdaptationLoggerFactory;
 import net.ssehub.easy.instantiation.core.model.buildlangModel.ITracer;
 import net.ssehub.easy.instantiation.core.model.execution.IInstantiatorTracer;
 import net.ssehub.easy.instantiation.core.model.execution.TracerFactory;
@@ -246,7 +247,7 @@ public class TimeMeasurementTracerFactory extends TracerFactory {
 
     @Override
     public ITracer createBuildLanguageTracerImpl() {
-        return new TimeDelegatingTracer(factory.createBuildLanguageTracerImpl());
+        return AdaptationLoggerFactory.createTracer(new TimeDelegatingTracer(factory.createBuildLanguageTracerImpl()));
     }
 
     @Override

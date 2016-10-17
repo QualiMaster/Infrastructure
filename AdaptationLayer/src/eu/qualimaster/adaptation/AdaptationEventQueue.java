@@ -12,6 +12,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import net.ssehub.easy.instantiation.core.model.buildlangModel.ITracer;
+import net.ssehub.easy.instantiation.core.model.execution.IInstantiatorTracer;
 import net.ssehub.easy.instantiation.core.model.execution.TracerFactory;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.Executor;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.RtVilExecution;
@@ -26,6 +28,7 @@ import eu.qualimaster.adaptation.events.HandlerAdaptationEvent;
 import eu.qualimaster.adaptation.events.IPipelineAdaptationEvent;
 import eu.qualimaster.adaptation.events.WrappingRequestMessageAdaptationEvent;
 import eu.qualimaster.adaptation.external.RequestMessage;
+import eu.qualimaster.adaptation.internal.AdaptationLoggerFactory;
 import eu.qualimaster.adaptation.internal.ReasoningHook;
 import eu.qualimaster.adaptation.internal.RtVilValueMapping;
 import eu.qualimaster.coordination.RepositoryConnector;
@@ -351,6 +354,28 @@ public class AdaptationEventQueue {
             } catch (IllegalAccessException e) {
                 LOGGER.info("Loading tracer factory " + factory + ":" + e.getMessage());
             }
+        }
+        if (!done) {
+            final TracerFactory current = TracerFactory.getInstance();
+            TracerFactory.setInstance(new TracerFactory() {
+
+                @Override
+                public ITracer createBuildLanguageTracerImpl() {
+                    return AdaptationLoggerFactory.createTracer(current.createBuildLanguageTracerImpl());
+                }
+
+                @Override
+                public IInstantiatorTracer createInstantiatorTracerImpl() {
+                    return current.createInstantiatorTracerImpl();
+                }
+
+                @Override
+                public net.ssehub.easy.instantiation.core.model.templateModel.ITracer 
+                    createTemplateLanguageTracerImpl() {
+                    return current.createTemplateLanguageTracerImpl();
+                }
+                
+            });
         }
         return done;
     }
