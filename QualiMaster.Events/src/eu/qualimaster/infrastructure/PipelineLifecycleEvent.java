@@ -172,7 +172,7 @@ public class PipelineLifecycleEvent extends InfrastructureEvent {
      * 
      * @param pipeline the name of the pipeline
      * @param status the actual status
-     * @param options the pipeline options
+     * @param options the pipeline options (may be <b>null</b>)
      * @param cause the causing returnable event (may be <b>null</b> if not known)
      */
     public PipelineLifecycleEvent(String pipeline, Status status, PipelineOptions options, 
@@ -180,21 +180,34 @@ public class PipelineLifecycleEvent extends InfrastructureEvent {
         this(pipeline, status, options.getAdaptationFilterName(), cause);
         this.options = options;
     }
-    
+
     /**
      * Creates a pipeline lifecycle event based on an existing event. Takes over all information
      * from <code>event</code> and sets <code>status</code> as given.
      * 
      * @param event takes over the information from the given event
      * @param status the new status
+     * @param options the pipeline options (may be <b>null</b>)
      */
-    public PipelineLifecycleEvent(PipelineLifecycleEvent event, Status status) {
+    public PipelineLifecycleEvent(PipelineLifecycleEvent event, Status status, PipelineOptions options) {
         this.pipeline = event.pipeline;
         this.adaptationFilterName = event.adaptationFilterName;
-        this.options = event.options;
+        this.options = options;
         this.causeSenderId = event.causeSenderId;
         this.causeMessageId = event.causeMessageId;
         this.status = status;
+    }
+    
+    /**
+     * Creates a pipeline lifecycle event based on an existing event. Takes over all information
+     * from <code>event</code> and sets <code>status</code> as given. Passes on the pipeline options.
+     * 
+     * @param event takes over the information from the given event
+     * @param status the new status
+     * @see #PipelineLifecycleEvent(PipelineLifecycleEvent, Status, PipelineOptions)
+     */
+    public PipelineLifecycleEvent(PipelineLifecycleEvent event, Status status) {
+        this(event, status, event.options);
     }
 
     /**

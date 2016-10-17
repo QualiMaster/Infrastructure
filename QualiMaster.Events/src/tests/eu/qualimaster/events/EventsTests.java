@@ -409,6 +409,22 @@ public class EventsTests {
         Assert.assertEquals(opts, lEvt.getOptions());
         Assert.assertEquals("1234", lEvt.getCauseMessageId());
         Assert.assertEquals("abcd", lEvt.getCauseSenderId());
+        
+        lEvt = new PipelineLifecycleEvent(lEvt, PipelineLifecycleEvent.Status.CHECKED);
+        Assert.assertEquals("pip", lEvt.getPipeline());
+        Assert.assertEquals(PipelineLifecycleEvent.Status.CHECKED, lEvt.getStatus());
+        Assert.assertEquals(opts, lEvt.getOptions());
+        Assert.assertEquals("1234", lEvt.getCauseMessageId());
+        Assert.assertEquals("abcd", lEvt.getCauseSenderId());
+        
+        opts = new PipelineOptions();
+        lEvt = new PipelineLifecycleEvent(lEvt, PipelineLifecycleEvent.Status.CHECKED, opts);
+        Assert.assertEquals("pip", lEvt.getPipeline());
+        Assert.assertEquals(PipelineLifecycleEvent.Status.CHECKED, lEvt.getStatus());
+        Assert.assertEquals(opts, lEvt.getOptions());
+        Assert.assertEquals("1234", lEvt.getCauseMessageId());
+        Assert.assertEquals("abcd", lEvt.getCauseSenderId());
+
     }
 
     /**
