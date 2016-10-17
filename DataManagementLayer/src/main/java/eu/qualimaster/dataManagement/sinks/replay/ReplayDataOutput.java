@@ -71,6 +71,7 @@ public class ReplayDataOutput implements IDataOutput, Closeable {
 	private void writeIfNeeded() throws UnsupportedEncodingException {
 		idx++;
 		if (idx == fields.length) {
+			log.info("Update the key: " + keyBuilder.toString());
 			keyBuilder.append(DELIMITER);
 
 			/*
@@ -78,6 +79,12 @@ public class ReplayDataOutput implements IDataOutput, Closeable {
 			 * range queries
 			 */
 			keyBuilder.append(String.valueOf(timestamp));
+			if (keyBuilder.length() == 0) {
+				String msg = "Key cannot be empty: Remember that every tuple " +
+						"must have at least one key and one timestamp field";
+				log.error(msg);
+				throw new RuntimeException(msg);
+			}
 			byte[] bytes = keyBuilder.toString().getBytes("UTF-8");
 			row.setKey(bytes);
 			storer.write(row);
