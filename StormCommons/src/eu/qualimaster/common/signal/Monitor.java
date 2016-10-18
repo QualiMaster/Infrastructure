@@ -76,7 +76,7 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     private AtomicLong itemsVolume = new AtomicLong(-1);
     private boolean includeItems;
     private TimerEventHandler timerHandler;
-    private boolean collectVolume = false; // TODO activate by default?
+    private boolean collectVolume = true; //false; // TODO activate by default?
     
     /**
      * Creates a monitor and sends once the executors resource usage event.
@@ -275,9 +275,9 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     public void emit(EmitInfo info) {
         if (null != info && null != info.values) {
             itemsSend.addAndGet(info.values.size());
-            /*if (collectVolume) {
+            if (collectVolume) {
                 itemsVolume.addAndGet(MEMGATHERER.getObjectSize(info.values));
-            }*/
+            }
             MonitoringPluginRegistry.emitted(info);
         }
     }
@@ -314,9 +314,9 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     public void emitted(Object tuple) {
         if (null != tuple) {
             itemsSend.incrementAndGet();
-            /*if (collectVolume) {
+            if (collectVolume) {
                 itemsVolume.addAndGet(MEMGATHERER.getObjectSize(tuple));
-            }*/
+            }
             MonitoringPluginRegistry.emitted(tuple);
         }
     }
