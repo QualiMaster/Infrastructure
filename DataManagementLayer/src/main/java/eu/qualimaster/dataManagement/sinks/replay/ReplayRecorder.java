@@ -116,6 +116,7 @@ public class ReplayRecorder<T> {
     public static  <T> ISerializer<T> getSerializer(Class<T> cls) {
     	//LogManager.getLogger(SerializerRegistry.class).info(
         //        "get serializer instance: cls.getName() = "+ cls.getSimpleName());
+		log.info("ReplayRecorder: Register with " + cls.getSimpleName() + ", " + cls.getName());
         return SerializerRegistry.getSerializer(cls.getSimpleName(), cls);    	
     }
 	

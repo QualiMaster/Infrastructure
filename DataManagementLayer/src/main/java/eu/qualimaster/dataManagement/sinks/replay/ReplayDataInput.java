@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 
@@ -45,6 +47,16 @@ public class ReplayDataInput implements IDataInput, Closeable {
     /** Map fields in the tuple to the HBase-compatible bytes */
     private byte[][] fields;
 
+    /**
+     * 2016-10-18 Tuan: Fix a bug related to the way the records are read.
+     * Key1 DELIM Key2 DELIM Key3 DELIM timestamp
+     * keyIdx contains the sorted indices of the key fields
+     */
+    private int[] keyIdx;
+
+    /** Index of the timestamp field */
+    private int tsIdx;
+
     /** Cursor to the current field */
     private int idx;
 
@@ -52,7 +64,11 @@ public class ReplayDataInput implements IDataInput, Closeable {
     private ResultScanner scanner;
     private Iterator<Result> iter;
     private Result peekedRow;
-    private boolean eod;
+
+    /** Internally cached variables */
+    private String[] rowKey;
+
+    private boolean eod = true;
 
     /** the current prefix of query */
     private byte[][] filter;
@@ -70,32 +86,53 @@ public class ReplayDataInput implements IDataInput, Closeable {
         int n = schema.getFields().size();
         fields = new byte[n][];
         filter = new byte[2][];
+
+        // The first item is the number of key fields
+        keyIdx = new int[n];
+
         for (int i = 0; i < n; i++) {
             Field f = schema.getField(i);
-            if (!f.isKey() && !f.isTimesamp()) {
-                fields[i] = Bytes.toBytes(f.getName());
+            fields[i] = Bytes.toBytes(f.getName());
+            if (f.isKey()) {
+                keyIdx[0]++;
+                keyIdx[keyIdx[0]] = i;
+            }
+            else if (f.isTimesamp()) {
+                tsIdx = i;
             }
         }
+        eod = true;
+
         this.db.connect();
     }
 
     public void updateQuery(String query, Date startDate, Date enDate) {
         parseQuery(query, startDate, enDate);
         eod = true;
-        scanner.close();
+        if (scanner != null)
+            scanner.close();
         peekedRow = null;
         Object obj = null;
         try {
+            LOG.info("Querying db with query range: " + new String(filter[0]) + ", " + new String(filter[1]));
             obj = db.get(filter);
             if (obj == null || !(obj instanceof ResultScanner)) {
-                LOG.warn("Error processing the query " + query);
+                LOG.warn("Error getting the scanner from the query " + query);
             }
             scanner = (ResultScanner)obj;
             iter = scanner.iterator();
-            peekedRow = iter.next();
-            eod = false;
+            if (iter.hasNext()) {
+                peekedRow = iter.next();
+                eod = false;
+                rowKey = (peekedRow != null) ? new String(peekedRow.getRow(), Charset.forName("UTF-8")).split("-") : null;
+                LOG.info("Fetch internally one data from the scanner: " + peekedRow);
+            }
         } catch (Exception e) {
-            LOG.warn("Error processing the query " + query);
+            LOG.warn("ERROR processing the query " + query);
+            LOG.error(e.getMessage());
+            for (StackTraceElement msg : e.getStackTrace()) {
+                LOG.error(msg.getClassName() + " line " + msg.getLineNumber() + "( method " + msg.getMethodName() + "): " + msg.toString());
+            }
         }
     }
 
@@ -129,10 +166,12 @@ public class ReplayDataInput implements IDataInput, Closeable {
         else {
             sb = new StringBuilder(query);
         }
-        LOG.info("Parsing query: " + sb.toString());
+        queryStr = sb.toString();
+        LOG.info("Parsing query: " + queryStr);
         try {
             filter[0] = sb.append(DELIMITER).append(String.valueOf(begin))
                     .toString().getBytes("UTF-8");
+            sb = new StringBuilder(query);
             filter[1] = sb.append(DELIMITER).append(String.valueOf(end))
                     .toString().getBytes("UTF-8");
         } catch (UnsupportedEncodingException e) {
@@ -141,11 +180,41 @@ public class ReplayDataInput implements IDataInput, Closeable {
         }
     }
 
+    /** Perform binary search over the keyIdx, or -1 if not found */
+    private int _searchKeyIndex() {
+        int i = Arrays.binarySearch(keyIdx, 1, keyIdx[0] + 1, idx);
+        assert (i != 0);
+        return i;
+    }
+
+    /** Extract value of the key field */
+    private String _extractKey( int idx) {
+        if (rowKey == null) return null;
+        return rowKey[idx-1];
+    }
+
+    /** Extract timestamp value */
+    private long _extractTimestamp() {
+        if (rowKey == null) return Long.MAX_VALUE;
+        return Long.parseLong(rowKey[rowKey.length - 1]);
+    }
+
     @Override
     public int nextInt() throws IOException {
+        LOG.info("Check integer at index " + idx + "( name: " + new String(fields[idx],Charset.forName("UTF-8")) + " )");
         if (peekedRow == null) throw new IOException("Corrupted data when reading" +
                 " from Hbase result for query " + queryStr);
-        int data = Bytes.toInt(peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx]));
+        int i = _searchKeyIndex();
+        int data = -1;
+        if (i > 0) {
+            data = Integer.parseInt(_extractKey(i));
+        }
+        else if (idx == tsIdx) {
+            data = (int) _extractTimestamp();
+        }
+        else {
+            data = Bytes.toInt(peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx]));
+        }
         _silentPeek();
         return data;
     }
@@ -154,7 +223,17 @@ public class ReplayDataInput implements IDataInput, Closeable {
     public long nextLong() throws IOException {
         if (peekedRow == null) throw new IOException("Corrupted data when reading" +
                 " from Hbase result for query " + queryStr);
-        long data = Bytes.toLong(peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx]));
+        long data = -1L;
+        int i = _searchKeyIndex();
+        if (i > 0) {
+            data = Long.parseLong(_extractKey(i));
+        }
+        else if (idx == tsIdx) {
+            data =  _extractTimestamp();
+        }
+        else {
+            data = Bytes.toLong(peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx]));
+        }
         _silentPeek();
         return data;
     }
@@ -163,7 +242,8 @@ public class ReplayDataInput implements IDataInput, Closeable {
     public boolean nextBoolean() throws IOException {
         if (peekedRow == null) throw new IOException("Corrupted data when reading" +
                 " from Hbase result for query " + queryStr);
-        boolean data = Bytes.toBoolean(peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx]));
+        boolean data = false;
+        Bytes.toBoolean(peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx]));
         _silentPeek();
         return data;
     }
@@ -172,7 +252,17 @@ public class ReplayDataInput implements IDataInput, Closeable {
     public double nextDouble() throws IOException {
         if (peekedRow == null) throw new IOException("Corrupted data when reading" +
                 " from Hbase result for query " + queryStr);
-        double data = Bytes.toDouble(peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx]));
+        double data = 0d;
+        int i = _searchKeyIndex();
+        if (i > 0) {
+            data = Double.parseDouble(_extractKey(i));
+        }
+        else if (idx == tsIdx) {
+            data = (double) _extractTimestamp();
+        }
+        else {
+            data = Bytes.toDouble(peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx]));
+        }
         _silentPeek();
         return data;
     }
@@ -181,7 +271,17 @@ public class ReplayDataInput implements IDataInput, Closeable {
     public String nextString() throws IOException {
         if (peekedRow == null) throw new IOException("Corrupted data when reading" +
                 " from Hbase result for query " + queryStr);
-        String data = Bytes.toString(peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx]));
+        String data = null;
+        int i = _searchKeyIndex();
+        if (i > 0) {
+            data = _extractKey(i);
+        }
+        else if (idx == tsIdx) {
+            data = String.valueOf(_extractTimestamp());
+        }
+        else {
+            data = new String(peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx]), Charset.forName("UTF-8"));
+        }
         _silentPeek();
         return data;
     }
@@ -195,7 +295,17 @@ public class ReplayDataInput implements IDataInput, Closeable {
     public float nextFloat() throws IOException {
         if (peekedRow == null) throw new IOException("Corrupted data when reading" +
                 " from Hbase result for query " + queryStr);
-        float data = Bytes.toFloat(peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx]));
+        float data = 0f;
+        int i = _searchKeyIndex();
+        if (i > 0) {
+            data = Float.parseFloat(_extractKey(i));
+        }
+        else if (idx == tsIdx) {
+            data = (float) _extractTimestamp();
+        }
+        else {
+            data = Bytes.toFloat(peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx]));
+        }
         _silentPeek();
         return data;
     }
@@ -204,7 +314,17 @@ public class ReplayDataInput implements IDataInput, Closeable {
     public short nextShort() throws IOException {
         if (peekedRow == null) throw new IOException("Corrupted data when reading" +
                 " from Hbase result for query " + queryStr);
-        short data = Bytes.toShort(peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx]));
+        short data = 0;
+        int i = _searchKeyIndex();
+        if (i > 0) {
+            data = Short.parseShort(_extractKey(i));
+        }
+        else if (idx == tsIdx) {
+            data = (short) _extractTimestamp();
+        }
+        else {
+            data = Bytes.toShort(peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx]));
+        }
         _silentPeek();
         return data;
     }
@@ -213,7 +333,18 @@ public class ReplayDataInput implements IDataInput, Closeable {
     public byte nextByte() throws IOException {
         if (peekedRow == null) throw new IOException("Corrupted data when reading" +
                 " from Hbase result for query " + queryStr);
-        byte data = peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx])[0];
+        byte data = Byte.MAX_VALUE;
+        int i = _searchKeyIndex();
+        if (i > 0) {
+            data = Byte.parseByte(_extractKey(i));
+        }
+        else if (idx == tsIdx) {
+            data = (byte) _extractTimestamp();
+        }
+        else {
+            data = peekedRow.getValue(COLUMN_FAMILY_BYTES, fields[idx])[0];
+        }
+
         _silentPeek();
         return data;
     }
@@ -302,7 +433,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
     @Override
     public boolean isEOD() {
         // silently close the connection when reaching the end
-        if (eod) {
+        if (eod && scanner != null) {
             scanner.close();
         }
         return eod;
