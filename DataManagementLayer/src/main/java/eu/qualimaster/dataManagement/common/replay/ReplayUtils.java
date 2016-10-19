@@ -1,6 +1,8 @@
 package eu.qualimaster.dataManagement.common.replay;
 
 import com.google.common.primitives.Bytes;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -16,6 +18,8 @@ import java.util.Date;
  */
 public class ReplayUtils {
 
+    private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("MM/dd/yyyy,HH:mm:ss");
+
     /** Converts the timestamp representation to UNIX epoch.
      * This method should be equipped with a list of type-specific
      * converters */
@@ -24,7 +28,9 @@ public class ReplayUtils {
 
         // TODO: access the respective converter from its class from a factory
         Class<?> type = field.getType();
-
+        if (type == String.class) {
+            return formatter.parseMillis((String)timeValue);
+        }
         return 0L;
     }
 
