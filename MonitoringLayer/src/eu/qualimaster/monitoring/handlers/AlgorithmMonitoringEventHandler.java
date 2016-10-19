@@ -17,11 +17,12 @@ package eu.qualimaster.monitoring.handlers;
 
 import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.INameMapping.Algorithm;
+import eu.qualimaster.coordination.INameMapping.Component;
 import eu.qualimaster.monitoring.MonitoringEventHandler;
 import eu.qualimaster.monitoring.MonitoringManager;
 import eu.qualimaster.monitoring.events.AlgorithmMonitoringEvent;
-import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
+import eu.qualimaster.monitoring.systemState.SystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
 import eu.qualimaster.observables.IObservable;
 
@@ -51,7 +52,7 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
             if (null != mapping) {
                 IObservable obs = event.getObservable();
                 if (!obs.isInternal()) {
-                    handle(mapping, event, state, obs);
+                    cause = handle(mapping, event, state, obs);
                 }                
             } else {
                 cause = -1;
@@ -76,19 +77,33 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
     private int handle(INameMapping mapping, AlgorithmMonitoringEvent event, SystemState state, 
         IObservable obs) {
         int cause = 0;
-        Algorithm algorithm = mapping.getAlgorithmByClassName(event.getAlgorithmId());
-        if (null != algorithm) {
+        String algId = event.getAlgorithmId();
+        Component component = mapping.getComponentByClassName(algId);
+        SystemPart part = null;
+        if (null != component) {
             PipelineSystemPart pip = getActivePipeline(state, mapping.getPipelineName());
             if (null != pip) {
-                NodeImplementationSystemPart algPart = pip.getAlgorithm(algorithm.getName());
-                // so far key: event.getTopologyId()
-                algPart.setValue(obs, event.getValue(), event.getComponentKey());
-                cause = 1;
+                part = pip.getPipelineNode(component.getName());
             } else {
                 cause = -1;
             }
         } else {
-            cause = -2;
+            // fallback
+            Algorithm algorithm = mapping.getAlgorithmByClassName(event.getAlgorithmId());
+            if (null != algorithm) {
+                PipelineSystemPart pip = getActivePipeline(state, mapping.getPipelineName());
+                if (null != pip) {
+                    part = pip.getAlgorithm(algorithm.getName());
+                } else {
+                    cause = -2;
+                }
+            } else {
+                cause = -3;
+            }
+        }
+        if (null != part) {
+            part.setValue(obs, event.getValue(), event.getComponentKey());
+            cause = 0;
         }
         return cause;
     }
