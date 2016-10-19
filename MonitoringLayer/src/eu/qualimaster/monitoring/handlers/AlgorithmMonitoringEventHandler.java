@@ -103,7 +103,7 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
         }
         if (null != part) {
             part.setValue(obs, event.getValue(), event.getComponentKey());
-            cause = 0;
+            cause = 1;
         }
         return cause;
     }
