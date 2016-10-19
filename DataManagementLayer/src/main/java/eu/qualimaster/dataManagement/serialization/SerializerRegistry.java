@@ -16,6 +16,7 @@
 package eu.qualimaster.dataManagement.serialization;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -60,6 +61,13 @@ public class SerializerRegistry {
             result = (ISerializer<T>) SERIALIZERS.get(clsName);
             if (null == result){
             	getLogger().warn("No serializer for clsName = "+ clsName);
+                getLogger().warn("SET_OF_SERIALIZER: = ");
+                Iterator<Map.Entry<String, ISerializer<?>>> iter = SERIALIZERS.entrySet().iterator();
+                while (iter.hasNext()) {
+                    Map.Entry<String, ISerializer<?>> pair = iter.next();
+                    getLogger().warn(
+                            "class = " + pair.getKey() + "\t serializer = " + pair.getValue().getClass().getName());
+                }
             }
         }
         return result;
