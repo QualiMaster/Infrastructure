@@ -39,7 +39,7 @@ public class ReplayStreamer<T> {
     private volatile boolean stopFetchingDataThread = false;
 
     /**
-     * Timeout 500 miliseconds for stop querying the database to have
+     * Timeout 50 miliseconds for stop querying the database to have
      * a pseudo-non-blocking call to the getData()
      */
     private static final int TIMEOUT = 50;
@@ -121,8 +121,9 @@ public class ReplayStreamer<T> {
                 Thread.sleep(1);
             }
             if (counter < TIMEOUT) {
-                LOG.info("Get one data from the buffer");
+                LOG.info("Fetch one data from the buffer");
                 result = buffer.poll(10, TimeUnit.SECONDS);
+                LOG.info("Received one data from the buffer");
             }
             else {
                 LOG.info("Timeout querying database.. Reset clock");
@@ -169,12 +170,13 @@ public class ReplayStreamer<T> {
 
                     // Potential gotcha here, since resultWrapper is not thread-safe
                     if (resultWrapper.isEOD()) {
-
+                        LOG.info("The result wrapper is empty, wait 90 misecs before the next request");
                         // Need to tune this according to TSI performance
                         Thread.sleep(90);
                     }
 
                     // Relax the loading on the TSI cluster
+                    LOG.info("Wait 10 misecs before the next request to the result wrapper");
                     Thread.sleep(10);
                 } catch (IOException e) {
                     LOG.error("Error getting data from HBase for the query " + query, e);

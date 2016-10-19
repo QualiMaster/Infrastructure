@@ -434,6 +434,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
     public boolean isEOD() {
         // silently close the connection when reaching the end
         if (eod && scanner != null) {
+            LOG.info("Silently close the connection because EOD = true");
             scanner.close();
         }
         return eod;
@@ -442,10 +443,14 @@ public class ReplayDataInput implements IDataInput, Closeable {
     private void _silentPeek() {
         idx++;
         if (idx == fields.length) {
+            LOG.info("Going to the next item");
             if (iter.hasNext()) {
+                LOG.info("Iterator still has one more item, fetch it");
                 peekedRow = iter.next();
+                eod = false;
             }
             else {
+                LOG.info("The iterator is exhausted. Return null");
                 peekedRow = null;
                 eod = true;
             }
