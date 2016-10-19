@@ -64,7 +64,7 @@ public class ReplayStreamer<T> {
     /* Need to synchronize the speed set with other thread as well ? */
     public void setSpeed(float speed) {
         stopFetchingDataThread = true;
-        buffer.clear();
+        // buffer.clear();
         speedFactor = speed;
         updateQuery();
         stopFetchingDataThread = false;
@@ -75,7 +75,7 @@ public class ReplayStreamer<T> {
 
         // the internal fullyLock() method is called inside BlockingQueue's
         // clear() method code so no race condition here
-        buffer.clear();
+        // buffer.clear();
         startDate = date;
         updateQuery();
         stopFetchingDataThread = false;
@@ -83,7 +83,7 @@ public class ReplayStreamer<T> {
 
     public void setEnd(Date date) {
     	stopFetchingDataThread = true;
-        buffer.clear();
+        // buffer.clear();
         endDate = date;
         updateQuery();
         stopFetchingDataThread = false;
@@ -91,7 +91,7 @@ public class ReplayStreamer<T> {
 
     public void setQuery(String query) {
     	stopFetchingDataThread = true;
-        buffer.clear();
+        // buffer.clear();
         this.query = query;
         updateQuery();
         stopFetchingDataThread = false;
