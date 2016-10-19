@@ -36,7 +36,7 @@ public class ReplayStreamer<T> {
     private String prefix;
     
     /** Control the thread of fetching data from HBase */
-    private volatile boolean stopFetchingDataThread = false;
+    private boolean stopFetchingDataThread = false;
 
     /**
      * Timeout 50 miliseconds for stop querying the database to have
@@ -64,7 +64,7 @@ public class ReplayStreamer<T> {
     /* Need to synchronize the speed set with other thread as well ? */
     public void setSpeed(float speed) {
         stopFetchingDataThread = true;
-        // buffer.clear();
+        buffer.clear();
         speedFactor = speed;
         updateQuery();
         stopFetchingDataThread = false;
@@ -75,7 +75,7 @@ public class ReplayStreamer<T> {
 
         // the internal fullyLock() method is called inside BlockingQueue's
         // clear() method code so no race condition here
-        // buffer.clear();
+        buffer.clear();
         startDate = date;
         updateQuery();
         stopFetchingDataThread = false;
@@ -83,7 +83,7 @@ public class ReplayStreamer<T> {
 
     public void setEnd(Date date) {
     	stopFetchingDataThread = true;
-        // buffer.clear();
+        buffer.clear();
         endDate = date;
         updateQuery();
         stopFetchingDataThread = false;
@@ -91,7 +91,7 @@ public class ReplayStreamer<T> {
 
     public void setQuery(String query) {
     	stopFetchingDataThread = true;
-        // buffer.clear();
+        buffer.clear();
         this.query = query;
         updateQuery();
         stopFetchingDataThread = false;
@@ -116,14 +116,17 @@ public class ReplayStreamer<T> {
             // set-parameter methods
             // We return null
             LOG.info("Fetching flag: " + stopFetchingDataThread);
-            while (stopFetchingDataThread & counter < TIMEOUT) {
+            while (stopFetchingDataThread && counter < TIMEOUT) {
                 counter++;
                 Thread.sleep(1);
             }
             if (counter < TIMEOUT) {
                 LOG.info("Fetch one data from the buffer");
                 result = buffer.poll(10, TimeUnit.SECONDS);
-                LOG.info("Received one data from the buffer");
+
+                /** 2016-10-19 Tuan: Test random sink - Note */
+                LOG.info("Received one data from the buffer : " + result);
+                /** End note */
             }
             else {
                 LOG.info("Timeout querying database.. Reset clock");
@@ -152,44 +155,50 @@ public class ReplayStreamer<T> {
 		@Override
 		public void run() {
             LOG.info("Start Runnable of DataFetcher");
-			while (!stopFetchingDataThread) {
-                LOG.info("Keep fetching data");
-                try {
-                    while (!resultWrapper.isEOD()) {
-                        LOG.info("Received 1 data item. Will be serialized using " + serializer);
-                        T data = serializer.deserializeFrom(resultWrapper);
-                        LOG.info("Serialized passed");
-                        if (data != null) {
-                            LOG.info("Serialized 1 data item: " + data.toString());
-                            buffer.put(data);
-                        }
-                        else {
-                            LOG.info("Cannot serialize data");
-                        }
+            try {
+                while (true) {
+                    if (stopFetchingDataThread) {
+                        LOG.info("The parameters are probably being updated. Wait");
+                        Thread.sleep(10);
                     }
+                    LOG.info("Keep fetching data");
+                    try {
+                        while (!resultWrapper.isEOD()) {
+                            LOG.info("Received 1 data item. Will be serialized using " + serializer);
+                            T data = serializer.deserializeFrom(resultWrapper);
+                            LOG.info("Serializer passed");
+                            if (data != null) {
+                                LOG.info("Serialized 1 data item: " + data.toString());
+                                buffer.put(data);
+                            } else {
+                                LOG.info("Cannot serialize data");
+                            }
+                        }
 
-                    // Potential gotcha here, since resultWrapper is not thread-safe
-                    if (resultWrapper.isEOD()) {
-                        LOG.info("The result wrapper is empty, wait 90 misecs before the next request");
-                        // Need to tune this according to TSI performance
-                        Thread.sleep(90);
+                        // Potential gotcha here, since resultWrapper is not thread-safe
+                        if (resultWrapper.isEOD()) {
+                            LOG.info("The result wrapper is empty, wait 90 misecs before the next request");
+                            // Need to tune this according to TSI performance
+                            Thread.sleep(90);
+                        }
+
+                        // Relax the loading on the TSI cluster
+                        LOG.info("Wait 10 misecs before the next request to the result wrapper");
+                        Thread.sleep(10);
+                    } catch (IOException e) {
+                        LOG.error("Error getting data from HBase for the query " + query, e);
+                        throw new RuntimeException(e);
+                    } catch (Exception e) {
+                        LOG.error(e.getMessage());
+                        throw new RuntimeException(e);
                     }
-
-                    // Relax the loading on the TSI cluster
-                    LOG.info("Wait 10 misecs before the next request to the result wrapper");
-                    Thread.sleep(10);
-                } catch (IOException e) {
-                    LOG.error("Error getting data from HBase for the query " + query, e);
-                    throw new RuntimeException(e);
-                } catch (InterruptedException e) {
-                    LOG.warn("The deading-data thread is interrupted or closed");
-                    throw new RuntimeException(e);
-                } catch (Exception e) {
-                    LOG.error(e.getMessage());
-                    throw new RuntimeException(e);
                 }
             }
-		}
+            catch (InterruptedException e) {
+                LOG.warn("The deading-data thread is interrupted or closed");
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     /** This method is to checked that the null return values of the getData() is caused

@@ -68,7 +68,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
     /** Internally cached variables */
     private String[] rowKey;
 
-    private boolean eod = true;
+    private boolean eod;
 
     /** the current prefix of query */
     private byte[][] filter;
@@ -125,7 +125,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
                 peekedRow = iter.next();
                 eod = false;
                 rowKey = (peekedRow != null) ? new String(peekedRow.getRow(), Charset.forName("UTF-8")).split("-") : null;
-                LOG.info("Fetch internally one data from the scanner: " + peekedRow);
+                LOG.info("Fetch internally one data from the scanner: " + peekedRow + ", eod = " + eod);
             }
         } catch (Exception e) {
             LOG.warn("ERROR processing the query " + query);
@@ -433,9 +433,12 @@ public class ReplayDataInput implements IDataInput, Closeable {
     @Override
     public boolean isEOD() {
         // silently close the connection when reaching the end
-        if (eod && scanner != null) {
-            LOG.info("Silently close the connection because EOD = true");
-            scanner.close();
+        if (eod) {
+            LOG.info("EOD = true");
+            if (scanner != null) {
+                LOG.info("Silently close the connection because EOD = true");
+                scanner.close();
+            }
         }
         return eod;
     }
