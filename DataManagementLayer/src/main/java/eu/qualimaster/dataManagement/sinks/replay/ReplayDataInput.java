@@ -124,15 +124,11 @@ public class ReplayDataInput implements IDataInput, Closeable {
             if (iter.hasNext()) {
                 peekedRow = iter.next();
                 eod = false;
-                rowKey = (peekedRow != null) ? new String(peekedRow.getRow(), Charset.forName("UTF-8")).split("-") : null;
+                rowKey = (peekedRow != null) ? new String(peekedRow.getRow(),Charset.forName("UTF-8")).split("-") : null;
                 LOG.info("Fetch internally one data from the scanner: " + peekedRow + ", eod = " + eod);
             }
         } catch (Exception e) {
-            LOG.warn("ERROR processing the query " + query);
-            LOG.error(e.getMessage());
-            for (StackTraceElement msg : e.getStackTrace()) {
-                LOG.error(msg.getClassName() + " line " + msg.getLineNumber() + "( method " + msg.getMethodName() + "): " + msg.toString());
-            }
+            LOG.warn("ERROR processing the query " + query, e);
         }
     }
 
@@ -450,6 +446,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
             if (iter.hasNext()) {
                 LOG.info("Iterator still has one more item, fetch it");
                 peekedRow = iter.next();
+                rowKey = (peekedRow != null) ? new String(peekedRow.getRow(), Charset.forName("UTF-8")).split("-") : null;
                 eod = false;
             }
             else {

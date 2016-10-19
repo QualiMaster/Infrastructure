@@ -162,8 +162,9 @@ public class ReplayStreamer<T> {
                         Thread.sleep(10);
                     }
                     LOG.info("Keep fetching data");
-                    try {
-                        while (!resultWrapper.isEOD()) {
+
+                    while (!resultWrapper.isEOD()) {
+                        try {
                             LOG.info("Received 1 data item. Will be serialized using " + serializer);
                             T data = serializer.deserializeFrom(resultWrapper);
                             LOG.info("Serializer passed");
@@ -173,25 +174,24 @@ public class ReplayStreamer<T> {
                             } else {
                                 LOG.info("Cannot serialize data");
                             }
+                        } catch (IOException e) {
+                            LOG.error("Error getting data from HBase for the query " + query, e);
+                        } catch (Exception e) {
+                            LOG.error("ERROR: ", e);
+                            if (e instanceof InterruptedException) throw new RuntimeException(e);
                         }
-
-                        // Potential gotcha here, since resultWrapper is not thread-safe
-                        if (resultWrapper.isEOD()) {
-                            LOG.info("The result wrapper is empty, wait 90 misecs before the next request");
-                            // Need to tune this according to TSI performance
-                            Thread.sleep(90);
-                        }
-
-                        // Relax the loading on the TSI cluster
-                        LOG.info("Wait 10 misecs before the next request to the result wrapper");
-                        Thread.sleep(10);
-                    } catch (IOException e) {
-                        LOG.error("Error getting data from HBase for the query " + query, e);
-                        throw new RuntimeException(e);
-                    } catch (Exception e) {
-                        LOG.error(e.getMessage());
-                        throw new RuntimeException(e);
                     }
+
+                    // Potential gotcha here, since resultWrapper is not thread-safe
+                    if (resultWrapper.isEOD()) {
+                        LOG.info("The result wrapper is empty, wait 90 mi secs before the next request");
+                        // Need to tune this according to TSI performance
+                        Thread.sleep(90);
+                    }
+
+                    // Relax the loading on the TSI cluster
+                    LOG.info("Wait 10 misecs before the next request to the result wrapper");
+                    Thread.sleep(10);
                 }
             }
             catch (InterruptedException e) {

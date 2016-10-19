@@ -10,6 +10,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.regionserver.BloomType;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,6 +83,9 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 				}
 				log.info("Column family \" + COLUMN_FAMILY + \" does not exist. Create one");
 				HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY);
+
+				// Note 2016-10-19 Tuan: Add a Bloom filter to the HFiles of this column family to increase the read overhead
+				hcd.setBloomFilterType(BloomType.ROW);
 				htd.addFamily(hcd);
 			} else {
 				log.info("Table " + getTableName() + " does not exist. Create one");
