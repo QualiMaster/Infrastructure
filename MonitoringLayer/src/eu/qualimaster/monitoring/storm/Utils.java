@@ -30,6 +30,7 @@ import eu.qualimaster.coordination.RepositoryConnector;
 import eu.qualimaster.coordination.INameMapping.Algorithm;
 import eu.qualimaster.coordination.INameMapping.Component;
 import eu.qualimaster.coordination.INameMapping.Component.Type;
+import eu.qualimaster.coordination.RepositoryConnector.Models;
 import eu.qualimaster.coordination.RepositoryConnector.Phase;
 import eu.qualimaster.easy.extension.QmConstants;
 import eu.qualimaster.easy.extension.internal.PipelineHelper;
@@ -319,7 +320,33 @@ public class Utils {
      */
     private static void createInvisibleStreams(INameMapping mapping, Map<String, StormProcessor> procs, 
         StormProcessor processor) {
-        Configuration cfg = RepositoryConnector.getModels(Phase.MONITORING).getConfiguration();
+        boolean done = false;
+        Models models = RepositoryConnector.getModels(Phase.MONITORING);
+        if (null != models) {
+            Configuration cfg = models.getConfiguration();
+            if (null != cfg) {
+                createInvisibleStreams(mapping, procs, cfg, processor);
+                done = true;
+            }
+        } 
+        if (!done) {
+            getLogger().error("Cannot complete topology as configuration model was not (completely) loaded."); 
+        }
+    }
+
+    /**
+     * Creates invisible streams between pipeline elements and algorithm processors, including a pseudo-stream "for" the
+     * hardware in hardware integration. This method may create more
+     * connections than actual needed, in particular if a sub-algorithm defines own spouts without connections to
+     * the main topology, but this shall not disturb the monitoring data aggregation.
+     * 
+     * @param mapping the name mapping
+     * @param procs already known processors
+     * @param cfg the actual variability configuration (not <b>null</b>)
+     * @param processor the component to search for potential invisible components
+     */
+    private static void createInvisibleStreams(INameMapping mapping, Map<String, StormProcessor> procs, 
+        Configuration cfg, StormProcessor processor) {
         IDatatype hwAlgType;
         try {
             hwAlgType = ModelQuery.findType(cfg.getProject(), QmConstants.TYPE_HARDWARE_ALGORITHM, null);

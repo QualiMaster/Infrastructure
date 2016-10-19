@@ -43,22 +43,54 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
 
     @Override
     protected void handle(AlgorithmMonitoringEvent event, SystemState state) {
+        int cause = 0;
         String pipelineName = event.getPipeline();
+        INameMapping mapping = null;
         if (null != pipelineName) { // just to be on the safe side
-            INameMapping mapping = MonitoringManager.getNameMapping(pipelineName);
+            mapping = MonitoringManager.getNameMapping(pipelineName);
             if (null != mapping) {
                 IObservable obs = event.getObservable();
                 if (!obs.isInternal()) {
-                    Algorithm algorithm = mapping.getAlgorithmByClassName(event.getAlgorithmId());
-                    PipelineSystemPart pip = getActivePipeline(state, pipelineName);
-                    if (null != pip) {
-                        NodeImplementationSystemPart algPart = pip.getAlgorithm(algorithm.getName());
-                        // so far key: event.getTopologyId()
-                        algPart.setValue(obs, event.getValue(), event.getComponentKey());
-                    }   
+                    handle(mapping, event, state, obs);
                 }                
+            } else {
+                cause = -1;
             }
+        } else {
+            cause = -4;
         }
+        if (cause <= 0) {
+            getLogger().error("Cannot handle " + cause + " " + event + " " + mapping);
+        }
+    }
+    
+    /**
+     * Handles an algorithm monitoring event.
+     * 
+     * @param mapping the name mapping
+     * @param event the event to be handled
+     * @param state the system state
+     * @param obs the observable identified for event
+     * @return an internal error code, successful if <code>1</code> (temporary)
+     */
+    private int handle(INameMapping mapping, AlgorithmMonitoringEvent event, SystemState state, 
+        IObservable obs) {
+        int cause = 0;
+        Algorithm algorithm = mapping.getAlgorithmByClassName(event.getAlgorithmId());
+        if (null != algorithm) {
+            PipelineSystemPart pip = getActivePipeline(state, mapping.getPipelineName());
+            if (null != pip) {
+                NodeImplementationSystemPart algPart = pip.getAlgorithm(algorithm.getName());
+                // so far key: event.getTopologyId()
+                algPart.setValue(obs, event.getValue(), event.getComponentKey());
+                cause = 1;
+            } else {
+                cause = -1;
+            }
+        } else {
+            cause = -2;
+        }
+        return cause;
     }
 
 }
