@@ -1,18 +1,3 @@
-/*
- * Copyright 2009-2015 University of Hildesheim, Software Systems Engineering
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package eu.qualimaster.monitoring.tracing;
 
 import java.io.PrintStream;
@@ -24,14 +9,15 @@ import java.util.Set;
 import eu.qualimaster.monitoring.parts.PartType;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
+import eu.qualimaster.monitoring.systemState.PlatformSystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
 
 /**
- * Represents a trace. The pipeline/infrastructure trace format is rather preliminary.
+ * Represents a trace storing the information required for reflective adaptation.
  * 
- * @author Holger Eichelberger
+ * @author Andrea Ceroni
  */
-public class FileTrace extends AbstractFileTrace {
+public class ReflectiveFileTrace extends AbstractFileTrace {
     
     /**
      * Creates a new trace.
@@ -39,8 +25,22 @@ public class FileTrace extends AbstractFileTrace {
      * @param name the name of the trace (for {link {@link #toString()}}, shall be the file name
      * @param out the output stream to trace to
      */
-    public FileTrace(String name, PrintStream out) {
+    public ReflectiveFileTrace(String name, PrintStream out) {
     	super(name, out);
+    }
+    
+    /**
+     * Traces the platform.
+     * 
+     * @param state the system state
+     */
+    private void tracePlatform(SystemState state) {
+        PlatformSystemPart platform = state.getPlatform();
+        print("platform:");
+        printSeparator();
+        print(platform.getName());
+        printSeparator();
+        trace(platform, null, null, null);
     }
     
     /**
@@ -81,6 +81,8 @@ public class FileTrace extends AbstractFileTrace {
      */
     private void tracePipelineNode(PipelineNodeSystemPart node) {
         if (null != node) {
+        	print("node:");
+        	printSeparator();
             print(node.getName());
             printSeparator();
             trace(node, null, null, null);
@@ -94,14 +96,18 @@ public class FileTrace extends AbstractFileTrace {
         if (!isInitialized() && null == pipelines) {
             pipelines = new ArrayList<PipelineTraceInfo>(); 
             
-            printFormat(PipelineSystemPart.class, PartType.PIPELINE, "pipeline format: ");
-            printFormat(PipelineNodeSystemPart.class, PartType.PIPELINE_NODE, "pipeline node format: ");
+            printFormat(PlatformSystemPart.class, PartType.PLATFORM, "platform format:\t");
+            printFormat(PipelineSystemPart.class, PartType.PIPELINE, "pipeline format:\t");
+            printFormat(PipelineNodeSystemPart.class, PartType.PIPELINE_NODE, "pipeline node format:\t");
             println();
             initialized = true;
         }
         
         print(copy.getTimestamp());
         printSeparator();
+        
+        tracePlatform(copy);
+        
         Set<String> pipelineDone = new HashSet<String>();
         for (PipelineTraceInfo info : pipelines) {
             tracePipeline(copy, info, parameters);
