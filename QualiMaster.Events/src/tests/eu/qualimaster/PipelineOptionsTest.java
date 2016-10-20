@@ -121,6 +121,25 @@ public class PipelineOptionsTest {
         conf.put(key, 100L);
         Assert.assertEquals(100L, PipelineOptions.getExecutorLongArgument(conf, "exec2", "delay", 0));
     }
+
+    /**
+     * Tests the executor parallelism access helpers.
+     */
+    @Test
+    @SuppressWarnings({ "rawtypes" })
+    public void parallelismArgTests() {
+        PipelineOptions options = new PipelineOptions();
+        options.setExecutorParallelism("exec2", 5);
+        options.setTaskParallelism("exec1", 4);
+        options.setNumberOfWorkers(3);
+
+        Map conf = options.toMap();
+        Assert.assertEquals(0, PipelineOptions.getExecutorParallelism(conf, "exec1", 0));
+        Assert.assertEquals(5, PipelineOptions.getExecutorParallelism(conf, "exec2", 0));
+        Assert.assertEquals(4, PipelineOptions.getTaskParallelism(conf, "exec1", 0));
+        Assert.assertEquals(0, PipelineOptions.getTaskParallelism(conf, "exec2", 0));
+        Assert.assertEquals(3, PipelineOptions.getNumberOfWorkers(conf, 0));
+    }
     
     /**
      * Asserts the equality of <code>options</code> with its arguments-parsed counterpart.

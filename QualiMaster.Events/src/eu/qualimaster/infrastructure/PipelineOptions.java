@@ -660,8 +660,18 @@ public class PipelineOptions implements Serializable {
      */
     public static int getExecutorIntArgument(@SuppressWarnings("rawtypes") Map map, String executor, 
         String paramName, int deflt) {
+        return getIntValue(map.get(getExecutorArgumentKey(executor, paramName)), deflt);
+    }
+
+    /**
+     * Turns the configuration <code>value</code> into a integer value.
+     * 
+     * @param value the value
+     * @param deflt the default value if <code>value</code> is <b>null</b> or cannot be converted
+     * @return the converted value or <code>deflt</code>
+     */
+    private static int getIntValue(Object value, int deflt) {
         int result = deflt;
-        Object value = map.get(getExecutorArgumentKey(executor, paramName));
         if (null != value) {
             if (value instanceof Integer) {
                 result = ((Integer) value).intValue();
@@ -687,8 +697,18 @@ public class PipelineOptions implements Serializable {
      */
     public static double getExecutorDoubleArgument(@SuppressWarnings("rawtypes") Map map, String executor, 
         String paramName, double deflt) {
+        return getDoubleValue(map.get(getExecutorArgumentKey(executor, paramName)), deflt);
+    }
+
+    /**
+     * Turns the configuration <code>value</code> into a double value.
+     * 
+     * @param value the value
+     * @param deflt the default value if <code>value</code> is <b>null</b> or cannot be converted
+     * @return the converted value or <code>deflt</code>
+     */
+    private static double getDoubleValue(Object value, double deflt) {
         double result = deflt;
-        Object value = map.get(getExecutorArgumentKey(executor, paramName));
         if (null != value) {
             if (value instanceof Double) {
                 result = ((Double) value).intValue();
@@ -714,8 +734,18 @@ public class PipelineOptions implements Serializable {
      */
     public static long getExecutorLongArgument(@SuppressWarnings("rawtypes") Map map, String executor, 
         String paramName, long deflt) {
+        return getLongValue(map.get(getExecutorArgumentKey(executor, paramName)), deflt);
+    }
+
+    /**
+     * Turns the configuration <code>value</code> into a long value.
+     * 
+     * @param value the value
+     * @param deflt the default value if <code>value</code> is <b>null</b> or cannot be converted
+     * @return the converted value or <code>deflt</code>
+     */
+    private static long getLongValue(Object value, long deflt) {
         long result = deflt;
-        Object value = map.get(getExecutorArgumentKey(executor, paramName));
         if (null != value) {
             if (value instanceof Long) {
                 result = ((Long) value).longValue();
@@ -729,9 +759,9 @@ public class PipelineOptions implements Serializable {
         }
         return result;
     }
-    
+
     /**
-     * Returns an executor argument as Boolean.
+     * Returns an executor argument as Boolean value.
      * 
      * @param map the map (Storm conf) containing the name-value binding
      * @param executor the executor name
@@ -741,8 +771,18 @@ public class PipelineOptions implements Serializable {
      */
     public static boolean getExecutorBooleanArgument(@SuppressWarnings("rawtypes") Map map, String executor, 
         String paramName, boolean deflt) {
+        return getBooleanValue(map.get(getExecutorArgumentKey(executor, paramName)), deflt);
+    }
+
+    /**
+     * Turns the configuration <code>value</code> into a Boolean.
+     * 
+     * @param value the value
+     * @param deflt the default value if <code>value</code> is <b>null</b> or cannot be converted
+     * @return the converted value or <code>deflt</code>
+     */
+    private static boolean getBooleanValue(Object value, boolean deflt) {
         boolean result = deflt;
-        Object value = map.get(getExecutorArgumentKey(executor, paramName));
         if (null != value) {
             if (value instanceof Boolean) {
                 result = ((Boolean) value).booleanValue();
@@ -752,7 +792,7 @@ public class PipelineOptions implements Serializable {
         }
         return result;
     }
-
+    
     /**
      * Returns an executor argument as String.
      * 
@@ -764,12 +804,57 @@ public class PipelineOptions implements Serializable {
      */
     public static String getExecutorStringArgument(@SuppressWarnings("rawtypes") Map map, String executor, 
         String paramName, String deflt) {
+        return getStringValue(map.get(getExecutorArgumentKey(executor, paramName)), deflt);
+    }
+
+    /**
+     * Turns the configuration <code>value</code> into a string.
+     * 
+     * @param value the value
+     * @param deflt the default value if <code>value</code> is <b>null</b> or cannot be converted
+     * @return the converted value or <code>deflt</code>
+     */
+    private static String getStringValue(Object value, String deflt) {
         String result = deflt;
-        Object value = map.get(getExecutorArgumentKey(executor, paramName));
         if (null != value) {
             result = value.toString();
         }
         return result;
+    }
+
+    /**
+     * Returns the desired executor parallelism.
+     * 
+     * @param map the map (Storm conf) containing the name-value binding
+     * @param executor the name of the executor
+     * @param dflt the default value (e.g., from IVML config)
+     * @return the executor parallelism value, if none is in the options use <code>deflt</code>)
+     */
+    public static int getExecutorParallelism(@SuppressWarnings("rawtypes") Map map, String executor, int dflt) {
+        return getIntValue(map.get(getExecutorParallelismKey(executor)), dflt);
+    }
+
+    /**
+     * Returns the desired task parallelism.
+     * 
+     * @param map the map (Storm conf) containing the name-value binding
+     * @param executor the name of the executor
+     * @param dflt the default value (e.g., from IVML config)
+     * @return the task parallelism value, if none is in the options use <code>deflt</code>)
+     */
+    public static int getTaskParallelism(@SuppressWarnings("rawtypes") Map map, String executor, int dflt) {
+        return getIntValue(map.get(getTaskParallelismKey(executor)), dflt);
+    }
+
+    /**
+     * Returns the desired number of workers.
+     * 
+     * @param map the map (Storm conf) containing the name-value binding
+     * @param dflt the default value (e.g., from IVML config)
+     * @return the task number of workers, if none is in the options use <code>deflt</code>)
+     */
+    public static int getNumberOfWorkers(@SuppressWarnings("rawtypes") Map map, int dflt) {
+        return getIntValue(map.get(KEY_WORKERS), dflt);
     }
     
     /**
