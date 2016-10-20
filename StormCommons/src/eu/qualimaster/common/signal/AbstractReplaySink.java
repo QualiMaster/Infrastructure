@@ -23,7 +23,6 @@ import java.util.Map;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -47,8 +46,6 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
     private transient Map<Class<?>, TupleHandler<?>> handlers = new HashMap<Class<?>, TupleHandler<?>>();
     private transient ReplayRunnable replayRunnable;
     
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(AbstractReplaySink.class);
-
     /**
      * Implements a tuple handler, i.e., a combination of {@link ReplayRecorder}
      * and related {@link ReplayStreamer streamers}.
@@ -317,8 +314,7 @@ public abstract class AbstractReplaySink extends BaseSignalBolt implements IRepl
 
     @Override
     public void notifyReplay(ReplaySignal signal) {
-        //LogManager.getLogger(getClass()).info("notifying with:" + signal);
-    	log.info("notifying with:" + signal);
+        getLogger().info("notifying with:" + signal);
         int streamerCount = 0;
         if (null != handlers) {
             for (TupleHandler<?> handler : handlers.values()) {

@@ -26,7 +26,6 @@ import backtype.storm.topology.base.*;
 public abstract class BaseSignalSpout extends BaseRichSpout implements SignalListener, IParameterChangeListener, 
     IShutdownListener, ILoadSheddingListener, IMonitoringChangeListener {
 
-    private static final Logger LOGGER = Logger.getLogger(BaseSignalSpout.class);
     private String name;
     private String pipeline;
     private boolean sendRegular;
@@ -75,7 +74,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
             context.addTaskHook(monitor);
         }
         try {
-            LOGGER.info("Prepare--basesignalspout.... " + pipeline + "/" + this.name);
+            getLogger().info("Prepare--basesignalspout.... " + pipeline + "/" + this.name);
             signalConnection = new StormSignalConnection(this.name, this, pipeline);
             signalConnection.init(conf);
             if (Configuration.getPipelineSignalsQmEvents()) {
@@ -84,7 +83,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
             }
             portManager = BaseSignalBolt.createPortManager(signalConnection, conf);
         } catch (Exception e) {
-            LOGGER.error("Error SignalConnection:" + e.getMessage(), e);
+            getLogger().error("Error SignalConnection:" + e.getMessage(), e);
         }
         ComponentKeyRegistry.register(pipeline, this, monitor.getComponentKey());
     }
@@ -184,7 +183,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
 
     @Override
     public void onSignal(byte[] data) {
-        LOGGER.info("onSignal: Listening on the signal! " + pipeline + "/" + name);
+        getLogger().info("onSignal: Listening on the signal! " + pipeline + "/" + name);
         boolean done = ParameterChangeSignal.notify(data, pipeline, name, this);
         if (!done) {
             done = ShutdownSignal.notify(data, pipeline, name, this);
@@ -197,7 +196,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     @Override
     public void notifyParameterChange(ParameterChangeSignal signal) {
         // empty: keep interface/implementations stable
-        LOGGER.info("This notifyParameterChange is being called!");
+        getLogger().info("This notifyParameterChange is being called!");
     }
     
     /**
@@ -328,6 +327,15 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      * so as not to waste too much CPU. Shall consider {@link #isEnabled(Object)} for load shedding.
      */
     protected void doNextTuple() {
+    }
+
+    /**
+     * Returns the logger for this bolt.
+     * 
+     * @return the logger
+     */
+    protected Logger getLogger() {
+        return Logger.getLogger(getClass());
     }
 
 }

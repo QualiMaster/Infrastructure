@@ -27,7 +27,6 @@ import backtype.storm.tuple.Tuple;
 public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListener, IAlgorithmChangeListener, 
     IParameterChangeListener, IShutdownListener, ILoadSheddingListener, IMonitoringChangeListener {
 
-    private static final Logger LOGGER = Logger.getLogger(BaseSignalBolt.class);
     private String name;
     private String pipeline;
     private boolean sendRegular;
@@ -77,7 +76,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
             context.addTaskHook(monitor);
         }
         try {
-            LOGGER.info("Prepare--basesignalbolt.... " + pipeline + "/" + this.name);
+            getLogger().info("Prepare--basesignalbolt.... " + pipeline + "/" + this.name);
             signalConnection = new StormSignalConnection(this.name, this, pipeline);
             signalConnection.init(conf);
             if (Configuration.getPipelineSignalsQmEvents()) {
@@ -87,7 +86,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
             }
             portManager = createPortManager(signalConnection, conf);
         } catch (Exception e) {
-            LOGGER.error("Error SignalConnection:" + e.getMessage(), e);
+            getLogger().error("Error SignalConnection:" + e.getMessage(), e);
         }
         ComponentKeyRegistry.register(pipeline, this, monitor.getComponentKey());
     }
@@ -234,7 +233,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
 
     @Override
     public void onSignal(byte[] data) {
-        LOGGER.info("onSignal: Listening on the signal! " + pipeline + "/" + name);
+        getLogger().info("onSignal: Listening on the signal! " + pipeline + "/" + name);
         boolean done = AlgorithmChangeSignal.notify(data, pipeline, name, this);
         if (!done) {
             done = ParameterChangeSignal.notify(data, pipeline, name, this);
@@ -378,6 +377,15 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      */
     public String getPipeline() {
         return pipeline;
+    }
+
+    /**
+     * Returns the logger for this bolt.
+     * 
+     * @return the logger
+     */
+    protected Logger getLogger() {
+        return Logger.getLogger(getClass());
     }
 
 }
