@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+     xmlns="http://sse.uni-hildesheim.de/instrumentation" 
+     exclusive="true" 
+     memAccounting="CONSTRUCTION_NATIVEUNALLOCATION_ARRAYS"
+     mainDefault="START_END_SHUTDOWN"
+     localEventProcessing="true"
+     scopeType="GROUP_INHERIT"
+     registerThreads="false"
+     accountableResources="CPU_TIME, MEMORY"
+     sumResources="CPU_TIME, MEMORY"
+     defaultGroupResources="CPU_TIME, MEMORY"> 
+    <module name="tests.eu.qualimaster.monitoring.spassMeter.MemTest">
+      <monitor/>
+      <behavior signature="doTest()">
+        <startSystem/>
+        <endSystem/>
+      </behavior>
+    </module>
+</configuration>

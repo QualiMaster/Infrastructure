@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="SpassMeterIntegration" default="jar" basedir="." xmlns:jacoco="antlib:org.jacoco.ant"
+    xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+	<!-- import von globalen Properties Einstellungen -->
+	<property file="${user.home}/global-build.properties"/>
+    <property file="${user.home}/qualimaster-build.properties"/>
+    
+    <include file="${user.home}/macros.xml"/>
+    
+    <property name="dist.dir" value="dist"/>
+    <property name="lib.dir" value="lib"/>		
+	<property name="src.dir" value="src"/>
+    <property name="javacSource" value="1.7"/>
+	<property name="javacTarget" value="1.7"/>
+	
+	<!-- Check - no typedef shall be required as installed in ANT/lib -->
+    <path id="maven-ant-tasks.classpath" path="${ant-maven.lib}" />
+    <typedef resource="org/apache/maven/artifact/ant/antlib.xml"
+       uri="antlib:org.apache.maven.artifact.ant"
+       classpathref="maven-ant-tasks.classpath" />
+	
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml" />
+
+    <path id ="base-path">
+        <!--  <pathelement path="${libs.qualimaster.events.core}"/>
+        <fileset dir="${libs.qualimaster.events.core.dir}/lib">
+            <include name="**/*.jar" />
+        </fileset>-->
+        <!--  testing  -->
+        <!--  <fileset dir="${eclipse.plugins.dir}">
+            <include name="org.junit_4*/*.jar" />
+            <include name="org.hamcrest*.jar" />
+        </fileset>-->
+    </path>
+    	
+	<path id ="includes">
+        <!--  <fileset dir="${lib.dir}">
+            <include name="**/*.jar" />
+        </fileset>
+        <path refid="base-path"/>-->
+    </path>
+	
+    <!-- force snapshot update - does not work in macros.xml  -->
+    <artifact:remoteRepository id="qm.repository" url="${maven.repository}">
+        <snapshots updatePolicy="always" />
+    </artifact:remoteRepository>
+	
+	<!-- Targets  -->
+	<target name="init">
+		<!-- Delete generated folders -->
+		<delete dir="${build.base.dir}"/>
+		
+		<!-- Create folders -->
+        <mkdir dir="${build.base.dir}"/>
+		<mkdir dir="${build.classes.dir}"/>
+		<mkdir dir="${build.jar.dir}"/>
+	
+		<mavenUpdate pomFile="pom.xml"/>
+	    <artifact:dependencies pathId="maven.compile.classpath">
+            <pom file="pom.xml" id="pom"/>
+	    	<remoteRepository refid="qm.repository" />
+        </artifact:dependencies>        
+	</target>
+	
+	<!-- Compile all files without test classes -->
+	<target name="compile" depends="init">
+		<javac srcdir="${src.dir}" debug="on" destdir="${build.classes.dir}" includeAntRuntime="no" failonerror="true" source="${javacSource}" target="${javacTarget}" encoding="${javac.encoding}">
+	        <classpath refid="maven.compile.classpath" />
+		    <classpath refid="includes" />	
+		</javac>
+    </target>
+	
+	<target name="package" depends="compile">
+        <!-- from maven -->
+        <property name="spassJar" value="${de.uni_hildesheim.sse.spassMeter:spass-meter:jar}"/>
+        <echo message="Bundling ${spassJar}"/>
+        
+        <mkdir dir="${dist.dir}"/>
+        <delete file="${dist.dir}/spass-meter-rt.jar"/>
+        <jar destfile="${dist.dir}/spass-meter-rt.jar"> 
+            <zipgroupfileset file="${spassJar}"/>
+            <zipfileset dir="." includes="plugin.lst"/>
+            <zipfileset dir="${build.classes.dir}" includes="eu/**/*.class"/>
+        </jar>
+	</target>
+	
+	<!--  Tests -->
+	<target name="test" depends="package">
+        <!-- from maven -->
+        <property name="spassIaJar" value="${de.uni_hildesheim.sse.spassMeter:spass-meter-ia:jar}"/>
+        <property name="spassIaJar.abs" location="${spassIaJar}"/>
+        <echo message="Relying on ${spassIaJar.abs}"/>
+	    
+	    	    <!-- 
+        <mkdir dir="${dist.dir}"/>
+        <copy file="${lib.dir}/spass-meter-annotations.jar" todir="${dist.dir}"/>
+        <copy file="${lib.dir}/spass-meter-boot.jar" todir="${dist.dir}"/>
+        <copy file="${lib.dir}/spass-meter-ia.jar" todir="${dist.dir}"/>
+        <jar destfile="${dist.dir}/spass-meter-rt.jar"> 
+            <zipgroupfileset dir="${lib.dir}" includes="spass-meter-rt.jar"/>
+            <zipfileset dir="." includes="plugin.lst"/>
+            <zipfileset dir="${build.classes.dir}" includes="eu/**/*.class"/>
+        </jar>
+        -->
+        
+	  <!-- avoid overlapping instrumentations, currently testing works only in a local fashion... -->
+        <!-- <jacoco:coverage output="file" destfile="jacoco.exec" excludes="de.uni_hildesheim.sse.*:backtype.*:org.*:tests.*">
+        <junit printsummary="withOutAndErr" dir="${build.base.dir}" fork="true" timeout="240000">
+            <classpath>
+                <pathelement location="${spassJar}"/>
+                <pathelement location="${build.classes.dir}" />
+            </classpath>
+            <test name="tests.eu.qualimaster.monitoring.spassMeter.AllTests" haltonfailure="no" outfile="result">
+                <formatter type="xml" />
+            </test>
+		    <jvmarg value="-javaagent:${spassIaJar.abs}=logLevel=SEVERE,overhead=false,configDetect=false,xmlconfig=${basedir}/spass.xml,printStatistics=false,outInterval=1000,eventBus.host=localhost,eventBus.port=9998"/>
+		</junit>
+      </jacoco:coverage>  -->
+	</target>
+	
+	    <!-- Javadoc -->
+    <target name="javadoc" depends="compile">
+        <javadoc access="public" author="true" destdir="${doc.dir}" doctitle="QualiMaster EventBus" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="1.7" sourcepath="src" splitindex="true" use="true" version="true">
+          <classpath refid="maven.compile.classpath" />
+          <classpath refid="includes" />
+          <packageset dir="src" defaultexcludes="yes">
+            <include name="eu/qualimaster/**"/>
+          </packageset>
+        </javadoc>
+    </target>
+	
+	<!-- Creates a jar file -->
+	<target name="jar" depends="test, javadoc">
+	    <!-- package is already done! -->
+        <copy file="${dist.dir}/spass-meter-rt.jar" tofile="${build.jar.dir}/${ant.project.name}.jar"/>
+		<!-- Copy created jar to global EASy Plug-ins directory -->
+        <copy todir="${qm.bundles.dir}">
+			<fileset dir="${build.jar.dir}" includes="**/*.jar"/>
+		</copy>
+		
+        <!-- 
+	    <artifact:install file="${build.jar.dir}/${ant.project.name}.jar">
+            <pom refid="pom"/>
+        </artifact:install>-->
+        
+        <mvnDeploy folderName="${ant.project.name}" jarFolder="${build.jar.dir}" jarFile="${ant.project.name}.jar"/>
+    </target>
+	
+</project>
