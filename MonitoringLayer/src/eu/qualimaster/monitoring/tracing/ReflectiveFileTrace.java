@@ -71,7 +71,7 @@ public class ReflectiveFileTrace extends AbstractFileTrace {
                 info.nodes.add(name);
             }
         }
-        print("pipeline/");
+        //print("pipeline/");
     }
     
     /**
