@@ -26,7 +26,7 @@ public class ReflectiveFileTrace extends AbstractFileTrace {
      * @param out the output stream to trace to
      */
     public ReflectiveFileTrace(String name, PrintStream out) {
-    	super(name, out);
+        super(name, out);
     }
     
     /**
@@ -81,8 +81,8 @@ public class ReflectiveFileTrace extends AbstractFileTrace {
      */
     private void tracePipelineNode(PipelineNodeSystemPart node) {
         if (null != node) {
-        	print("node:");
-        	printSeparator();
+            print("node:");
+            printSeparator();
             print(node.getName());
             printSeparator();
             trace(node, null, null, null);

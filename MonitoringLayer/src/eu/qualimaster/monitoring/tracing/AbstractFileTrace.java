@@ -26,9 +26,15 @@ import eu.qualimaster.monitoring.topology.PipelineTopology.Processor;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.Scalability;
 
+/**
+ * Abstract file trace functionality.
+ * 
+ * @author Andrea Ceroni
+ * @author Holger Eichelberger
+ */
 public abstract class AbstractFileTrace implements ITrace {
 
-	/**
+    /**
      * A comparator for pipeline node system parts.
      */
     protected static final Comparator<PipelineNodeSystemPart> PIPELINE_NODE_SYSTEM_PART_COMPARATOR 
@@ -38,7 +44,7 @@ public abstract class AbstractFileTrace implements ITrace {
             public int compare(PipelineNodeSystemPart o1, PipelineNodeSystemPart o2) {
                 return o1.getName().compareTo(o2.getName());
             }
-    };
+        };
     
     protected static final IObservable[] NODE_MEASURES = new IObservable[] {Scalability.ITEMS};
     protected PrintStream out;

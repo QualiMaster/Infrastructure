@@ -40,7 +40,7 @@ public class FileTrace extends AbstractFileTrace {
      * @param out the output stream to trace to
      */
     public FileTrace(String name, PrintStream out) {
-    	super(name, out);
+        super(name, out);
     }
     
     /**
