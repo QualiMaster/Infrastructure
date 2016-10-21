@@ -121,11 +121,14 @@ public class AdaptationManager {
                 }
                 break;
             case STOPPING:
-                handleEvent(new ShutdownAdaptationEvent(event.getPipeline()));
+                handleEvent(new ShutdownAdaptationEvent(event.getPipeline(), false));
                 synchronized (activePipelines) {
                     activePipelines.remove(event.getPipeline());
                 }
                 AdaptationEventQueue.notifyStopping(event.getPipeline());
+                break;
+            case STOPPED:
+                handleEvent(new ShutdownAdaptationEvent(event.getPipeline(), true));
                 break;
             default:
                 break;
