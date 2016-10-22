@@ -270,6 +270,7 @@ public class ReplayDataOutput implements IDataOutput, Closeable {
 
 	@Override
 	public void writeString(String value) throws IOException {
+		log.info("Writing " + value);
 		byte[] bytes = Bytes.toBytes(value);
 		if (fields[idx].isKey()) {
 			appendToKey(value);
