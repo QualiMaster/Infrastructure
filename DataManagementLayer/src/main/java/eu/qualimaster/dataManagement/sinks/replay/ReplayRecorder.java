@@ -103,6 +103,7 @@ public class ReplayRecorder<T> {
 			serializer = getSerializer(cls);
 			//return;
 		}
+
 		serializer.serializeTo(data, output);
 	}
 
