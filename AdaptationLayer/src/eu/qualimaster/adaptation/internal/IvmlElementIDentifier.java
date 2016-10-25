@@ -103,6 +103,11 @@ public class IvmlElementIDentifier extends AbstractVariableIdentifier<Observable
                 
                 return id;
             }
+            
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException("Removing segments are not supported. Tried this on: " + id);
+            }
         };
     }
 
