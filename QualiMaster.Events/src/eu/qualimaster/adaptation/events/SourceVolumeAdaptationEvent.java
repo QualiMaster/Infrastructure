@@ -147,14 +147,17 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
     }
 
     /**
-     * Returns the sum of all deviations.
+     * Returns the average of all deviations.
      * 
-     * @return the sum of all deviations
+     * @return the average of all deviations
      */
     public double getAllNormalizedDeviations() {
         double result = 0;
-        for (Double dev : normalizedFindings.values()) {
-            result += dev;
+        if (normalizedFindings.size() > 0) {
+            for (Double dev : normalizedFindings.values()) {
+                result += dev;
+            }
+            result = result / normalizedFindings.size();
         }
         return result;
     }
