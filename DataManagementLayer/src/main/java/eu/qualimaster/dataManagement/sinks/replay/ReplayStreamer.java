@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Simulate the results from the Replay Store (currently HBase) as stream items
+ * // TODO 26/10/16: Optimize the easy-checking anti-pattern with native callback readers-writers
  * @author tuan
  * @since 03/06/16.
  */
@@ -36,7 +37,7 @@ public class ReplayStreamer<T> {
     private String prefix;
     
     /** Control the thread of fetching data from HBase */
-    private boolean stopFetchingDataThread = false;
+    private volatile boolean stopFetchingDataThread = false;
 
     /**
      * Timeout 50 miliseconds for stop querying the database to have
@@ -115,17 +116,20 @@ public class ReplayStreamer<T> {
             // moment between the first and the last lines of code in the
             // set-parameter methods
             // We return null
-            LOG.info("Fetching flag: " + stopFetchingDataThread);
+            // LOG.info("Fetching flag: " + stopFetchingDataThread);
             while (stopFetchingDataThread && counter < TIMEOUT) {
                 counter++;
                 Thread.sleep(1);
             }
             if (counter < TIMEOUT) {
-                LOG.info("Fetch one data from the buffer");
+                LOG.info("Connect buffer to check for available data");
                 result = buffer.poll(10, TimeUnit.SECONDS);
 
                 /** 2016-10-19 Tuan: Test random sink - Note */
-                LOG.info("Received one data from the buffer : " + result);
+                if (result != null)
+                    LOG.info("Get available data from the buffer: " + result.getClass().getName());
+                else
+                    LOG.info("No available data from the buffer");
                 /** End note */
             }
             else {
@@ -158,10 +162,9 @@ public class ReplayStreamer<T> {
             try {
                 while (true) {
                     if (stopFetchingDataThread) {
-                        LOG.info("The parameters are probably being updated. Wait");
+                        LOG.info("The parameters are probably being updated. Wait 10 ms");
                         Thread.sleep(10);
                     }
-                    LOG.info("Keep fetching data");
 
                     while (!resultWrapper.isEOD()) {
                         try {
@@ -184,14 +187,15 @@ public class ReplayStreamer<T> {
 
                     // Potential gotcha here, since resultWrapper is not thread-safe
                     if (resultWrapper.isEOD()) {
-                        LOG.info("The result wrapper is empty, wait 90 mi secs before the next request");
+                        // LOG.info("The result wrapper is empty, wait 90 mi secs before the next ping");
                         // Need to tune this according to TSI performance
-                        Thread.sleep(90);
+                        Thread.sleep(100);
                     }
-
-                    // Relax the loading on the TSI cluster
-                    LOG.info("Wait 10 misecs before the next request to the result wrapper");
-                    Thread.sleep(10);
+                    else {
+                        // Relax the loading on the TSI cluster
+                        LOG.info("Wait 10 misecs before the next request to the result wrapper");
+                        Thread.sleep(10);
+                    }
                 }
             }
             catch (InterruptedException e) {

@@ -62,6 +62,10 @@ public class ReplayDataInput implements IDataInput, Closeable {
 
     /** "peek iterator" in-line implementation */
     private ResultScanner scanner;
+
+    /** Keep the isClosed flag to avoid excessive calls to Scanner.close() */
+    private boolean isClosed = false;
+
     private Iterator<Result> iter;
     private Result peekedRow;
 
@@ -120,12 +124,17 @@ public class ReplayDataInput implements IDataInput, Closeable {
                 LOG.warn("Error getting the scanner from the query " + query);
             }
             scanner = (ResultScanner)obj;
+            isClosed = false;
+
             iter = scanner.iterator();
             if (iter.hasNext()) {
                 peekedRow = iter.next();
                 eod = false;
                 rowKey = (peekedRow != null) ? new String(peekedRow.getRow(),Charset.forName("UTF-8")).split("-") : null;
                 LOG.info("Fetch internally one data from the scanner: " + peekedRow + ", eod = " + eod);
+            }
+            else {
+                LOG.info("Empty internal result");
             }
         } catch (Exception e) {
             LOG.warn("ERROR processing the query " + query, e);
@@ -425,10 +434,10 @@ public class ReplayDataInput implements IDataInput, Closeable {
     public boolean isEOD() {
         // silently close the connection when reaching the end
         if (eod) {
-            LOG.info("EOD = true");
-            if (scanner != null) {
+            if (scanner != null && !isClosed) {
                 LOG.info("Silently close the connection because EOD = true");
                 scanner.close();
+                isClosed = true;
             }
         }
         return eod;
@@ -437,7 +446,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
     private void _silentPeek() {
         idx++;
         if (idx == fields.length) {
-            LOG.info("Going to the next item");
+            // LOG.info("Going to the next item");
             if (iter.hasNext()) {
                 LOG.info("Iterator still has one more item, fetch it");
                 peekedRow = iter.next();
