@@ -170,17 +170,20 @@ public class VolumePredictor {
 	/**
 	 * Makes a blind prediction (based on historical data) of the volume of a term that is not being monitored.
 	 * @param term the not monitored term whose volume has to be predicted.
-	 * @return the predicted volume of the term; -1 if a model with historial data for the input term is not available.
+	 * @return the predicted volume of the term; -1 if a model with historical data for the input term is not available.
 	 */
-	public double predictBlindly(String term)
+	public double predictBlindly(String termId)
 	{
-		BlindPrediction model = this.blindModels.get(term);
+		// get the name of the source term from its id
+		String termName = this.idsToNamesMap.get(termId);
+				
+		BlindPrediction model = this.blindModels.get(termName);
 		if(model != null) return model.predictBlindly();
 		else
 		{
 			// add the term to the set of blind models with a null model, so that a model for this new term will be trained during the next update.
-			this.blindModels.put(term, null);
-			this.blindTerms.add(term);
+			this.blindModels.put(termName, null);
+			this.blindTerms.add(termName);
 			return -1;
 		}
 	}
