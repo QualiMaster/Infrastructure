@@ -15,12 +15,12 @@
  */
 package eu.qualimaster.adaptation.internal;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.LogManager;
 
-import eu.qualimaster.easy.extension.QmConstants;
 import net.ssehub.easy.instantiation.core.model.vilTypes.configuration.Configuration;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.IReasoningHook;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.IRtValueAccess;
@@ -30,9 +30,8 @@ import net.ssehub.easy.instantiation.rt.core.model.rtVil.Script;
 import net.ssehub.easy.basics.messages.Status;
 import net.ssehub.easy.reasoning.core.reasoner.Message;
 import net.ssehub.easy.varModel.confModel.IDecisionVariable;
-import net.ssehub.easy.varModel.model.AbstractVariable;
-import net.ssehub.easy.varModel.model.values.EnumValue;
-import net.ssehub.easy.varModel.model.values.Value;
+import net.ssehub.easy.varModel.cst.ConstraintSyntaxTree;
+import net.ssehub.easy.varModel.model.Constraint;
 
 /**
  * Defines a reasoning hook, which filters out all irrelevant messages on adaptation level.
@@ -51,33 +50,34 @@ public class ReasoningHook extends ReasoningHookAdapter {
     
     @Override
     public Status analyze(Script script, IRtVilConcept concept, IRtValueAccess values, Message message) {
-        List<String> found = new java.util.ArrayList<String>();
+        Set<IDecisionVariable> found = new HashSet<IDecisionVariable>();
+        ConstraintClassifier classifier = new ConstraintClassifier();
+        List<Constraint> probConstraints = message.getProblemConstraints();
         List<Set<IDecisionVariable>> probVars = message.getProblemVariables();
-        if (null != probVars) {
-            for (Set<IDecisionVariable> set : probVars) {
-                for (IDecisionVariable var : set) {
-                    for (int a = 0; a < var.getAttributesCount(); a++) {
-                        IDecisionVariable attribute = var.getAttribute(a);
-                        AbstractVariable decl = attribute.getDeclaration();
-                        if (QmConstants.ANNOTATION_BINDING_TIME.equals(decl.getName())) {
-                            Value val = attribute.getValue();
-                            if (val instanceof EnumValue) {
-                                EnumValue eVal = (EnumValue) val;
-                                if (eVal.getValue().getName().equals(
-                                    QmConstants.CONST_BINDING_TIME_RUNTIME_ENACT)) {
-                                    found.add(var.getDeclaration().getQualifiedName());
-                                }
-                            }
-                        }
-                    }
-                }
+        int count = Math.min(probConstraints.size(), probVars.size()); // shall be the same, but in any case
+        for (int i = 0; i < count; i++) {
+            Constraint c = probConstraints.get(i);
+            ConstraintSyntaxTree cst = c.getConsSyntax();
+            if (null != cst) {
+                classifier.setVariables(probVars.get(i));
+                cst.accept(classifier);
+                classifier.collectRuntimeVariables(found);
+                classifier.clear();
             }
         }
+        
         Status result;
         if (!found.isEmpty()) {
             result = message.getStatus(); // pass only if relevant variable found
+            String tmp = "";
+            for (IDecisionVariable dv : found) {
+                if (tmp.length() > 0) {
+                    tmp += ",";
+                }
+                tmp += dv.getQualifiedName();
+            }
             LogManager.getLogger(ReasoningHook.class).error("Failing reasoning message " + toText(message) 
-                + " due to " + found);            
+                + " due to " + tmp);            
         } else {
             LogManager.getLogger(ReasoningHook.class).warn("Skipped reasoning message: " + toText(message));
             result = null; // ignore
