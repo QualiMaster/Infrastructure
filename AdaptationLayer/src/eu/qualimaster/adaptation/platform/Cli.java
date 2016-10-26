@@ -45,8 +45,8 @@ public class Cli {
     public static final String CFG_FILE = "qm.cli.cfg";
     private static boolean standalone = false;
 
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy,HH:mm:ss", Locale.GERMANY);
-    private static final Logger logger = LoggerFactory.getLogger(Cli.class);
+    private static final SimpleDateFormat SDF = new SimpleDateFormat("MM/dd/yyyy,HH:mm:ss", Locale.GERMANY);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Cli.class);
 
     /**
      * Executes the command line interface.
@@ -341,6 +341,7 @@ public class Cli {
          * @param argName the argument name
          * @return the value
          * @throws NumberFormatException in case that parsing is not possible
+         * @throws ParseException if parsing is not possible due to an invalid ate format
          */
         private Date parseDate(String text, String argName) throws NumberFormatException, ParseException {
             Date result;
@@ -350,8 +351,8 @@ public class Cli {
                 try {
                     result = new Date(Long.parseLong(text));
                 } catch (NumberFormatException e) {
-                    logger.info("Date time needed to be parsed ");
-                    result = sdf.parse(text);
+                    LOGGER.info("Date time needed to be parsed ");
+                    result = SDF.parse(text);
                 }
             }
             return result;
