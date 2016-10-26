@@ -57,7 +57,7 @@ public class BlindPrediction {
 		// get the current timestamp
 		DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 		Date date = new Date();
-		String time = dateFormat.format(date).split("'T'")[1];
+		String time = dateFormat.format(date).split("T")[1];
 		
 		// fetch the historical average value at the required time of the day
 		if(this.getHistoricalVolumes().containsKey(time)) return this.getHistoricalVolumes().get(time);
@@ -110,16 +110,15 @@ public class BlindPrediction {
 		String[] fields = time.split(":");
 		int hour = Integer.valueOf(fields[0]);
 		int minutes = Integer.valueOf(fields[1]);
-		int seconds = Integer.valueOf(fields[2]);
 		
 		Calendar prevCalendar = Calendar.getInstance();
 		Calendar succCalendar = Calendar.getInstance();
 		prevCalendar.set(Calendar.HOUR_OF_DAY, hour);
 		prevCalendar.set(Calendar.MINUTE, minutes);
-		prevCalendar.set(Calendar.SECOND, seconds);
+		prevCalendar.set(Calendar.SECOND, 0);
 		succCalendar.set(Calendar.HOUR_OF_DAY, hour);
 		succCalendar.set(Calendar.MINUTE, minutes);
-		succCalendar.set(Calendar.SECOND, seconds);
+		succCalendar.set(Calendar.SECOND, 0);
 		
 		double neighborValue = -1;
 		while(neighborValue == -1)
