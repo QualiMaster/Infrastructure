@@ -41,6 +41,8 @@ public class VolumePredictionManager {
 	 */
 	private static boolean test = false;
 	
+	private static Map<String, Map<String, Double>> testBlindPredictions;
+	
 	/** Indicates the status of the component */
 	private static String status = "idle";
 	
@@ -194,9 +196,16 @@ public class VolumePredictionManager {
             @Override
             protected void handle(SourceVolumePredictionRequest event) {
                 Map<String, Double> predictions = new HashMap<String, Double>();
+                String source = event.getSource();
                 for (int k = 0; k < event.getKeywordCount(); k++) {
                     String keyword = event.getKeyword(k);
-                    predictions.put(keyword, predictBlindly(event.getSource(), keyword));
+                    Map<String, Double> blindTestdata = 
+                        null == testBlindPredictions ? null : testBlindPredictions.get(source);
+                    if (null != blindTestdata) {
+                        predictions.put(keyword, blindTestdata.get(keyword));
+                    } else {
+                        predictions.put(keyword, predictBlindly(event.getSource(), keyword));
+                    }
                 }
                 EventManager.send(new SourceVolumePredictionResponse(event, predictions));
             }
@@ -309,5 +318,14 @@ public class VolumePredictionManager {
 	 */
 	public static String getStatus() {
 		return status;
+	}
+	
+	/**
+	 * Sets blind prediction values for testing.
+	 * 
+	 * @param predictions the predictions, i.e., a source-keyword-value mapping
+	 */
+	public static void setBlindTestPredictions(Map<String, Map<String, Double>> predictions) {
+	    testBlindPredictions = predictions;
 	}
 }
