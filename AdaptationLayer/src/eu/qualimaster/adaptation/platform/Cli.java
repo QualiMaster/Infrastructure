@@ -4,10 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import eu.qualimaster.adaptation.AdaptationConfiguration;
 import eu.qualimaster.coordination.CoordinationManager;
@@ -26,6 +25,8 @@ import eu.qualimaster.coordination.commands.UpdateCommand;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.monitoring.events.ChangeMonitoringEvent;
 import eu.qualimaster.pipeline.AlgorithmChangeParameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A simple command line interface to the QualiMaster infrastructure. A configuration
@@ -43,6 +44,9 @@ public class Cli {
     public static final String CFG_FILE_OLD = "qm.cfg"; // legacy
     public static final String CFG_FILE = "qm.cli.cfg";
     private static boolean standalone = false;
+
+    private static final SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy,HH:mm:ss", Locale.GERMANY);
+    private static final Logger logger = LoggerFactory.getLogger(Cli.class);
 
     /**
      * Executes the command line interface.
@@ -303,6 +307,8 @@ public class Cli {
                     cmd = rCmd;
                 } catch (NumberFormatException e) {
                     addErrorString(errTmp, e.getMessage());
+                } catch (ParseException e) {
+                    addErrorString(errTmp, e.getMessage());
                 }
                 if (errTmp.length() > 0) {
                     error = errTmp;
@@ -336,7 +342,7 @@ public class Cli {
          * @return the value
          * @throws NumberFormatException in case that parsing is not possible
          */
-        private Date parseDate(String text, String argName) throws NumberFormatException {
+        private Date parseDate(String text, String argName) throws NumberFormatException, ParseException {
             Date result;
             if ("null".equals(text)) {
                 result = null;
@@ -344,7 +350,8 @@ public class Cli {
                 try {
                     result = new Date(Long.parseLong(text));
                 } catch (NumberFormatException e) {
-                    throw new NumberFormatException("Parsing " + argName + ": " + e.getMessage());
+                    logger.info("Date time needed to be parsed ");
+                    result = sdf.parse(text);
                 }
             }
             return result;
