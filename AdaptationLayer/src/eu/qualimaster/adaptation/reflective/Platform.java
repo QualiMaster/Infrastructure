@@ -5,58 +5,59 @@ import java.util.ArrayList;
 /**
  * Represents a platform logged in the monitoring log
  * 
- * @author  Andrea Ceroni
+ * @author Andrea Ceroni
  */
 public class Platform {
 
-	/** The name of the platform */
-	private String name;
-	
-	/** The observed measures */
-	private ArrayList<Double> measures;
-	
-	/** The pipelines in the platform */
-	private ArrayList<Pipeline> pipelines;
+    /** The name of the platform */
+    private String name;
 
-	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return name;
-	}
+    /** The observed measures */
+    private ArrayList<Double> measures;
 
-	/**
-	 * @param name the name to set
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
+    /** The pipelines in the platform */
+    private ArrayList<Pipeline> pipelines;
 
-	/**
-	 * @return the measures
-	 */
-	public ArrayList<Double> getMeasures() {
-		return measures;
-	}
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
 
-	/**
-	 * @param measures the measures to set
-	 */
-	public void setMeasures(ArrayList<Double> measures) {
-		this.measures = measures;
-	}
+    /**
+     * @param name
+     *            the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	/**
-	 * @return the pipelines
-	 */
-	public ArrayList<Pipeline> getPipelines() {
-		return pipelines;
-	}
+    /**
+     * @return the measures
+     */
+    public ArrayList<Double> getMeasures() {
+        return measures;
+    }
 
-	/**
-	 * @param pipelines the pipelines to set
-	 */
-	public void setPipelines(ArrayList<Pipeline> pipelines) {
-		this.pipelines = pipelines;
-	}
+    /**
+     * @param measures the measures to set
+     */
+    public void setMeasures(ArrayList<Double> measures) {
+        this.measures = measures;
+    }
+
+    /**
+     * @return the pipelines
+     */
+    public ArrayList<Pipeline> getPipelines() {
+        return pipelines;
+    }
+
+    /**
+     * @param pipelines the pipelines to set
+     */
+    public void setPipelines(ArrayList<Pipeline> pipelines) {
+        this.pipelines = pipelines;
+    }
 }

@@ -31,8 +31,9 @@ public class ModelUpdateTask extends TimerTask {
         try {
             VolumePredictionManager.updatePredictors();
         } catch (Throwable t) {
-            LogManager.getLogger(getClass()).error("While updating source volume prediction models: " 
-                + t.getMessage(), t);
+            LogManager.getLogger(getClass()).error(
+                    "While updating source volume prediction models: "
+                            + t.getMessage(), t);
         }
     }
 
