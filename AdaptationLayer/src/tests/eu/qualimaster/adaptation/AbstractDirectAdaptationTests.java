@@ -462,8 +462,11 @@ public abstract class AbstractDirectAdaptationTests {
          * Notifies the test specification about starting the given <code>step</code>.
          * 
          * @param step the simulation step (positive integer)
+         * @param config the monitoring configuration used while testing
+         * @return <code>true</code> if the step shall be performed, <code>false</code> else
          */
-        protected void start(int step) {
+        protected boolean start(int step, Configuration config) {
+            return true;
         }
         
         /**
@@ -471,9 +474,10 @@ public abstract class AbstractDirectAdaptationTests {
          * Allows to stop the simulation process. Called after {@link #assertAdaptation(int, Configuration)}.
          * 
          * @param step the simulation step (positive integer)
+         * @param config the adaptation configuration used while testing
          * @return <code>true</code> for stopping, <code>false</code> else
          */
-        protected boolean stop(int step) {
+        protected boolean stop(int step, Configuration config) {
             return false;
         }
 
@@ -548,42 +552,42 @@ public abstract class AbstractDirectAdaptationTests {
         rTask.setReasoningListener(testSpec);
         testSpec.initialize(adaptConfig);
         for (int step = 1; step <= testSpec.getStepCount(); step++) {
-            testSpec.start(step);
-            String id = testSpec.getTimeIdentifier();
-            if (testSpec.getStepCount() > 1) {
-                id = testSpec.getTimeIdentifier() + " step " + step;
-            }
-            TimeMeasurementTracerFactory.setCurrentIdentifier(id);
-            // monitoring
-            AdaptationEvent event = testSpec.monitor(step, MonitoringManager.getSystemState());
-            // analysis
-            if (null == event) {
-                TimeMeasurementTracerFactory.measure(true, Measure.ANALYSIS);
-                event = rTask.reason(false);
-                TimeMeasurementTracerFactory.measure(false, Measure.ANALYSIS);
-                if (!testSpec.assertAnalysis(step, event, monConfig)) {
-                    event = null; // consume silently
+            if (testSpec.start(step, monConfig)) {
+                String id = testSpec.getTimeIdentifier();
+                if (testSpec.getStepCount() > 1) {
+                    id = testSpec.getTimeIdentifier() + " step " + step;
                 }
-            }
-            
-            ISimulationNotifier notifier = RtVilStorage.setSimulationNotifier(testSpec);
-            // run adaptation
-            if (null != event) {
-                if (debug) {
-                    System.out.println("Adaptation event " + event);
+                TimeMeasurementTracerFactory.setCurrentIdentifier(id);
+                // monitoring
+                AdaptationEvent event = testSpec.monitor(step, MonitoringManager.getSystemState());
+                // analysis
+                if (null == event) {
+                    TimeMeasurementTracerFactory.measure(true, Measure.ANALYSIS);
+                    event = rTask.reason(false);
+                    TimeMeasurementTracerFactory.measure(false, Measure.ANALYSIS);
+                    if (!testSpec.assertAnalysis(step, event, monConfig)) {
+                        event = null; // consume silently
+                    }
                 }
-                TimeMeasurementTracerFactory.measure(true, Measure.ADAPT);
-                AdaptationEventQueue.adapt(event, adaptConfig, adaptRtVilModel, tmp);
-                TimeMeasurementTracerFactory.measure(false, Measure.ADAPT);
+                
+                ISimulationNotifier notifier = RtVilStorage.setSimulationNotifier(testSpec);
+                // run adaptation
+                if (null != event) {
+                    if (debug) {
+                        System.out.println("Adaptation event " + event);
+                    }
+                    TimeMeasurementTracerFactory.measure(true, Measure.ADAPT);
+                    AdaptationEventQueue.adapt(event, adaptConfig, adaptRtVilModel, tmp);
+                    TimeMeasurementTracerFactory.measure(false, Measure.ADAPT);
+                }
+                RtVilStorage.setSimulationNotifier(notifier);
+                
+                testSpec.assertAdaptation(step, adaptConfig);
+                if (testSpec.stop(step, adaptConfig)) {
+                    break;
+                }
+                testSpec.commands.clear();
             }
-            RtVilStorage.setSimulationNotifier(notifier);
-            
-            testSpec.assertAdaptation(step, adaptConfig);
-            
-            if (testSpec.stop(step)) {
-                break;
-            }
-            testSpec.commands.clear();
         }
 
         testSpec.end();
