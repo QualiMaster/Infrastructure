@@ -34,6 +34,7 @@ import org.apache.log4j.Logger;
  * Some JAR utilities for using / testing the various QM layers.
  * 
  * @author Holger Eichelberger
+ * @author Sascha El-Sharkawy
  */
 public class JarUtil {
 
@@ -44,9 +45,19 @@ public class JarUtil {
      * @throws IOException in case that creating the artifact fails
      */
     public static void jarModelArtifact(File file) throws IOException {
+        jarModelArtifact("EASy/", file);
+    }
+    
+    /**
+     * Creates the Jar model artifact in <code>file</code>.
+     * 
+     * @param folder Specifies the root folder of the model files, which shall be packed into the JAR.
+     * @param file the file to be created
+     * @throws IOException in case that creating the artifact fails
+     */
+    public static void jarModelArtifact(final String folder, File file) throws IOException {
         Manifest mf = new Manifest();
         JarOutputStream jar = new JarOutputStream(new FileOutputStream(file), mf);
-        final String folder = "EASy/";
 
         JarEntry entry = new JarEntry(folder);
         jar.putNextEntry(entry);
