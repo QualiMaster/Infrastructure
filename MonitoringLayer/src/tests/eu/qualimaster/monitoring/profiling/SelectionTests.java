@@ -699,8 +699,10 @@ public class SelectionTests {
     @Test
     public void testRanking() {
         Set<IObservable> observables = new HashSet<IObservable>();
+        Map<IObservable, Double> weighting = new HashMap<IObservable, Double>();
         for (IObservable obs : RELEVANT) {
             observables.add(obs);
+            weighting.put(obs, 1.0);
         }
         Map<String, Map<IObservable, Double>> result = AlgorithmProfilePredictionManager.predict(PIP_NAME, FAM_ELT, 
             ALGORITHMS.keySet(), observables, null);
@@ -721,6 +723,48 @@ public class SelectionTests {
                     Math.abs(o - p) / o <= 0.15);
             }            
         }
+        String best = simpleWeighting(result, weighting);
+        Assert.assertEquals(HW_ALG, best); // by construction
+    }
+    
+    /**
+     * Implements a simple weighting of mass predictions.
+     * 
+     * @param predictions the predictions
+     * @param weighting the weighting
+     * @return the "best" solution
+     */
+    private static String simpleWeighting(Map<String, Map<IObservable, Double>> predictions, 
+        Map<IObservable, Double> weighting) {
+        String best = null;
+        double bestVal = 0;
+        for (Map.Entry<String, Map<IObservable, Double>> pEnt : predictions.entrySet()) {
+            String algorithm = pEnt.getKey();
+            Map<IObservable, Double> algPredictions = pEnt.getValue();
+            double algVal = 0;
+            double sum = 0;
+            double weights = 0;
+            for (Map.Entry<IObservable, Double> ent : weighting.entrySet()) {
+                IObservable obs = ent.getKey();
+                Double weight = ent.getValue();
+                if (null != obs && null != weight) {
+                    Double predicted = algPredictions.get(obs);
+                    if (null != predicted) {
+                        sum += predicted * weight;
+                    }
+                    weights += weight;
+                }
+            }
+            if (weights != 0) {
+                algVal = sum / weights;
+            } else {
+                algVal = 0;
+            }
+            if (null == best || algVal > bestVal) {
+                best = algorithm;
+            }
+        }
+        return best;
     }
 
 }
