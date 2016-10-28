@@ -30,6 +30,7 @@ public class Utils {
         /**
          * sole constructor for this class.
          * @param rootFolder Specifies the root folder to be used, <tt>null</tt> will use the default folder.
+         *     The folder must end with a forward slash <tt>/</tt>.
          */
         public ModelProvider(String rootFolder) {
             this.rootFolder = rootFolder;
