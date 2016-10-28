@@ -34,6 +34,7 @@ import org.apache.log4j.Logger;
  * Some JAR utilities for using / testing the various QM layers.
  * 
  * @author Holger Eichelberger
+ * @author Sascha El-Sharkawy
  */
 public class JarUtil {
 
@@ -44,18 +45,28 @@ public class JarUtil {
      * @throws IOException in case that creating the artifact fails
      */
     public static void jarModelArtifact(File file) throws IOException {
+        jarModelArtifact("EASy/", file);
+    }
+    
+    /**
+     * Creates the Jar model artifact in <code>file</code>.
+     * 
+     * @param folder Specifies the root folder of the model files, which shall be packed into the JAR.
+     * @param file the file to be created
+     * @throws IOException in case that creating the artifact fails
+     */
+    public static void jarModelArtifact(final String folder, File file) throws IOException {
         Manifest mf = new Manifest();
         JarOutputStream jar = new JarOutputStream(new FileOutputStream(file), mf);
-        final String folder = "EASy/";
 
-        JarEntry entry = new JarEntry(folder);
+        JarEntry entry = createJarEntry(folder, "EASy/");
         jar.putNextEntry(entry);
         jar.closeEntry();
         
         String fileName = folder + "QM.ivml";
         File f = createFileWithFallback(fileName);
         getLogger().info("Including " + f.getAbsolutePath() + " into model jar");
-        entry = new JarEntry(fileName);
+        entry = createJarEntry(fileName, "EASy/");
         jar.putNextEntry(entry);
         putFile(jar, f);
         jar.closeEntry();
@@ -63,7 +74,7 @@ public class JarUtil {
         fileName = folder + "QM.rtvil";
         f = createFileWithFallback(fileName);
         getLogger().info("Including " + f.getAbsolutePath() + " into model jar");
-        entry = new JarEntry(fileName);
+        entry  = createJarEntry(fileName, "EASy/");
         jar.putNextEntry(entry);
         putFile(jar, f);
         jar.closeEntry();
@@ -71,12 +82,34 @@ public class JarUtil {
         fileName = folder + "model.properties";
         f = createFileWithFallback(fileName);
         getLogger().info("Including " + f.getAbsolutePath() + " into model jar");
-        entry = new JarEntry(fileName);
+        entry = createJarEntry(fileName, "EASy/");
         jar.putNextEntry(entry);
         putFile(jar, f);
         jar.closeEntry();
 
         jar.close();
+    }
+    
+    /**
+     * Normalizes the target and creates a JarEntry for the target. This mean that if the target starts not with the
+     * normalization, the beginning part (folder) is exchanged by the normalization. This is done as later steps assume
+     * that the path starts with <tt>EASy/</tt>.
+     * @param target The filename (path) to be packed into the JAR file.
+     * @param normalization The new root folder of all files. If <tt>null</tt> no normalization will be performed.
+     * @return The normalized target location within the JAR archive.
+     */
+    private static JarEntry createJarEntry(String target, String normalization) {
+        JarEntry entry = null;
+        
+        if (null != normalization && null != target) {
+            int pos = target.indexOf("/");
+            if (!target.contains(normalization) && pos > -1) {
+                target = normalization + target.substring(pos + 1);
+            }
+        }
+        entry = new JarEntry(target);
+        
+        return entry;
     }
     
     /**
