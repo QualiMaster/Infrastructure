@@ -50,11 +50,12 @@ public class FeatureExtractor {
         Pattern pattern = new Pattern();
         
         // extract features from the recent (last) unit
-        ArrayList<Double> recentFeatures = extractFeatures(units.get(units.size() - 1));
-        pattern.getFeatures().getMonitoringFeatures().addAll(recentFeatures);
+        ArrayList<Double> lastFeatures = extractFeatures(units.get(units.size() - 1));
+        pattern.getFeatures().getLastMonitoring().addAll(lastFeatures);
         
         // extract aggregated features from the set of previous units
-        //TODO
+        ArrayList<Double> aggregateFeatures = extractAggregateFeatures(units);
+        pattern.getFeatures().getAggregateMonitoring().addAll(aggregateFeatures);
         
         return pattern;
     }
@@ -72,30 +73,25 @@ public class FeatureExtractor {
         unitFeatures.addAll(extractFeatures(unit.getPlatform()));
         
         // extract features from the pipeline of interest
-        ArrayList<Double> pipelineFeatures = null;
-        ArrayList<Double> nodesFeatures = null;
-        for(Pipeline pipeline : unit.getPlatform().getPipelines()){
-            if(pipeline.getName().compareTo(this.pipeline) == 0){
-                pipelineFeatures = new ArrayList<>(pipeline.getMeasures());
-                nodesFeatures = extractFeatures(pipeline.getNodes());
-                break;
-            }
-        }
-        
+        Pipeline pipelineOfInterest = getPipelineOfInterest(unit.getPlatform().getPipelines());
+
         // check if the desired pipeline was present in the monitoring log
-        if(pipelineFeatures == null){
+        if(pipelineOfInterest == null){
             System.out.println("ERROR: pipeline " + this.pipeline + " is not present in the monitoring log");
             return null;
         }
-        else unitFeatures.addAll(pipelineFeatures);
-        
-        // check if the desired pipeline was made of the desired nodes
-        if(nodesFeatures == null){
-            System.out.println("ERROR: pipeline " + this.pipeline + " is not made of the desired nodes");
-            return null;
+        else{
+            unitFeatures.addAll(extractFeatures(pipelineOfInterest));
+            
+            // check if the desired pipeline was made of the desired nodes
+            ArrayList<Double> nodesFeatures = extractFeatures(pipelineOfInterest.getNodes());
+            if(nodesFeatures == null){
+                System.out.println("ERROR: pipeline " + this.pipeline + " is not made of the desired nodes");
+                return null;
+            }
+            else unitFeatures.addAll(nodesFeatures);
         }
-        else unitFeatures.addAll(nodesFeatures);
-        
+
         return unitFeatures;
     }
     
@@ -105,8 +101,10 @@ public class FeatureExtractor {
      * @return the list of features of the nodes.
      */
     private ArrayList<Double> extractFeatures(ArrayList<Node> nodes){
-        // TODO
-        return null;
+        ArrayList<Double> nodesFeatures = new ArrayList<>();
+        
+        // for the moment they are ignored
+        return nodesFeatures;
     }
     
     /**
@@ -116,6 +114,95 @@ public class FeatureExtractor {
      */
     private ArrayList<Double> extractFeatures(Platform platform){
         return platform.getMeasures();
+    }
+    
+    /**
+     * Extracts features from a pipeline.
+     * @param pipeline the pipeline from which the features are extracted.
+     * @return the list of features of the pipeline.
+     */
+    private ArrayList<Double> extractFeatures(Pipeline pipeline){
+        return pipeline.getMeasures();
+    }
+    
+    private ArrayList<Double> extractAggregateFeatures(List<MonitoringUnit> units){
+        ArrayList<Double> aggregateFeatures = new ArrayList<>();
+        
+        // aggregate platform features
+        for(int i = 0; i < units.get(0).getPlatform().getMeasures().size(); i++){
+            ArrayList<Double> featureMeasurements = new ArrayList<>();
+            for(MonitoringUnit unit : units){
+                featureMeasurements.add(unit.getPlatform().getMeasures().get(i));
+            }
+            aggregateFeatures.addAll(extractAggregateFeatures(featureMeasurements));
+        }
+        
+        // aggregate pipeline features (from the pipeline of interest)
+        Pipeline pipelineOfInterest = getPipelineOfInterest(units.get(0).getPlatform().getPipelines());
+        if(pipelineOfInterest == null){
+            System.out.println("ERROR: pipeline " + this.pipeline + " is not present in the monitoring log");
+            return null;
+        }
+        else{
+            for(int i = 0; i < pipelineOfInterest.getMeasures().size(); i++){
+                ArrayList<Double> featureMeasurements = new ArrayList<>();
+                for(MonitoringUnit unit : units){
+                    // get the pipeline of interest
+                    pipelineOfInterest = getPipelineOfInterest(unit.getPlatform().getPipelines());
+                    if(pipelineOfInterest == null){
+                        System.out.println("ERROR: pipeline " + this.pipeline + " is not present in the monitoring log");
+                        return null;
+                    }
+                    featureMeasurements.add(pipelineOfInterest.getMeasures().get(i));
+                }
+                aggregateFeatures.addAll(extractAggregateFeatures(featureMeasurements));
+            }
+        }
+        
+        // aggregate nodes features
+        // TODO not supported at the moment
+        
+        return aggregateFeatures;
+    }
+    
+    private ArrayList<Double> extractAggregateFeatures(ArrayList<Double> measures){
+        ArrayList<Double> features = new ArrayList<>();
+        
+        //TODO clarify where to do the normalization.
+        
+        // variation between beginning and end of the period
+        features.add(computeLinearVariation(measures));
+        
+        // variation of the variation from step to step (to model non-linear increases)
+        features.add(computeNonLinearVariation(measures));
+        
+        return features;
+    }
+    
+    private Pipeline getPipelineOfInterest(ArrayList<Pipeline> pipelines){
+        for(Pipeline pipeline : pipelines){
+            if(pipeline.getName().compareTo(this.pipeline) == 0){
+                return pipeline;
+            }
+        }
+        return null;
+    }
+    
+    private double computeLinearVariation(ArrayList<Double> measures){
+        return measures.get(measures.size() - 1) - measures.get(0);
+    }
+    
+    private double computeNonLinearVariation(ArrayList<Double> measures){
+        ArrayList<Double> stepToStepVariations = computeStepToStepVariations(measures);
+        return computeLinearVariation(stepToStepVariations);
+    }
+    
+    private ArrayList<Double> computeStepToStepVariations(ArrayList<Double> measures){
+        ArrayList<Double> variations = new ArrayList<>();
+        for(int i = 1; i < measures.size(); i++){
+            variations.add(measures.get(i) - measures.get(i - 1));
+        }
+        return variations;
     }
 
     /**

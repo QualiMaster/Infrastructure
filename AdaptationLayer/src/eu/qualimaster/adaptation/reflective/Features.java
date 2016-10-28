@@ -9,55 +9,75 @@ import java.util.ArrayList;
  */
 public class Features {
     
+    /** The values of the monitoring features at the most recent time point */
+    private ArrayList<Double> lastMonitoring;
+    
     /** The values of the monitoring features */
-    private ArrayList<Double> monitoringFeatures;
+    private ArrayList<Double> aggregateMonitoring;
     
     /** The values of the adaptation features */
-    private ArrayList<Double> adaptationFeatures;
+    private ArrayList<Double> adaptation;
     
     /**
      * Default constructor.
      */
     public Features(){
-        this.monitoringFeatures = new ArrayList<>();
-        this.adaptationFeatures = new ArrayList<>();
+        this.lastMonitoring = new ArrayList<>();
+        this.aggregateMonitoring = new ArrayList<>();
+        this.adaptation = new ArrayList<>();
     }
     
     /**
      * Constructor with input features.
-     * @param monitoringFeatures the features extracted from the monitoring log.
-     * @param adaptationFeatures the features extracted from the adaptation log.
+     * @param lastMonitoring the features extracted from the monitoring log at the most recent time point.
+     * @param aggregateMonitoring the features extracted and aggregated from a set of recent time points.
+     * @param adaptation the features extracted from the adaptation log.
      */
-    public Features(ArrayList<Double> monitoringFeatures, ArrayList<Double> adaptationFeatures){
-        this.monitoringFeatures = monitoringFeatures;
-        this.adaptationFeatures = adaptationFeatures;
+    public Features(ArrayList<Double> lastMonitoring, ArrayList<Double> aggregateMonitoring, ArrayList<Double> adaptation){
+        this.lastMonitoring = lastMonitoring;
+        this.aggregateMonitoring = aggregateMonitoring;
+        this.adaptation = adaptation;
     }
 
     /**
-     * @return the monitoringFeatures
+     * @return the lastMonitoring
      */
-    public ArrayList<Double> getMonitoringFeatures() {
-        return monitoringFeatures;
+    public ArrayList<Double> getLastMonitoring() {
+        return lastMonitoring;
     }
 
     /**
-     * @param monitoringFeatures the monitoringFeatures to set
+     * @param lastMonitoring the lastMonitoring to set
      */
-    public void setMonitoringFeatures(ArrayList<Double> monitoringFeatures) {
-        this.monitoringFeatures = monitoringFeatures;
+    public void setLastMonitoring(ArrayList<Double> lastMonitoring) {
+        this.lastMonitoring = lastMonitoring;
     }
 
     /**
-     * @return the adaptationFeatures
+     * @return the aggregateMonitoring
      */
-    public ArrayList<Double> getAdaptationFeatures() {
-        return adaptationFeatures;
+    public ArrayList<Double> getAggregateMonitoring() {
+        return aggregateMonitoring;
     }
 
     /**
-     * @param adaptationFeatures the adaptationFeatures to set
+     * @param aggregateMonitoring the aggregateMonitoring to set
      */
-    public void setAdaptationFeatures(ArrayList<Double> adaptationFeatures) {
-        this.adaptationFeatures = adaptationFeatures;
+    public void setAggregateMonitoring(ArrayList<Double> aggregateMonitoring) {
+        this.aggregateMonitoring = aggregateMonitoring;
+    }
+
+    /**
+     * @return the adaptation
+     */
+    public ArrayList<Double> getAdaptation() {
+        return adaptation;
+    }
+
+    /**
+     * @param adaptation the adaptation to set
+     */
+    public void setAdaptation(ArrayList<Double> adaptation) {
+        this.adaptation = adaptation;
     }
 }
