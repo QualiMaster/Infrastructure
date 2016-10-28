@@ -23,7 +23,7 @@ public class Utils {
      * 
      * @author Sascha El-Sharkawy
      */
-    static class ModelProvider implements IModelProvider {
+    public static class ModelProvider implements IModelProvider {
         private final String rootFolder;
         private File tmp;
         
@@ -31,7 +31,7 @@ public class Utils {
          * sole constructor for this class.
          * @param rootFolder Specifies the root folder to be used, <tt>null</tt> will use the default folder.
          */
-        ModelProvider(String rootFolder) {
+        public ModelProvider(String rootFolder) {
             this.rootFolder = rootFolder;
         }
         
