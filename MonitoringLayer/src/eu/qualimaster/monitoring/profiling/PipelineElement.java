@@ -180,9 +180,9 @@ public class PipelineElement {
                 Serializable value = ent.getValue();
                 Quantizer<?> quantizer;
                 if (key instanceof IObservable) {
-                    quantizer = QuantizerRegistry.getQuantizer((IObservable) key);
+                    quantizer = QuantizerRegistry.getQuantizer((IObservable) key, true);
                 } else {
-                    quantizer = QuantizerRegistry.getQuantizer(value);
+                    quantizer = QuantizerRegistry.getQuantizer(value, true);
                 }
                 if (null != quantizer) {
                     target.put(key, quantizer.quantize(value));
@@ -213,7 +213,7 @@ public class PipelineElement {
      */
     private void updateInputRate(PipelineNodeSystemPart family) {
         List<PipelineNodeSystemPart> pred = Tracing.getPredecessors(family);
-        Quantizer<Double> quantizer = QuantizerRegistry.getQuantizer(Scalability.ITEMS);
+        Quantizer<Double> quantizer = QuantizerRegistry.getQuantizer(Scalability.ITEMS, false);
         if (null != pred && null != quantizer) {
             double inputRate = 0;
             int predCount = pred.size();
@@ -246,7 +246,7 @@ public class PipelineElement {
      * @param observable the observable to predict
      * @param targetValues the target values for prediction. Predict the next step if <b>null</b> or empty. May contain
      *   observables ({@link IObservable}-Double) or parameter values (String-value)
-     * @return the predicted value (<code>Double.MIN_VALUE</code> in case of no prediction)
+     * @return the predicted value ({@link Constants#NO_PREDICTION} in case of no prediction)
      */
     double predict(String algorithm, IObservable observable, Map<Object, Serializable> targetValues) {
         Map<Object, Serializable> key = getKey(algorithm, targetValues);

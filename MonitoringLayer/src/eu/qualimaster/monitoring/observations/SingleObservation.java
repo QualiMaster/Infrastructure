@@ -145,6 +145,11 @@ public class SingleObservation implements IObservation {
     public long getLastUpdate() {
         return lastUpdate.get();
     }
+    
+    @Override
+    public void setLastUpdate(long timestamp) {
+        lastUpdate.set(timestamp);
+    }
 
     @Override
     public int getComponentCount() {

@@ -23,6 +23,9 @@ import eu.qualimaster.monitoring.profiling.quantizers.DoubleIntegerQuantizer;
 import eu.qualimaster.monitoring.profiling.quantizers.IdentityIntegerQuantizer;
 import eu.qualimaster.monitoring.profiling.quantizers.Quantizer;
 import eu.qualimaster.monitoring.profiling.quantizers.ScalingDoubleQuantizer;
+import eu.qualimaster.monitoring.profiling.validators.IValidator;
+import eu.qualimaster.monitoring.profiling.validators.MinMaxValidator;
+import eu.qualimaster.monitoring.profiling.validators.MinValidator;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.ResourceUsage;
 import eu.qualimaster.observables.Scalability;
@@ -35,33 +38,88 @@ import eu.qualimaster.observables.TimeBehavior;
  */
 public class QuantizerRegistry {
     
-    private static final Map<Class<? extends Serializable>, Quantizer<?>> TYPE_QUANTIZERS = new HashMap<>();
-    private static final Map<IObservable, Quantizer<Double>> OBSERVABLE_QUANTIZERS = new HashMap<>();
+    private static final Map<Class<? extends Serializable>, QuantizerInfo<?>> TYPE_QUANTIZERS = new HashMap<>();
+    private static final Map<IObservable, QuantizerInfo<Double>> OBSERVABLE_QUANTIZERS = new HashMap<>();
     private static final Map<IObservable, Integer> PREDICTION_STEPS = new HashMap<>();
+    private static final Map<IObservable, IValidator> VALIDATORS = new HashMap<>();
     
     static {
         // observable quantizers
-        registerQuantizer(TimeBehavior.LATENCY, ScalingDoubleQuantizer.INSTANCE); // ms
-        registerQuantizer(TimeBehavior.THROUGHPUT_ITEMS, ScalingDoubleQuantizer.INSTANCE);
-        registerQuantizer(Scalability.ITEMS, ScalingDoubleQuantizer.INSTANCE);
-        registerQuantizer(ResourceUsage.EXECUTORS, DoubleIntegerQuantizer.INSTANCE);
-        registerQuantizer(ResourceUsage.TASKS, DoubleIntegerQuantizer.INSTANCE);
+        registerQuantizer(TimeBehavior.LATENCY, ScalingDoubleQuantizer.INSTANCE, true); // ms
+        registerValidator(TimeBehavior.LATENCY, MinValidator.MIN_0_VALIDATOR);
+        registerQuantizer(TimeBehavior.THROUGHPUT_ITEMS, ScalingDoubleQuantizer.INSTANCE, true);
+        registerValidator(TimeBehavior.THROUGHPUT_ITEMS, MinValidator.MIN_0_VALIDATOR);
+        registerQuantizer(Scalability.ITEMS, ScalingDoubleQuantizer.INSTANCE, true);
+        registerValidator(Scalability.ITEMS, MinValidator.MIN_0_VALIDATOR);
+        registerQuantizer(ResourceUsage.EXECUTORS, DoubleIntegerQuantizer.INSTANCE, true);
+        registerValidator(ResourceUsage.EXECUTORS, MinValidator.MIN_0_VALIDATOR);
+        registerQuantizer(ResourceUsage.TASKS, DoubleIntegerQuantizer.INSTANCE, true);
+        registerValidator(ResourceUsage.TASKS, MinValidator.MIN_0_VALIDATOR);
+        registerQuantizer(ResourceUsage.CAPACITY, ScalingDoubleQuantizer.INSTANCE, false);
+        registerValidator(ResourceUsage.CAPACITY, MinMaxValidator.MIN_0_MAX_1_VALIDATOR);
 
         // type quantizers for parameters
-        registerQuantizer(IdentityIntegerQuantizer.INSTANCE);
-        registerQuantizer(DoubleIntegerQuantizer.INSTANCE);
+        registerQuantizer(IdentityIntegerQuantizer.INSTANCE, true);
+        registerQuantizer(DoubleIntegerQuantizer.INSTANCE, true);
+    }
+    
+    /**
+     * Stores a quantizer and additional information.
+     * 
+     * @param <T> the value type the quantizer is operating on
+     * @author Holger Eichelberger
+     */
+    private static class QuantizerInfo<T extends Serializable> {
+        private Quantizer<T> quantizer;
+        private boolean forKey;
+
+        /**
+         * Creates an information object.
+         * 
+         * @param quantizer the quantizer
+         * @param forKey whether the quantizer shall be used for building profile keys 
+         */
+        private QuantizerInfo(Quantizer<T> quantizer, boolean forKey) {
+            this.quantizer = quantizer;
+            this.forKey = forKey;
+        }
+        
+        /**
+         * Returns the quantizer.
+         * 
+         * @return the quantizer
+         */
+        private Quantizer<T> getQuantizer() {
+            return quantizer;
+        }
+        
+        /**
+         * Returns, whether the quantizer shall be used for building profile keys.
+         * 
+         * @return <code>true</code> for building profile keys, <code>false</code> else
+         */
+        private boolean forKey() {
+            return forKey;
+        }
+        
     }
     
     /**
      * Returns the quantizer for an observable.
      * 
      * @param observable the observable
+     * @param forKey whether the quantizer shall be used to determine the profile identification key
      * @return the {@link QuantizerRegistry} (may be <b>null</b> if there is none and the observable shall be ignored)
      */
-    public static Quantizer<Double> getQuantizer(IObservable observable) {
+    public static Quantizer<Double> getQuantizer(IObservable observable, boolean forKey) {
         Quantizer<Double> result = null;
         if (null != observable) {
-            result = OBSERVABLE_QUANTIZERS.get(observable);
+            QuantizerInfo<Double> info = OBSERVABLE_QUANTIZERS.get(observable);
+            if (null != info) {
+                if ((forKey && info.forKey()) || !forKey) {
+                    result = info.getQuantizer();
+                }
+            }
         }
         return result;
     }
@@ -70,12 +128,18 @@ public class QuantizerRegistry {
      * Returns the quantizer for a serializable (parameter value).
      * 
      * @param serializable the serializable
+     * @param forKey whether the quantizer shall be used to determine the profile identification key
      * @return the quantizer (may be <b>null</b> if there is none and the parameter shall be ignored)
      */
-    public static Quantizer<?> getQuantizer(Serializable serializable) {
+    public static Quantizer<?> getQuantizer(Serializable serializable, boolean forKey) {
         Quantizer<?> result = null;
         if (null != serializable) {
-            result = TYPE_QUANTIZERS.get(serializable.getClass());
+            QuantizerInfo<?> info = TYPE_QUANTIZERS.get(serializable.getClass());
+            if (null != info) {
+                if ((forKey && info.forKey()) || !forKey) {
+                    result = info.getQuantizer();
+                }
+            }
         }
         return result;
     }
@@ -85,10 +149,11 @@ public class QuantizerRegistry {
      * 
      * @param observable the observable
      * @param quantizer the quantizer (<b>null</b> unregisters the quantizer)
+     * @param forKey whether the quantizer shall be used to determine the profile identification key
      */
-    public static void registerQuantizer(IObservable observable, Quantizer<Double> quantizer) {
+    public static void registerQuantizer(IObservable observable, Quantizer<Double> quantizer, boolean forKey) {
         if (null != observable) {
-            OBSERVABLE_QUANTIZERS.put(observable, quantizer);
+            OBSERVABLE_QUANTIZERS.put(observable, new QuantizerInfo<Double>(quantizer, forKey));
         }
     }
     
@@ -104,13 +169,53 @@ public class QuantizerRegistry {
     }
 
     /**
+     * Registers an observable validator.
+     * 
+     * @param observable the observable
+     * @param validator the validator (<b>null</b> unregisters the quantizer)
+     */
+    public static void registerValidator(IObservable observable, IValidator validator) {
+        if (null != observable) {
+            VALIDATORS.put(observable, validator);
+        }
+    }
+
+    /**
+     * Unregisters an observable validator.
+     * 
+     * @param observable the observable
+     */
+    public static void unregisterValidator(IObservable observable) {
+        if (null != observable) {
+            VALIDATORS.remove(observable);
+        }
+    }
+
+    /**
+     * Returns a validator for a given <code>observable</code>.
+     * 
+     * @param observable the observable
+     * @return the validator instance or <b>null</b> if no validator is known and the predicted value shall not 
+     *     be validated
+     */
+    public static IValidator getValidator(IObservable observable) {
+        IValidator result = null;
+        if (null != observable) {
+            result = VALIDATORS.get(observable);
+        }
+        return result;
+    }
+
+    /**
      * Registers a given type quantizer.
      * 
+     * @param <T> the value type of the quantizer
      * @param quantizer the quantizer
+     * @param forKey whether the quantizer shall be used to determine the profile identification key
      */
-    public static void registerQuantizer(Quantizer<?> quantizer) {
+    public static <T extends Serializable> void registerQuantizer(Quantizer<T> quantizer, boolean forKey) {
         if (null != quantizer && null != quantizer.handles()) {
-            TYPE_QUANTIZERS.put(quantizer.handles(), quantizer);
+            TYPE_QUANTIZERS.put(quantizer.handles(), new QuantizerInfo<T>(quantizer, forKey));
         }
     }
 
@@ -148,7 +253,7 @@ public class QuantizerRegistry {
      * @param observable the observable
      */
     public static void defaultPredictionSteps(IObservable observable) {
-        registerPredictionSteps(observable, -1);
+        registerPredictionSteps(observable, 0);
     }
     
     /**

@@ -28,16 +28,30 @@ import eu.qualimaster.observables.TimeBehavior;
 public class StateUtils {
 
     /**
-     * Updates the capacity. Actually, derived observations would be better, but this is sufficient for now.
+     * Updates the capacity for now. Actually, derived observations would be better, but this is sufficient for now.
      * 
      * @param part the system part
      * @param key the component key
      * @param ignoreNoTuples ignore phases where no tuples are observed and enlarge observation window (-> thrift)
+     * @see #updateCapacity(SystemPart, Object, boolean, long)
      */
     public static void updateCapacity(SystemPart part, Object key, boolean ignoreNoTuples) {
+        updateCapacity(part, key, ignoreNoTuples, System.currentTimeMillis());
+    }
+
+    /**
+     * Updates the capacity for a given point in time [testing, simulation]. Actually, derived observations would be 
+     * better, but this is sufficient for now.
+     * 
+     * @param part the system part
+     * @param key the component key
+     * @param ignoreNoTuples ignore phases where no tuples are observed and enlarge observation window (-> thrift)
+     * @param timestamp the actual point in time for updating
+     */
+    public static void updateCapacity(SystemPart part, Object key, boolean ignoreNoTuples, long timestamp) {
         Double last = part.getStoreValue(ResourceUsage.CAPACITY, key);
         Double lastExecuted = part.getStoreValue(TimeBehavior.THROUGHPUT_ITEMS, key);
-        double now = System.currentTimeMillis();
+        double now = timestamp;
         if (null != last && null != lastExecuted) {
             double window = now - last;
             if (window > 5000) { // > 0! 
@@ -57,7 +71,7 @@ public class StateUtils {
             part.setStoreValue(ResourceUsage.CAPACITY, now, key);
         }
     }
-    
+
     /**
      * Returns whether the given observable changes the latency.
      * 

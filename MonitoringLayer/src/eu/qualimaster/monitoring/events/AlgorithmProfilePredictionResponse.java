@@ -15,8 +15,11 @@
  */
 package eu.qualimaster.monitoring.events;
 
+import java.util.Map;
+
 import eu.qualimaster.common.QMInternal;
 import eu.qualimaster.events.AbstractResponseEvent;
+import eu.qualimaster.observables.IObservable;
 
 /**
  * An event for responding to an algorithm profile prediction request.
@@ -29,7 +32,9 @@ public class AlgorithmProfilePredictionResponse extends AbstractResponseEvent<Al
     private static final long serialVersionUID = 3749223586800239726L;
 
     private double prediction;
+    @Deprecated
     private String algorithm;
+    private Map<String, Map<IObservable, Double>> massPrediction;
     
     /**
      * Creates the response.
@@ -47,10 +52,25 @@ public class AlgorithmProfilePredictionResponse extends AbstractResponseEvent<Al
      * 
      * @param request the request
      * @param algorithm the best algorithm (for algorithm-choice predictions)
+     * @deprecated use {@link #AlgorithmProfilePredictionResponse(AlgorithmProfilePredictionRequest, Map)} instead
      */
+    @Deprecated
     public AlgorithmProfilePredictionResponse(AlgorithmProfilePredictionRequest request, String algorithm) {
         super(request);
         this.algorithm = algorithm;
+    }
+
+    /**
+     * Creates the response for a mass-prediction request.
+     * 
+     * @param request the request
+     * @param massPrediction the prediction results, may be <b>null</b>, if there is no prediction the double objects 
+     * shall be <b>null</b>
+     */
+    public AlgorithmProfilePredictionResponse(AlgorithmProfilePredictionRequest request, 
+        Map<String, Map<IObservable, Double>> massPrediction) {
+        super(request);
+        this.massPrediction = massPrediction;
     }
     
     /**
@@ -66,9 +86,21 @@ public class AlgorithmProfilePredictionResponse extends AbstractResponseEvent<Al
      * The "best" algorithm.
      * 
      * @return the best algorithm (may be <b>null</b>)
+     * @deprecated
      */
+    @Deprecated
     public String getAlgorithm() {
         return algorithm;
     }
 
+    /**
+     * Returns the result for a mass-prediction request.
+     * 
+     * @return the prediction results, may be <b>null</b>, if there is no prediction the double objects 
+     *     shall be <b>null</b>
+     */
+    public Map<String, Map<IObservable, Double>> getMassPrediction() {
+        return massPrediction;
+    }
+    
 }

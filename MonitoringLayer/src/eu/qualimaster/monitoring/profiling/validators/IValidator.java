@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.qualimaster.monitoring.profiling;
+package eu.qualimaster.monitoring.profiling.validators;
 
 /**
- * Some constants.
+ * Defines the validation interface for predicted values.
  * 
  * @author Holger Eichelberger
  */
-public class Constants {
+public interface IValidator {
 
     /**
-     * The value to be returned if there is no prediction (<code>Double.MIN_VALUE</code>).
+     * Validates a predicted <code>value</code>.
+     * 
+     * @param value the predicted value
+     * @return the validated/corrected predicted value, may be <code>value</code> but also corrected if invalid
      */
-    public static final double NO_PREDICTION = Double.MIN_VALUE;
-    public static final String KEY_INPUT_RATE = "*inp*";
-    static final String KEY_ALGORITHM = "*alg*";
-    
+    public double validate(double value);
+
 }

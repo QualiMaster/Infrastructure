@@ -13,20 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.qualimaster.monitoring.profiling;
+package eu.qualimaster.monitoring.profiling.validators;
 
 /**
- * Some constants.
+ * Implements a validator ensuring minimum values.
  * 
  * @author Holger Eichelberger
  */
-public class Constants {
+public class MinValidator implements IValidator {
 
     /**
-     * The value to be returned if there is no prediction (<code>Double.MIN_VALUE</code>).
+     * The default validator for positive values.
      */
-    public static final double NO_PREDICTION = Double.MIN_VALUE;
-    public static final String KEY_INPUT_RATE = "*inp*";
-    static final String KEY_ALGORITHM = "*alg*";
+    public static final IValidator MIN_0_VALIDATOR = new MinValidator(0);
     
+    private double min;
+    
+    /**
+     * Creates a minimum validator.
+     * 
+     * @param min the minimum allowed value
+     */
+    public MinValidator(double min) {
+        this.min = min;
+    }
+
+    @Override
+    public double validate(double value) {
+        double result;
+        if (value < min) {
+            result = min;
+        } else {
+            result = value;
+        }
+        return result;
+    }
+
 }

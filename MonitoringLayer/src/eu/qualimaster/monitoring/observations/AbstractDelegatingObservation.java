@@ -121,6 +121,11 @@ public abstract class AbstractDelegatingObservation implements IObservation {
     public long getLastUpdate() {
         return observation.getLastUpdate();
     }
+    
+    @Override
+    public void setLastUpdate(long timestamp) {
+        observation.setLastUpdate(timestamp);
+    }
 
     @Override
     public int getComponentCount() {

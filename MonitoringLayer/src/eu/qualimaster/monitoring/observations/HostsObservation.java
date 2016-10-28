@@ -138,6 +138,11 @@ class HostsObservation implements IObservation {
     public long getLastUpdate() {
         return provider.getLastUpdate(ResourceUsage.EXECUTORS);
     }
+    
+    @Override
+    public void setLastUpdate(long timestamp) {
+        provider.setLastUpdate(ResourceUsage.EXECUTORS, timestamp);
+    }
 
     @Override
     public int getComponentCount() {

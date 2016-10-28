@@ -278,6 +278,11 @@ public abstract class AbstractCompoundObservation implements IObservation {
     }
 
     @Override
+    public void setLastUpdate(long timestamp) {
+        lastUpdate.set(timestamp);
+    }
+
+    @Override
     public int getComponentCount() {
         int result = components.size();
         if (null != links) {

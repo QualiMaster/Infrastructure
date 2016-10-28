@@ -13,20 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.qualimaster.monitoring.profiling;
+package eu.qualimaster.monitoring.profiling.validators;
 
 /**
- * Some constants.
+ * Implements a validator ensuring maximum values.
  * 
  * @author Holger Eichelberger
  */
-public class Constants {
+public class MaxValidator implements IValidator {
 
+    private double max;
+    
     /**
-     * The value to be returned if there is no prediction (<code>Double.MIN_VALUE</code>).
+     * Creates a maximum-validator.
+     * 
+     * @param max the maximum allowed value
      */
-    public static final double NO_PREDICTION = Double.MIN_VALUE;
-    public static final String KEY_INPUT_RATE = "*inp*";
-    static final String KEY_ALGORITHM = "*alg*";
+    public MaxValidator(double max) {
+        this.max = max;
+    }
+
+    @Override
+    public double validate(double value) {
+        double result;
+        if (value > max) {
+            result = max;
+        } else {
+            result = value;
+        }
+        return result;
+    }
     
 }

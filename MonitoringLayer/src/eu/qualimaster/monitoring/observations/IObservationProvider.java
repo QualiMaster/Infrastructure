@@ -85,6 +85,16 @@ public interface IObservationProvider {
     public long getLastUpdate(IObservable observable);
 
     /**
+     * Maniuplates the last update. [testing only]
+     * 
+     * @param observable the value to manipulate
+     * @param timestamp may be <b>-1</b> if <code>observable</code> is not supported or has not been monitored. In order
+     *   to  discriminate these situations, please call {@link #supportsObservation(IObservable)} 
+     *   or {@link #hasValue(IObservable)}. 
+     */
+    public void setLastUpdate(IObservable observable, long timestamp);
+    
+    /**
      * Returns whether this part supports the given observable.
      * 
      * @param observable the observation to be returned for

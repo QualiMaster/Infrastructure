@@ -35,10 +35,12 @@ public class AlgorithmProfilePredictionRequest extends AbstractReturnableEvent {
     private String pipeline;
     private String pipelineElement;
     private String algorithm;
+    @Deprecated
     private Map<IObservable, Double> weighting;
     private IObservable observable;
     private Map<Object, Serializable> targetValues;
     private Set<String> algorithms;
+    private Set<IObservable> observables;
 
     /**
      * Creates a request (internal).
@@ -110,11 +112,30 @@ public class AlgorithmProfilePredictionRequest extends AbstractReturnableEvent {
      * @param weighting the weighting
      * @param targetValues the target values for a modified situation (may be <b>null</b> if just the algorithm may 
      *     change based on the current situation)
+     * @deprecated use {@link #AlgorithmProfilePredictionRequest(String, String, Set, Set, Map)} instead
      */
+    @Deprecated
     public AlgorithmProfilePredictionRequest(String pipeline, String pipelineElement, Set<String> algorithms, 
         Map<IObservable, Double> weighting, Map<Object, Serializable> targetValues) {
         this(pipeline, pipelineElement, targetValues);
         this.weighting = weighting;
+        this.algorithms = algorithms;
+    }
+    
+    /**
+     * Creates a request to obtain a mass prediction for a set of algorithms / observables in this situation.
+     * 
+     * @param pipeline the pipeline to predict for
+     * @param pipelineElement the pipeline element
+     * @param algorithms the algorithms to predict for
+     * @param observables the observables to predict for
+     * @param targetValues the target values for a modified situation (may be <b>null</b> if just the algorithm may 
+     *     change based on the current situation)
+     */
+    public AlgorithmProfilePredictionRequest(String pipeline, String pipelineElement, Set<String> algorithms, 
+        Set<IObservable> observables, Map<Object, Serializable> targetValues) {
+        this(pipeline, pipelineElement, targetValues);
+        this.observables = observables;
         this.algorithms = algorithms;
     }
 
@@ -154,11 +175,21 @@ public class AlgorithmProfilePredictionRequest extends AbstractReturnableEvent {
     public Map<IObservable, Double> getWeighting() {
         return weighting;
     }
+
+    /**
+     * Returns the observables to perform a mass prediction for.
+     * 
+     * @return the observables (may be <b>null</b> if {@link #getAlgorithm()} is given)
+     * @see #getObservable()
+     */
+    public Set<IObservable> getObservables() {
+        return observables;
+    }
     
     /**
      * Returns the observable to predict for.
      * 
-     * @return the observable (may be <b>null</b> if {@link #getWeighting()} is given and vv.)
+     * @return the observable (may be <b>null</b> if {@link #getObservables()} is given and vv.)
      */
     public IObservable getObservable() {
         return observable;

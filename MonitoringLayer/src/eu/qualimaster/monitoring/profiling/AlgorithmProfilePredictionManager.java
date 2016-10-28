@@ -16,11 +16,9 @@
 package eu.qualimaster.monitoring.profiling;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent;
 import eu.qualimaster.events.EventHandler;
@@ -47,8 +45,6 @@ public class AlgorithmProfilePredictionManager {
     private static IAlgorithmProfileCreator creator = new KalmanProfileCreator(); // currently fixed, may be replaced
     private static boolean predict = true;
  
-    private static final Logger LOGGER = LogManager.getLogger(AlgorithmProfilePredictionManager.class);
-    
     static {
         EventManager.register(new AlgorithmProfilePredictionRequestHandler());
     }
@@ -76,7 +72,6 @@ public class AlgorithmProfilePredictionManager {
      * @param event the lifecycle event
      */
     public static void notifyPipelineLifecycleChange(PipelineLifecycleEvent event) {
-        LOGGER.debug("TESTOUT: " + event);
         String pipeline = event.getPipeline();
         Status status = event.getStatus();
         
@@ -189,6 +184,41 @@ public class AlgorithmProfilePredictionManager {
         }
         return result;
     }
+
+    /**
+     * Performs a mass-prediction for a set of algorithms and a set of observables.
+     * 
+     * @param pipeline the pipeline name containing <code>element</code>
+     * @param element the pipeline element name running <code>algorithm</code>
+     * @param algorithms the algorithms to predict for
+     * @param observables the observables to create the prediction for
+     * @param targetValues the target values for prediction. Predict the next step if <b>null</b> or empty. May contain
+     *   observables ({@link IObservable}-Double) or parameter values (String-value)
+     * @return the predicted values with <b>null</b> as prediction if there is none, or <b>null</b> if no prediction is 
+     *   possible at all, e.g., pipeline or element unknown
+     */
+    public static Map<String, Map<IObservable, Double>> predict(String pipeline, String element, Set<String> algorithms,
+        Set<IObservable> observables, Map<Object, Serializable> targetValues) {
+        Map<String, Map<IObservable, Double>> result = null;
+        if (predict && null != algorithms) {
+            Pipeline pip = Pipelines.getPipeline(pipeline);
+            if (null != pip) {
+                PipelineElement elt = pip.getElement(element);
+                if (null != elt) {
+                    result = new HashMap<String, Map<IObservable, Double>>();
+                    for (String algorithm : algorithms) {
+                        Map<IObservable, Double> algResults = new HashMap<IObservable, Double>();
+                        for (IObservable obs : observables) {
+                            double predicted = elt.predict(algorithm, obs, targetValues);
+                            algResults.put(obs, (Constants.NO_PREDICTION == predicted) ? null : predicted);
+                        }
+                        result.put(algorithm, algResults);
+                    }
+                }
+            }
+        }
+        return result;
+    }
     
     /**
      * Predicts the best algorithm for the given situation.
@@ -201,6 +231,7 @@ public class AlgorithmProfilePredictionManager {
      *   observables ({@link IObservable}-Double) or parameter values (String-value)
      * @return the predicted algorithm or <b>null</b> if no one can be predicted
      */
+    @Deprecated
     public static String predict(String pipeline, String element, Set<String> algorithms, 
         Map<IObservable, Double> weighting, Map<Object, Serializable> targetValues) {
         String result = null;
@@ -226,6 +257,7 @@ public class AlgorithmProfilePredictionManager {
      *   observables ({@link IObservable}-Double) or parameter values (String-value)
      * @return the predicted algorithm or <b>null</b> if no one can be predicted
      */
+    @Deprecated
     private static String simpleWeighting(PipelineElement elt, Set<String> algorithms, 
         Map<IObservable, Double> weighting, Map<Object, Serializable> targetValues) {
         String best = null;
@@ -239,7 +271,7 @@ public class AlgorithmProfilePredictionManager {
                 double weights = 0;
                 if (null != obs && null != weight) {
                     double predicted = elt.predict(algorithm, obs, targetValues);
-                    if (Double.MIN_VALUE != predicted) {
+                    if (Constants.NO_PREDICTION != predicted) {
                         sum = predicted * weight;
                         weights += weight;
                     }
@@ -307,14 +339,15 @@ public class AlgorithmProfilePredictionManager {
         protected void handle(AlgorithmProfilePredictionRequest event) {
             String pipeline = event.getPipeline();
             String pipelineElement = event.getPipelineElement();
-            Map<IObservable, Double> weighting = event.getWeighting();
+            Set<IObservable> observables = event.getObservables();
             Map<Object, Serializable> targetValues = event.getTargetValues();
-            if (null == weighting) {
+            if (null == observables) {
                 double result = predict(pipeline, pipelineElement, event.getAlgorithm(), event.getObservable(), 
                     targetValues);
                 EventManager.send(new AlgorithmProfilePredictionResponse(event, result));
             } else {
-                String result = predict(pipeline, pipelineElement, event.getAlgorithms(), weighting, targetValues);
+                Map<String, Map<IObservable, Double>> result = 
+                    predict(pipeline, pipelineElement, event.getAlgorithms(), observables, targetValues);
                 EventManager.send(new AlgorithmProfilePredictionResponse(event, result));
             }
         }

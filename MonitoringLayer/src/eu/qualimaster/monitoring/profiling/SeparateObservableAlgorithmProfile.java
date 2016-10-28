@@ -26,6 +26,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.monitoring.profiling.predictors.IAlgorithmProfilePredictor;
+import eu.qualimaster.monitoring.profiling.validators.IValidator;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.observables.IObservable;
 
@@ -191,7 +192,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
      */
     private IAlgorithmProfilePredictor obtainPredictor(IObservable observable) {
         IAlgorithmProfilePredictor predictor = predictors.get(observable);
-        if (null == predictor && null != QuantizerRegistry.getQuantizer(observable)) {
+        if (null == predictor && null != QuantizerRegistry.getQuantizer(observable, false)) {
             predictor = element.getProfileCreator().createPredictor();
             try {
                 load(predictor, element.getPath(), generateKey(observable));
@@ -214,6 +215,10 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
         IAlgorithmProfilePredictor predictor = obtainPredictor(observable);
         if (null != predictor) {
             result = predictor.predict(steps);
+            IValidator validator = QuantizerRegistry.getValidator(observable);
+            if (null != validator) {
+                result = validator.validate(result);
+            }
         } else {
             result = Constants.NO_PREDICTION;
         }

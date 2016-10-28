@@ -401,6 +401,16 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
         }
         return result;
     }
+    
+    @Override
+    public void setLastUpdate(IObservable observable, long timestamp) {
+        synchronized (parameterValues) {
+            IObservation observation = parameterValues.get(observable);
+            if (null != observation) {
+                observation.setLastUpdate(timestamp);
+            }
+        }
+    }
 
     @Override
     public int getObservedValueInt(IObservable observable) {

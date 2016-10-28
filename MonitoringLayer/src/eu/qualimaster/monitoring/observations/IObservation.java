@@ -109,6 +109,13 @@ public interface IObservation extends Serializable {
      * @return the timestamp, negative if no value was set
      */
     public long getLastUpdate();
+    
+    /**
+     * Manipulates the timestamp of the last update [testing].
+     * 
+     * @param timestamp the timestamp, negative if no value was set
+     */
+    public void setLastUpdate(long timestamp);
 
     /**
      * Returns the number of components.

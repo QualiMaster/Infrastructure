@@ -98,6 +98,10 @@ public class ConstantObservation implements IObservation {
     public long getLastUpdate() {
         return 0;
     }
+    
+    @Override
+    public void setLastUpdate(long timestamp) {
+    }
 
     @Override
     public int getComponentCount() {

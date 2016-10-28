@@ -29,6 +29,7 @@ import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularMatrixException;
 import org.apache.log4j.LogManager;
 
+import eu.qualimaster.monitoring.profiling.Constants;
 import eu.qualimaster.monitoring.profiling.Utils;
 
 /**
@@ -156,7 +157,7 @@ public class Kalman extends AbstractMatrixPredictor {
     /**
      * The latest value used to update the Kalman-Instance.
      */
-    private double lastUpdate = Double.MIN_VALUE;
+    private double lastUpdate = Constants.NO_PREDICTION;
     
     /**
      * Allowed gap between update and prediction in milliseconds.
@@ -203,7 +204,7 @@ public class Kalman extends AbstractMatrixPredictor {
         try {
             // Call predict(0), if no prediction was made since the last update
             // Reason: The Kalman-Filter needs a predict-update(correct)-cycle.
-            if (!predictedSinceUpdate && lastUpdate != Double.MIN_VALUE) {
+            if (!predictedSinceUpdate && lastUpdate != Constants.NO_PREDICTION) {
                 predict(0);
             }
             
@@ -225,10 +226,11 @@ public class Kalman extends AbstractMatrixPredictor {
      * last (via update) given value.
      * @param steps Number of times steps to predict.
      * 
-     * @return Predictions for the last time step ahead as {@link Double} or Double.MIN_VALUE if the prediction failed.
+     * @return Predictions for the last time step ahead as {@link Double} or {@link Constants#NO_PREDICTION} if the 
+     *     prediction failed.
      */
     public double predict(int steps) {
-        double prediction = Double.MIN_VALUE;
+        double prediction = Constants.NO_PREDICTION;
         if (lastUpdated != Long.MIN_VALUE) {
             try {
                 if (steps > 0) {
@@ -246,7 +248,8 @@ public class Kalman extends AbstractMatrixPredictor {
                          * If an update must be simulated and there is no predicted value 
                          * to use instead of the measurement, 'defaultMeasurenment' value is used for the update.
                          */
-                        update(lastUpdated + 1 , prediction == Double.MIN_VALUE ? lastUpdate : defaultMeasurement);
+                        update(lastUpdated + 1 , prediction == Constants.NO_PREDICTION 
+                            ? lastUpdate : defaultMeasurement);
                         prediction = predict(0);
                         gap = true;
                     }
@@ -261,7 +264,7 @@ public class Kalman extends AbstractMatrixPredictor {
                 predictedSinceUpdate = true;
             } catch (DimensionMismatchException e) {
                 LogManager.getLogger(Kalman.class).error(e.getMessage(), e);
-                prediction = Double.MIN_VALUE;
+                prediction = Constants.NO_PREDICTION;
             }
         } else {
             System.err.println("Warning: Prediction should only be called after at least one update-call!");
@@ -273,7 +276,8 @@ public class Kalman extends AbstractMatrixPredictor {
      * This method predicts the value of a time line one time step ahead of the
      * last (via update) given value.
      * 
-     * @return Prediction for one time step ahead as {@link Double} or Double.MIN_VALUE if the prediction failed.
+     * @return Prediction for one time step ahead as {@link Double} or {@link Constants#NO_PREDICTION} if the 
+     *     prediction failed.
      */
     public double predict() {
         return predict(1);
