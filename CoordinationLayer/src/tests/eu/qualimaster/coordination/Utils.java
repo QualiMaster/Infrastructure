@@ -17,10 +17,23 @@ import tests.eu.qualimaster.TestHelper;
  */
 public class Utils {
 
-    public static final String MODEL_ARTIFACTSPEC = "eu.qualimaster:infrastructure:0.0.1";
-    public static final IModelProvider INFRASTRUCTURE_TEST_MODEL_PROVIDER = new IModelProvider() {
-
+    /**
+     * Defines a model provider for initializing test models.
+     * Additional to the interface, this class facilitates the specification of the root folder to be used.
+     * 
+     * @author Sascha El-Sharkawy
+     */
+    static class ModelProvider implements IModelProvider {
+        private final String rootFolder;
         private File tmp;
+        
+        /**
+         * sole constructor for this class.
+         * @param rootFolder Specifies the root folder to be used, <tt>null</tt> will use the default folder.
+         */
+        ModelProvider(String rootFolder) {
+            this.rootFolder = rootFolder;
+        }
         
         @Override
         public void provideModel(Properties properties) {
@@ -28,7 +41,11 @@ public class Utils {
                 tmp = File.createTempFile("qmModelArtifact", ".jar");
                 tmp.deleteOnExit();
                 URL tmpUrl = tmp.toURI().toURL();
-                JarUtil.jarModelArtifact(tmp);
+                if (null == rootFolder) {
+                    JarUtil.jarModelArtifact(tmp);
+                } else {
+                    JarUtil.jarModelArtifact(rootFolder, tmp);
+                }
                 ArtifactRegistry.defineArtifact(MODEL_ARTIFACTSPEC, tmpUrl);
                 properties.put(CoordinationConfiguration.CONFIG_MODEL_ARTIFACT_SPEC, MODEL_ARTIFACTSPEC);
             } catch (IOException e) {
@@ -43,7 +60,10 @@ public class Utils {
             System.out.println("deleting " + tmp + " " + success);
         }
         
-    };
+    }
+    
+    public static final String MODEL_ARTIFACTSPEC = "eu.qualimaster:infrastructure:0.0.1";
+    public static final IModelProvider INFRASTRUCTURE_TEST_MODEL_PROVIDER = new ModelProvider(null);
 
     private static IModelProvider modelProvider;
     
