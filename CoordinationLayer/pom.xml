@@ -157,7 +157,7 @@
          <groupId>eu.qualimaster</groupId>
          <artifactId>QualiMaster.Events</artifactId>
          <type>test-jar</type>
-         <scope>provided</scope>
+         <scope>test</scope>
        </dependency>
    </dependencies> 
   
