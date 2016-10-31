@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import backtype.storm.Config;
 import backtype.storm.utils.Utils;
@@ -142,6 +143,7 @@ public class Configuration {
      */
     public static final int DEFAULT_TIME_SHUTDOWN_EVENTS = 300;
     
+    private static final Logger LOGGER = Logger.getLogger(Configuration.class);
     /**
      * Implements a configuration option.
      * 
@@ -662,6 +664,7 @@ public class Configuration {
      * @return the pipeline interconnection ports
      */
     public static String getPipelinePorts() {
+        LOGGER.info("The configured pipeline ports: " + pipelinePorts.getValue());        
         return pipelinePorts.getValue();
     }
 
