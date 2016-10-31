@@ -28,6 +28,7 @@ import net.ssehub.easy.varModel.confModel.IDecisionVariable;
 import net.ssehub.easy.varModel.model.ModelQueryException;
 import net.ssehub.easy.varModel.model.datatypes.Compound;
 import net.ssehub.easy.varModel.model.datatypes.IDatatype;
+import net.ssehub.easy.varModel.model.datatypes.Reference;
 
 /**
  * Implements a mapper from IVML type (names) to frozen and actual system state.
@@ -239,8 +240,15 @@ public class TypeMapper {
         TypeCharacterizer result = null;
         do {
             result = TYPE_PREFIX.get(type.getName());
-            if (null == result && type instanceof Compound) {
-                type = ((Compound) type).getRefines();
+            if (null == result) {
+                if (type instanceof Compound) {
+                    type = ((Compound) type).getRefines();
+                } else if (type instanceof Reference) {
+                    type = Reference.dereference(type);
+                } else {
+                    // Not handled by the TypeMapper -> stop loop
+                    type = null;
+                }
             }
         } while (null == result && null != type);
         return result;
