@@ -35,6 +35,7 @@ public class AlgorithmProfilePredictionRequest extends AbstractReturnableEvent {
     private String pipeline;
     private String pipelineElement;
     private String algorithm;
+    private String parameter;
     @Deprecated
     private Map<IObservable, Double> weighting;
     private IObservable observable;
@@ -140,6 +141,23 @@ public class AlgorithmProfilePredictionRequest extends AbstractReturnableEvent {
     }
 
     /**
+     * Creates a request to obtain a predictions for a parameter in this situation.
+     * 
+     * @param pipeline the pipeline to predict for
+     * @param pipelineElement the pipeline element
+     * @param parameter the parameter to predict for
+     * @param observables the observables to predict for
+     * @param targetValues the target values for a modified situation (may be <b>null</b> if just the algorithm may 
+     *     change based on the current situation)
+     */
+    public AlgorithmProfilePredictionRequest(String pipeline, String pipelineElement, String parameter, 
+        Set<IObservable> observables, Map<Object, Serializable> targetValues) {
+        this(pipeline, pipelineElement, targetValues);
+        this.observables = observables;
+        this.parameter = parameter;
+    }
+
+    /**
      * Returns the name of the pipeline.
      * 
      * @return the name of the pipeline
@@ -212,5 +230,15 @@ public class AlgorithmProfilePredictionRequest extends AbstractReturnableEvent {
     public Set<String> getAlgorithms() {
         return algorithms;
     }
-    
+
+    /**
+     * Returns the parameter to predict for.
+     * 
+     * @return the parameter (may be <b>null</b> if {@link #getAlgorithm()} or {@link #getAlgorithms()} contains 
+     *     a value)
+     */
+    public String getParameter() {
+        return parameter;
+    }
+
 }

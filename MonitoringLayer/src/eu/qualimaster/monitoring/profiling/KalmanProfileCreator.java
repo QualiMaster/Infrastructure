@@ -15,11 +15,14 @@
  */
 package eu.qualimaster.monitoring.profiling;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 import eu.qualimaster.monitoring.profiling.predictors.IAlgorithmProfilePredictor;
 import eu.qualimaster.monitoring.profiling.predictors.Kalman;
+import eu.qualimaster.observables.IObservable;
 
 /**
  * Creates profiles and related predictors for the actual Kalman-based approach.
@@ -41,6 +44,12 @@ public class KalmanProfileCreator implements IAlgorithmProfileCreator {
     @Override
     public String getStorageSubFolder() {
         return "predictor=kalman";
+    }
+
+    @Override
+    public List<String> getKnownParameterValues(PipelineElement element, Map<Object, Serializable> key, 
+        IObservable observable, String parameter) throws IOException {
+        return SeparateObservableAlgorithmProfile.getKnownParameterValues(element, key, observable, parameter);
     }
 
 }

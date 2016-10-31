@@ -18,7 +18,9 @@ package eu.qualimaster.monitoring.profiling;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -54,7 +56,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
         this.element = element;
         this.key = key;
     }
-    
+
     /**
      * Generates a string key (identifier) based on the attributes.
      * 
@@ -64,34 +66,96 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
      *     current configuration.
      */
     private String generateKey(IObservable observable) {
+        return generateKey(element, key, observable);
+    }
+    
+    /**
+     * Generates a string key (identifier).
+     * 
+     * @param element the holding pipeline element
+     * @param key the profile key
+     * @param observable the observable to be predicted
+     * 
+     * @return The key representing this {@link SeparateObservableAlgorithmProfile} instance in its 
+     *     current configuration.
+     */
+    private static String generateKey(PipelineElement element, Map<Object, Serializable> key, IObservable observable) {
         boolean profiling = element.isInProfilingMode();
         String pipelineName = element.getPipeline().getName();
         String elementName = element.getName();
-        String algorithm = keyToString(Constants.KEY_ALGORITHM);
+        String algorithm = keyToString(key, Constants.KEY_ALGORITHM);
         TreeMap<String, String> sorted = new TreeMap<>();
         for (Map.Entry<Object, Serializable> ent : key.entrySet()) {
-            String key = ent.getKey().toString();
-            if (!Constants.KEY_ALGORITHM.equals(key)) {
-                sorted.put(key, ent.getValue().toString());
+            String k = ent.getKey().toString();
+            if (!Constants.KEY_ALGORITHM.equals(k)) {
+                sorted.put(k, ent.getValue().toString());
             }
         }
-        String key;
+        String result;
         if (profiling) {
-            key = "";
+            result = "";
         } else {
-            key = "pipeline=" + pipelineName + ":element=" + elementName + ":";
+            result = "pipeline=" + pipelineName + ":element=" + elementName + ":";
         }
-        key += "algorithm=" + algorithm + ":predicted=" + observable.name() + ";parameters=" + sorted;
-        return key;
+        result += "algorithm=" + algorithm + ":predicted=" + observable.name() + ";parameters=" + sorted;
+        return result;
+    }
+    
+    /**
+     * Returns all known parameter values.
+     * 
+     * @param element the element to return the values for
+     * @param key the profile key
+     * @param observable the observable
+     * @param parameter the parameter name
+     * @return the parameter values (here as strings regardless of type)
+     * @throws IOException in case that the map file of the profile cannot be loaded
+     */
+    static List<String> getKnownParameterValues(PipelineElement element, Map<Object, Serializable> key, 
+        IObservable observable, String parameter) throws IOException {
+        File folder = getFolder(element, element.getPath(), generateKey(element, key, observable));
+        MapFile mapFile = new MapFile(folder);
+        mapFile.load();
+        return readKnownParameterValues(mapFile, parameter);
+    }
+
+    /**
+     * Returns the known parameter values from a map file. [public for testing]
+     * 
+     * @param mapFile the map file
+     * @param parameter the parameter
+     * @return the known values as strings (regardless of type)
+     */
+    public static List<String> readKnownParameterValues(MapFile mapFile, String parameter) {
+        List<String> result = new ArrayList<>();
+        for (String k : mapFile.keys()) {
+            int pos = k.indexOf(";parameters=");
+            if (pos > 0) {
+                String paramId = parameter + "=";
+                pos = k.indexOf(parameter + "=", pos + 1);
+                if (pos > 0) {
+                    pos += paramId.length();
+                    int end = k.indexOf(",", pos);
+                    if (end < 0) {
+                        end = k.indexOf("}", pos);
+                    }
+                    if (end > 0) {
+                        result.add(k.substring(pos, end));
+                    }
+                }
+            }
+        }
+        return result;
     }
     
     /**
      * Turns a key part into a string.
      * 
+     * @param key the key
      * @param part the key part
      * @return the string representation
      */
-    private String keyToString(Object part) {
+    private static String keyToString(Map<Object, Serializable> key, Object part) {
         Serializable tmp = key.get(part);
         return null == tmp ? "" : tmp.toString();
     }
@@ -112,7 +176,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
     public File getFolder(IObservable observable) {
         return getFolder(element.getPath(), generateKey(observable));
     }
-    
+
     /**
      * Returns the folder for a predictor.
      * 
@@ -121,6 +185,18 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
      * @return the folder
      */
     private File getFolder(String path, String identifier) {
+        return getFolder(element, path, identifier);
+    }
+    
+    /**
+     * Returns the folder for a predictor.
+     * 
+     * @param element the pipeline element
+     * @param path the base path
+     * @param identifier the profile identifier
+     * @return the folder
+     */
+    private static File getFolder(PipelineElement element, String path, String identifier) {
         File folder = new File(path);
         // Get subfolder from nesting information 
         String[] nesting = identifier.split(";")[0].split(":");

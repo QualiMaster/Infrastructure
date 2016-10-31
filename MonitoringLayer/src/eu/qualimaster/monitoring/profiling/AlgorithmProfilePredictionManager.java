@@ -221,6 +221,65 @@ public class AlgorithmProfilePredictionManager {
     }
     
     /**
+     * Predicts parameter values for a pipeline element.
+     * 
+     * @param pipeline the pipeline
+     * @param element the pipeline element
+     * @param parameter the parameter name
+     * @param observables the observables to predict for
+     * @param targetValues the target values for prediction. Predict the next step if <b>null</b> or empty. May contain
+     *   observables ({@link IObservable}-Double) or parameter values (String-value)
+     * @return the parameter-observable-prediction mapping, <b>null</b> if there are no predictions
+     */
+    public static Map<String, Map<IObservable, Double>> predictParameterValues(String pipeline, String element, 
+        String parameter, Set<IObservable> observables, Map<Object, Serializable> targetValues) {
+        Map<String, Map<IObservable, Double>> result = null;
+        if (predict) {
+            Pipeline pip = Pipelines.getPipeline(pipeline);
+            if (null != pip) {
+                PipelineElement elt = pip.getElement(element);
+                if (null != elt) {
+                    result = predictParameterValues(elt, parameter, observables, targetValues);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Predicts parameter values for a pipeline element.
+     * 
+     * @param elt the pipeline element
+     * @param parameter the parameter name
+     * @param observables the observables to predict for
+     * @param targetValues the target values for prediction. Predict the next step if <b>null</b> or empty. May contain
+     *   observables ({@link IObservable}-Double) or parameter values (String-value)
+     * @return the parameter-observable-prediction mapping, <b>null</b> if there are no predictions
+     */
+    private static Map<String, Map<IObservable, Double>> predictParameterValues(PipelineElement elt, 
+        String parameter, Set<IObservable> observables, Map<Object, Serializable> targetValues) {
+        Map<String, Map<IObservable, Double>> result = null;
+        for (IObservable obs : observables) {
+            Map<String, Double> preds = elt.predictParameterValues(parameter, obs, targetValues);
+            if (null != preds) {
+                if (null == result) {
+                    result = new HashMap<String, Map<IObservable, Double>>();
+                }
+                for (Map.Entry<String, Double> e : preds.entrySet()) {
+                    String pVal = e.getKey();
+                    Map<IObservable, Double> tmp = result.get(pVal);
+                    if (null == tmp) {
+                        tmp = new HashMap<IObservable, Double>();
+                        result.put(pVal, tmp);
+                    }
+                    tmp.put(obs, e.getValue());
+                }
+            }
+        }
+        return result;
+    }
+    
+    /**
      * Predicts the best algorithm for the given situation.
      * 
      * @param pipeline the pipeline name containing <code>element</code>

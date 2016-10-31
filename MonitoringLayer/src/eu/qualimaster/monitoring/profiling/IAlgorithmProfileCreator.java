@@ -15,10 +15,13 @@
  */
 package eu.qualimaster.monitoring.profiling;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 import eu.qualimaster.monitoring.profiling.predictors.IAlgorithmProfilePredictor;
+import eu.qualimaster.observables.IObservable;
 
 /**
  * Creates algorithm profile predictors.
@@ -50,4 +53,17 @@ public interface IAlgorithmProfileCreator {
      */
     public String getStorageSubFolder();
 
+    /**
+     * Returns all known parameter values.
+     * 
+     * @param element the element to return the values for
+     * @param key the profile key
+     * @param observable the observable
+     * @param parameter the parameter name
+     * @return the parameter values (here as strings regardless of type)
+     * @throws IOException in case that the map file of the profile cannot be loaded
+     */
+    public List<String> getKnownParameterValues(PipelineElement element, Map<Object, Serializable> key, 
+        IObservable observable, String parameter) throws IOException;
+    
 }

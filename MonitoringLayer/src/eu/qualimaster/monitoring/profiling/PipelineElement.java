@@ -15,11 +15,14 @@
  */
 package eu.qualimaster.monitoring.profiling;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.log4j.LogManager;
 
 import eu.qualimaster.monitoring.profiling.quantizers.Quantizer;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
@@ -252,6 +255,46 @@ public class PipelineElement {
         Map<Object, Serializable> key = getKey(algorithm, targetValues);
         IAlgorithmProfile profile = obtainProfile(key);
         return profile.predict(observable, QuantizerRegistry.getPredictionSteps(observable));
+    }
+
+    /**
+     * Predicts parameter values for this pipeline element.
+     * 
+     * @param parameter the parameter name
+     * @param observable the observable to predict for
+     * @param targetValues the target values for prediction. Predict the next step if <b>null</b> or empty. May contain
+     *   observables ({@link IObservable}-Double) or parameter values (String-value)
+     * @return the parameter-observable-prediction mapping, <b>null</b> if there are no predictions
+     */
+    Map<String, Double> predictParameterValues(String parameter, IObservable observable, 
+        Map<Object, Serializable> targetValues) {
+        Map<String, Double> result = null; 
+        try {
+            // just use the key, parameter will be ignored
+            Map<Object, Serializable> key = getKey(null, targetValues);
+            List<String> values = getProfileCreator().getKnownParameterValues(this, key, observable, parameter);
+            // now with the known values
+            if (!values.isEmpty()) {
+                Map<Object, Serializable> tv = new HashMap<Object, Serializable>();
+                if (null != targetValues) {
+                    tv.putAll(targetValues);
+                }
+                for (String value : values) {
+                    tv.put(parameter, value);
+                    IAlgorithmProfile profile = obtainProfile(key);
+                    double pred = profile.predict(observable, QuantizerRegistry.getPredictionSteps(observable));
+                    if (pred != Constants.NO_PREDICTION) {
+                        if (null == result) {
+                            result = new HashMap<String, Double>();
+                        }
+                        result.put(value, pred);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            LogManager.getLogger(getClass()).warn("No parameter value predictions due to " + e.getMessage());
+        }
+        return result;
     }
     
 }
