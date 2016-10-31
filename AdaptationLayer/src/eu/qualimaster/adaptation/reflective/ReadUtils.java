@@ -1,16 +1,21 @@
 package eu.qualimaster.adaptation.reflective;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+
+import eu.qualimaster.adaptation.internal.AdaptationUnit;
 
 /**
  * Provides methods to read objects from files/strings.
  * 
  * @author Andrea Ceroni
  */
-public class ReadingUtils {
+public class ReadUtils {
 
     private static final String SEPARATOR = "\t";
     private static final String PIPELINE_TAG = "pipeline:";
@@ -26,7 +31,7 @@ public class ReadingUtils {
      * 
      * @param numberFormat the format used to read numbers
      */
-    public ReadingUtils(NumberFormat numberFormat) {
+    public ReadUtils(NumberFormat numberFormat) {
         this.counter = 0;
         this.numberFormat = numberFormat;
     }
@@ -34,15 +39,103 @@ public class ReadingUtils {
     /**
      * Default constructor
      */
-    public ReadingUtils() {
+    public ReadUtils() {
         this(DEFAULT_NUMBER_FORMAT);
+    }
+    
+    /**
+     * Parses a whole monitoring log and extracts one monitoring unit from each line.
+     * @param filePath The path of the file (monitoring log) to be parsed.
+     * @return A list of <code>MonitoringUnit</code> objects.
+     */
+    public List<MonitoringUnit> readMonitoringUnits(String filePath){
+        List<MonitoringUnit> units = new ArrayList<>();
+        BufferedReader reader = null;
+        
+        try{
+            reader = new BufferedReader(new FileReader(filePath));
+            reader.readLine();
+            reader.readLine();
+            reader.readLine();
+            reader.readLine();
+            
+            String line = null;
+            while((line = reader.readLine()) != null){
+                units.add(readMonitoringUnit(line));
+            }
+            reader.close();
+            
+            return units;
+        }
+        catch(Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    /**
+     * Parses a whole adaptation log and extracts one <code>AdaptationUnit</code> from each line.
+     * @param filePath The path of the file (adaptation log) to be parsed.
+     * @return A list of <code>AdaptationUnit</code> objects.
+     */
+    public List<AdaptationUnit> readAdaptationUnits(String filePath){
+        List<AdaptationUnit> units = new ArrayList<>();
+        BufferedReader reader = null;
+        
+        try{
+            reader = new BufferedReader(new FileReader(filePath));
+            reader.readLine();
+            
+            String line = null;
+            while((line = reader.readLine()) != null){
+                units.add(readAdaptationUnit(line));
+            }
+            reader.close();
+            
+            return units;
+        }
+        catch(Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    /**
+     * Creates an <code>AdaptationUnit</code> object from a string.
+     * 
+     * @param string the string to be parsed
+     * @return the <code>AdaptationUnit</code> object
+     */
+    public AdaptationUnit readAdaptationUnit(String string) {
+        AdaptationUnit unit = new AdaptationUnit();
+
+        try {
+            String[] fields = string.split(SEPARATOR, -1);
+            
+            unit.setStartTime(Long.valueOf(fields[0]));
+            unit.setEndTime(Long.valueOf(fields[1]));
+            unit.setEvent(fields[2]);
+            unit.setCondition(fields[3]);
+            unit.setStrategy(fields[4]);
+            unit.setStrategySuccess(Boolean.valueOf(fields[5]));
+            unit.setTactic(fields[6]);
+            unit.setTacticSuccess(Boolean.valueOf(fields[7]));
+            unit.setMessage(fields[8]);
+            unit.setAdaptationSuccess(Boolean.valueOf(fields[9]));
+            
+            return unit;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
-     * Create a <code>Platform</code> object from a string.
+     * Creates a <code>MonitoringUnit</code> object from a string.
      * 
      * @param string the string to be parsed
-     * @return the <code>Platform</code> object
+     * @return the <code>MonitoringUnit</code> object
      */
     public MonitoringUnit readMonitoringUnit(String string) {
         MonitoringUnit unit = new MonitoringUnit();

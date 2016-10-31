@@ -27,13 +27,13 @@ public class AdaptationLoggerFile implements IAdaptationLogger {
     /**
      * To handle multiple pending adaptations, which have not been enacted yet.
      */
-    private HashMap<String, AdaptationLoggerUnit> adaptationsMap;
+    private HashMap<String, AdaptationUnit> adaptationsMap;
 
     /**
      * The current adaptation, filled in the methods between startAdaptation()
      * and endAdaptation(), which are sequential.
      */
-    private AdaptationLoggerUnit currentAdaptation;
+    private AdaptationUnit currentAdaptation;
 
     /**
      * Creates the logger.
@@ -52,7 +52,7 @@ public class AdaptationLoggerFile implements IAdaptationLogger {
     @Override
     public void startAdaptation(AdaptationEvent event, FrozenSystemState state) {
         // create a new adaptation unit
-        this.currentAdaptation = new AdaptationLoggerUnit();
+        this.currentAdaptation = new AdaptationUnit();
         this.currentAdaptation.setStartTime(System.currentTimeMillis());
         this.currentAdaptation.setEvent(event.getClass().getSimpleName());
 
@@ -81,7 +81,7 @@ public class AdaptationLoggerFile implements IAdaptationLogger {
     public void endAdaptation(boolean successful) {
         // add the current adaptation unit to the map, using the message id of
         // the coordination command as key
-        AdaptationLoggerUnit pendingUnit = new AdaptationLoggerUnit(this.currentAdaptation);
+        AdaptationUnit pendingUnit = new AdaptationUnit(this.currentAdaptation);
         this.adaptationsMap.put(pendingUnit.getMessage(), pendingUnit);
         this.currentAdaptation = null;
     }
@@ -90,7 +90,7 @@ public class AdaptationLoggerFile implements IAdaptationLogger {
     public void enacted(CoordinationCommand command, CoordinationCommandExecutionEvent event) {
         // get the corresponding adaptation unit via the message id
         Long endTime = System.currentTimeMillis();
-        AdaptationLoggerUnit unit = this.adaptationsMap.get(command.getMessageId());
+        AdaptationUnit unit = this.adaptationsMap.get(command.getMessageId());
         if (unit == null) {
             System.out.println("ERROR: adaptation unit with message id " + command.getMessageId()
                             + " missing and could not be stored.");
@@ -125,7 +125,7 @@ public class AdaptationLoggerFile implements IAdaptationLogger {
      * 
      * @param unit the unit
      */
-    private void storeAdaptationUnit(AdaptationLoggerUnit unit) {
+    private void storeAdaptationUnit(AdaptationUnit unit) {
         print(unit.getStartTime());
         printSeparator();
         print(unit.getEndTime());
