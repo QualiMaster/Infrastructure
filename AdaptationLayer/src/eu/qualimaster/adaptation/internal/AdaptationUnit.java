@@ -6,7 +6,7 @@ package eu.qualimaster.adaptation.internal;
  * 
  * @author Andrea Ceroni
  */
-public class AdaptationLoggerUnit {
+public class AdaptationUnit {
 
     /** The time (milliseconds) when the adaptation starts. */
     private long startTime;
@@ -42,7 +42,7 @@ public class AdaptationLoggerUnit {
     private String message;
 
     /** Default constructor. */
-    public AdaptationLoggerUnit() {
+    public AdaptationUnit() {
         this.startTime = -1;
         this.endTime = -1;
         this.event = null;
@@ -59,7 +59,7 @@ public class AdaptationLoggerUnit {
      * 
      * @param unit the unit to copy
      */
-    public AdaptationLoggerUnit(AdaptationLoggerUnit unit) {
+    public AdaptationUnit(AdaptationUnit unit) {
         this.startTime = unit.getStartTime();
         this.endTime = unit.getEndTime();
         this.event = unit.getEvent();
