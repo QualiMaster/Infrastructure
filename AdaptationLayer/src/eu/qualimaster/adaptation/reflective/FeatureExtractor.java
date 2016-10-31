@@ -3,6 +3,8 @@ package eu.qualimaster.adaptation.reflective;
 import java.util.ArrayList;
 import java.util.List;
 
+import eu.qualimaster.adaptation.internal.AdaptationUnit;
+
 /**
  * Extracts features for reflective adaptation from monitoring and adaptation logs.
  * To cope with the presence of different pipelines within the monitoring log, the
@@ -18,16 +20,54 @@ public class FeatureExtractor {
     /** The names of the nodes of the pipeline of interest */
     private ArrayList<String> nodes;
     
+    /** Counter to parse the monitoring log only once when extracting features */
+    private int index;
+    
+    /**
+     * Constructor with names of input pipeline and nodes.
+     * @param pipeline the name of the pipeline of interest.
+     * @param nodes the names of the nodes within the pipeline.
+     */
     public FeatureExtractor(String pipeline, ArrayList<String> nodes){
         this.pipeline = pipeline;
         this.nodes = new ArrayList<>(nodes);
+        this.index = 0;
+    }
+    
+    /**
+     * Extracts features from monitoring units (one pattern for each unit) logged between
+     * subsequent adaptation decisions (stored as adaptation units).
+     * @param mUnits the list of monitoring units.
+     * @param aUnits the list of adaptation units.
+     * @param unitsToSkip the number of units to ignore after an adaptation has been finished.
+     * @param window the number of units to consider when computing aggregated features for a unit.
+     * @return the list of patterns containing the extracted features (without labels)
+     */
+    public ArrayList<Pattern> extractFeatures(ArrayList<MonitoringUnit> mUnits, ArrayList<AdaptationUnit> aUnits, int unitsToIgnore, int window){
+        ArrayList<Pattern> patterns = new ArrayList<>();
+        
+        // first block of monitoring units before the first adaptation decision
+        this.index = 0;
+        ArrayList<MonitoringUnit> currUnits = getMonitoringUnits(mUnits, -1, aUnits.get(0).getStartTime(), unitsToIgnore);
+        patterns.addAll(extractFeatures(currUnits, window));
+        
+        // all the other blocks of monitoring units between two consecutive adaptations
+        for(int i = 1; i < aUnits.size(); i++){
+            currUnits = getMonitoringUnits(mUnits, aUnits.get(i-1).getEndTime(), aUnits.get(i).getStartTime(), unitsToIgnore);
+            patterns.addAll(extractFeatures(currUnits, window));
+        }
+        
+        // reset the internal counter for future feature extractions
+        this.index = 0;
+        
+        return patterns;
     }
     
     /**
      * Extracts features from a list of monitoring units (one pattern for each unit).
      * @param units the monitoring units from which the features are extracted.
      * @param windowSize the number of units to consider when computing aggregated features.
-     * @return the list of patterns containing the extracted features (no labels).
+     * @return the list of patterns containing the extracted features (without labels).
      */
     public ArrayList<Pattern> extractFeatures(ArrayList<MonitoringUnit> units, int windowSize){
         ArrayList<Pattern> patterns = new ArrayList<>();
@@ -58,6 +98,32 @@ public class FeatureExtractor {
         pattern.getFeatures().getAggregateMonitoring().addAll(aggregateFeatures);
         
         return pattern;
+    }
+    
+    private ArrayList<MonitoringUnit> getMonitoringUnits(ArrayList<MonitoringUnit> units, long lowerBound, long upperBound, int skip){
+        ArrayList<MonitoringUnit> selectedUnits = new ArrayList<>();
+        
+        // skip the first set of monitoring units based on the skip parameter, proceed until
+        // the maximum time is reached.
+        if(lowerBound != -1){
+            while(units.get(this.index).getTimestamp() <= lowerBound){
+                this.index++;
+            }
+            this.index += skip;
+        }
+        else{
+            // first iteration where there is not any lower bound
+            this.index = skip;
+        }
+        
+        // get all the monitoring units within the "valid" period
+        MonitoringUnit currUnit = units.get(this.index);
+        while(currUnit.getTimestamp() < upperBound){
+            selectedUnits.add(currUnit);
+            currUnit = units.get(++this.index);
+        }
+        
+        return selectedUnits;
     }
     
     /**

@@ -15,7 +15,7 @@ import eu.qualimaster.adaptation.internal.AdaptationUnit;
  * 
  * @author Andrea Ceroni
  */
-public class ReadingUtils {
+public class ReadUtils {
 
     private static final String SEPARATOR = "\t";
     private static final String PIPELINE_TAG = "pipeline:";
@@ -31,7 +31,7 @@ public class ReadingUtils {
      * 
      * @param numberFormat the format used to read numbers
      */
-    public ReadingUtils(NumberFormat numberFormat) {
+    public ReadUtils(NumberFormat numberFormat) {
         this.counter = 0;
         this.numberFormat = numberFormat;
     }
@@ -39,7 +39,7 @@ public class ReadingUtils {
     /**
      * Default constructor
      */
-    public ReadingUtils() {
+    public ReadUtils() {
         this(DEFAULT_NUMBER_FORMAT);
     }
     
