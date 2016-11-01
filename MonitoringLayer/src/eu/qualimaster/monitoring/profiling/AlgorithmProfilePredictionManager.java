@@ -400,9 +400,14 @@ public class AlgorithmProfilePredictionManager {
             String pipelineElement = event.getPipelineElement();
             Set<IObservable> observables = event.getObservables();
             Map<Object, Serializable> targetValues = event.getTargetValues();
+            String parameter = event.getParameter();
             if (null == observables) {
                 double result = predict(pipeline, pipelineElement, event.getAlgorithm(), event.getObservable(), 
                     targetValues);
+                EventManager.send(new AlgorithmProfilePredictionResponse(event, result));
+            } else if (null != parameter) {
+                Map<String, Map<IObservable, Double>> result = 
+                    predictParameterValues(pipeline, pipelineElement, parameter, observables, targetValues);
                 EventManager.send(new AlgorithmProfilePredictionResponse(event, result));
             } else {
                 Map<String, Map<IObservable, Double>> result = 
