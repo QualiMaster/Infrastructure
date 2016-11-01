@@ -36,7 +36,7 @@ import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictionManager;
 import eu.qualimaster.monitoring.profiling.Constants;
-import eu.qualimaster.monitoring.profiling.QuantizerRegistry;
+import eu.qualimaster.monitoring.profiling.ProfilingRegistry;
 import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
@@ -674,7 +674,7 @@ public class SelectionTests {
     public void testPrediction() {
         for (AlgorithmDescriptor alg : ALGORITHMS.values()) {
             for (IObservable obs : MEASURED) { // CAPACITY / ITEMS does not work, also as validated
-                int origSteps = QuantizerRegistry.getPredictionSteps(obs);
+                int origSteps = ProfilingRegistry.getPredictionSteps(obs);
                 for (int i = 0; i < 5; i++) { // prediction steps ahead
                     long time = (LAST_TIME + i) * TIME_STEP;
                     double o;
@@ -687,7 +687,7 @@ public class SelectionTests {
                     Assert.assertTrue("OBS " + obs + " for " + alg.getName() + " not in 15% " + o + " " + p + " for " 
                         + i + " prediction steps", Math.abs(o - p) / o <= 0.15);
                 }
-                QuantizerRegistry.registerPredictionSteps(obs, origSteps);
+                ProfilingRegistry.registerPredictionSteps(obs, origSteps);
             }
         }
         //printLogs(System.out);

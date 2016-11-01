@@ -36,7 +36,7 @@ import eu.qualimaster.observables.TimeBehavior;
  * 
  * @author Holger Eichelberger
  */
-public class QuantizerRegistry {
+public class ProfilingRegistry {
     
     private static final Map<Class<? extends Serializable>, QuantizerInfo<?>> TYPE_QUANTIZERS = new HashMap<>();
     private static final Map<IObservable, QuantizerInfo<Double>> OBSERVABLE_QUANTIZERS = new HashMap<>();
@@ -109,7 +109,7 @@ public class QuantizerRegistry {
      * 
      * @param observable the observable
      * @param forKey whether the quantizer shall be used to determine the profile identification key
-     * @return the {@link QuantizerRegistry} (may be <b>null</b> if there is none and the observable shall be ignored)
+     * @return the {@link ProfilingRegistry} (may be <b>null</b> if there is none and the observable shall be ignored)
      */
     public static Quantizer<Double> getQuantizer(IObservable observable, boolean forKey) {
         Quantizer<Double> result = null;

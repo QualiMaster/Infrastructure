@@ -268,7 +268,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
      */
     private IAlgorithmProfilePredictor obtainPredictor(IObservable observable) {
         IAlgorithmProfilePredictor predictor = predictors.get(observable);
-        if (null == predictor && null != QuantizerRegistry.getQuantizer(observable, false)) {
+        if (null == predictor && null != ProfilingRegistry.getQuantizer(observable, false)) {
             predictor = element.getProfileCreator().createPredictor();
             try {
                 load(predictor, element.getPath(), generateKey(observable));
@@ -291,7 +291,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
         IAlgorithmProfilePredictor predictor = obtainPredictor(observable);
         if (null != predictor) {
             result = predictor.predict(steps);
-            IValidator validator = QuantizerRegistry.getValidator(observable);
+            IValidator validator = ProfilingRegistry.getValidator(observable);
             if (null != validator) {
                 result = validator.validate(result);
             }

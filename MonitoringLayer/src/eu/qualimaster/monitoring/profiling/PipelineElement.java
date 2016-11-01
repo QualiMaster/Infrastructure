@@ -183,9 +183,9 @@ public class PipelineElement {
                 Serializable value = ent.getValue();
                 Quantizer<?> quantizer;
                 if (key instanceof IObservable) {
-                    quantizer = QuantizerRegistry.getQuantizer((IObservable) key, true);
+                    quantizer = ProfilingRegistry.getQuantizer((IObservable) key, true);
                 } else {
-                    quantizer = QuantizerRegistry.getQuantizer(value, true);
+                    quantizer = ProfilingRegistry.getQuantizer(value, true);
                 }
                 if (null != quantizer) {
                     target.put(key, quantizer.quantize(value));
@@ -216,7 +216,7 @@ public class PipelineElement {
      */
     private void updateInputRate(PipelineNodeSystemPart family) {
         List<PipelineNodeSystemPart> pred = Tracing.getPredecessors(family);
-        Quantizer<Double> quantizer = QuantizerRegistry.getQuantizer(Scalability.ITEMS, false);
+        Quantizer<Double> quantizer = ProfilingRegistry.getQuantizer(Scalability.ITEMS, false);
         if (null != pred && null != quantizer) {
             double inputRate = 0;
             int predCount = pred.size();
@@ -254,7 +254,7 @@ public class PipelineElement {
     double predict(String algorithm, IObservable observable, Map<Object, Serializable> targetValues) {
         Map<Object, Serializable> key = getKey(algorithm, targetValues);
         IAlgorithmProfile profile = obtainProfile(key);
-        return profile.predict(observable, QuantizerRegistry.getPredictionSteps(observable));
+        return profile.predict(observable, ProfilingRegistry.getPredictionSteps(observable));
     }
 
     /**
@@ -282,7 +282,7 @@ public class PipelineElement {
                 for (String value : values) {
                     tv.put(parameter, value);
                     IAlgorithmProfile profile = obtainProfile(key);
-                    double pred = profile.predict(observable, QuantizerRegistry.getPredictionSteps(observable));
+                    double pred = profile.predict(observable, ProfilingRegistry.getPredictionSteps(observable));
                     if (pred != Constants.NO_PREDICTION) {
                         if (null == result) {
                             result = new HashMap<String, Double>();

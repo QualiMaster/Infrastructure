@@ -38,7 +38,7 @@ import eu.qualimaster.monitoring.profiling.MapFile;
 import eu.qualimaster.monitoring.profiling.Pipeline;
 import eu.qualimaster.monitoring.profiling.PipelineElement;
 import eu.qualimaster.monitoring.profiling.Pipelines;
-import eu.qualimaster.monitoring.profiling.QuantizerRegistry;
+import eu.qualimaster.monitoring.profiling.ProfilingRegistry;
 import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
@@ -339,7 +339,7 @@ public class ManagerTest {
     private void registerPredictionSteps(int steps) {
         // see testLifecylce
         for (IObservable obs : OBSERVABLES) {
-            QuantizerRegistry.registerPredictionSteps(obs, steps);
+            ProfilingRegistry.registerPredictionSteps(obs, steps);
         }
     }
     
@@ -348,7 +348,7 @@ public class ManagerTest {
      */
     private void defaultPredictionSteps() {
         for (IObservable obs : OBSERVABLES) {
-            QuantizerRegistry.defaultPredictionSteps(obs);
+            ProfilingRegistry.defaultPredictionSteps(obs);
         }
     }
 
