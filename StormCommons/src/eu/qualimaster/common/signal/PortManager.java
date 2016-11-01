@@ -31,6 +31,7 @@ import org.apache.storm.curator.framework.api.transaction.CuratorTransactionFina
 import org.apache.storm.curator.framework.imps.CuratorFrameworkState;
 
 import backtype.storm.utils.Utils;
+import eu.qualimaster.Configuration;
 
 import static eu.qualimaster.common.signal.SignalMechanism.PATH_SEPARATOR;
 
@@ -447,10 +448,14 @@ public class PortManager {
      */
     public static PortRange createPortRangeQuietly(String range) {
         PortRange result;
+        String rng = range;
+        if (null == rng) {
+            rng = Configuration.DEFAULT_PIPELINE_INTERCONN_PORTS;
+        }
         try {
-            result = new PortRange(range);
+            result = new PortRange(rng);
         } catch (IllegalArgumentException e) {
-            LogManager.getLogger(PortManager.class).warn("Parsing port range: " + range + " " + e.getMessage());
+            LogManager.getLogger(PortManager.class).warn("Parsing port range: " + rng + " " + e.getMessage());
             result = null;
         }
         return result;
