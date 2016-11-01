@@ -30,6 +30,8 @@ import net.ssehub.easy.varModel.confModel.IDecisionVariable;
 public class RuntimeVariableMapping {
     
     private Map<IDecisionVariable, IDecisionVariable> mapping = new HashMap<IDecisionVariable, IDecisionVariable>();
+    private Map<IDecisionVariable, IDecisionVariable> reverseMapping
+        = new HashMap<IDecisionVariable, IDecisionVariable>();
     
     /**
      * Creates an instance.
@@ -48,6 +50,16 @@ public class RuntimeVariableMapping {
     }
     
     /**
+     * Reverse function to {@link #getReferencedBy(IDecisionVariable)}.
+     * 
+     * @param originalVar the <b>unmapped</b> variable to look for
+     * @return the mapped(runtime/adaptation) variable (<b>null</b> if there is none)
+     */
+    public IDecisionVariable getMappedVariable(IDecisionVariable originalVar) {
+        return null == originalVar ? null : reverseMapping.get(originalVar);
+    }
+    
+    /**
      * Records that <code>referenced</code> is referenced by <code>origin</code>.
      * 
      * @param referenced the referenced variable
@@ -55,6 +67,7 @@ public class RuntimeVariableMapping {
      */
     public void addReferencedBy(IDecisionVariable referenced, IDecisionVariable origin) {
         mapping.put(referenced, origin);
+        reverseMapping.put(origin, referenced);
     }
     
     @Override
