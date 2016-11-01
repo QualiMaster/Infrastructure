@@ -32,7 +32,7 @@ import eu.qualimaster.observables.Scalability;
 import eu.qualimaster.observables.TimeBehavior;
 
 /**
- * A registry for quantizers.
+ * A registry for singleton instances used during profiling. Was called <code>QuantizerRegistry</code> before.
  * 
  * @author Holger Eichelberger
  */
