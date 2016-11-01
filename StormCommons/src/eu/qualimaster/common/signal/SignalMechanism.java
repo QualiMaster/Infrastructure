@@ -403,6 +403,7 @@ public class SignalMechanism {
      */
     static void sendSignal(CuratorFramework mechanism, AbstractTopologyExecutorSignal signal) throws SignalException {
         Namespace space = obtainNamespace(signal.getNamespace());
+        getLogger().info("Sending the signal: " + signal + ", with the namespace enabled? " + space.getState());
         //space.setState(NamespaceState.ENABLE); //TODO revert debug: ENABLE SIGNALS FOR THE MOMENT!!
         if (Configuration.getPipelineSignalsCurator()) {
             if (null == mechanism) {
