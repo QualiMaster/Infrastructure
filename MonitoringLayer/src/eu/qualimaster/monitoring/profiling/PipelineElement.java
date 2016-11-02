@@ -15,6 +15,7 @@
  */
 package eu.qualimaster.monitoring.profiling;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
@@ -24,6 +25,9 @@ import java.util.Map;
 
 import org.apache.log4j.LogManager;
 
+import eu.qualimaster.monitoring.profiling.approximation.IApproximator;
+import eu.qualimaster.monitoring.profiling.approximation.IApproximatorCreator;
+import eu.qualimaster.monitoring.profiling.approximation.IStorageStrategy;
 import eu.qualimaster.monitoring.profiling.quantizers.Quantizer;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.tracing.Tracing;
@@ -36,12 +40,28 @@ import eu.qualimaster.observables.Scalability;
  * @author Holger Eichelberger
  */
 public class PipelineElement {
-    
+
+    private static boolean enableApproximation = true;
+
     private Pipeline pipeline;
     private String name;
     private String activeAlgorithm;
+    
+    /**
+     * Maps parameter identifiers to parameter values (actual state).
+     */
     private Map<Object, Serializable> parameters = new HashMap<>();
+    
+    /**
+     * Maps profile keys to profiles.
+     */
     private Map<Object, IAlgorithmProfile> profiles = new HashMap<>();
+    
+    /**
+     * Maps parameter identifiers and observables to an approximator for unknown points, i.e., 
+     * paramValue x observableValue.
+     */
+    private Map<Object, Map<IObservable, IApproximator>> approximators = new HashMap<>();
     
     /**
      * Creates a pipeline element.
@@ -153,6 +173,23 @@ public class PipelineElement {
         for (IAlgorithmProfile profile : profiles.values()) {
             profile.store();
         }
+        File folder = getApproximatorsPath();
+        for (Map.Entry<Object, Map<IObservable, IApproximator>> pEntry : approximators.entrySet()) {
+            for (Map.Entry<IObservable, IApproximator> aEntry : pEntry.getValue().entrySet()) {
+                IApproximator approximator = aEntry.getValue();
+                approximator.store(folder);
+            }
+        }
+    }
+
+    /**
+     * Returns the path to the approximators.
+     * 
+     * @return the path to the approximators
+     */
+    private File getApproximatorsPath() {
+        IStorageStrategy storageStrategy = getProfileCreator().getStorageStrategy();
+        return storageStrategy.getApproximatorsPath(this, getPath(), getKey(null, null));
     }
     
     /**
@@ -238,6 +275,95 @@ public class PipelineElement {
         Map<Object, Serializable> key = getKey(null, null);
         IAlgorithmProfile profile = obtainProfile(key);
         profile.update(family);
+
+        for (IObservable obs : family.getObservables()) {
+            if (family.hasValue(obs)) {
+                updateParameterApproximators(obs, family.getObservedValue(obs), true);
+            }
+        }
+    }
+
+    /**
+     * Updates the approximators for all parameters.
+     * 
+     * @param observable the observable to update for
+     * @param value the value to be used for updating
+     * @param measured whether <code>observation</code> was measured (<code>true</code>) or 
+     *   predicted (<code>false</code>)
+     */
+    private void updateParameterApproximators(IObservable observable, double value, boolean measured) {
+        for (Map.Entry<Object, Serializable> param : parameters.entrySet()) {
+            Object paramName = param.getKey();
+            IApproximator approximator = obtainApproximator(paramName, observable);
+            if (null != approximator) {
+                approximator.update(param.getValue(), value, measured);
+            }
+        }
+    }
+    
+    /**
+     * Returns an approximator or creates / loads one if required.
+     * 
+     * @param paramName the parameter name
+     * @param observable the observable
+     * @return the approximator or <b>null</b> if no approximator can be created
+     */
+    private IApproximator obtainApproximator(Object paramName, IObservable observable) {
+        IApproximator result = null;
+        Map<IObservable, IApproximator> obsApproximators = approximators.get(paramName);
+        if (null != obsApproximators) {
+            result = obsApproximators.get(observable);
+        }
+        if (null == result) {
+            IApproximatorCreator creator = ProfilingRegistry.getApproximatorCreator(paramName, observable);
+            if (null != creator) {
+                result = creator.createApproximator(getApproximatorsPath(), paramName, observable);
+                if (null != result) {
+                    if (null == obsApproximators) {
+                        obsApproximators = new HashMap<>();
+                        approximators.put(paramName, obsApproximators);
+                    }
+                    obsApproximators.put(observable, result);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Predicts the actual value for <code>observable</code> in <code>profile</code> or asks the approximators
+     * if no prediction is possible. Updates the approximators.
+     * 
+     * @param profile the profile to predict for
+     * @param observable the observable to predict for
+     * @return the prediction or {@link Constants#NO_PREDICTION} if neither prediction nor approximation is possible
+     */
+    private double predict(IAlgorithmProfile profile, IObservable observable) {
+        double result = profile.predict(observable, ProfilingRegistry.getPredictionSteps(observable));
+        if (Constants.NO_PREDICTION != result) {
+            updateParameterApproximators(observable, result, false);
+        } else {
+            double sum = 0;
+            double weights = 0;
+            int count = 0;
+            if (enableApproximation) {
+                for (Map.Entry<Object, Serializable> param : parameters.entrySet()) {
+                    Object paramName = param.getKey();
+                    IApproximator approximator = obtainApproximator(paramName, observable);
+                    double weight = ProfilingRegistry.getApproximationWeight(observable);
+                    if (null != approximator && weight != 0) {
+                        double approx = approximator.approximate(param.getValue());
+                        if (Constants.NO_APPROXIMATION != approx) {
+                            sum += approx * weight;
+                            weights += weight;
+                            count++;
+                        }
+                    }                
+                }
+            }
+            result = count > 0 ? sum / weights : Constants.NO_PREDICTION;
+        }
+        return result;
     }
     
     /**
@@ -254,7 +380,7 @@ public class PipelineElement {
     double predict(String algorithm, IObservable observable, Map<Object, Serializable> targetValues) {
         Map<Object, Serializable> key = getKey(algorithm, targetValues);
         IAlgorithmProfile profile = obtainProfile(key);
-        return profile.predict(observable, ProfilingRegistry.getPredictionSteps(observable));
+        return predict(profile, observable);
     }
 
     /**
@@ -282,7 +408,7 @@ public class PipelineElement {
                 for (String value : values) {
                     tv.put(parameter, value);
                     IAlgorithmProfile profile = obtainProfile(key);
-                    double pred = profile.predict(observable, ProfilingRegistry.getPredictionSteps(observable));
+                    double pred = predict(profile, observable);
                     if (pred != Constants.NO_PREDICTION) {
                         if (null == result) {
                             result = new HashMap<String, Double>();
@@ -295,6 +421,15 @@ public class PipelineElement {
             LogManager.getLogger(getClass()).warn("No parameter value predictions due to " + e.getMessage());
         }
         return result;
+    }
+    
+    /**
+     * Enables or disables the approximation functionality in case that parameters do not match any known profile.
+     * 
+     * @param enable <code>true</code> enable (default), <code>false</code> disable
+     */
+    static void enableApproximation(boolean enable) {
+        enableApproximation = enable;
     }
     
 }

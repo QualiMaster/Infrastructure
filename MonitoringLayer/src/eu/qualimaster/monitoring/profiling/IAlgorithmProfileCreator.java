@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
+import eu.qualimaster.monitoring.profiling.approximation.IStorageStrategy;
 import eu.qualimaster.monitoring.profiling.predictors.IAlgorithmProfilePredictor;
 import eu.qualimaster.observables.IObservable;
 
@@ -65,5 +66,12 @@ public interface IAlgorithmProfileCreator {
      */
     public List<String> getKnownParameterValues(PipelineElement element, Map<Object, Serializable> key, 
         IObservable observable, String parameter) throws IOException;
+
+    /**
+     * Returns the storage strategy for elements within a profile.
+     * 
+     * @return the storage strategy
+     */
+    public IStorageStrategy getStorageStrategy();
     
 }

@@ -19,8 +19,10 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -237,7 +239,6 @@ public class ManagerTest {
                 AlgorithmProfilePredictionManager.update(pipeline, family, elt);
                 lastUpdate = System.currentTimeMillis();
             }
-                        
         }
         
         /**
@@ -249,6 +250,31 @@ public class ManagerTest {
          */
         private double predict(IObservable observable, Map<Object, Serializable> targetValues) {
             return AlgorithmProfilePredictionManager.predict(pipeline, family, algorithm, observable, targetValues);
+        }
+        
+        /**
+         * Returns the numeric parameter in this descriptor.
+         * 
+         * @return the numeric parameter
+         */
+        private String getNumericParameterName() {
+            return paramWindow;
+        }
+        
+        /**
+         * Performs a prediction of parameter values.
+         * 
+         * @param parameter the parameter
+         * @param targetValues the changed context for the prediction (may be <b>null</b> for none)
+         * @return parameter-observable-prediction 
+         */
+        private Map<String, Map<IObservable, Double>> predictParameterValues(String parameter, 
+            Map<Object, Serializable> targetValues) {
+            Set<IObservable> obs = new HashSet<IObservable>();
+            obs.add(TimeBehavior.LATENCY);
+            obs.add(TimeBehavior.THROUGHPUT_ITEMS);
+            return AlgorithmProfilePredictionManager.predictParameterValues(pipeline, family, parameter, 
+                obs, targetValues);
         }
 
         /**
@@ -391,6 +417,8 @@ public class ManagerTest {
             assertPrediction(desc, TimeBehavior.THROUGHPUT_ITEMS, 0.6); // increasing
             assertPrediction(desc, Scalability.ITEMS, 0.11); // Failed with 0.1
 
+            desc.predictParameterValues(desc.getNumericParameterName(), null); // TODO assert
+            
             desc.storeAll();
             desc.assertStorage();
             desc.stop();

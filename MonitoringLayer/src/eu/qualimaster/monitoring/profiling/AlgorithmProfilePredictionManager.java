@@ -418,4 +418,13 @@ public class AlgorithmProfilePredictionManager {
         
     }
     
+    /**
+     * Enables or disables the approximation functionality in case that parameters do not match any known profile.
+     * 
+     * @param enable <code>true</code> enable, <code>false</code> disable
+     */
+    public static void enableApproximation(boolean enable) {
+        PipelineElement.enableApproximation(enable);
+    }
+    
 }

@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
+import eu.qualimaster.monitoring.profiling.approximation.IStorageStrategy;
 import eu.qualimaster.monitoring.profiling.predictors.IAlgorithmProfilePredictor;
 import eu.qualimaster.monitoring.profiling.predictors.Kalman;
 import eu.qualimaster.observables.IObservable;
@@ -50,6 +51,11 @@ public class KalmanProfileCreator implements IAlgorithmProfileCreator {
     public List<String> getKnownParameterValues(PipelineElement element, Map<Object, Serializable> key, 
         IObservable observable, String parameter) throws IOException {
         return SeparateObservableAlgorithmProfile.getKnownParameterValues(element, key, observable, parameter);
+    }
+
+    @Override
+    public IStorageStrategy getStorageStrategy() {
+        return DefaultStorageStrategy.INSTANCE;
     }
 
 }

@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import eu.qualimaster.monitoring.profiling.approximation.IApproximatorCreator;
 import eu.qualimaster.monitoring.profiling.quantizers.DoubleIntegerQuantizer;
 import eu.qualimaster.monitoring.profiling.quantizers.IdentityIntegerQuantizer;
 import eu.qualimaster.monitoring.profiling.quantizers.Quantizer;
@@ -270,6 +271,27 @@ public class ProfilingRegistry {
                 PREDICTION_STEPS.put(observable, steps);
             }
         }
+    }
+    
+    /**
+     * Returns the approximator creator for a given parameter/observable combination.
+     * 
+     * @param paramName the parameter name
+     * @param observable the observable
+     * @return the approximator creator, may be <b>null</b> if no approximator shall be created / used
+     */
+    public static IApproximatorCreator getApproximatorCreator(Object paramName, IObservable observable) {
+        return null; 
+    }
+    
+    /**
+     * Returns the approximation weights if multiple appoximations are present.
+     * 
+     * @param observable the observable
+     * @return the approximation weight
+     */
+    public static double getApproximationWeight(IObservable observable) {
+        return 0;
     }
     
 }

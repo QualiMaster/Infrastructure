@@ -26,7 +26,24 @@ public class Constants {
      * The value to be returned if there is no prediction (<code>Double.MIN_VALUE</code>).
      */
     public static final double NO_PREDICTION = Double.MIN_VALUE;
-    public static final String KEY_INPUT_RATE = "*inp*";
-    static final String KEY_ALGORITHM = "*alg*";
+
+    /**
+     * The value to be returned if there is no approximation (<code>Double.MIN_VALUE</code>).
+     */
+    public static final double NO_APPROXIMATION = Double.MIN_VALUE;
+
+    public static final String KEY_CHAR = "*";
+    public static final String KEY_INPUT_RATE = KEY_CHAR + "inp" + KEY_CHAR;
+    static final String KEY_ALGORITHM = KEY_CHAR + "alg" + KEY_CHAR;
+    
+    /**
+     * Turns a name with {@link #KEY_CHAR} into a file system name if needed.
+     * 
+     * @param string the string
+     * @return the translated string
+     */
+    public static final String toFileName(String string) {
+        return string.replace(KEY_CHAR, "+");
+    }
     
 }

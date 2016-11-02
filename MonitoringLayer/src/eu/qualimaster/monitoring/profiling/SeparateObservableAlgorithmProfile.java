@@ -22,11 +22,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import eu.qualimaster.monitoring.profiling.approximation.IStorageStrategy;
 import eu.qualimaster.monitoring.profiling.predictors.IAlgorithmProfilePredictor;
 import eu.qualimaster.monitoring.profiling.validators.IValidator;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
@@ -72,7 +72,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
     /**
      * Generates a string key (identifier).
      * 
-     * @param element the holding pipeline element
+     * @param element the pipeline element
      * @param key the profile key
      * @param observable the observable to be predicted
      * 
@@ -80,25 +80,17 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
      *     current configuration.
      */
     private static String generateKey(PipelineElement element, Map<Object, Serializable> key, IObservable observable) {
-        boolean profiling = element.isInProfilingMode();
-        String pipelineName = element.getPipeline().getName();
-        String elementName = element.getName();
-        String algorithm = keyToString(key, Constants.KEY_ALGORITHM);
-        TreeMap<String, String> sorted = new TreeMap<>();
-        for (Map.Entry<Object, Serializable> ent : key.entrySet()) {
-            String k = ent.getKey().toString();
-            if (!Constants.KEY_ALGORITHM.equals(k)) {
-                sorted.put(k, ent.getValue().toString());
-            }
-        }
-        String result;
-        if (profiling) {
-            result = "";
-        } else {
-            result = "pipeline=" + pipelineName + ":element=" + elementName + ":";
-        }
-        result += "algorithm=" + algorithm + ":predicted=" + observable.name() + ";parameters=" + sorted;
-        return result;
+        return getStorageStrategy(element).generateKey(element, key, observable, true);
+    }
+
+    /**
+     * Returns the storage strategy of the given pipeline <code>element</code>.
+     * 
+     * @param element the pipeline element
+     * @return the storage strategy
+     */
+    private static IStorageStrategy getStorageStrategy(PipelineElement element) {
+        return element.getProfileCreator().getStorageStrategy();
     }
     
     /**
@@ -113,7 +105,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
      */
     static List<String> getKnownParameterValues(PipelineElement element, Map<Object, Serializable> key, 
         IObservable observable, String parameter) throws IOException {
-        File folder = getFolder(element, element.getPath(), generateKey(element, key, observable));
+        File folder = getStorageStrategy(element).getPredictorPath(element, element.getPath(), key, observable);
         MapFile mapFile = new MapFile(folder);
         mapFile.load();
         return readKnownParameterValues(mapFile, parameter);
@@ -148,24 +140,13 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
         return result;
     }
     
-    /**
-     * Turns a key part into a string.
-     * 
-     * @param key the key
-     * @param part the key part
-     * @return the string representation
-     */
-    private static String keyToString(Map<Object, Serializable> key, Object part) {
-        Serializable tmp = key.get(part);
-        return null == tmp ? "" : tmp.toString();
-    }
-    
     @Override
     public void store() {
         for (Map.Entry<IObservable, IAlgorithmProfilePredictor> ent : predictors.entrySet()) {
             try {
+                IObservable observable = ent.getKey();
                 // this is not really efficient
-                store(ent.getValue(), element.getPath(), generateKey(ent.getKey()));
+                store(ent.getValue(), getFolder(observable), generateKey(observable));
             } catch (IOException e) {
                 LOGGER.error("While writing profile: " + e.getMessage());
             }
@@ -174,7 +155,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
     
     @Override
     public File getFolder(IObservable observable) {
-        return getFolder(element.getPath(), generateKey(observable));
+        return getStorageStrategy(element).getPredictorPath(element, element.getPath(), key, observable);
     }
 
     /**
@@ -184,9 +165,9 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
      * @param identifier the profile identifier
      * @return the folder
      */
-    private File getFolder(String path, String identifier) {
+    /*private File getFolder(String path, String identifier) {
         return getFolder(element, path, identifier);
-    }
+    }*/
     
     /**
      * Returns the folder for a predictor.
@@ -196,7 +177,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
      * @param identifier the profile identifier
      * @return the folder
      */
-    private static File getFolder(PipelineElement element, String path, String identifier) {
+    /*private static File getFolder(PipelineElement element, String path, String identifier) {
         File folder = new File(path);
         // Get subfolder from nesting information 
         String[] nesting = identifier.split(";")[0].split(":");
@@ -206,19 +187,17 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
         // set kind of the predictor as subfolder
         String subfolder = element.getProfileCreator().getStorageSubFolder();
         return new File(folder, subfolder);
-    }
+    }*/
     
     /**
      * Stores a given predictor.
      * 
      * @param predictor the predictor
-     * @param path the target path for persisting the predictor instances
+     * @param folder the target folder for persisting the predictor instances
      * @param identifier the predictor identifier
      * @throws IOException if saving the predictor fails
      */
-    void store(IAlgorithmProfilePredictor predictor, String path, String identifier) throws IOException {
-        File folder = getFolder(path, identifier);
-        
+    private void store(IAlgorithmProfilePredictor predictor, File folder, String identifier) throws IOException {
         // Create folders, if needed
         if (!folder.exists()) {
             folder.mkdirs();
@@ -248,12 +227,11 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
      * Loads a predictor back if possible.
      * 
      * @param predictor the predictor to load into
-     * @param path the target path for persisting the predictor instances
+     * @param folder the folder for persisting the predictor instances
      * @param identifier the predictor identifier
      * @throws IOException if saving the predictor fails
      */
-    void load(IAlgorithmProfilePredictor predictor, String path, String identifier) throws IOException {
-        File folder = getFolder(path, identifier);
+    private void load(IAlgorithmProfilePredictor predictor, File folder, String identifier) throws IOException {
         MapFile mapFile = new MapFile(folder);
         mapFile.load();
         File instanceFile = mapFile.getFile(identifier);
@@ -271,7 +249,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
         if (null == predictor && null != ProfilingRegistry.getQuantizer(observable, false)) {
             predictor = element.getProfileCreator().createPredictor();
             try {
-                load(predictor, element.getPath(), generateKey(observable));
+                load(predictor, getFolder(observable), generateKey(observable));
             } catch (IOException e) {
                 LOGGER.error("While reading predictor: " + e.getMessage());
             }
@@ -282,7 +260,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
 
     @Override
     public double predict(IObservable observable) {
-        return predict(observable, 0); // TODO really 0?
+        return predict(observable, 0);
     }
 
     @Override
