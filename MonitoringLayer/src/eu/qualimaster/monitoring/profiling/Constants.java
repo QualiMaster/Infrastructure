@@ -43,7 +43,7 @@ public class Constants {
      * @return the translated string
      */
     public static final String toFileName(String string) {
-        return string.replace(KEY_CHAR, "+");
+        return string.replace(KEY_CHAR, "0");
     }
     
 }

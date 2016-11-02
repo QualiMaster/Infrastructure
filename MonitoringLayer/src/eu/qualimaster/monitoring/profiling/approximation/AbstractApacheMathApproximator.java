@@ -42,7 +42,7 @@ import eu.qualimaster.observables.IObservable;
 public abstract class AbstractApacheMathApproximator extends AbstractApproximator {
 
     private static final String SEPARATOR = "\t";
-    private WeightedObservedPoints obs = new WeightedObservedPoints();
+    private WeightedObservedPoints obs;
     private AbstractCurveFitter fitter = createFitter();
     private ParametricUnivariateFunction function = createFunction();
 
@@ -55,6 +55,11 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
      */
     protected AbstractApacheMathApproximator(File path, Object parameterName, IObservable observable) {
         super(path, parameterName, observable);
+    }
+    
+    @Override
+    protected void initialize() {
+        obs = new WeightedObservedPoints();
     }
 
     @Override
@@ -109,7 +114,7 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
     @Override
     public void store(File folder) {
         File file = getFile(folder);
-        file.mkdirs();
+        file.getParentFile().mkdirs();
         try (PrintWriter out = new PrintWriter(new FileWriter(file))) {
             List<WeightedObservedPoint> points = obs.toList();
             int size = points.size();

@@ -35,11 +35,20 @@ public abstract class AbstractApproximator implements IApproximator {
      * @param path the path to load a persisted version from
      * @param parameterName the parameter name
      * @param observable the observable this approximator is handling
+     * @see #initialize()
+     * @see #load(File)
      */
     protected AbstractApproximator(File path, Object parameterName, IObservable observable) {
         this.observable = observable;
         this.parameterName = parameterName;
+        initialize();
         load(path);
+    }
+
+    /**
+     * Initializations that must be done before {@link #load(File)}.
+     */
+    protected void initialize() {
     }
 
     @Override

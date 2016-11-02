@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import eu.qualimaster.monitoring.profiling.approximation.HarmonicApacheMathApproximator;
 import eu.qualimaster.monitoring.profiling.approximation.IApproximatorCreator;
 import eu.qualimaster.monitoring.profiling.quantizers.DoubleIntegerQuantizer;
 import eu.qualimaster.monitoring.profiling.quantizers.IdentityIntegerQuantizer;
@@ -43,22 +44,28 @@ public class ProfilingRegistry {
     private static final Map<IObservable, QuantizerInfo<Double>> OBSERVABLE_QUANTIZERS = new HashMap<>();
     private static final Map<IObservable, Integer> PREDICTION_STEPS = new HashMap<>();
     private static final Map<IObservable, IValidator> VALIDATORS = new HashMap<>();
+    private static final Map<IObservable, Double> APPROXIMATION_WEIGHTS = new HashMap<>();
+    private static final Map<String, IApproximatorCreator> APPROXIMATION_CREATORS = new HashMap<>();
     
     static {
         // observable quantizers
         registerQuantizer(TimeBehavior.LATENCY, ScalingDoubleQuantizer.INSTANCE, true); // ms
         registerValidator(TimeBehavior.LATENCY, MinValidator.MIN_0_VALIDATOR);
+        registerApproximationCreator(TimeBehavior.LATENCY, HarmonicApacheMathApproximator.INSTANCE_10);
         registerQuantizer(TimeBehavior.THROUGHPUT_ITEMS, ScalingDoubleQuantizer.INSTANCE, true);
         registerValidator(TimeBehavior.THROUGHPUT_ITEMS, MinValidator.MIN_0_VALIDATOR);
+        registerApproximationCreator(TimeBehavior.THROUGHPUT_ITEMS, HarmonicApacheMathApproximator.INSTANCE_10);
         registerQuantizer(Scalability.ITEMS, ScalingDoubleQuantizer.INSTANCE, true);
         registerValidator(Scalability.ITEMS, MinValidator.MIN_0_VALIDATOR);
+        registerApproximationCreator(Scalability.ITEMS, HarmonicApacheMathApproximator.INSTANCE_10);
         registerQuantizer(ResourceUsage.EXECUTORS, DoubleIntegerQuantizer.INSTANCE, true);
         registerValidator(ResourceUsage.EXECUTORS, MinValidator.MIN_0_VALIDATOR);
         registerQuantizer(ResourceUsage.TASKS, DoubleIntegerQuantizer.INSTANCE, true);
         registerValidator(ResourceUsage.TASKS, MinValidator.MIN_0_VALIDATOR);
         registerQuantizer(ResourceUsage.CAPACITY, ScalingDoubleQuantizer.INSTANCE, false);
         registerValidator(ResourceUsage.CAPACITY, MinMaxValidator.MIN_0_MAX_1_VALIDATOR);
-
+        registerApproximationCreator(ResourceUsage.CAPACITY, HarmonicApacheMathApproximator.INSTANCE_10);
+        
         // type quantizers for parameters
         registerQuantizer(IdentityIntegerQuantizer.INSTANCE, true);
         registerQuantizer(DoubleIntegerQuantizer.INSTANCE, true);
@@ -281,17 +288,71 @@ public class ProfilingRegistry {
      * @return the approximator creator, may be <b>null</b> if no approximator shall be created / used
      */
     public static IApproximatorCreator getApproximatorCreator(Object paramName, IObservable observable) {
-        return null; 
+        IApproximatorCreator result = null;
+        if (null != paramName && null != observable) {
+            String obsPostfix = "/" + observable.name();
+            String key = paramName + obsPostfix;
+            result = APPROXIMATION_CREATORS.get(key);
+            if (null == result) { // fallback
+                result = APPROXIMATION_CREATORS.get(obsPostfix);    
+            }
+        }
+        return result; 
+    }
+    
+    /**
+     * Registers an approximation creator for all parameters and the given observable.
+     * 
+     * @param observable the observable to register (ignored if <b>null</b>)
+     * @param creator the creator (ignored if <b>null</b>)
+     */
+    public static void registerApproximationCreator(IObservable observable, IApproximatorCreator creator) {
+        registerApproximationCreator(null, observable, creator);
+    }
+
+    /**
+     * Registers an approximation creator for the given parameter and the given observable.
+     * 
+     * @param paramName the parameter name (may be <b>null</b> to indicate all parameters)
+     * @param observable the observable to register (ignored if <b>null</b>)
+     * @param creator the creator (ignored if <b>null</b>)
+     */
+    public static void registerApproximationCreator(Object paramName, IObservable observable, 
+        IApproximatorCreator creator) {
+        if (null != observable && null != creator) {
+            String key = null == paramName ? "" : paramName.toString();
+            key += "/" + observable.toString();
+            APPROXIMATION_CREATORS.put(key, creator);
+        }
     }
     
     /**
      * Returns the approximation weights if multiple appoximations are present.
      * 
      * @param observable the observable
-     * @return the approximation weight
+     * @return the approximation weight (1 by default)
      */
     public static double getApproximationWeight(IObservable observable) {
-        return 0;
+        double result = 1;
+        if (null != observable) {
+            Double weight = APPROXIMATION_WEIGHTS.get(observable);
+            if (null != weight) {
+                result = weight.doubleValue();
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * Registers an approximation weight.
+     * 
+     * @param observable the observable
+     * @param weight the weight
+     */
+    public static void registerApproximationWeight(IObservable observable, double weight) {
+        if (null != observable) {
+            APPROXIMATION_WEIGHTS.put(observable, weight);
+        }
     }
     
 }
