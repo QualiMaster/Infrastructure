@@ -78,9 +78,9 @@ public class StormTests extends AbstractCoordinationTests {
      * @author Holger Eichelberger
      */
     private enum ParallelismChangeLevel {
-        NONE (false),
-        WORKER (true),
-        EXECUTOR (true);
+        NONE(false),
+        WORKER(true),
+        EXECUTOR(true);
 
         private boolean changes;
         
