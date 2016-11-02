@@ -15,9 +15,12 @@
  */
 package eu.qualimaster.coordination;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import net.ssehub.easy.instantiation.rt.core.model.rtVil.VariableValueCopier;
 import net.ssehub.easy.varModel.confModel.IDecisionVariable;
 
 /**
@@ -30,8 +33,8 @@ import net.ssehub.easy.varModel.confModel.IDecisionVariable;
 public class RuntimeVariableMapping {
     
     private Map<IDecisionVariable, IDecisionVariable> mapping = new HashMap<IDecisionVariable, IDecisionVariable>();
-    private Map<IDecisionVariable, IDecisionVariable> reverseMapping
-        = new HashMap<IDecisionVariable, IDecisionVariable>();
+    private Map<IDecisionVariable, List<IDecisionVariable>> reverseMapping
+        = new HashMap<IDecisionVariable, List<IDecisionVariable>>();
     
     /**
      * Creates an instance.
@@ -52,10 +55,10 @@ public class RuntimeVariableMapping {
     /**
      * Reverse function to {@link #getReferencedBy(IDecisionVariable)}.
      * 
-     * @param originalVar the <b>unmapped</b> variable to look for
-     * @return the mapped(runtime/adaptation) variable (<b>null</b> if there is none)
+     * @param originalVar the holding, parent variable to look for
+     * @return the mapped(runtime/adaptation) variables belonging to the given parent (<b>null</b> if there is none)
      */
-    public IDecisionVariable getMappedVariable(IDecisionVariable originalVar) {
+    public List<IDecisionVariable> getMappedVariables(IDecisionVariable originalVar) {
         return null == originalVar ? null : reverseMapping.get(originalVar);
     }
     
@@ -67,7 +70,12 @@ public class RuntimeVariableMapping {
      */
     public void addReferencedBy(IDecisionVariable referenced, IDecisionVariable origin) {
         mapping.put(referenced, origin);
-        reverseMapping.put(origin, referenced);
+        List<IDecisionVariable> mappedChilds = reverseMapping.get(origin);
+        if (null == mappedChilds) {
+            mappedChilds = new ArrayList<IDecisionVariable>();
+            reverseMapping.put(origin, mappedChilds);
+        }
+        mappedChilds.add(referenced);
     }
     
     @Override

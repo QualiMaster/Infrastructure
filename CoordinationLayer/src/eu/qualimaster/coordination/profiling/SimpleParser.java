@@ -60,7 +60,6 @@ class SimpleParser implements IProfileControlParser {
      * Parses the control file.
      * 
      * @param file the file to read
-     * @param considerImport whether imports shall be considered or ignored
      * @param profile the profile to be built
      * @return the actual data file (from {@link IProfile#getDataFile()} if not changed by imports)
      * @throws IOException if loading/parsing the control file fails
