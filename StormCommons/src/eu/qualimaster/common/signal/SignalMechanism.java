@@ -147,6 +147,11 @@ public class SignalMechanism {
             }
         }
         
+        @Override
+        public String toString() {
+            return state + " signal count " + signals.size(); 
+        }
+        
     }
     
     /**
@@ -532,6 +537,7 @@ public class SignalMechanism {
             default:
                 break;
             }
+            getLogger().info("Changed namespace state: " + namespace + " " + NAMESPACES.get(namespace));
         }
     }
 
