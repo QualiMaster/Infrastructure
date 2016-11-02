@@ -11,12 +11,21 @@ import tests.eu.qualimaster.monitoring.profiling.ProfilingTests;
  * "STORM_TEST_TIMEOUT_MS" to a value greater than 15.000 (ms).
  * 
  * @author Holger Eichelberger
+ * @author Sascha El-Sharkawy
  */
 @RunWith(Suite.class)
-@Suite.SuiteClasses({SimpleMonitoringTests.class, ChangeMonitoringTests.class, 
+@Suite.SuiteClasses({
+    SimpleMonitoringTests.class,
+    ChangeMonitoringTests.class, 
     StormTest.class,
-    HwMonitoringTest.class, SystemStateTest.class, LogTest.class, TopologyTests.class, ReasoningTaskTests.class, 
-    StormClusterMonitoringTest.class, ObservationTests.class, 
+    HwMonitoringTest.class,
+    SystemStateTest.class,
+    LogTest.class,
+    TopologyTests.class,
+    ReasoningTaskTests.class, 
+    ValueBindingTest.class,
+    StormClusterMonitoringTest.class,
+    ObservationTests.class, 
     CloudEnvironmentTests.class,
     ProfilingTests.class,
     // must be last
