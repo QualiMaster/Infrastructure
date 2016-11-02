@@ -511,6 +511,21 @@ public class SignalMechanism {
     }
     
     /**
+     * Initialize the signal namespace state of <code>namespace</code> to {@link NamespaceState#ENABLE} but
+     * only if the namespace does not already exist. This is intended to allow workers to enable sending of
+     * messages. Please be careful to have the receiving worker already running and registered to receive
+     * signals as otherwise sent signals may be lost.
+     * 
+     * @param namespace the namespace
+     */
+    public static void initEnabledSignalNamespaceState(String namespace) {
+        Namespace space = NAMESPACES.get(namespace);
+        if (null == space) {
+            changeSignalNamespaceState(namespace, NamespaceState.ENABLE);
+        }
+    }
+    
+    /**
      * Changes the state of a signal namespace.
      * 
      * @param namespace the namespace

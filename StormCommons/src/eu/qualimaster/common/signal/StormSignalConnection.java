@@ -57,6 +57,7 @@ public class StormSignalConnection extends AbstractSignalConnection {
     
             initWatcher(); // failing
         }
+        SignalMechanism.initEnabledSignalNamespaceState(pipeline);
     }
     
     /**
