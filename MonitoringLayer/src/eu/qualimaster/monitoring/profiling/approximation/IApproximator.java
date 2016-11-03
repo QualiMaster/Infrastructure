@@ -16,7 +16,6 @@
 package eu.qualimaster.monitoring.profiling.approximation;
 
 import java.io.File;
-import java.io.Serializable;
 
 import eu.qualimaster.observables.IObservable;
 
@@ -30,20 +29,20 @@ public interface IApproximator {
     /**
      * Updates a measured/predicted value to be related to a specific observation.
      * 
-     * @param paramValue the value of the parameter
+     * @param paramValue the (quantized) value of the parameter
      * @param value the assigned value (observation or prediction)
      * @param measured whether <code>value</code> was measured (<code>true</code>), i.e., is an observation or 
      *     predicted (<code>false</code>)
      */
-    public void update(Serializable paramValue, double value, boolean measured);
+    public void update(int paramValue, double value, boolean measured);
     
     /**
      * Approximates values for a given <code>paramValue</code>.
      * 
-     * @param paramValue the value of the parameter to return the approximation for
+     * @param paramValue the (quantized) value of the parameter to return the approximation for
      * @return the approximation, {@link Constants#NO_APPROXIMATION} if no approximation is possible.
      */
-    public double approximate(Serializable paramValue);
+    public double approximate(int paramValue);
     
     /**
      * The observable to approximate for.

@@ -294,9 +294,11 @@ public class PipelineElement {
     private void updateParameterApproximators(IObservable observable, double value, boolean measured) {
         for (Map.Entry<Object, Serializable> param : parameters.entrySet()) {
             Object paramName = param.getKey();
+            Serializable paramValue = param.getValue();
             IApproximator approximator = obtainApproximator(paramName, observable);
-            if (null != approximator) {
-                approximator.update(param.getValue(), value, measured);
+            Quantizer<?> quantizer = ProfilingRegistry.getQuantizer(paramValue, false);
+            if (null != approximator && null != quantizer) {
+                approximator.update(quantizer.quantize(paramValue), value, measured);
             }
         }
     }
@@ -349,10 +351,12 @@ public class PipelineElement {
             if (enableApproximation) {
                 for (Map.Entry<Object, Serializable> param : parameters.entrySet()) {
                     Object paramName = param.getKey();
+                    Serializable paramValue = param.getValue();
                     IApproximator approximator = obtainApproximator(paramName, observable);
                     double weight = ProfilingRegistry.getApproximationWeight(observable);
-                    if (null != approximator && weight != 0) {
-                        double approx = approximator.approximate(param.getValue());
+                    Quantizer<?> quantizer = ProfilingRegistry.getQuantizer(paramValue, false);
+                    if (null != approximator && weight != 0 && null != quantizer) {
+                        double approx = approximator.approximate(quantizer.quantize(paramValue));
                         if (Constants.NO_APPROXIMATION != approx) {
                             sum += approx * weight;
                             weights += weight;

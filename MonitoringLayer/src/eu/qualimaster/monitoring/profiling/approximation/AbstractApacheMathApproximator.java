@@ -21,13 +21,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.PrintWriter;
-import java.io.Serializable;
 import java.util.List;
 
 import org.apache.commons.math3.analysis.ParametricUnivariateFunction;
 import org.apache.commons.math3.fitting.AbstractCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoint;
-import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -42,7 +40,7 @@ import eu.qualimaster.observables.IObservable;
 public abstract class AbstractApacheMathApproximator extends AbstractApproximator {
 
     private static final String SEPARATOR = "\t";
-    private WeightedObservedPoints obs;
+    private LastRecentWeightedObservedPoints obs;
     private AbstractCurveFitter fitter = createFitter();
     private ParametricUnivariateFunction function = createFunction();
 
@@ -59,14 +57,12 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
     
     @Override
     protected void initialize() {
-        obs = new WeightedObservedPoints();
+        obs = new LastRecentWeightedObservedPoints();
     }
 
     @Override
-    public void update(Serializable paramValue, double value, boolean measured) {
-        if (paramValue instanceof Number) {
-            obs.add(((Number) paramValue).doubleValue(), value);
-        }
+    public void update(int paramValue, double value, boolean measured) {
+        obs.add(paramValue, value);
     }
     
     /**
@@ -93,17 +89,15 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
     // checkstyle: stop exception type check
     
     @Override
-    public double approximate(Serializable paramValue) {
+    public double approximate(int paramValue) {
         double result = Constants.NO_APPROXIMATION;
-        if (paramValue instanceof Number) {
-            List<WeightedObservedPoint> points = obs.toList();
-            if (points.size() > getMinSampleSize()) {
-                try {
-                    double[] coeff = fitter.fit(obs.toList());
-                    result = function.value(((Number) paramValue).doubleValue(), coeff);
-                } catch (Throwable t) {
-                    getLogger().warn("During approximation: " + t.getMessage());
-                }
+        List<WeightedObservedPoint> points = obs.toList();
+        if (points.size() > getMinSampleSize()) {
+            try {
+                double[] coeff = fitter.fit(obs.toList());
+                result = function.value(paramValue, coeff);
+            } catch (Throwable t) {
+                getLogger().warn("During approximation: " + t.getMessage());
             }
         }
         return result;
