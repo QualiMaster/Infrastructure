@@ -217,7 +217,6 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      * @throws SignalException in case that the execution / signal sending fails
      */
     protected void sendSignal(TopologySignal signal) throws SignalException {
-getLogger().info("BaseSignalBolt: sending signal..." + signal.toString());        
         signal.sendSignal(this.signalConnection);
     }
     

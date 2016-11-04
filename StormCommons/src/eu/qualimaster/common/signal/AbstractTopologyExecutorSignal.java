@@ -109,7 +109,6 @@ public abstract class AbstractTopologyExecutorSignal extends TopologySignal {
      * @throws SignalException in case that the execution / signal sending fails
      */
     void sendSignal(CuratorFramework mechanism) throws SignalException {
-getLogger().info("AbstractTopologyExecutorSignal: sending signal..." + this.toString());        
         SignalMechanism.sendSignal(mechanism, this);
     }
     
