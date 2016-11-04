@@ -52,7 +52,6 @@ import eu.qualimaster.monitoring.systemState.TypeMapper;
 import eu.qualimaster.monitoring.systemState.TypeMapper.TypeCharacterizer;
 import eu.qualimaster.observables.AnalysisObservables;
 import eu.qualimaster.observables.IObservable;
-import eu.qualimaster.observables.Observables;
 import net.ssehub.easy.basics.progress.ProgressObserver;
 import net.ssehub.easy.reasoning.core.frontend.ReasonerFrontend;
 import net.ssehub.easy.reasoning.core.reasoner.ReasonerConfiguration;
@@ -88,7 +87,6 @@ public class ReasoningTask extends TimerTask {
     private static final String OBSERVATION_SEPARATOR = ".";
     private static final boolean WITH_DEBUG = Boolean.valueOf(System.getProperty("qm.monitoring.debug", "false"));
     private static final ReasonerConfiguration CONFIGURATION = new ReasonerConfiguration();
-    private static final Map<String, IObservable> NAME_OBSERVABLE_MAPPING = new HashMap<String, IObservable>();
     private AtomicBoolean inProcessing = new AtomicBoolean(false);
     private Configuration config;
     private Script rtVilModel;
@@ -121,7 +119,6 @@ public class ReasoningTask extends TimerTask {
             public void info(String arg0) {
             }
         });
-        registerAll(Observables.OBSERVABLES);
     }
     
     /**
@@ -459,42 +456,6 @@ public class ReasoningTask extends TimerTask {
         this.listener = listener;
     }
 
-    /**
-     * Registers all observables according to the variable name convention, i.e., 
-     * turns observable names in Java-like variable names. "Cpus" becomes "CPUs" and
-     * "Dfes" becomes "DFEs".
-     * 
-     * @param observables the observables to be registered
-     */
-    private static final void registerAll(IObservable[] observables) {
-        for (IObservable obs : observables) {
-            StringBuilder name = new StringBuilder(obs.name());
-            int i = 0; 
-            boolean lastUnderscore = false;
-            while (i < name.length()) {
-                char c = name.charAt(i);
-                if ('_' == c) {
-                    name.deleteCharAt(i);
-                    lastUnderscore = true;
-                } else {
-                    char newChar;
-                    if (lastUnderscore) {
-                        newChar = Character.toUpperCase(c);
-                    } else {
-                        newChar = Character.toLowerCase(c);
-                    }
-                    name.setCharAt(i, newChar);
-                    lastUnderscore = false;
-                    i++;
-                }
-            }
-            String tmpName = name.toString();
-            tmpName = tmpName.replace("Cpus", "CPUs");
-            tmpName = tmpName.replace("Dfes", "DFEs");
-            NAME_OBSERVABLE_MAPPING.put(tmpName, obs);
-        }
-    }
-
     // checkstyle: stop exception type check
     
     @Override
@@ -698,7 +659,7 @@ public class ReasoningTask extends TimerTask {
         private ActualViolation isActualViolation(IDecisionVariable var, String operation, Double deviationPercentage) {
             boolean isConstraint = false;
             IDecisionVariable top = Configuration.getTopLevelDecision(var);
-            IObservable obs = NAME_OBSERVABLE_MAPPING.get(var.getDeclaration().getName());
+            IObservable obs = ObservableMapper.getObservable(var);
             if (null != currentConstraint && currentConstraint.getParent() instanceof AbstractVariable) {
                 AbstractVariable parent = (AbstractVariable) currentConstraint.getParent();
                 if (Container.TYPE.isAssignableFrom(parent.getType())) {
