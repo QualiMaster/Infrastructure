@@ -176,7 +176,7 @@ public class StormTest extends AbstractCoordinationTests {
         Assert.assertNotNull(part);
         
         // currently not monitored / tested
-        assertNotMeasured(part, ResourceUsage.MEMORY_USE); // this needs SPASS-meter
+        assertNotMeasured(part, ResourceUsage.USED_MEMORY); // this needs SPASS-meter
         assertNotMeasured(part, FunctionalSuitability.ACCURACY_CONFIDENCE);
         assertNotMeasured(part, Scalability.VOLUME);
 

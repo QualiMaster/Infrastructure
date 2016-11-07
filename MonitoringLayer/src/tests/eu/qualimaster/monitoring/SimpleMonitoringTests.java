@@ -184,7 +184,7 @@ public class SimpleMonitoringTests {
             TestNameMapping.NODE_PROCESS, TestNameMapping.NODE_PROCESS_ALG1));
         // monitor value for pipeline node an and (propagated) for current algorithm
         MonitoringManager.handleEvent(new PipelineElementObservationMonitoringEvent(TestNameMapping.PIPELINE_NAME, 
-            TestNameMapping.NODE_PROCESS, null, ResourceUsage.MEMORY_USE, 1500));
+            TestNameMapping.NODE_PROCESS, null, ResourceUsage.USED_MEMORY, 1500));
 
         assertAlgorithmAggregation(state);
         assertAlgorithmAggregation(new SystemState(state));
@@ -211,17 +211,17 @@ public class SimpleMonitoringTests {
         PipelineSystemPart pPart = state.obtainPipeline(TestNameMapping.PIPELINE_NAME);
         Assert.assertNotNull(pPart);
         PipelineNodeSystemPart nPart = pPart.obtainPipelineNode(TestNameMapping.NODE_PROCESS);
-        assertPart(nPart, ResourceUsage.MEMORY_USE, 1500); // no aggregation at element level at the moment
+        assertPart(nPart, ResourceUsage.USED_MEMORY, 1500); // no aggregation at element level at the moment
         NodeImplementationSystemPart aPart = pPart.getAlgorithm(TestNameMapping.NODE_PROCESS_ALG1);
-        assertPart(aPart, ResourceUsage.MEMORY_USE, 1500);
+        assertPart(aPart, ResourceUsage.USED_MEMORY, 1500);
 
         assertSerializable(state);
         
         FrozenSystemState frozen = state.freeze();
         assertEquals(1500, frozen.getPipelineElementObservation(TestNameMapping.PIPELINE_NAME, 
-            TestNameMapping.NODE_PROCESS, ResourceUsage.MEMORY_USE));
+            TestNameMapping.NODE_PROCESS, ResourceUsage.USED_MEMORY));
         assertEquals(1500, frozen.getAlgorithmObservation(TestNameMapping.PIPELINE_NAME, 
-            TestNameMapping.NODE_PROCESS_ALG1, ResourceUsage.MEMORY_USE));
+            TestNameMapping.NODE_PROCESS_ALG1, ResourceUsage.USED_MEMORY));
         
         assertSerializable(frozen);
     }
@@ -384,13 +384,13 @@ public class SimpleMonitoringTests {
         state.obtainPipeline(Naming.PIPELINE_NAME).changeStatus(PipelineLifecycleEvent.Status.STARTED, false, null);
         
         EventManager.send(new AlgorithmMonitoringEvent(Naming.PIPELINE_NAME, Naming.NODE_PROCESS_ALG1_CLASS, 
-            ResourceUsage.MEMORY_USE, 1000));
+            ResourceUsage.USED_MEMORY, 1000));
         EventManager.cleanup(); // force execution
         
         PipelineSystemPart pip = state.obtainPipeline(Naming.PIPELINE_NAME);
         Assert.assertNotNull(pip);
         NodeImplementationSystemPart alg = pip.getAlgorithm(Naming.NODE_PROCESS_ALG1);
-        assertPart(alg, ResourceUsage.MEMORY_USE, 1000);
+        assertPart(alg, ResourceUsage.USED_MEMORY, 1000);
     }
     
     /**

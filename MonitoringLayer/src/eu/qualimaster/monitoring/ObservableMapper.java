@@ -33,6 +33,7 @@ import net.ssehub.easy.varModel.model.AbstractVariable;
 public class ObservableMapper {
 
     private static final Map<String, IObservable> NAME_OBSERVABLE_MAPPING = new HashMap<String, IObservable>();
+    private static final Map<String, IObservable> TYPENAME_OBSERVABLE_MAPPING = new HashMap<String, IObservable>();
 
     static {
         registerAll(Observables.OBSERVABLES);
@@ -47,31 +48,81 @@ public class ObservableMapper {
      */
     private static final void registerAll(IObservable[] observables) {
         for (IObservable obs : observables) {
-            StringBuilder name = new StringBuilder(obs.name());
-            int i = 0; 
-            boolean lastUnderscore = false;
-            while (i < name.length()) {
-                char c = name.charAt(i);
-                if ('_' == c) {
-                    name.deleteCharAt(i);
-                    lastUnderscore = true;
-                } else {
-                    char newChar;
-                    if (lastUnderscore) {
-                        newChar = Character.toUpperCase(c);
-                    } else {
-                        newChar = Character.toLowerCase(c);
-                    }
-                    name.setCharAt(i, newChar);
-                    lastUnderscore = false;
-                    i++;
-                }
-            }
-            String tmpName = name.toString();
-            tmpName = tmpName.replace("Cpus", "CPUs");
-            tmpName = tmpName.replace("Dfes", "DFEs");
-            NAME_OBSERVABLE_MAPPING.put(tmpName, obs);
+            NAME_OBSERVABLE_MAPPING.put(getMappedName(obs), obs);
+            TYPENAME_OBSERVABLE_MAPPING.put(getMappedTypeName(obs), obs);
         }
+    }
+
+    /**
+     * Returns the mapped (variable) name.
+     * 
+     * @param obs the observable
+     * @return the mapped (variable) name
+     */
+    public static String getMappedName(IObservable obs) {
+        StringBuilder name = new StringBuilder(obs.name());
+        int i = 0; 
+        boolean lastUnderscore = false;
+        while (i < name.length()) {
+            char c = name.charAt(i);
+            if ('_' == c) {
+                name.deleteCharAt(i);
+                lastUnderscore = true;
+            } else {
+                char newChar;
+                if (lastUnderscore) {
+                    newChar = Character.toUpperCase(c);
+                } else {
+                    newChar = Character.toLowerCase(c);
+                }
+                name.setCharAt(i, newChar);
+                lastUnderscore = false;
+                i++;
+            }
+        }
+        String tmpName = name.toString();
+        tmpName = tmpName.replace("Cpus", "CPUs");
+        tmpName = tmpName.replace("Dfes", "DFEs"); 
+        return tmpName;
+    }
+    
+    /**
+     * Returns the mapped type name.
+     * 
+     * @param obs the observable
+     * @return the mapped type name
+     */
+    public static String getMappedTypeName(IObservable obs) {
+        StringBuilder name = new StringBuilder(obs.name());
+        int i = 0; 
+        boolean lastUnderscore = false;
+        while (i < name.length()) {
+            char c = name.charAt(i);
+            if ('_' == c) {
+                lastUnderscore = true;
+            } else {
+                char newChar;
+                if (0 == i || lastUnderscore) {
+                    newChar = Character.toUpperCase(c);
+                } else {
+                    newChar = Character.toLowerCase(c);
+                }
+                name.setCharAt(i, newChar);
+                lastUnderscore = false;
+            }
+            i++;
+        }
+        return name.toString();
+    }
+
+    /**
+     * Maps an IVML type name to an observable.
+     * 
+     * @param ivmlTypeName the IVML type name
+     * @return the observable or <b>null</b> if no mapping is possible
+     */
+    public static final IObservable getObservableByType(String ivmlTypeName) {
+        return TYPENAME_OBSERVABLE_MAPPING.get(ivmlTypeName);
     }
 
     /**
@@ -103,5 +154,5 @@ public class ObservableMapper {
     public static final IObservable getObservable(IDecisionVariable var) {
         return getObservable(var.getDeclaration());
     }
-
+    
 }

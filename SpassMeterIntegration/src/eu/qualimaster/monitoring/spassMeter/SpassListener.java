@@ -58,7 +58,7 @@ class SpassListener implements MonitoringGroupCreationListener, MonitoringGroupB
         double jvmMemUse = jvm.getAvgMemUse();
         if (jvmMemUse > 0) {
             EventManager.handle(new PlatformMonitoringEvent(ComponentKeyRegistry.getPipelineName(), 
-                ResourceUsage.MEMORY_USE, jvmMemUse, null));
+                ResourceUsage.USED_MEMORY, jvmMemUse, null));
         }
         String freq = System.getProperty("qm.spass.frequency", null);
         if (null != freq) {
@@ -85,7 +85,7 @@ class SpassListener implements MonitoringGroupCreationListener, MonitoringGroupB
         long memUse = group.getMemUse();
         if (memUse > 0) {
             EventManager.handle(new AlgorithmMonitoringEvent(ComponentKeyRegistry.getPipelineName(), algorithmId, key, 
-                ResourceUsage.MEMORY_USE, memUse));
+                ResourceUsage.USED_MEMORY, memUse));
         }
     }
 

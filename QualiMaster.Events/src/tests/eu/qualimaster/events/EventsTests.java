@@ -349,9 +349,9 @@ public class EventsTests {
      */
     @Test
     public void testAlgorithmEvents()  {
-        AlgorithmMonitoringEvent evt = new AlgorithmMonitoringEvent("123", "alg", ResourceUsage.MEMORY_USE, 10);
+        AlgorithmMonitoringEvent evt = new AlgorithmMonitoringEvent("123", "alg", ResourceUsage.USED_MEMORY, 10);
         Assert.assertEquals("alg", evt.getAlgorithmId());
-        Assert.assertEquals(ResourceUsage.MEMORY_USE, evt.getObservable());
+        Assert.assertEquals(ResourceUsage.USED_MEMORY, evt.getObservable());
         Assert.assertEquals(10, evt.getValue(), 0.05);
         Assert.assertEquals("123", evt.getPipeline());
     }

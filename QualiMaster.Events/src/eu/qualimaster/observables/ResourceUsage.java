@@ -9,7 +9,7 @@ import eu.qualimaster.common.QMInternal;
  */
 public enum ResourceUsage implements IObservable {
     
-    MEMORY_USE, // TODO USED_MEMORY
+    USED_MEMORY,
     AVAILABLE_MEMORY,
     AVAILABLE_FREQUENCY,
     

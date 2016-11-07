@@ -411,7 +411,7 @@ public class ObservationFactory {
         registerCreator(FunctionalSuitability.RELEVANCY, null, CREATOR_SINGLE);
         registerCreator(FunctionalSuitability.MP_VOLATILITY, null, CREATOR_SINGLE);
 
-        registerCreator(ResourceUsage.MEMORY_USE, null, CREATOR_SINGLE);
+        registerCreator(ResourceUsage.USED_MEMORY, null, CREATOR_SINGLE);
         registerCreator(ResourceUsage.LOAD, null, CREATOR_SINGLE);
         registerCreator(ResourceUsage.AVAILABLE_FREQUENCY, null, CREATOR_SINGLE);
         registerCreator(ResourceUsage.AVAILABLE_MEMORY, null, CREATOR_SINGLE);
@@ -454,7 +454,7 @@ public class ObservationFactory {
         registerPart(PartType.PIPELINE_NODE, 
             TimeBehavior.LATENCY, TimeBehavior.ENACTMENT_DELAY, TimeBehavior.THROUGHPUT_ITEMS, 
                 TimeBehavior.THROUGHPUT_VOLUME, 
-            ResourceUsage.MEMORY_USE, ResourceUsage.CAPACITY, ResourceUsage.EXECUTORS, ResourceUsage.TASKS, 
+            ResourceUsage.USED_MEMORY, ResourceUsage.CAPACITY, ResourceUsage.EXECUTORS, ResourceUsage.TASKS, 
                 ResourceUsage.HOSTS,
             FunctionalSuitability.ACCURACY_CONFIDENCE, FunctionalSuitability.COMPLETENESS,
                 FunctionalSuitability.BELIEVABILITY, FunctionalSuitability.RELEVANCY,
@@ -463,7 +463,7 @@ public class ObservationFactory {
         registerPart(PartType.ALGORITHM, 
             TimeBehavior.LATENCY, TimeBehavior.THROUGHPUT_ITEMS, 
                 TimeBehavior.THROUGHPUT_VOLUME, 
-            ResourceUsage.MEMORY_USE,
+            ResourceUsage.USED_MEMORY,
             FunctionalSuitability.ACCURACY_ERROR_RATE, FunctionalSuitability.ACCURACY_CONFIDENCE, 
                 FunctionalSuitability.COMPLETENESS, FunctionalSuitability.BELIEVABILITY, 
                 FunctionalSuitability.RELEVANCY,
@@ -482,7 +482,7 @@ public class ObservationFactory {
                 ResourceUsage.USED_MACHINES, ResourceUsage.USED_DFES, ResourceUsage.BANDWIDTH);
         registerPart(PartType.MACHINE, 
             ResourceUsage.BANDWIDTH, ResourceUsage.AVAILABLE, ResourceUsage.AVAILABLE_CPUS, ResourceUsage.LOAD, 
-                ResourceUsage.AVAILABLE_FREQUENCY, ResourceUsage.AVAILABLE_MEMORY, ResourceUsage.MEMORY_USE);
+                ResourceUsage.AVAILABLE_FREQUENCY, ResourceUsage.AVAILABLE_MEMORY, ResourceUsage.USED_MEMORY);
         registerPart(PartType.CLUSTER, 
             ResourceUsage.AVAILABLE_CPUS, ResourceUsage.AVAILABLE_DFES, ResourceUsage.USED_CPUS, 
                 ResourceUsage.USED_DFES, ResourceUsage.BANDWIDTH, ResourceUsage.AVAILABLE);
