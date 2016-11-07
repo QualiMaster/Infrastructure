@@ -44,6 +44,9 @@ public class AlgorithmProfilePredictionManager {
     private static String baseFolder = MonitoringConfiguration.getProfileLocation();
     private static IAlgorithmProfileCreator creator = new KalmanProfileCreator(); // currently fixed, may be replaced
     private static boolean predict = true;
+    private static Double testPrediction;
+    private static Map<String, Map<IObservable, Double>> testPredictions;
+    private static Map<String, Map<IObservable, Double>> testParameterPredictions;
  
     static {
         EventManager.register(new AlgorithmProfilePredictionRequestHandler());
@@ -169,6 +172,9 @@ public class AlgorithmProfilePredictionManager {
      * @param targetValues the target values for prediction. Predict the next step if <b>null</b> or empty. May contain
      *   observables ({@link IObservable}-Double) or parameter values (String-value)
      * @return the predicted value ({@link Constants#NO_PREDICTION} in case of no prediction)
+     * 
+     * @see #setTestPrediction(Double)
+     * @see #enablePrediction(boolean)
      */
     public static double predict(String pipeline, String element, String algorithm, IObservable observable, 
         Map<Object, Serializable> targetValues) {
@@ -182,7 +188,7 @@ public class AlgorithmProfilePredictionManager {
                 }
             }
         }
-        return result;
+        return null == testPrediction ? result : testPrediction.doubleValue();
     }
 
     /**
@@ -196,6 +202,9 @@ public class AlgorithmProfilePredictionManager {
      *   observables ({@link IObservable}-Double) or parameter values (String-value)
      * @return the predicted values with <b>null</b> as prediction if there is none, or <b>null</b> if no prediction is 
      *   possible at all, e.g., pipeline or element unknown
+     *   
+     * @see #setParameterPredictions(Map)
+     * @see #enablePrediction(boolean)
      */
     public static Map<String, Map<IObservable, Double>> predict(String pipeline, String element, Set<String> algorithms,
         Set<IObservable> observables, Map<Object, Serializable> targetValues) {
@@ -217,7 +226,7 @@ public class AlgorithmProfilePredictionManager {
                 }
             }
         }
-        return result;
+        return null == testPredictions ? result : testPredictions;
     }
     
     /**
@@ -230,6 +239,9 @@ public class AlgorithmProfilePredictionManager {
      * @param targetValues the target values for prediction. Predict the next step if <b>null</b> or empty. May contain
      *   observables ({@link IObservable}-Double) or parameter values (String-value)
      * @return the parameter-observable-prediction mapping, <b>null</b> if there are no predictions
+     * 
+     * @see #setTestParameterPredictions(Map)
+     * @see #enablePrediction(boolean)
      */
     public static Map<String, Map<IObservable, Double>> predictParameterValues(String pipeline, String element, 
         String parameter, Set<IObservable> observables, Map<Object, Serializable> targetValues) {
@@ -243,7 +255,7 @@ public class AlgorithmProfilePredictionManager {
                 }
             }
         }
-        return result;
+        return null == testParameterPredictions ? result : testParameterPredictions;
     }
 
     /**
@@ -290,7 +302,7 @@ public class AlgorithmProfilePredictionManager {
      *   observables ({@link IObservable}-Double) or parameter values (String-value)
      * @return the predicted algorithm or <b>null</b> if no one can be predicted
      */
-    @Deprecated
+    /*@Deprecated
     public static String predict(String pipeline, String element, Set<String> algorithms, 
         Map<IObservable, Double> weighting, Map<Object, Serializable> targetValues) {
         String result = null;
@@ -304,7 +316,7 @@ public class AlgorithmProfilePredictionManager {
             }
         }
         return result;
-    }
+    }*/
 
     /**
      * Performs a simple weighting-based maximization over algorithms.
@@ -316,7 +328,7 @@ public class AlgorithmProfilePredictionManager {
      *   observables ({@link IObservable}-Double) or parameter values (String-value)
      * @return the predicted algorithm or <b>null</b> if no one can be predicted
      */
-    @Deprecated
+    /*@Deprecated
     private static String simpleWeighting(PipelineElement elt, Set<String> algorithms, 
         Map<IObservable, Double> weighting, Map<Object, Serializable> targetValues) {
         String best = null;
@@ -346,7 +358,7 @@ public class AlgorithmProfilePredictionManager {
             }
         }
         return best;
-    }
+    }*/
 
     /**
     * Called upon shutdown of the infrastructure. Clean up global resources here.
@@ -427,4 +439,31 @@ public class AlgorithmProfilePredictionManager {
         PipelineElement.enableApproximation(enable);
     }
     
+    /**
+     * Sets the next mass predictions for testing. The values remain valid until changed by the next call.
+     * 
+     * @param predictions the next predictions, i.e., a source-keyword-value mapping, <b>null</b> for real predictions
+     */
+    public static void setTestPredictions(Map<String, Map<IObservable, Double>> predictions) {
+        testPredictions = predictions;
+    }
+    
+    /**
+     * Sets the next mass parameter predictions for testing. The values remain valid until changed by the next call.
+     * 
+     * @param predictions the next predictions, i.e., a source-keyword-value mapping, <b>null</b> for real predictions
+     */
+    public static void setTestParameterPredictions(Map<String, Map<IObservable, Double>> predictions) {
+        testParameterPredictions = predictions;
+    }
+
+    /**
+     * Sets the next single predictions for testing. The value remain valid until changed by the next call.
+     * 
+     * @param prediction the next prediction, i.e., <b>null</b> for real prediction
+     */
+    public static void setTestPrediction(Double prediction) {
+        testPrediction = prediction;
+    }
+
 }
