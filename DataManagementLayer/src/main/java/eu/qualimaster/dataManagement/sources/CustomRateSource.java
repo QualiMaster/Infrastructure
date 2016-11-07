@@ -53,6 +53,10 @@ public abstract class CustomRateSource <T> extends TimerTask implements IDataSou
             return;
         }
         
+        System.out.println("Initializing CustomRateSource:");
+        System.out.println("Begin delay: " + beginDelay);
+        System.out.println("Timer delay: " + timerDelay);
+        
         this.timerDelay = timerDelay;
         this.beginDelay = beginDelay;
         this.tupleCounts = new int[rates.length];
