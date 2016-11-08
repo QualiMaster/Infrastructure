@@ -217,7 +217,11 @@ public class VolumePredictor {
      */
     public double predictBlindly(String termId) {
         // get the name of the source term from its id
-        String termName = this.idsToNamesMap.get(termId);
+        String termName;
+        if (!this.idsToNamesMap.isEmpty())
+            termName = this.idsToNamesMap.get(termId);
+        else
+            termName = termId;
 
         BlindPrediction model = this.blindModels.get(termName);
         if (model != null)
@@ -246,7 +250,11 @@ public class VolumePredictor {
         ArrayList<String> unknownTerms = new ArrayList<>();
         for (String termId : observations.keySet()) {
             // get the name of the source term from its id
-            String termName = this.idsToNamesMap.get(termId);
+            String termName;
+            if (!this.idsToNamesMap.isEmpty())
+                termName = this.idsToNamesMap.get(termId);
+            else
+                termName = termId;
 
             long currVolume = (long) observations.get(termId);
             System.out.print(currVolume + "\t");
@@ -626,6 +634,9 @@ public class VolumePredictor {
 
     private Map<String, String> formatMap(Map<String, String> inputMap) {
         Map<String, String> newMap = new HashMap<>();
+        
+        if(inputMap == null) return newMap;
+        
         for (String id : inputMap.keySet()) {
             String name = inputMap.get(id);
             String[] fields = name.split("�");
