@@ -77,6 +77,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
             getLogger().info("Prepare--basesignalspout.... " + pipeline + "/" + this.name);
             signalConnection = new StormSignalConnection(this.name, this, pipeline);
             signalConnection.init(conf);
+            getLogger().info("Prepared--basesignalspout.... " + pipeline + "/" + this.name);
             if (Configuration.getPipelineSignalsQmEvents()) {
                 parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, pipeline, name);
                 shutdownEventHandler = ShutdownEventHandler.createAndRegister(this, pipeline, name);

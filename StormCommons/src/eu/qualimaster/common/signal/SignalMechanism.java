@@ -319,11 +319,14 @@ public class SignalMechanism {
             if (null == connectString) {
                 connectString = Configuration.getZookeeperConnectString();
             }
+            getLogger().info("Creating a curator framwork...");
             result = CuratorFrameworkFactory.builder().namespace(namespace)
                 .connectString(connectString)
                 .retryPolicy(new RetryOneTime(500)).build();
+            getLogger().info("Created a curator framwork: " + result);
             FRAMEWORKS.put(namespace, result);
             result.start();
+            getLogger().info("Started the curator framwork...");
         }
         return result;
     }
@@ -413,6 +416,7 @@ public class SignalMechanism {
         if (Configuration.getPipelineSignalsCurator()) {
             if (null == mechanism) {
                 try {
+                    getLogger().info("Obtaining the framwork...");
                     mechanism = obtainFramework(space.getName());
                 } catch (IOException e) {
                     throw new SignalException(e);
@@ -429,6 +433,7 @@ public class SignalMechanism {
                     
                 });
             } else {
+                getLogger().info("Sending the signal: " + signal.toString());
                 sendSignal(mechanism, signal.getTopology(), signal.getExecutor(), signal.createPayload());
             }
         } else {

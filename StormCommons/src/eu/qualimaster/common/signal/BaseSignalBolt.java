@@ -79,6 +79,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
             getLogger().info("Prepare--basesignalbolt.... " + pipeline + "/" + this.name);
             signalConnection = new StormSignalConnection(this.name, this, pipeline);
             signalConnection.init(conf);
+            getLogger().info("Prepared--basesignalbolt.... " + pipeline + "/" + this.name);
             if (Configuration.getPipelineSignalsQmEvents()) {
                 algorithmEventHandler = AlgorithmChangeEventHandler.createAndRegister(this, pipeline, name);
                 parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, pipeline, name);
