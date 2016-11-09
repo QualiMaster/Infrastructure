@@ -131,5 +131,12 @@
        <mvnDeploy folderName="${projectName}" pomFile="@{pomFile}" jarFolder="${targetFolder}" jarFile="${jarFile}"/>
       </sequential>
    </macrodef>
+	
+   <macrodef name="clearMavenRepo">
+    <sequential>
+      <sshexec host="${maven.repository.server}" username="${maven.repository.user}" trust="true" keyfile="${maven.repository.keyfile}" 
+        command="./cleanMvnQm.sh"/>         
+    </sequential>
+   </macrodef>
     
 </project>
