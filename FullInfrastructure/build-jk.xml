@@ -155,6 +155,7 @@
         <zip destfile="infra-${NOW}-stamped.zip"> 
             <fileset dir="build/stamp" excludes="**/lib/*.jar"/>
         </zip>
+    	<clearMavenRepo/>
     </target>
     
 </project>
