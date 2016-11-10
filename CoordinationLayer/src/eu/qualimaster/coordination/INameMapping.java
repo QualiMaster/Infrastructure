@@ -3,6 +3,7 @@ package eu.qualimaster.coordination;
 import java.util.Collection;
 import java.util.List;
 
+import eu.qualimaster.infrastructure.IScalingDescriptor;
 import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 
 /**
@@ -155,6 +156,13 @@ public interface INameMapping {
          */
         public List<Component> getComponents();
 
+        /**
+         * Returns the scaling descriptor of this algorithm (in case of a manual implemented sub-topology).
+         * 
+         * @return the scaling descriptor (may be <b>null</b>)
+         */
+        public IScalingDescriptor getScalingDescriptor();
+        
     }
     
     /**

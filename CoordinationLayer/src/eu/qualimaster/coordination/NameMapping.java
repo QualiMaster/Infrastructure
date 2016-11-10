@@ -24,6 +24,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import eu.qualimaster.common.signal.Constants;
 import eu.qualimaster.coordination.INameMapping.Component.Type;
+import eu.qualimaster.infrastructure.IScalingDescriptor;
 import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 
 /**
@@ -252,6 +253,7 @@ public class NameMapping implements INameMapping {
         private String implName;
         private String className;
         private List<Component> components = new ArrayList<Component>();
+        private IScalingDescriptor scalingDescriptor;
 
         /**
          * Creates an algorithm information instance.
@@ -294,7 +296,21 @@ public class NameMapping implements INameMapping {
         private void addComponent(Component component) {
             components.add(component);
         }
-        
+
+        /**
+         * Sets the scaling descriptor.
+         * 
+         * @param scalingDescriptor the scaling descriptor (may be <b>null</b>)
+         */
+        private void setScalingDescriptor(IScalingDescriptor scalingDescriptor) {
+            this.scalingDescriptor = scalingDescriptor;
+        }
+
+        @Override
+        public IScalingDescriptor getScalingDescriptor() {
+            return scalingDescriptor;
+        }
+
         @Override
         public String toString() {
             return "Alg: " + name + " " + implName + " " + className + " " + components;
@@ -799,6 +815,7 @@ public class NameMapping implements INameMapping {
     @Override
     public void considerSubStructures(SubTopologyMonitoringEvent event) {
         Map<String, List<String>> structures = event.getStructure();
+        Map<String, IScalingDescriptor> descriptors = event.getScalingDescriptors();
         String pipeline = event.getPipeline();
         if (null != structures && null != pipeline) {
             for (Map.Entry<String, List<String>> entry : structures.entrySet()) {
@@ -810,6 +827,7 @@ public class NameMapping implements INameMapping {
                         alg = getAlgorithmImpl(algImplName);
                     }
                     if (null != alg) {
+                        IScalingDescriptor desc = null == descriptors ? null : descriptors.get(algImplName);
                         for (String s : subToplogyComponents) {
                             String[] tmp = s.split(SubTopologyMonitoringEvent.SEPARATOR);
                             if (null != tmp && 2 == tmp.length) {
@@ -822,6 +840,7 @@ public class NameMapping implements INameMapping {
                                 componentImpl.put(comp.getName(), comp);
                             }
                         }
+                        alg.setScalingDescriptor(desc);
                     }
                 }
             }

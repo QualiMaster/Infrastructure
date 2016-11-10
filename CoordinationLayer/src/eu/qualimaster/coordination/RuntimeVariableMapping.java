@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.ssehub.easy.instantiation.rt.core.model.rtVil.VariableValueCopier;
 import net.ssehub.easy.varModel.confModel.IDecisionVariable;
 
 /**

@@ -23,6 +23,8 @@ import eu.qualimaster.coordination.INameMapping.Component;
 import eu.qualimaster.coordination.INameMapping.ISubPipeline;
 import eu.qualimaster.coordination.INameMapping.Component.Type;
 import eu.qualimaster.coordination.NameMapping;
+import eu.qualimaster.infrastructure.FixedScalingDescriptor;
+import eu.qualimaster.infrastructure.IScalingDescriptor;
 import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 
 /**
@@ -123,14 +125,20 @@ public class NameMappingTest {
         final String elt1Class = "eu.qualimaster.algorithms.Process1Bolt";
         final String elt2Name = "RandomProcessor1processor2";
         final String elt2Class = "eu.qualimaster.algorithms.Process2Bolt";
+        final FixedScalingDescriptor desc = new FixedScalingDescriptor();
+        desc.setExecutor(elt1Name, 5);
+        desc.setExecutor(elt2Name, 3);
         tmp.add(elt1Name + SubTopologyMonitoringEvent.SEPARATOR + elt1Class);
         tmp.add(elt2Name + SubTopologyMonitoringEvent.SEPARATOR + elt2Class);
         structure.put(alg, tmp);
-        SubTopologyMonitoringEvent evt = new SubTopologyMonitoringEvent(pipeline, structure);
+        Map<String, IScalingDescriptor> descriptors = new HashMap<String, IScalingDescriptor>();
+        descriptors.put(alg, desc);
+        SubTopologyMonitoringEvent evt = new SubTopologyMonitoringEvent(pipeline, structure, descriptors);
         mapping.considerSubStructures(evt);
         
         Algorithm algorithm = mapping.getAlgorithmByImplName(alg);
         Assert.assertNotNull(algorithm);
+        Assert.assertEquals(desc, algorithm.getScalingDescriptor());
         Map<String, Component> cmpMap = new HashMap<String, Component>();
         for (Component c: algorithm.getComponents()) {
             cmpMap.put(c.getName(), c);
