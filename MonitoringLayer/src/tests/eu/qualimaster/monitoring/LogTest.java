@@ -106,7 +106,7 @@ public class LogTest {
         put(structure, "SimpleStateTransferSW2", 
             "Switch2IntermediarySpout" + sep + "eu.qualimaster.test.algorithms.IntermediarySpoutSW2", 
             "Switch2ProcessBolt" + sep + "eu.qualimaster.test.algorithms.ProcessBoltSW2");
-        SubTopologyMonitoringEvent stMonEvt = new SubTopologyMonitoringEvent(SWITCHPIP_NAME, structure);
+        SubTopologyMonitoringEvent stMonEvt = new SubTopologyMonitoringEvent(SWITCHPIP_NAME, structure, null);
         MonitoringManager.handleEvent(stMonEvt);
         
         LogReader reader = new LogReader(new File(folder, "qm.log"), processor);

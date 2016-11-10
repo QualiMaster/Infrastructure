@@ -81,7 +81,7 @@ public class ManualTopologyCreator {
             structure.put("SimpleStateTransferSW2", split(
                 "Switch2IntermediarySpout;eu.qualimaster.test.algorithms.IntermediarySpoutSW2, "
                 + "Switch2ProcessBolt;eu.qualimaster.test.algorithms.ProcessBoltSW2"));
-            mapping.considerSubStructures(new SubTopologyMonitoringEvent(pipelineName, structure));
+            mapping.considerSubStructures(new SubTopologyMonitoringEvent(pipelineName, structure, null));
             in.close();
             TopologyInfo topoInfo = new TopologyInfo();
             List<String> executors = new ArrayList<String>();
