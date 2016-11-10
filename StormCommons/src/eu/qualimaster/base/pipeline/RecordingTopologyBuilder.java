@@ -22,8 +22,11 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import eu.qualimaster.base.algorithm.IScalableTopology;
+import eu.qualimaster.base.algorithm.ITopologyCreate;
 import eu.qualimaster.common.signal.StormSignalConnection;
 import eu.qualimaster.events.EventManager;
+import eu.qualimaster.infrastructure.IScalingDescriptor;
 import eu.qualimaster.infrastructure.PipelineOptions;
 import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 import backtype.storm.topology.BoltDeclarer;
@@ -47,6 +50,7 @@ public class RecordingTopologyBuilder extends TopologyBuilder {
     private static final Logger LOGGER = Logger.getLogger(RecordingTopologyBuilder.class);
     private String currentId;
     private Map<String, List<String>> recording = new HashMap<String, List<String>>();
+    private Map<String, IScalingDescriptor> scalingDescriptors = new HashMap<String, IScalingDescriptor>();
     private PipelineOptions options;
 
     /**
@@ -194,9 +198,25 @@ public class RecordingTopologyBuilder extends TopologyBuilder {
     }
     
     /**
-     * Denotes the end of recording of sub-structures for a certain pipeline element.
+     * Denotes the end of recording of sub-structures for a certain pipeline element. Ends recording without explicitly
+     * considering the created topology and, thus, potential scaling descriptors.
      */
     public void endRecording() {
+        endRecording(null);
+    }
+
+    /**
+     * Denotes the end of recording of sub-structures for a certain pipeline element. Considers scaling descriptors.
+     * 
+     * @param topology the topology created during the actual {@link #startRecording(String)} and this call
+     */
+    public void endRecording(ITopologyCreate topology) {
+        if (null != currentId && topology instanceof IScalableTopology) {
+            IScalingDescriptor desc = ((IScalableTopology) topology).getScalingDescriptor();
+            if (null != desc) {
+                scalingDescriptors.put(currentId, desc);
+            }
+        }
         currentId = null;
     }
 
@@ -209,7 +229,7 @@ public class RecordingTopologyBuilder extends TopologyBuilder {
     public void close(String pipelineName, @SuppressWarnings("rawtypes") Map config) {
         if (!recording.isEmpty()) {
             StormSignalConnection.configureEventBus(config);
-            EventManager.send(new SubTopologyMonitoringEvent(pipelineName, recording));
+            EventManager.send(new SubTopologyMonitoringEvent(pipelineName, recording, scalingDescriptors));
         }
     }
 
