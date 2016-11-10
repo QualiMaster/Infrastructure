@@ -212,7 +212,7 @@ public class EventsTests {
         assertEqualsFrequency(100, MonitoringFrequency.CLUSTER_MONITORING, cEvent);
         assertCause(req, cEvent);
         
-        SubTopologyMonitoringEvent sEvent = new SubTopologyMonitoringEvent(pipeline, null);
+        SubTopologyMonitoringEvent sEvent = new SubTopologyMonitoringEvent(pipeline, null, null);
         Assert.assertEquals(pipeline, sEvent.getPipeline());
         Assert.assertNull(sEvent.getStructure());
     }
