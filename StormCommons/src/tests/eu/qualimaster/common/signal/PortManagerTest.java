@@ -155,24 +155,20 @@ public class PortManagerTest {
             Assert.assertNull(mgr.getPortAssignment("pip", "element", 5, null));
             PortAssignment pa2 = mgr.getPortAssignment("pip", "element", 5, "id");
             Assert.assertEquals(pa1, pa2);
-
             // create second assignment
             req = new PortAssignmentRequest("pip", "element", 6, "localhost", null);
             PortAssignment pa3 = assertPortAssignment(mgr, req, range, 1001);
             Assert.assertNull(mgr.getPortAssignment("pip", "element", 6, "id"));
             PortAssignment pa4 = mgr.getPortAssignment("pip", "element", 6, null);
             Assert.assertEquals(pa3, pa4);
-
             // first is still there
             pa2 = mgr.getPortAssignment("pip", "element", 5, "id");
             Assert.assertEquals(pa1, pa2);
-            
             // clear last assignment - initial one is still there
             mgr.clearPortAssignment("pip", "element", pa3);
             Assert.assertNull(mgr.getPortAssignment("pip", "element", 6, null));
             pa2 = mgr.getPortAssignment("pip", "element", 5, "id");
             Assert.assertEquals(pa1, pa2);
-
             // try with default range
             mgr = new PortManager(client, range);
             // register again - reuse port
@@ -181,13 +177,15 @@ public class PortManagerTest {
             Assert.assertEquals(pa3, pa4);
             mgr.clearPortAssignment("pip", "element", pa3);
             Assert.assertNull(mgr.getPortAssignment("pip", "element", 6, null));
+            listPorts(mgr, "After all assignments");
 
             // clear all assignments for pipeline
             mgr.clearPortAssignments("pip");
             Assert.assertNull(mgr.getPortAssignment("pip", "element", 5, "id"));
+            listPorts(mgr, "After pipeline clear");
 
             mgr.clearAllPortAssignments();
-
+            listPorts(mgr, "After all clear");
             mgr.close();
         } catch (SignalException e) {
             e.printStackTrace();
@@ -201,6 +199,19 @@ public class PortManagerTest {
         if (null != fail) {
             Assert.fail(fail.getMessage());
         }
+    }
+
+    /**
+     * Lists the ports in the given port manager.
+     * 
+     * @param mgr the manager
+     * @param text gives some additional information
+     * @throws SignalException in case that reading data fails
+     */
+    private void listPorts(PortManager mgr, String text) throws SignalException {
+        System.out.println("> ---- " + text + " ----");
+        mgr.listPorts(System.out);
+        System.out.println("< ---- " + text + " ----");
     }
     
     /**

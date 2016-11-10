@@ -16,6 +16,7 @@
 package eu.qualimaster.common.signal;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.net.ConnectException;
 import java.net.Socket;
@@ -37,7 +38,7 @@ import static eu.qualimaster.common.signal.SignalMechanism.PATH_SEPARATOR;
 
 /**
  * Dynamically manages the ports to be used for loose pipeline connections and switches. Assignment ids are intended
- * to separate multiple assignments for one task using a (logical) identifier)
+ * to separate multiple assignments for one task using a (logical) identifier.
  * 
  * @author Holger Eichelberger
  * @author Cui Qin
@@ -410,6 +411,77 @@ public class PortManager {
         }
 
     }
+    
+    /**
+     * A node printer, prints individual nodes and decides whether a node shall be printed.
+     * 
+     * @author Holger Eichelberger
+     */
+    private interface INodePrinter {
+        
+        /**
+         * Shall print the data of a zNode.
+         *  
+         * @param out the output stream
+         * @param path the zNode path
+         * @param indentation the actual indentation
+         * @throws SignalException if reading the data fails
+         */
+        public void print(PrintStream out, String path, String indentation) throws SignalException;
+        
+    }
+    
+    /**
+     * A deserializing node printer.
+     * 
+     * @author Holger Eichelberger
+     */
+    private class DeserializingNodePrinter implements INodePrinter {
+
+        private int depth;
+        private Class<?> dataCls;
+
+        /**
+         * Deserializes for <code>dataCls</code>.
+         * 
+         * @param dataCls the type to serialize for
+         */
+        private DeserializingNodePrinter(Class<?> dataCls) {
+            this(0, dataCls);
+        }
+
+        /**
+         * Deserializes for <code>dataCls</code> on a given path depth level.
+         * 
+         * @param depth the path depth level (ignored if not positive), 1 is typically the leading /
+         * @param dataCls the type to serialize for
+         */
+        private DeserializingNodePrinter(int depth, Class<?> dataCls) {
+            this.depth = depth;
+            this.dataCls = dataCls;
+        }
+        
+        @Override
+        public void print(PrintStream out, String path, String indentation) throws SignalException {
+            boolean list = true;
+            if (depth > 0) {
+                int count = 0;
+                int pos = path.indexOf(PATH_SEPARATOR);
+                while (pos >= 0) {
+                    count++;
+                    pos = path.indexOf(PATH_SEPARATOR, pos + 1);
+                }
+                list = count == depth;
+            }
+            if (list) {
+                Object table = loadSafe(path, dataCls);
+                if (null != table) {
+                    out.println(indentation + "  " + table);
+                }
+            }
+        }
+        
+    }
 
     /**
      * Creates a port manager (frontend).
@@ -549,6 +621,18 @@ public class PortManager {
      */
     public void close() {
         client = null;
+    }
+    
+    
+    /**
+     * Lists all currently assigned ports.
+     * 
+     * @param out the output stream
+     * @throws SignalException in case that reading from zookeeper fails
+     */
+    public void listPorts(PrintStream out) throws SignalException {
+        list(System.out, NODES, new DeserializingNodePrinter(4, PortsTable.class));
+        list(System.out, HOSTS, new DeserializingNodePrinter(HostTable.class));
     }
     
     // checkstyle: stop exception type check
@@ -998,7 +1082,52 @@ public class PortManager {
             }
         }
     }
+     
+    /**
+     * Lists zNodes in recursive fashion.
+     * 
+     * @param out the output stream
+     * @param path the path to visit/list
+     * @param indentation the current indentation
+     * @param printer the printer
+     * @throws SignalException in case that reading from zookeeper fails
+     */
+    private void listRec(PrintStream out, String path, String indentation, INodePrinter printer) 
+        throws SignalException {
+        try {
+            List<String> children = client.getChildren().forPath(path);
+            for (String c : children) {
+                String cPath = path + PATH_SEPARATOR + c;
+                out.println(indentation + "- " + c);
+                if (null != printer) {
+                    printer.print(out, cPath, indentation);
+                }
+                listRec(out, cPath, indentation + " ", printer);
+            }
+        } catch (Exception e) {
+            throw new SignalException(e);
+        }
+    }
+
+    /**
+     * Lists zNodes in recursive fashion.
+     * 
+     * @param out the output stream
+     * @param basePath the path to visit/list
+     * @param printer the printer
+     * @throws SignalException in case that reading from zookeeper fails
+     */
+    private void list(PrintStream out, String basePath, INodePrinter printer) throws SignalException {
+        out.println(basePath);
+        try {
+            if (client.checkExists().forPath(basePath) != null) {
+                listRec(out, basePath, " ", printer);
+            }
+        } catch (Exception e) {
+            throw new SignalException(e);
+        }
+    }
 
     // checkstyle: resume exception type check
-    
+
 }
