@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import eu.qualimaster.common.QMInternal;
+import eu.qualimaster.infrastructure.IScalingDescriptor;
 
 /**
  * Allows to send the monitoring layer information about substructures and their mapping
@@ -32,16 +33,20 @@ public class SubTopologyMonitoringEvent extends AbstractPipelineMonitoringEvent 
     public static final String SEPARATOR = ";";
     private static final long serialVersionUID = -499709262081421544L;
     private Map<String, List<String>> structure;
+    private Map<String, IScalingDescriptor> descriptors;
     
     /**
      * Creates a monitoring event.
      * 
      * @param pipeline the pipeline name
      * @param structure a processing id - sub processing id mapping
+     * @param descriptors the scaling descriptors (may be <b>null</b> or contain mapping to <b>null</b>)
      */
-    public SubTopologyMonitoringEvent(String pipeline, Map<String, List<String>> structure) {
+    public SubTopologyMonitoringEvent(String pipeline, Map<String, List<String>> structure, 
+        Map<String, IScalingDescriptor> descriptors) {
         super(pipeline);
         this.structure = structure;
+        this.descriptors = descriptors;
     }
     
     /**
@@ -51,6 +56,15 @@ public class SubTopologyMonitoringEvent extends AbstractPipelineMonitoringEvent 
      */
     public Map<String, List<String>> getStructure() {
         return structure;
+    }
+    
+    /**
+     * Returns the scaling descriptors.
+     * 
+     * @return the scaling descriptors (may be <b>null</b> or contain mapping to <b>null</b>)
+     */
+    public Map<String, IScalingDescriptor> getScalingDescriptors() {
+        return descriptors;
     }
 
 }
