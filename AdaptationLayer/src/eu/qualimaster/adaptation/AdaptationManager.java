@@ -38,6 +38,8 @@ import eu.qualimaster.adaptation.external.UpdateCloudResourceMessage;
 import eu.qualimaster.adaptation.internal.HilariousAuthenticationProvider;
 import eu.qualimaster.adaptation.internal.IAuthenticationProvider;
 import eu.qualimaster.adaptation.internal.ServerEndpoint;
+import eu.qualimaster.coordination.CoordinationManager;
+import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand;
 import eu.qualimaster.coordination.events.CoordinationCommandExecutionEvent;
@@ -497,6 +499,16 @@ public class AdaptationManager {
         if (null != provider && null == endpoint) {
             authProvider = provider;
         }
+    }
+    
+    /**
+     * Returns the name mapping for the given <code>pipelineName</code>.
+     * 
+     * @param pipelineName the name of the pipeline
+     * @return the name mapping (an identity mapping in case of no registered mapping)
+     */
+    public static INameMapping getNameMapping(String pipelineName) {
+        return CoordinationManager.getNameMapping(pipelineName);
     }
 
 }
