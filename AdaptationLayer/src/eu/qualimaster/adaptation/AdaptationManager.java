@@ -4,8 +4,17 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.RtVILMemoryStorage;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.RtVilStorage;
+import net.ssehub.easy.varModel.confModel.AssignmentState;
+import net.ssehub.easy.varModel.confModel.ConfigurationException;
+import net.ssehub.easy.varModel.confModel.IDecisionVariable;
+import net.ssehub.easy.varModel.model.values.NullValue;
+import net.ssehub.easy.varModel.model.values.ValueDoesNotMatchTypeException;
+import net.ssehub.easy.varModel.model.values.ValueFactory;
 import eu.qualimaster.adaptation.TestHandler.ITestHandler;
 import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.adaptation.events.AlgorithmConfigurationAdaptationEvent;
@@ -40,11 +49,18 @@ import eu.qualimaster.adaptation.internal.IAuthenticationProvider;
 import eu.qualimaster.adaptation.internal.ServerEndpoint;
 import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.coordination.InitializationMode;
+import eu.qualimaster.coordination.RepositoryConnector;
+import eu.qualimaster.coordination.RepositoryConnector.Models;
+import eu.qualimaster.coordination.RepositoryConnector.Phase;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand;
 import eu.qualimaster.coordination.events.CoordinationCommandExecutionEvent;
 import eu.qualimaster.dataManagement.events.IShutdownListener;
 import eu.qualimaster.dataManagement.events.ShutdownEvent;
+import eu.qualimaster.easy.extension.QmConstants;
+import eu.qualimaster.easy.extension.internal.PipelineHelper;
+import eu.qualimaster.easy.extension.internal.VariableHelper;
 import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
@@ -263,6 +279,78 @@ public class AdaptationManager {
     }
     
     /**
+     * Implements the handling of {@link AlgorithmChangedMonitoringEvent}.
+     * 
+     * @author Holger Eichelberger
+     */
+    private static class AlgorithmChangedMonitoringEventHandler extends EventHandler<AlgorithmChangedMonitoringEvent> {
+
+        private static final AlgorithmChangedMonitoringEventHandler INSTANCE 
+            = new AlgorithmChangedMonitoringEventHandler();
+        
+        /**
+         * Creates an instance.
+         */
+        private AlgorithmChangedMonitoringEventHandler() {
+            super(AlgorithmChangedMonitoringEvent.class);
+        }
+
+        @Override
+        protected void handle(AlgorithmChangedMonitoringEvent event) {
+            Models models = RepositoryConnector.getModels(Phase.ADAPTATION);
+            if (null != models) {
+                IDecisionVariable pVar = PipelineHelper.obtainPipelineByName(
+                    models.getConfiguration(), event.getPipeline());
+                IDecisionVariable pElt = PipelineHelper.obtainPipelineElementByName(pVar, 
+                    null, event.getPipelineElement());
+                if (null != pElt) {
+                    trySetActual(pElt, event);
+                }
+            }
+        }
+
+        /**
+         * Trys setting the actual value of the actual slot of <code>pElt</code> due to the information in 
+         * <code>evt</code>.
+         * 
+         * @param pElt the IVML configuration variable representing the target pipeline element
+         * @param evt the algorithm changed monitoring event
+         */
+        private void trySetActual(IDecisionVariable pElt, AlgorithmChangedMonitoringEvent evt) {
+            IDecisionVariable actual = pElt.getNestedElement(QmConstants.SLOT_ACTUAL);
+            if (AssignmentState.UNDEFINED == actual.getState() || NullValue.INSTANCE == actual.getValue()) {
+                IDecisionVariable available = pElt.getNestedElement(QmConstants.SLOT_AVAILABLE);
+                if (null != available) {
+                    IDecisionVariable algVar = VariableHelper.findNamedVariable(available, null, evt.getAlgorithm());
+                    if (null != algVar) {
+                        try {
+                            actual.setValue(
+                                ValueFactory.createValue(algVar.getDeclaration().getType(), actual.getDeclaration()), 
+                                AssignmentState.USER_ASSIGNED);
+                        } catch (ValueDoesNotMatchTypeException e) {
+                            error(evt, e.getMessage());
+                        } catch (ConfigurationException e) {
+                            error(evt, e.getMessage());
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * Logs an error while setting the actual algorithm due to <code>evt</code>.
+         * 
+         * @param evt the algorithm changed monitoring event
+         * @param message the actual error message
+         */
+        private void error(AlgorithmChangedMonitoringEvent evt, String message) {
+            getLogger().error("While setting initial actual algorithm " + evt.getAlgorithm() + " on " 
+                + evt.getPipelineElement() + " in " + evt.getPipeline() + ": " + message);
+        }
+        
+    }
+    
+    /**
      * Handles a shutdown event.
      * 
      * @author Holger Eichelberger
@@ -308,6 +396,7 @@ public class AdaptationManager {
         EventManager.register(new CoordinationCommandEventHandler());
         EventManager.register(new MonitoringInformationEventHandler());
         EventManager.register(new ShutdownEventHandler());
+        // not AlgorithmChangedMonitoringEventHandler.INSTANCE as dynamic
     }
 
     /**
@@ -434,6 +523,9 @@ public class AdaptationManager {
      */
     public static void start() {
         Logging.setBack(Log4jLoggingBack.INSTANCE);
+        if (InitializationMode.DYNAMIC == AdaptationConfiguration.getInitializationMode()) {
+            EventManager.register(AlgorithmChangedMonitoringEventHandler.INSTANCE);
+        }
         RtVilStorage.setInstance(new RtVILMemoryStorage()); // TODO switch to QmRtVILStorageProvider
         try {
             AdaptationDispatcher dispatcher = new AdaptationDispatcher();
@@ -453,6 +545,9 @@ public class AdaptationManager {
         AdaptationEventQueue.stop();
         if (null != endpoint) {
             endpoint.stop();
+        }
+        if (InitializationMode.DYNAMIC == AdaptationConfiguration.getInitializationMode()) {
+            EventManager.unregister(AlgorithmChangedMonitoringEventHandler.INSTANCE);
         }
     }
     
@@ -509,6 +604,15 @@ public class AdaptationManager {
      */
     public static INameMapping getNameMapping(String pipelineName) {
         return CoordinationManager.getNameMapping(pipelineName);
+    }
+    
+    /**
+     * Returns the logger for this class.
+     * 
+     * @return the logger
+     */
+    private static Logger getLogger() {
+        return LogManager.getLogger(AdaptationManager.class);
     }
 
 }
