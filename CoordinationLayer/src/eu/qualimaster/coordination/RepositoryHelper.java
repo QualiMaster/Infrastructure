@@ -76,7 +76,7 @@ public class RepositoryHelper {
     public static void setOverrideIfExists(boolean override) {
         overrideIfExists = override;
     }
-    
+
     /**
      * Creates and initializes a (runtime) configuration.
      * 
@@ -85,9 +85,21 @@ public class RepositoryHelper {
      * @return the configuration
      */
     public static Configuration createConfiguration(Project project, String newVariablePrefix) {
+        return createConfiguration(project, newVariablePrefix, true);
+    }
+    
+    /**
+     * Creates and initializes a (runtime) configuration.
+     * 
+     * @param project the project to obtain the configuration for
+     * @param newVariablePrefix the prefix to be used for new variables
+     * @param initActual whether actual variables shall be initialized
+     * @return the configuration
+     */
+    public static Configuration createConfiguration(Project project, String newVariablePrefix, boolean initActual) {
         Configuration configuration = new Configuration(project);
         try {
-            ConfigurationInitializer.initializeConfiguration(configuration, newVariablePrefix);
+            ConfigurationInitializer.initializeConfiguration(configuration, newVariablePrefix, initActual);
         } catch (VilException e) {
             getLogger().error("Cannot initialize runtime model: " + e.getMessage());
         }

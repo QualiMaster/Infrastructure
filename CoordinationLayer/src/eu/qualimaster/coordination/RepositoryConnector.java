@@ -81,7 +81,7 @@ public class RepositoryConnector {
          * @return <code>true</code> if VIL shall be loaded, <code>false</code> else
          */
         public boolean doLoadVil();
-
+        
     }
     
     /**
@@ -527,7 +527,11 @@ public class RepositoryConnector {
      * @return the configuration
      */
     public static Configuration createConfiguration(Project project, IPhase phase) {
-        return RepositoryHelper.createConfiguration(project, phase.name());
+        boolean initActual = true;
+        if (Phase.ADAPTATION == phase) {
+            initActual = InitializationMode.STATIC == CoordinationConfiguration.getInitializationMode();
+        }
+        return RepositoryHelper.createConfiguration(project, phase.name(), initActual);
     }
 
     /**
