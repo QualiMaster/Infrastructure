@@ -55,6 +55,8 @@ public class CoordinationConfigurationTests extends DataManagementConfigurationT
              CoordinationConfiguration.getProfileLocation());
         Assert.assertEquals(CoordinationConfiguration.DEFAULT_SPECIFICPIPSETTINGS_ARTIFACT_SPEC, 
              CoordinationConfiguration.getSpecificPipelineSettingsArtifactSpecification());
+        Assert.assertEquals(CoordinationConfiguration.DEFAULT_INIT_MODE, 
+             CoordinationConfiguration.getInitializationMode());
     }
 
     @Override

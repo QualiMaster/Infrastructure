@@ -188,6 +188,15 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
      */
     public static final String DEFAULT_SPECIFICPIPSETTINGS_ARTIFACT_SPEC = EMPTY_VALUE;
     
+    /**
+     * The initialization mode for the configuration model.
+     */
+    public static final String INIT_MODE = "confModel.initMode";
+
+    /**
+     * The default value for {@link #INIT_MODE}.
+     */
+    public static final InitializationMode DEFAULT_INIT_MODE = InitializationMode.ADAPTIVE;
     
     static final PropertyReader<DetailMode> DETAIL_MODE_READER = new PropertyReader<DetailMode>() {
 
@@ -206,7 +215,25 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
         }
         
     };
-    
+
+    static final PropertyReader<InitializationMode> INIT_MODE_READER = new PropertyReader<InitializationMode>() {
+
+        @Override
+        public InitializationMode read(Properties properties, String key, InitializationMode deflt) {
+            InitializationMode result = deflt;
+            String tmp = properties.getProperty(key, deflt.name());
+            if (null != tmp) {
+                try {
+                    result = InitializationMode.valueOf(tmp.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    // use deflt
+                }
+            }
+            return result;
+        }
+        
+    };
+
     private static ConfigurationOption<Boolean> enablePipelineArtifactDownload 
         = createBooleanOption(PIPELINE_ARTIFACT_DOWNLOAD, DEFAULT_PIPELINE_ARTIFACT_DOWNLOAD);
     private static ConfigurationOption<String> localConfigModelArtifactLocation
@@ -236,6 +263,8 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
         = createStringOption(PROFILE_LOCATION, DEFAULT_PROFILE_LOCATION);
     private static ConfigurationOption<String> specificPipelineSettingsArtifactLocation
         = createStringOption(SPECIFICPIPSETTINGS_ARTIFACT_SPEC, DEFAULT_SPECIFICPIPSETTINGS_ARTIFACT_SPEC);
+    private static ConfigurationOption<InitializationMode> initMode 
+        = new ConfigurationOption<InitializationMode>(INIT_MODE, DEFAULT_INIT_MODE, INIT_MODE_READER);
 
     /**
      * Reads the configuration settings from the file.
@@ -458,6 +487,15 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
      */
     public static String getSpecificPipelineSettingsArtifactSpecification() {
         return specificPipelineSettingsArtifactLocation.getValue();
+    }
+    
+    /**
+     * Returns the initialization mode for the configuration model.
+     * 
+     * @return the initialization mode
+     */
+    public static InitializationMode getInitializationMode() {
+        return initMode.getValue();
     }
     
 }
