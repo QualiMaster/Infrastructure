@@ -31,8 +31,10 @@ import net.ssehub.easy.instantiation.core.model.vilTypes.OperationDescriptor;
 import eu.qualimaster.adaptation.AdaptationConfiguration;
 import eu.qualimaster.adaptation.AdaptationEventQueue;
 import eu.qualimaster.adaptation.events.AdaptationEvent;
+import eu.qualimaster.coordination.CoordinationConfiguration;
 import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.coordination.InitializationMode;
 import eu.qualimaster.coordination.NameMapping;
 import eu.qualimaster.coordination.RepositoryConnector;
 import eu.qualimaster.coordination.RepositoryConnector.Models;
@@ -115,6 +117,15 @@ public abstract class AbstractDirectAdaptationTests {
     protected boolean loadVilModel() {
         return false;
     }
+    
+    /**
+     * Returns the IVML initialization mode to be used for this test.
+     *  
+     * @return the initialization mode ({@link InitializationMode#STATIC} by default)
+     */
+    protected InitializationMode getInitMode() {
+        return InitializationMode.STATIC; // avoids running the full cycle always with startup!
+    }
 
     /**
      * Executed before a single test.
@@ -125,6 +136,10 @@ public abstract class AbstractDirectAdaptationTests {
     @Before
     public void setUp() throws ModelManagementException, ModelQueryException {
         RepositoryConnector.initialize();
+
+        Properties prop = new Properties();
+        prop.put(CoordinationConfiguration.INIT_MODE, getInitMode().name());
+        AdaptationConfiguration.configure(prop);
         
         // model is not loaded as configuration is not set and we want to use the model in this package
         ModelInitializer.registerLoader(ProgressObserver.NO_OBSERVER);
