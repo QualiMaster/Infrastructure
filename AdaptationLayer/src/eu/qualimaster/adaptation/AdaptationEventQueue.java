@@ -2,8 +2,10 @@ package eu.qualimaster.adaptation;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -19,27 +21,39 @@ import net.ssehub.easy.instantiation.rt.core.model.rtVil.Executor;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.RtVilExecution;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.Script;
 import net.ssehub.easy.reasoning.core.reasoner.ReasonerConfiguration.IAdditionalInformationLogger;
+import net.ssehub.easy.varModel.confModel.AssignmentState;
 import net.ssehub.easy.varModel.confModel.Configuration;
+import net.ssehub.easy.varModel.confModel.ConfigurationException;
+import net.ssehub.easy.varModel.confModel.IDecisionVariable;
+import net.ssehub.easy.varModel.model.values.NullValue;
+import net.ssehub.easy.varModel.model.values.ValueDoesNotMatchTypeException;
+import net.ssehub.easy.varModel.model.values.ValueFactory;
 import net.ssehub.easy.instantiation.core.model.tracing.ConsoleTracerFactory;
 import net.ssehub.easy.instantiation.core.model.vilTypes.configuration.VariableValueMapping;
 import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.adaptation.events.CheckBeforeStartupAdaptationEvent;
 import eu.qualimaster.adaptation.events.HandlerAdaptationEvent;
 import eu.qualimaster.adaptation.events.IPipelineAdaptationEvent;
+import eu.qualimaster.adaptation.events.StartupAdaptationEvent;
 import eu.qualimaster.adaptation.events.WrappingRequestMessageAdaptationEvent;
 import eu.qualimaster.adaptation.external.RequestMessage;
 import eu.qualimaster.adaptation.internal.AdaptationLoggerFactory;
 import eu.qualimaster.adaptation.internal.IAdaptationLogger;
 import eu.qualimaster.adaptation.internal.ReasoningHook;
 import eu.qualimaster.adaptation.internal.RtVilValueMapping;
+import eu.qualimaster.coordination.InitializationMode;
 import eu.qualimaster.coordination.RepositoryConnector;
 import eu.qualimaster.coordination.RepositoryConnector.Models;
 import eu.qualimaster.coordination.RepositoryConnector.Phase;
 import eu.qualimaster.coordination.RepositoryHelper;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.coordination.events.CoordinationCommandExecutionEvent;
+import eu.qualimaster.easy.extension.QmConstants;
+import eu.qualimaster.easy.extension.internal.PipelineHelper;
+import eu.qualimaster.easy.extension.internal.VariableHelper;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.monitoring.MonitoringManager;
+import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 import eu.qualimaster.monitoring.events.ConstraintViolationAdaptationEvent;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
 
@@ -57,6 +71,8 @@ public class AdaptationEventQueue {
     private static BlockingDeque<AdaptationEvent> adaptationEventQueue = new LinkedBlockingDeque<>();
     private static Map<String, Class<? extends AdaptationEvent>> adaptationFilters 
         = Collections.synchronizedMap(new HashMap<String, Class<? extends AdaptationEvent>>());
+    private static Map<String, List<AlgorithmChangedMonitoringEvent>> startupAlgorithmChangedEvents 
+        = Collections.synchronizedMap(new HashMap<String, List<AlgorithmChangedMonitoringEvent>>());
 
     private static final int RESPONSE_TIMEOUT = AdaptationConfiguration.getEventResponseTimeout();
     private static MessageResponseStore messageStore = new MessageResponseStore(RESPONSE_TIMEOUT);
@@ -254,6 +270,9 @@ public class AdaptationEventQueue {
     private static void adaptImpl(AdaptationEvent event, Configuration config, Script rtVilModel, File tmp) {
         if (null != config && null != rtVilModel) {
             FrozenSystemState state = null;
+            if (event instanceof StartupAdaptationEvent) {
+                initializePipeline(((StartupAdaptationEvent) event).getPipeline());
+            }
             if (event instanceof ConstraintViolationAdaptationEvent) {
                 ConstraintViolationAdaptationEvent evt = (ConstraintViolationAdaptationEvent) event;
                 state = evt.getState();
@@ -441,6 +460,96 @@ public class AdaptationEventQueue {
             logger.enacted(command, event);
         }
         return command;
+    }
+    
+    /**
+     * Notifies about the reception for a start algorithm monitoring event. For registering the event, first 
+     * {@link #notifyChecked(String)} must have been called.
+     * 
+     * @param event the algorithm changed monitoring event
+     */
+    static void notifyStartupAlgorithmChangedEvent(AlgorithmChangedMonitoringEvent event) {
+        List<AlgorithmChangedMonitoringEvent> evts = startupAlgorithmChangedEvents.get(event.getPipeline());
+        if (null != evts) { 
+            evts.add(event);
+        }
+    }
+
+    /**
+     * Notifies that a pipeline reached the checked lifecycle. This method shall be called before the related lifecycle
+     * event is issued.
+     * 
+     * @param pipelineName the pipeline name
+     */
+    public static void notifyChecked(String pipelineName) {
+        if (InitializationMode.DYNAMIC == AdaptationConfiguration.getInitializationMode()) {
+            List<AlgorithmChangedMonitoringEvent> evts = startupAlgorithmChangedEvents.get(pipelineName);
+            if (null == evts) { // no event registered so far
+                evts = Collections.synchronizedList(new ArrayList<AlgorithmChangedMonitoringEvent>(10));
+            }
+        }
+    }
+    
+    /**
+     * Initializes the model for the given pipeline based on registered algorithm changed events.
+     * 
+     * @param pipelineName the pipeline name
+     */
+    private static void initializePipeline(String pipelineName) {
+        List<AlgorithmChangedMonitoringEvent> evts = startupAlgorithmChangedEvents.remove(pipelineName);
+        if (null != evts) { // may be the case if InitializationMode != DYNAMIC
+            for (AlgorithmChangedMonitoringEvent event : evts) {
+                Models models = RepositoryConnector.getModels(Phase.ADAPTATION);
+                if (null != models) {
+                    IDecisionVariable pVar = PipelineHelper.obtainPipelineByName(
+                        models.getConfiguration(), event.getPipeline());
+                    IDecisionVariable pElt = PipelineHelper.obtainPipelineElementByName(pVar, 
+                        null, event.getPipelineElement());
+                    if (null != pElt) {
+                        trySetActual(pElt, event);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Trys setting the actual value of the actual slot of <code>pElt</code> due to the information in 
+     * <code>evt</code>.
+     * 
+     * @param pElt the IVML configuration variable representing the target pipeline element
+     * @param evt the algorithm changed monitoring event
+     */
+    private static void trySetActual(IDecisionVariable pElt, AlgorithmChangedMonitoringEvent evt) {
+        IDecisionVariable actual = pElt.getNestedElement(QmConstants.SLOT_ACTUAL);
+        if (AssignmentState.UNDEFINED == actual.getState() || NullValue.INSTANCE == actual.getValue()) {
+            IDecisionVariable available = pElt.getNestedElement(QmConstants.SLOT_AVAILABLE);
+            if (null != available) {
+                IDecisionVariable algVar = VariableHelper.findNamedVariable(available, null, evt.getAlgorithm());
+                if (null != algVar) {
+                    try {
+                        actual.setValue(
+                            ValueFactory.createValue(algVar.getDeclaration().getType(), actual.getDeclaration()), 
+                            AssignmentState.USER_ASSIGNED);
+                    } catch (ValueDoesNotMatchTypeException e) {
+                        error(evt, e.getMessage());
+                    } catch (ConfigurationException e) {
+                        error(evt, e.getMessage());
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Logs an error while setting the actual algorithm due to <code>evt</code>.
+     * 
+     * @param evt the algorithm changed monitoring event
+     * @param message the actual error message
+     */
+    private static void error(AlgorithmChangedMonitoringEvent evt, String message) {
+        LOGGER.error("While setting initial actual algorithm " + evt.getAlgorithm() + " on " 
+            + evt.getPipelineElement() + " in " + evt.getPipeline() + ": " + message);
     }
 
 }

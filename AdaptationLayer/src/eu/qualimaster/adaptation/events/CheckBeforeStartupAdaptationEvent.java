@@ -1,5 +1,6 @@
 package eu.qualimaster.adaptation.events;
 
+import eu.qualimaster.adaptation.AdaptationEventQueue;
 import eu.qualimaster.common.QMInternal;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
@@ -51,6 +52,7 @@ public class CheckBeforeStartupAdaptationEvent extends AdaptationEvent {
     public boolean adjustLifecycle(String failReason, Integer failCode) {
         boolean adjusted = false;
         if (null == failReason && null == failCode) {
+            AdaptationEventQueue.notifyChecked(getPipeline());
             EventManager.send(new PipelineLifecycleEvent(event, PipelineLifecycleEvent.Status.CHECKED, options));
             adjusted = true;
         } 
