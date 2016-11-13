@@ -15,6 +15,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import net.ssehub.easy.instantiation.core.model.buildlangModel.ITracer;
+import net.ssehub.easy.instantiation.core.model.common.VilException;
 import net.ssehub.easy.instantiation.core.model.execution.IInstantiatorTracer;
 import net.ssehub.easy.instantiation.core.model.execution.TracerFactory;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.Executor;
@@ -496,60 +497,72 @@ public class AdaptationEventQueue {
      * @param pipelineName the pipeline name
      */
     private static void initializePipeline(String pipelineName) {
+        Models models = RepositoryConnector.getModels(Phase.ADAPTATION);
         List<AlgorithmChangedMonitoringEvent> evts = startupAlgorithmChangedEvents.remove(pipelineName);
-        if (null != evts) { // may be the case if InitializationMode != DYNAMIC
+        if (null != evts && null != models) { // may be the case if InitializationMode != DYNAMIC
+            Configuration config = models.getConfiguration();
             for (AlgorithmChangedMonitoringEvent event : evts) {
-                Models models = RepositoryConnector.getModels(Phase.ADAPTATION);
-                if (null != models) {
-                    IDecisionVariable pVar = PipelineHelper.obtainPipelineByName(
-                        models.getConfiguration(), event.getPipeline());
-                    IDecisionVariable pElt = PipelineHelper.obtainPipelineElementByName(pVar, 
-                        null, event.getPipelineElement());
-                    if (null != pElt) {
-                        trySetActual(pElt, event);
-                    }
+                try {
+                    // TODO -> PipelineHelper.setActual
+                    setActual(config, event.getPipeline(), event.getPipelineElement(), event.getAlgorithm());
+                } catch (VilException e) {
+                    LOGGER.error("While setting initial actual algorithm " + event.getAlgorithm() + " on " 
+                        + event.getPipelineElement() + " in " + event.getPipeline() + ": " + e.getMessage());
                 }
             }
         }
     }
 
     /**
-     * Trys setting the actual value of the actual slot of <code>pElt</code> due to the information in 
-     * <code>evt</code>.
+     * Sets the value of the actual slot of <code>pElt</code> due to algorithm corresponding to the algorithm with same 
+     * name in the available slot.
      * 
      * @param pElt the IVML configuration variable representing the target pipeline element
-     * @param evt the algorithm changed monitoring event
+     * @param algorithm the name of the algorithm to set as actual
+     * @throws VilException in case that setting the actual value is not possible, but not if the algorithm or the 
+     *     pipeline element does not exist
      */
-    private static void trySetActual(IDecisionVariable pElt, AlgorithmChangedMonitoringEvent evt) {
+    private static void setActual(IDecisionVariable pElt, String algorithm) throws VilException {
         IDecisionVariable actual = pElt.getNestedElement(QmConstants.SLOT_ACTUAL);
         if (AssignmentState.UNDEFINED == actual.getState() || NullValue.INSTANCE == actual.getValue()) {
             IDecisionVariable available = pElt.getNestedElement(QmConstants.SLOT_AVAILABLE);
             if (null != available) {
-                IDecisionVariable algVar = VariableHelper.findNamedVariable(available, null, evt.getAlgorithm());
+                IDecisionVariable algVar = VariableHelper.findNamedVariable(available, null, algorithm);
                 if (null != algVar) {
                     try {
                         actual.setValue(
                             ValueFactory.createValue(algVar.getDeclaration().getType(), actual.getDeclaration()), 
                             AssignmentState.USER_ASSIGNED);
                     } catch (ValueDoesNotMatchTypeException e) {
-                        error(evt, e.getMessage());
+                        throw new VilException(e, VilException.ID_RUNTIME);
                     } catch (ConfigurationException e) {
-                        error(evt, e.getMessage());
+                        throw new VilException(e, VilException.ID_RUNTIME);
                     }
                 }
+            } else {
+                throw new VilException("No available slot", VilException.ID_RUNTIME);
             }
         }
     }
-
+    
     /**
-     * Logs an error while setting the actual algorithm due to <code>evt</code>.
+     * Sets the value of the actual slot in <code>pipeline</code>, <code>pipelineElement</code> to 
+     * <code>algorithm</code> to the respective instance stored in the available slot of <code>pipelineElement</code>.
      * 
-     * @param evt the algorithm changed monitoring event
-     * @param message the actual error message
+     * @param config the configuration
+     * @param pipeline the pipeline name
+     * @param pipelineElement the pipeline element name
+     * @param algorithm the algorithm name
+     * @throws VilException if setting the actual value is not possible, but not if the algorithm or the pipeline 
+     *     element does not exist
      */
-    private static void error(AlgorithmChangedMonitoringEvent evt, String message) {
-        LOGGER.error("While setting initial actual algorithm " + evt.getAlgorithm() + " on " 
-            + evt.getPipelineElement() + " in " + evt.getPipeline() + ": " + message);
+    private static void setActual(net.ssehub.easy.varModel.confModel.Configuration config, String pipeline, 
+        String pipelineElement, String algorithm) throws VilException {
+        IDecisionVariable pVar = PipelineHelper.obtainPipelineByName(config, pipeline);
+        IDecisionVariable pElt = PipelineHelper.obtainPipelineElementByName(pVar, null, pipelineElement);
+        if (null != pElt) {
+            setActual(pElt, algorithm);
+        }
     }
 
 }
