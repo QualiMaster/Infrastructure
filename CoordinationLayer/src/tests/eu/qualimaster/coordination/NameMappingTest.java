@@ -335,6 +335,24 @@ public class NameMappingTest {
      * @throws IOException in case of I/O problems, shall not occur / test failure
      */
     @Test
+    public void testSubTopoMapping() throws IOException {
+        NameMapping mapping = readNameMapping("SubTopoMapping.xml", "RandomPip");
+        Collection<ISubPipeline> sub = mapping.getSubPipelines();
+        Assert.assertEquals(1, sub.size());
+        ISubPipeline first = sub.iterator().next();
+        Assert.assertEquals("RandomSubPipelineAlgorithm1", first.getAlgorithmName());
+        Assert.assertEquals("RandomSubPipeline1", first.getName());
+        first = mapping.getSubPipelineByAlgorithmName("RandomSubPipelineAlgorithm1");
+        Assert.assertEquals("RandomSubPipelineAlgorithm1", first.getAlgorithmName());
+        Assert.assertEquals("RandomSubPipeline1", first.getName());
+    }
+    
+    /**
+     * Tests reading the name mapping for <code>genSubTopoMapping.xml</code>.
+     * 
+     * @throws IOException in case of I/O problems, shall not occur / test failure
+     */
+    @Test
     public void testGenSubTopoMapping() throws IOException {
         NameMapping mapping = readNameMapping("genSubTopoMapping.xml", "PriorityPip");
         Assert.assertEquals("PriorityPip", mapping.getPipelineName());
