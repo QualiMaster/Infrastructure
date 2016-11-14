@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import backtype.storm.generated.StormTopology;
@@ -291,6 +292,7 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
      * 
      * @throws IOException shall not occur
      */
+    @Ignore("does not run in sequence")
     @Test
     public void testStackAdaptive() throws IOException {
         if (!AbstractCoordinationTests.isJenkins()) {
