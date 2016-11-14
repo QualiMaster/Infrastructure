@@ -43,6 +43,7 @@ public class ReplayMechanism implements IDataSource {
     private boolean endOfData = false;
     private long offsetInMillis; // Offset in milliseconds between first timestamp and now
     private long prevTimeStampNow;
+    private boolean shallConnect;
 
     // Throughput measurement
     private long monitoringTimestamp;
@@ -109,6 +110,9 @@ public class ReplayMechanism implements IDataSource {
     public void setSource(IReplaySource source) {
         if (null != source) {
             this.source = source;
+            if (shallConnect) {
+                connect();
+            }
         }
     }
     
@@ -263,25 +267,29 @@ public class ReplayMechanism implements IDataSource {
 
     @Override
     public void connect() throws DefaultModeException {
-        try {
-            brForData = source.open();
-        } catch (IOException e) {
-            logger.error("Simulator Error : " + e.getMessage());
-            // so far only for FNF of File input
-            throw new DefaultModeException("Simulator Error : " + e.getMessage());
-        }
-        String line;
-
-        // Read first line from data file to get the timestamp offset, the separator and throw away the data
-        try {
-            if ((line = brForData.readLine()) != null) {
-                newlineWithDateToNow(line, true); 
-            } else {
-                endOfData = true;
+        if (null != source) {
+            try {
+                brForData = source.open();
+            } catch (IOException e) {
+                logger.error("Simulator Error : " + e.getMessage());
+                // so far only for FNF of File input
+                throw new DefaultModeException("Simulator Error : " + e.getMessage());
             }
-        } catch (IOException e) {
-            logger.error("Simulator Error : " + e.getMessage());
-            throw new DefaultModeException("Simulator Error : " + e.getMessage());
+            String line;
+    
+            // Read first line from data file to get the timestamp offset, the separator and throw away the data
+            try {
+                if ((line = brForData.readLine()) != null) {
+                    newlineWithDateToNow(line, true); 
+                } else {
+                    endOfData = true;
+                }
+            } catch (IOException e) {
+                logger.error("Simulator Error : " + e.getMessage());
+                throw new DefaultModeException("Simulator Error : " + e.getMessage());
+            }
+        } else {
+            shallConnect = true;
         }
     }
 
@@ -295,6 +303,7 @@ public class ReplayMechanism implements IDataSource {
             }
         }
         brForData = null;
+        shallConnect = false;
     }
 
     @Override
