@@ -336,7 +336,7 @@ public class NameMappingTest {
      */
     @Test
     public void testSubTopoMapping() throws IOException {
-        NameMapping mapping = readNameMapping("SubTopoMapping.xml", "RandomPip");
+        NameMapping mapping = readNameMapping("subTopoMapping.xml", "RandomPip");
         Collection<ISubPipeline> sub = mapping.getSubPipelines();
         Assert.assertEquals(1, sub.size());
         ISubPipeline first = sub.iterator().next();
