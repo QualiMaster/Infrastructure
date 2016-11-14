@@ -26,6 +26,7 @@ public abstract class CustomRateSource <T> extends TimerTask implements IDataSou
     private int[] tupleCounts;
     private long beginDelay;
     private int step;
+    protected boolean isConnected = false;
 
     /**
      * Creates a data source emitting data according to a vector of rates.
@@ -57,6 +58,7 @@ public abstract class CustomRateSource <T> extends TimerTask implements IDataSou
         System.out.println("Begin delay: " + beginDelay);
         System.out.println("Timer delay: " + timerDelay);
         
+        this.isConnected = false;
         this.timerDelay = timerDelay;
         this.beginDelay = beginDelay;
         this.tupleCounts = new int[rates.length];
@@ -67,7 +69,8 @@ public abstract class CustomRateSource <T> extends TimerTask implements IDataSou
     }
 
     @Override
-    public void connect() {      
+    public void connect() {
+        this.isConnected = true;
         if (null == timer) {
             timer = new Timer();
             timer.scheduleAtFixedRate(this, beginDelay, timerDelay);
@@ -75,7 +78,8 @@ public abstract class CustomRateSource <T> extends TimerTask implements IDataSou
     }
     
     @Override
-    public void disconnect() {       
+    public void disconnect() {
+        this.isConnected = false;
         if (null != timer) {
             queue.clear();
             cancel();
