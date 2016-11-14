@@ -64,6 +64,7 @@ public class Tracing {
     
     public static final String PREFIX_INFA = "qmInfra";
     public static final String TRACE_FILE_SUFFIX = ".csv";
+    public static final String REFLECTION_TRACE_FILE_SUFFIX = ".rtrace";
     public static final SimpleDateFormat LOG_TAG_FORMAT = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
     private static final Map<Class<?>, IObservable[]> LIMIT = new HashMap<>();
@@ -109,7 +110,7 @@ public class Tracing {
      * @return the trace or <b>null</b> if no tracing is enabled
      */
     public static ITrace createAlgorithmTrace(String algorithm) {
-        return createTrace(algorithm, MonitoringConfiguration.getMonitoringLogLocation());
+        return createTrace(algorithm, MonitoringConfiguration.getMonitoringLogLocation(), false);
     }
     
     /**
@@ -144,7 +145,7 @@ public class Tracing {
         switch (event.getStatus()) {
         case START:
             String logLocation = MonitoringConfiguration.getProfilingLogLocation();
-            trace = createTrace(key + "-profile", logLocation);
+            trace = createTrace(key + "-profile", logLocation, false);
             trace.setTraceMode(event.getDetailMode());
             trace.notifyNewSubTrace(event.getSettings());
             profilingTraces.put(key, trace);
@@ -214,7 +215,7 @@ public class Tracing {
      * @return the trace or <b>null</b> if no tracing is enabled
      */
     public static ITrace createInfrastructureTrace() {
-        return createTrace(PREFIX_INFA, MonitoringConfiguration.getMonitoringLogInfraLocation());
+        return createTrace(PREFIX_INFA, MonitoringConfiguration.getMonitoringLogInfraLocation(), true);
     }
 
     /**
@@ -222,9 +223,10 @@ public class Tracing {
      * 
      * @param prefix the prefix
      * @param logLocation the log location (from the configuration)
+     * @param createReflectionTrace create also a trace for reflective adaptation
      * @return the trace or <b>null</b> if no tracing is enabled
      */
-    public static ITrace createTrace(String prefix, String logLocation) {
+    public static ITrace createTrace(String prefix, String logLocation, boolean createReflectionTrace) {
         // reminder: profile traces shall be file traces
         ITrace result = null;
         if (!MonitoringConfiguration.isEmpty(logLocation)) {
@@ -235,6 +237,17 @@ public class Tracing {
             } catch (IOException e) {
                 getLogger().error("cannot open output stream for trace " 
                     + prefix + ": " + e.getMessage());
+            }
+            if (createReflectionTrace) {
+                File rLogFile = new File(logLocation, getLogTag(prefix) + REFLECTION_TRACE_FILE_SUFFIX);
+                try {
+                    FileOutputStream out = new FileOutputStream(rLogFile);
+                    ITrace rResult = new ReflectiveFileTrace(logFile.getAbsolutePath(), new PrintStream(out));
+                    result = new DelegatingTrace(result, rResult);
+                } catch (IOException e) {
+                    getLogger().error("cannot open output stream for reflective trace " 
+                        + prefix + ": " + e.getMessage());
+                }
             }
         }
         return result;

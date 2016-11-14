@@ -84,4 +84,9 @@ public interface IAdaptationLogger {
      */
     public void enacted(CoordinationCommand command, CoordinationCommandExecutionEvent event);
     
+    /**
+     * Closes the log.
+     */
+    public void close();
+    
 }

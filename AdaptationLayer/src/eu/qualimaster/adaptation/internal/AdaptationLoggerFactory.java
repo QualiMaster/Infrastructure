@@ -15,6 +15,14 @@
  */
 package eu.qualimaster.adaptation.internal;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+
+import org.apache.log4j.LogManager;
+
+import eu.qualimaster.adaptation.AdaptationConfiguration;
 import net.ssehub.easy.instantiation.core.model.buildlangModel.ITracer;
 
 /**
@@ -32,7 +40,41 @@ public class AdaptationLoggerFactory {
      * @return the adaptation logger (may be <b>null</b> for none)
      */
     private static IAdaptationLogger createLogger() {
-        return null;
+        IAdaptationLogger logger = null;
+        File f = getAdaptationLogFile();
+        if (null != f) {
+            try {
+                FileOutputStream fos = new FileOutputStream(f);
+                logger = new AdaptationLoggerFile(new PrintStream(fos));
+            } catch (IOException e) {
+                LogManager.getLogger(AdaptationLoggerFactory.class).error("While creating adaptation logger " 
+                    + e.getMessage());
+            }
+        }
+        return logger;
+    }
+    
+    /**
+     * Closes the actual logger.
+     */
+    public static void closeLogger() {
+        if (null != logger) {
+            logger.close();
+        }
+    }
+        
+    /**
+     * Returns the actual adaptation log file.
+     * 
+     * @return the log file, <b>null</b> if no logging shall happen
+     */
+    public static File getAdaptationLogFile() {
+        File result = null;
+        String location = AdaptationConfiguration.getAdaptationLogReflectiveLocation();
+        if (!AdaptationConfiguration.isEmpty(location)) {
+            result = new File(location, "reflective.log");
+        }
+        return result;
     }
     
     /**

@@ -35,6 +35,7 @@ import eu.qualimaster.adaptation.external.ReplayMessage;
 import eu.qualimaster.adaptation.external.ResourceChangeRequest;
 import eu.qualimaster.adaptation.external.SwitchAlgorithmRequest;
 import eu.qualimaster.adaptation.external.UpdateCloudResourceMessage;
+import eu.qualimaster.adaptation.internal.AdaptationLoggerFactory;
 import eu.qualimaster.adaptation.internal.HilariousAuthenticationProvider;
 import eu.qualimaster.adaptation.internal.IAuthenticationProvider;
 import eu.qualimaster.adaptation.internal.ServerEndpoint;
@@ -474,6 +475,7 @@ public class AdaptationManager {
      */
     public static void stop() {
         AdaptationEventQueue.stop();
+        AdaptationLoggerFactory.closeLogger();
         if (null != endpoint) {
             endpoint.stop();
         }

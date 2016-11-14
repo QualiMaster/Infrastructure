@@ -218,13 +218,12 @@ public class AdaptationLoggerFile implements IAdaptationLogger {
         }
     }
 
-    /**
-     * Closes the logger.
-     */
+    @Override
     public void close() {
         this.out.close();
         this.out = null;
         this.adaptationsMap.clear();
         this.currentAdaptation = null;
     }
+    
 }

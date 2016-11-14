@@ -68,6 +68,16 @@ public class AdaptationConfiguration extends MonitoringConfiguration {
      * The default value for {@link #ADAPTATION_RTVIL_TRACERFACTORY}, {@value}.
      */
     public static final String DEFAULT_ADAPTATION_RTVIL_TRACERFACTORY = EMPTY_VALUE;
+
+    /**
+     * Denotes the (optional - empty) local location where the adaptation layer may store adaptation logs.
+     */
+    public static final String ADAPTATION_LOG_REFLECTIVE_LOCATION = "adaptation.log.reflective.location";
+
+    /**
+     * The default value for {@link #ADAPTATION_LOG_REFLECTIVE_LOCATION}, {@link #EMPTY_VALUE}.
+     */
+    public static final String DEFAULT_ADAPTATION_LOG_REFLECTIVE_LOCATION = EMPTY_VALUE;
     
     private static ConfigurationOption<String> adaptationHost 
         = createStringOption(HOST_ADAPTATION, DEFAULT_HOST_ADAPTATION);
@@ -77,6 +87,8 @@ public class AdaptationConfiguration extends MonitoringConfiguration {
         = createStringOption(ADAPTATION_RTVIL_TRACERFACTORY, DEFAULT_ADAPTATION_RTVIL_TRACERFACTORY);
     private static ConfigurationOption<Integer> adaptationPort 
         = createIntegerOption(PORT_ADAPTATION, DEFAULT_PORT_ADAPTATION);
+    private static ConfigurationOption<String> adaptationLogReflective
+        = createStringOption(ADAPTATION_LOG_REFLECTIVE_LOCATION, DEFAULT_ADAPTATION_LOG_REFLECTIVE_LOCATION);
 
     /**
      * Reads the configuration settings from the file.
@@ -201,6 +213,15 @@ public class AdaptationConfiguration extends MonitoringConfiguration {
      */
     public static String getAdaptationRtVilTracerFactory() {
         return adaptationRtVilTracerFactory.getValue();
+    }
+    
+    /**
+     * Returns the log location for reflective adaptation.
+     * 
+     * @return the log location
+     */
+    public static String getAdaptationLogReflectiveLocation() {
+        return adaptationLogReflective.getValue();
     }
 
 }

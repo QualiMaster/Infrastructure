@@ -51,4 +51,8 @@ public class AdaptationLoggerAdapter implements IAdaptationLogger {
     public void enacted(CoordinationCommand command, CoordinationCommandExecutionEvent event) {
     }
 
+    @Override
+    public void close() {
+    }
+
 }
