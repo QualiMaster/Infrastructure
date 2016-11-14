@@ -131,7 +131,7 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
     /**
      * Denotes the maximum time that we wait for accepting that an existing executor has been created and is 
      * active (Integer in s). The actual time can be faster due to sending startup events (executor, task observation).
-     * Minimum value is 1;
+     * 0 or negative values switch off the detection heuristic.
      */
     public static final String TIME_STORM_EXECUTOR_STARTUP = "storm.executor.startup.time";
 
@@ -140,6 +140,17 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
      */
     public static final int DEFAULT_TIME_STORM_EXECUTOR_STARTUP = 1;
 
+    /**
+     * Denotes whether parallel executors shall be considered during startup (longer startup time, but correct) or 
+     * shall be ignored.
+     */
+    public static final String PARALLEL_EXECUTOR_STARTUP = "storm.executor.startup.parallel";
+
+    /**
+     * The default value for {@link #PARALLEL_EXECUTOR_STARTUP} (Value {@value}).
+     */
+    public static final boolean DEFAULT_PARALLEL_EXECUTOR_STARTUP = true;
+    
     /**
      * Enables debugging of the thrift-based monitoring. [temporary]
      */
@@ -180,6 +191,8 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
         = createIntegerOption(FREQUENCY_MONITORING_PIPELINE, DEFAULT_FREQUENCY_MONITORING_PIPELINE);
     private static ConfigurationOption<Integer> stormExecutorStartupWaitingTime
         = createIntegerOption(TIME_STORM_EXECUTOR_STARTUP, DEFAULT_TIME_STORM_EXECUTOR_STARTUP);
+    private static ConfigurationOption<Boolean> stormExecutorStartupParallel
+        = createBooleanOption(PARALLEL_EXECUTOR_STARTUP, DEFAULT_PARALLEL_EXECUTOR_STARTUP);
     private static ConfigurationOption<Boolean> debugThriftMonitoring
         = createBooleanOption(THRIFT_MONITORING_DEBUG, DEFAULT_THRIFT_MONITORING_DEBUG);
     private static ConfigurationOption<String> volumeModelLocation 
@@ -339,10 +352,19 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
      * Returns the maximum executor startup waiting time, i.e., the time the monitoring layer waits at maximum
      * per Storm executor in order to detect that a pipeline is up and running.
      * 
-     * @return the maximum waiting time in seconds (at minimum 1).
+     * @return the maximum waiting time in seconds, 0 switches off the heuristic.
      */
     public static int getStormExecutorStartupWaitingTime() {
-        return Math.max(1, stormExecutorStartupWaitingTime.getValue());
+        return stormExecutorStartupWaitingTime.getValue();
+    }
+    
+    /**
+     * Returns whether the startup detection shall take parallel executors into account.
+     * 
+     * @return <code>true</code> for parallel executors, <code>false</code> else
+     */
+    public static boolean getStormExecutorStartupParallel() {
+        return stormExecutorStartupParallel.getValue();
     }
     
     /**

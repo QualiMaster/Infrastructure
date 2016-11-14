@@ -617,7 +617,8 @@ public class MonitoringManager {
                         error = loadMonitoringPlugins(dec);
                     }
                 } else {
-                    error = "Cannot find configuration variable " + QmConstants.VAR_OBSERVABLES_CONFIGUREDPARAMS;
+                    error = "Cannot find configuration variable (ignored)" 
+                        + QmConstants.VAR_OBSERVABLES_CONFIGUREDPARAMS;
                 }
             } catch (ModelQueryException e) {
                 error = e.getMessage();

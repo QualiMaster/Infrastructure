@@ -20,6 +20,7 @@ import eu.qualimaster.coordination.TaskAssignment;
 import eu.qualimaster.coordination.ZkUtils;
 import eu.qualimaster.coordination.INameMapping.Component;
 import eu.qualimaster.coordination.INameMapping.Component.Type;
+import eu.qualimaster.coordination.InitializationMode;
 import eu.qualimaster.dataManagement.DataManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.monitoring.AbstractContainerMonitoringTask;
@@ -59,7 +60,6 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
     static final String AT_3H = "10800";
     static final String AT_1D = "86400";
     private static final Logger LOGGER = LogManager.getLogger(ThriftMonitoringTask.class);
-    private static final int EXECUTOR_START_WAITING_TIME = MonitoringConfiguration.getStormExecutorStartupWaitingTime();
     
     private String pipeline;
     private Set<String> topologyNames = new HashSet<String>();
@@ -190,6 +190,31 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
     }
     
     /**
+     * Returns whether the given node is considered to be up.
+     * 
+     * @param nodePart the node part
+     * @return <code>true</code> for up, <code>false</code> else
+     */
+    private static boolean isUp(PipelineNodeSystemPart nodePart) {
+        boolean up = false;
+        int tasks = (int) nodePart.getObservedValue(ResourceUsage.TASKS);
+        if (nodePart.getObservedValue(ResourceUsage.TASKS) > 0) {
+            InitializationMode initMode = MonitoringConfiguration.getInitializationMode();
+            if (InitializationMode.DYNAMIC == initMode) {
+                up = null != nodePart.getCurrent();
+                if (MonitoringConfiguration.getStormExecutorStartupParallel()) { // to be on the safe side
+                    up &= nodePart.getCurrentCount() == tasks;
+                }
+            } else {
+                // static: don't care
+                // adaptive: nothing set, go to adaptive init as soon as possible
+                up = true;
+            }
+        }
+        return up;
+    }
+    
+    /**
      * Aggregates the values for the topology.
      * 
      * @param topology the topology information to be aggregated
@@ -201,6 +226,7 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
     private PipelineSystemPart aggregateTopology(TopologyInfo topology) throws TException, NotAliveException {
         PipelineSystemPart part = null;
         INameMapping mapping = MonitoringManager.getNameMapping(pipeline);
+        int executorStartWaitingTime = MonitoringConfiguration.getStormExecutorStartupWaitingTime();
         if (null != mapping) {
             part = preparePipelineAggregation(topology, mapping);
             List<ExecutorSummary> executors = topology.get_executors();
@@ -213,7 +239,7 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
             for (int e = 0; e < executors.size(); e++) {
                 ExecutorSummary executor = executors.get(e);
                 String nodeName = executor.get_component_id();
-                if (executor.get_uptime_secs() > EXECUTOR_START_WAITING_TIME) { 
+                if (executorStartWaitingTime > 0 && executor.get_uptime_secs() > executorStartWaitingTime) { 
                     executorRunningCount++;
                     uptime.add(nodeName);
                 }
@@ -222,7 +248,7 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
                 PipelineNodeSystemPart nodePart = SystemState.getNodePart(mapping, part, nodeName);
                 if (!isInternal) {
                     nonInternalCount++;
-                    if (nodePart.getObservedValue(ResourceUsage.TASKS) > 0) {
+                    if (isUp(nodePart)) {
                         nonInternalRunningCount++;
                         eventsReceived.add(nodeName);
                     }

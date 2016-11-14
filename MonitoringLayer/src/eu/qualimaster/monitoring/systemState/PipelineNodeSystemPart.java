@@ -50,6 +50,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
     private boolean useThrift;
     private PipelineSystemPart pipeline;
     private NodeImplementationSystemPart parent; // parent
+    private int currentCount = 0;
     
     /**
      * Creates a pipeline node system part.
@@ -176,6 +177,9 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
             //unlink(this.current, selector); // sub-topology aggregation
             this.current = current;
             //link(this.current, selector); // sub-topology aggregation
+            currentCount = 1;
+        } else {
+            currentCount++;
         }
     }
     
@@ -218,6 +222,16 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
      */
     public NodeImplementationSystemPart getCurrent() {
         return current;
+    }
+
+    /**
+     * Returns how often the current value was set with the same instance indicating the number of tasks acknowledging
+     * the change.
+     * 
+     * @return the number of current changes to the same value
+     */
+    public int getCurrentCount() {
+        return currentCount;
     }
 
     // no direct access to observable needed here
