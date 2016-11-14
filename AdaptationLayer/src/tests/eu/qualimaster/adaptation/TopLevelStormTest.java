@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
@@ -31,6 +32,7 @@ import eu.qualimaster.adaptation.external.SwitchAlgorithmRequest;
 import eu.qualimaster.common.logging.QmLogging;
 import eu.qualimaster.common.signal.ThriftConnection;
 import eu.qualimaster.coordination.CoordinationManager;
+import eu.qualimaster.coordination.InitializationMode;
 import eu.qualimaster.coordination.StormUtils;
 import eu.qualimaster.coordination.StormUtils.TopologyTestInfo;
 import eu.qualimaster.coordination.commands.AlgorithmChangeCommand;
@@ -260,24 +262,68 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
     }
     
     /**
-     * Tests the entire stack.
+     * Tests the entire stack in static initialization mode.
      * 
      * @throws IOException shall not occur
      */
     @Test
-    public void testStack() throws IOException {
+    public void testStackStatic() throws IOException {
         if (!AbstractCoordinationTests.isJenkins()) {
-            testStackImpl();
+            testStackImpl(true, InitializationMode.STATIC);
+        }
+    }
+
+
+    /**
+     * Tests the entire stack in dynamic initialization mode.
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test
+    public void testStackDynamic() throws IOException {
+        if (!AbstractCoordinationTests.isJenkins()) {
+            testStackImpl(true, InitializationMode.DYNAMIC);
+        }
+    }
+
+    /**
+     * Tests the entire stack in adaptive initialization mode.
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test
+    public void testStackAdaptive() throws IOException {
+        if (!AbstractCoordinationTests.isJenkins()) {
+            testStackImpl(false, InitializationMode.ADAPTIVE);
         }
     }
     
     /**
+     * Configures the infrastructure for testing.
+     * 
+     * @param initMode the initialization mode
+     * @return the old initialization mode
+     */
+    private InitializationMode configure(InitializationMode initMode) {
+        InitializationMode before = AdaptationConfiguration.getInitializationMode();
+        Properties prop = new Properties();
+        prop.put(AdaptationConfiguration.INIT_MODE, initMode.name());
+        prop.put(AdaptationConfiguration.TIME_STORM_EXECUTOR_STARTUP, 0);
+        AdaptationConfiguration.configure(prop);
+        return before;
+    }
+
+    /**
      * Tests the entire stack. Please note that the test fails, if the initial enactment is not working
      * correctly, e.g., due to the Reasoner.
      * 
+     * @param defaultInit initialize the algorithm implementations by default (false requires adaptation layer 
+     *     and rt-VIL)
+     * @param initMode the configuration initialization mode
      * @throws IOException shall not occur
      */
-    public void testStackImpl() throws IOException {
+    public void testStackImpl(boolean defaultInit, InitializationMode initMode) throws IOException {
+        InitializationMode iMode = configure(initMode); 
         int demo = MonitoringManager.setDemoMessageState(MonitoringManager.DEMO_MSG_INFRASTRUCTURE 
             | MonitoringManager.DEMO_MSG_PIPELINE | MonitoringManager.DEMO_MSG_PROCESSING_ALGORITHM 
             | MonitoringManager.DEMO_MSG_PROCESSING_ELEMENT); // required for monitoring msg
@@ -289,14 +335,14 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
         AdaptationEventHandler adaptationEventHandler = new AdaptationEventHandler();
         EventManager.register(adaptationEventHandler);
         
-        Topology.setDefaultInitAlgorithms(false); // this requires adaptation layer and rt-VIL model!
         TopologyBuilder builder = new TopologyBuilder();
         Topology.createTopology(builder);
         StormTopology topology = builder.createTopology();
         Map<String, TopologyTestInfo> topologies = new HashMap<String, TopologyTestInfo>();
         // assign the topology data including its logging-enabled configuration (for this test)
         @SuppressWarnings("rawtypes")
-        Map topoCfg = Naming.setDefaultInitializeAlgorithms(QmLogging.enable(createTopologyConfiguration()), false);
+        Map topoCfg = Naming.setDefaultInitializeAlgorithms(QmLogging.enable(createTopologyConfiguration()), 
+            defaultInit);
         topologies.put(Naming.PIPELINE_NAME, new TopologyTestInfo(topology, 
             new File(Utils.getTestdataDir(), "pipeline.xml"), topoCfg));
         env.setTopologies(topologies);
@@ -343,6 +389,7 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
         asserts(dispatcher);
         //Assert.assertTrue(adaptationEventHandler.recordedConstraintViolations());
         MonitoringManager.setDemoMessageState(demo);
+        configure(iMode); 
     }
 
     // pipeline must be running...

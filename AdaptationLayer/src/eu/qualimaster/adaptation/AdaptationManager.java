@@ -40,7 +40,6 @@ import eu.qualimaster.adaptation.internal.IAuthenticationProvider;
 import eu.qualimaster.adaptation.internal.ServerEndpoint;
 import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.coordination.INameMapping;
-import eu.qualimaster.coordination.InitializationMode;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand;
 import eu.qualimaster.coordination.events.CoordinationCommandExecutionEvent;
@@ -270,9 +269,6 @@ public class AdaptationManager {
      */
     private static class AlgorithmChangedMonitoringEventHandler extends EventHandler<AlgorithmChangedMonitoringEvent> {
 
-        private static final AlgorithmChangedMonitoringEventHandler INSTANCE 
-            = new AlgorithmChangedMonitoringEventHandler();
-        
         /**
          * Creates an instance.
          */
@@ -333,6 +329,7 @@ public class AdaptationManager {
         EventManager.register(new CoordinationCommandEventHandler());
         EventManager.register(new MonitoringInformationEventHandler());
         EventManager.register(new ShutdownEventHandler());
+        EventManager.register(new AlgorithmChangedMonitoringEventHandler());
         // not AlgorithmChangedMonitoringEventHandler.INSTANCE as dynamic
     }
 
@@ -460,9 +457,6 @@ public class AdaptationManager {
      */
     public static void start() {
         Logging.setBack(Log4jLoggingBack.INSTANCE);
-        if (InitializationMode.DYNAMIC == AdaptationConfiguration.getInitializationMode()) {
-            EventManager.register(AlgorithmChangedMonitoringEventHandler.INSTANCE);
-        }
         RtVilStorage.setInstance(new RtVILMemoryStorage()); // TODO switch to QmRtVILStorageProvider
         try {
             AdaptationDispatcher dispatcher = new AdaptationDispatcher();
@@ -482,9 +476,6 @@ public class AdaptationManager {
         AdaptationEventQueue.stop();
         if (null != endpoint) {
             endpoint.stop();
-        }
-        if (InitializationMode.DYNAMIC == AdaptationConfiguration.getInitializationMode()) {
-            EventManager.unregister(AlgorithmChangedMonitoringEventHandler.INSTANCE);
         }
     }
     

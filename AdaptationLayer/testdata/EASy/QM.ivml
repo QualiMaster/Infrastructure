@@ -2,15 +2,28 @@
 
 project QM {
 
-    enum BindingTime {compile, runtime};
+    enum BindingTime {compile = 0, runtime = 1};
     annotate BindingTime bindingTime = BindingTime.compile to QM;
 
     compound PipelineElement {
         String name;
     }
     
+    compound DataSource {
+        String name;
+    }
+    
+    compound DataSink {
+        String name;
+    }
+    
     compound Source refines PipelineElement {
         setOf(refTo(PipelineElement)) next;
+        refTo(DataSource) source;
+        assign (bindingTime = BindingTime.runtime) to {
+          refTo(DataSource) actual;
+          setOf(refTo(DataSource)) available;
+        }
     }
     
     compound FamilyElement refines PipelineElement {
@@ -19,6 +32,7 @@ project QM {
 
         assign (bindingTime = BindingTime.runtime) to {
           refTo(Algorithm) actual;
+          setOf(refTo(Algorithm)) available;
           Real capacity;
           Integer executors;
         }
@@ -26,6 +40,11 @@ project QM {
     }
     
     compound Sink refines PipelineElement {
+        refTo(DataSink) sink;
+        assign (bindingTime = BindingTime.runtime) to {
+          refTo(DataSink) actual;
+          setOf(refTo(DataSink)) available;
+        }
     }
     
     compound ReplaySink refines Sink {
@@ -76,7 +95,8 @@ project QM {
     };
 
     Sink snk = {
-        name = "sink"
+        name = "sink", 
+        sink = refBy(dsnk)
     };
     
     FamilyElement famElt1 = {
@@ -87,7 +107,16 @@ project QM {
     
     Source src = {
         name = "source", 
-        next = {refBy(famElt1)}
+        next = {refBy(famElt1)}, 
+        source = refBy(dsrc)
+    };
+
+    DataSource dsrc = {
+        name = "source"
+    };
+    
+    DataSink dsnk = {
+        name = "sink"
     };
     
     Pipeline pip = {
@@ -100,6 +129,8 @@ project QM {
     algorithms = {refBy(alg1), refBy(alg2)};
     
     freeze {
+        dsrc;
+        dsnk;
         alg1;
         alg2;
         fam1;

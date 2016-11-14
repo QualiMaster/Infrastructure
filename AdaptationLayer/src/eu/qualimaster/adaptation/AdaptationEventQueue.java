@@ -2,10 +2,8 @@ package eu.qualimaster.adaptation;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -64,8 +62,8 @@ public class AdaptationEventQueue {
     private static BlockingDeque<AdaptationEvent> adaptationEventQueue = new LinkedBlockingDeque<>();
     private static Map<String, Class<? extends AdaptationEvent>> adaptationFilters 
         = Collections.synchronizedMap(new HashMap<String, Class<? extends AdaptationEvent>>());
-    private static Map<String, List<AlgorithmChangedMonitoringEvent>> startupAlgorithmChangedEvents 
-        = Collections.synchronizedMap(new HashMap<String, List<AlgorithmChangedMonitoringEvent>>());
+    private static Map<String, Map<String, AlgorithmChangedMonitoringEvent>> startupAlgorithmChangedEvents 
+        = Collections.synchronizedMap(new HashMap<String, Map<String, AlgorithmChangedMonitoringEvent>>());
 
     private static final int RESPONSE_TIMEOUT = AdaptationConfiguration.getEventResponseTimeout();
     private static MessageResponseStore messageStore = new MessageResponseStore(RESPONSE_TIMEOUT);
@@ -462,9 +460,12 @@ public class AdaptationEventQueue {
      * @param event the algorithm changed monitoring event
      */
     static void notifyStartupAlgorithmChangedEvent(AlgorithmChangedMonitoringEvent event) {
-        List<AlgorithmChangedMonitoringEvent> evts = startupAlgorithmChangedEvents.get(event.getPipeline());
-        if (null != evts) { 
-            evts.add(event);
+        if (InitializationMode.DYNAMIC == AdaptationConfiguration.getInitializationMode()) {
+            Map<String, AlgorithmChangedMonitoringEvent> evts = startupAlgorithmChangedEvents.get(event.getPipeline());
+            String pipelineElement = event.getPipelineElement();
+            if (null != evts && !evts.containsKey(pipelineElement)) { 
+                evts.put(pipelineElement, event);
+            }
         }
     }
 
@@ -476,9 +477,10 @@ public class AdaptationEventQueue {
      */
     public static void notifyChecked(String pipelineName) {
         if (InitializationMode.DYNAMIC == AdaptationConfiguration.getInitializationMode()) {
-            List<AlgorithmChangedMonitoringEvent> evts = startupAlgorithmChangedEvents.get(pipelineName);
+            Map<String, AlgorithmChangedMonitoringEvent> evts = startupAlgorithmChangedEvents.get(pipelineName);
             if (null == evts) { // no event registered so far
-                evts = Collections.synchronizedList(new ArrayList<AlgorithmChangedMonitoringEvent>(10));
+                evts = Collections.synchronizedMap(new HashMap<String, AlgorithmChangedMonitoringEvent>(10));
+                startupAlgorithmChangedEvents.put(pipelineName, evts);
             }
         }
     }
@@ -490,10 +492,10 @@ public class AdaptationEventQueue {
      */
     private static void initializePipeline(String pipelineName) {
         Models models = RepositoryConnector.getModels(Phase.ADAPTATION);
-        List<AlgorithmChangedMonitoringEvent> evts = startupAlgorithmChangedEvents.remove(pipelineName);
+        Map<String, AlgorithmChangedMonitoringEvent> evts = startupAlgorithmChangedEvents.remove(pipelineName);
         if (null != evts && null != models) { // may be the case if InitializationMode != DYNAMIC
             Configuration config = models.getConfiguration();
-            for (AlgorithmChangedMonitoringEvent event : evts) {
+            for (AlgorithmChangedMonitoringEvent event : evts.values()) {
                 String pipeline = event.getPipeline();
                 String pipelineElement = event.getPipelineElement();
                 String algorithm = event.getAlgorithm();
@@ -506,5 +508,5 @@ public class AdaptationEventQueue {
             }
         }
     }
-
+    
 }
