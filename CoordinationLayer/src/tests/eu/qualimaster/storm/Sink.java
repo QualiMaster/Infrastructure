@@ -41,11 +41,16 @@ public class Sink extends BaseSignalBolt {
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
         this.collector = collector;
-        this.sink = DataManager.DATA_SINK_MANAGER.createDataSink(getPipeline(), Snk.class, 
-            NoStorageStrategyDescriptor.INSTANCE);
-        EventManager.send(new AlgorithmChangedMonitoringEvent(getPipeline(), Naming.NODE_SINK, "sink"));
         if (Naming.defaultInitializeAlgorithms(stormConf)) {
-            this.sink.connect();
+            sink = new Snk();
+            EventManager.send(new AlgorithmChangedMonitoringEvent(getPipeline(), Naming.NODE_SINK, "sink"));
+            sink.connect();
+        } else {
+            sink = DataManager.DATA_SINK_MANAGER.createDataSink(getPipeline(), Snk.class, 
+                NoStorageStrategyDescriptor.INSTANCE);
+            if (!DataManager.isStarted()) { // DML workaround
+                sink.connect();
+            }
         }
     }
 

@@ -141,9 +141,9 @@ public class Process extends BaseSignalBolt {
         if (Naming.defaultInitializeAlgorithms(stormConf)) {
             alg = new Alg1();
             sendAlgorithmChangeEvent(Naming.NODE_PROCESS_ALG1);
+            System.out.println("PROCESS DELAY INIT " 
+                + PipelineOptions.getExecutorIntArgument(stormConf, getName(), "delay", 0));
         }
-        System.out.println("PROCESS DELAY INIT " 
-            + PipelineOptions.getExecutorIntArgument(stormConf, getName(), "delay", 0));
     }
 
     @Override

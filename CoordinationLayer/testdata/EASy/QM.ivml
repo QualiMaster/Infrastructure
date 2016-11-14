@@ -2,7 +2,7 @@
 
 project QM {
 
-    enum BindingTime {compile, runtime};
+    enum BindingTime {compile = 0, runtime = 1};
     annotate BindingTime bindingTime = BindingTime.compile to QM;
 
     compound Parameter {

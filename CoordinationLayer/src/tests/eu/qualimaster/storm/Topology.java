@@ -13,17 +13,6 @@ import backtype.storm.topology.TopologyBuilder;
  * @author Holger Eichelberger
  */
 public class Topology {
-    
-    private static boolean defaultInitAlgorithms = true;
-    
-    /**
-     * Changes the behavior of initializing default algorithms.
-     * 
-     * @param init whether algorithms shall be initialized by default (true)
-     */
-    public static void setDefaultInitAlgorithms(boolean init) {
-        defaultInitAlgorithms = init;
-    }
 
     /**
      * Creates the testing topology.
@@ -74,7 +63,6 @@ public class Topology {
      */
     public static void main(String[] args) throws Exception {
         Config config = new Config();
-        Naming.setDefaultInitializeAlgorithms(config, defaultInitAlgorithms);
         config.setMessageTimeoutSecs(100);
         PipelineOptions options = new PipelineOptions(args);
         RecordingTopologyBuilder b = new RecordingTopologyBuilder(options);

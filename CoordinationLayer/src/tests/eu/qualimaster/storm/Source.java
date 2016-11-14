@@ -56,14 +56,23 @@ public class Source<S extends ISrc> extends BaseSignalSourceSpout {
     public void open(Map stormConf, TopologyContext context, SpoutOutputCollector collector) {
         super.open(stormConf, context, collector);
         this.collector = collector;
-        this.source = DataManager.DATA_SOURCE_MANAGER.createDataSource(getPipeline(), srcClass, 
-            NoStorageStrategyDescriptor.INSTANCE);
-        initializeParams(stormConf, this.source);
-        EventManager.send(new AlgorithmChangedMonitoringEvent(getPipeline(), Naming.NODE_SOURCE, "source"));
         if (Naming.defaultInitializeAlgorithms(stormConf)) {
-            // for coordination level tests, there is no monitoring layer to support auto-connect
-            source.connect(); 
+            try {
+                source = srcClass.newInstance();
+                EventManager.send(new AlgorithmChangedMonitoringEvent(getPipeline(), Naming.NODE_SOURCE, "source"));
+                // for coordination level tests, there is no monitoring layer to support auto-connect
+                source.connect(); 
+            } catch (IllegalAccessException e) {
+            } catch (InstantiationException e) {
+            }
+        } else {
+            source = DataManager.DATA_SOURCE_MANAGER.createDataSource(getPipeline(), srcClass, 
+                NoStorageStrategyDescriptor.INSTANCE);
+            if (!DataManager.isStarted()) { // DML workaround
+                source.connect();
+            }
         }
+        initializeParams(stormConf, this.source);
     }
 
     /**
