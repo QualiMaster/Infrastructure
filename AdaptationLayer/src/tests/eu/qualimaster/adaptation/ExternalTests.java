@@ -860,7 +860,7 @@ public class ExternalTests {
         Assert.assertEquals(2, rMsg2.getTicket());
         Assert.assertEquals(start, rMsg2.getStart());
         Assert.assertEquals(end, rMsg2.getEnd());
-        Assert.assertEquals(10, rMsg2.getSpeed());
+        Assert.assertEquals(10, rMsg2.getSpeed(), 0.005);
         Assert.assertEquals("aa", rMsg2.getQuery());
         
         ReplayAdaptationEvent evt2 = new ReplayAdaptationEvent(rMsg2);
@@ -871,7 +871,7 @@ public class ExternalTests {
         Assert.assertEquals(2, evt2.getTicket());
         Assert.assertEquals(start, evt2.getStart());
         Assert.assertEquals(end, evt2.getEnd());
-        Assert.assertEquals(10, evt2.getSpeed());
+        Assert.assertEquals(10, evt2.getSpeed(), 0.005);
         Assert.assertEquals("aa", evt2.getQuery());
 
     }
