@@ -33,7 +33,7 @@ public class ReplaySignal extends AbstractTopologyExecutorSignal {
     private int ticket;
     private Date start;
     private Date end;
-    private int speed;
+    private float speed;
     private String query;
 
     /**
@@ -59,7 +59,7 @@ public class ReplaySignal extends AbstractTopologyExecutorSignal {
      * @param speed the replay speed, positive speed up, negative slow down
      * @param query which data to send (format unspecified so far)
      */
-    public void setReplayStartInfo(Date start, Date end, int speed, String query) {
+    public void setReplayStartInfo(Date start, Date end, float speed, String query) {
         this.start = start;
         this.end = end;
         this.speed = speed;
@@ -107,7 +107,7 @@ public class ReplaySignal extends AbstractTopologyExecutorSignal {
      * 
      * @return the replay speed
      */
-    public int getSpeed() {
+    public float getSpeed() {
         return speed;
     }
     

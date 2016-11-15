@@ -31,7 +31,7 @@ public class ReplayCommand extends AbstractPipelineElementCommand {
     private int ticket;
     private Date start;
     private Date end;
-    private int speed;
+    private float speed;
     private String query;
 
     /**
@@ -60,7 +60,7 @@ public class ReplayCommand extends AbstractPipelineElementCommand {
      * @param query which data to send (format unspecified so far)
      */
     @QMInternal
-    public void setReplayStartInfo(Date start, Date end, int speed, String query) {
+    public void setReplayStartInfo(Date start, Date end, float speed, String query) {
         this.start = start;
         this.end = end;
         this.speed = speed;
@@ -77,7 +77,7 @@ public class ReplayCommand extends AbstractPipelineElementCommand {
      * 
      * @see #toString(Date)
      */
-    public void setReplayStartInfo(String start, String end, int speed, String query) {
+    public void setReplayStartInfo(String start, String end, float speed, String query) {
         setReplayStartInfo(toDate(start), toDate(end), speed, query);
     }
     
@@ -152,7 +152,7 @@ public class ReplayCommand extends AbstractPipelineElementCommand {
      * 
      * @return the replay speed
      */
-    public int getSpeed() {
+    public float getSpeed() {
         return speed;
     }
     

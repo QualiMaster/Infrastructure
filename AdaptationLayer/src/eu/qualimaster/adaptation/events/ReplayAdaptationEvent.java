@@ -35,7 +35,7 @@ public class ReplayAdaptationEvent extends AdaptationEvent implements IPipelineA
     private int ticket;
     private Date start;
     private Date end;
-    private int speed;
+    private float speed;
     private String query;
 
     /**
@@ -134,7 +134,7 @@ public class ReplayAdaptationEvent extends AdaptationEvent implements IPipelineA
      * 
      * @return the replay speed
      */
-    public int getSpeed() {
+    public float getSpeed() {
         return speed;
     }
     
