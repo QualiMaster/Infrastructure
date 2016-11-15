@@ -104,6 +104,7 @@ public class ReplayCommand extends AbstractPipelineElementCommand {
      * @return the related string (<b>null</b> if <code>date</code> is <b>null</b>)
      * @see #toDate(String)
      */
+    @QMInternal
     public static String toString(Date date) {
         return null != date ? String.valueOf(date.getTime()) : null;
     }
@@ -115,6 +116,7 @@ public class ReplayCommand extends AbstractPipelineElementCommand {
      * @return the date (<b>null</b> if <code>text</code> is null or invalid)
      * @see #toString(Date)
      */
+    @QMInternal
     public static Date toDate(String text) {
         Date result = null;
         if (text != null) {
@@ -150,6 +152,7 @@ public class ReplayCommand extends AbstractPipelineElementCommand {
      * 
      * @return the data start date (may be <b>null</b> for none)
      */
+    @QMInternal
     public Date getStart() {
         return start;
     }
@@ -159,15 +162,26 @@ public class ReplayCommand extends AbstractPipelineElementCommand {
      * 
      * @return the data end date (may be <b>null</b> for none)
      */
+    @QMInternal
     public Date getEnd() {
         return end;
     }
-    
+
     /**
      * Returns the replay speed.
      * 
      * @return the replay speed
      */
+    public double getSpeedDbl() {
+        return speed;
+    }
+
+    /**
+     * Returns the replay speed.
+     * 
+     * @return the replay speed
+     */
+    @QMInternal
     public float getSpeed() {
         return speed;
     }
