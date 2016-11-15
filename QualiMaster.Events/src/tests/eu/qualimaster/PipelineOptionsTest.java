@@ -15,6 +15,7 @@
  */
 package tests.eu.qualimaster;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Assert;
@@ -42,8 +43,18 @@ public class PipelineOptionsTest {
         Assert.assertEquals(3, options.getExecutorParallelism("exec", 3));
         Assert.assertEquals(2, options.getTaskParallelism("exec", 2));
         Assert.assertFalse(options.isInProfilingMode());
+        Assert.assertNull(options.getMainPipeline());
+        Assert.assertFalse(options.isSubPipeline());
         assertThroughArgs(options);
-        
+
+        options.markAsSubPipeline("");
+        Assert.assertEquals("", options.getMainPipeline());
+        Assert.assertFalse(options.isSubPipeline());
+
+        options.markAsSubPipeline("mainPip");
+        Assert.assertEquals("mainPip", options.getMainPipeline());
+        Assert.assertTrue(options.isSubPipeline());
+
         options.setNumberOfWorkers(5);
         Assert.assertEquals(5, options.getNumberOfWorkers(2));
         assertThroughArgs(options);
@@ -82,6 +93,16 @@ public class PipelineOptionsTest {
         Assert.assertNull(null, options.getExecutorArgument("exec2", null));
         
         options.toString(); // actually no test needed
+        Map<Object, Object> c = new HashMap<Object, Object>();
+        options.toConf(c);
+        
+        PipelineOptions n = new PipelineOptions(options);
+        assertThroughArgs(n);
+        Assert.assertEquals(options, n);
+        n = new PipelineOptions();
+        n.merge(options);
+        assertThroughArgs(n);
+        Assert.assertEquals(options, n);
     }
     
     /**

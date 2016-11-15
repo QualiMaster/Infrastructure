@@ -84,6 +84,8 @@ public class PipelineOptions implements Serializable {
             try {
                 if (arg.equals(KEY_WORKERS)) {
                     setNumberOfWorkers(parseIntArg(args, a));
+                } else if (arg.equals(KEY_MAINPIP)) {
+                    markAsSubPipeline(parseStringArg(args, a));
                 } else if (arg.equals(KEY_PROFILINGMODE)) {
                     if (parseBooleanArg(args, a)) {
                         enableProfilingMode();
