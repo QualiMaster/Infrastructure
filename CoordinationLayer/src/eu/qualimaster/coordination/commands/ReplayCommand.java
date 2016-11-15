@@ -18,6 +18,7 @@ package eu.qualimaster.coordination.commands;
 import java.util.Date;
 
 import eu.qualimaster.common.QMInternal;
+import net.ssehub.easy.instantiation.core.model.vilTypes.Invisible;
 
 /**
  * Controls replay on pipelines.
@@ -68,6 +69,20 @@ public class ReplayCommand extends AbstractPipelineElementCommand {
     }
 
     /**
+     * Sets additional data required to start a replay. This method is required for rt-VIL.
+     * 
+     * @param start the start point in time (if <b>null</b> start from the first available data)
+     * @param end the end point in time (if <b>null</b> start from the last available data)
+     * @param speed the replay speed, positive speed up, negative slow down
+     * @param query which data to send (format unspecified so far)
+     * 
+     * @see #toDate(String)
+     */
+    public void setReplayStartInfo(String start, String end, double speed, String query) {
+        setReplayStartInfo(start, end, (float) speed, query);
+    }
+
+    /**
      * Sets additional data required to start a replay.
      * 
      * @param start the start point in time (if <b>null</b> start from the first available data)
@@ -75,8 +90,9 @@ public class ReplayCommand extends AbstractPipelineElementCommand {
      * @param speed the replay speed, positive speed up, negative slow down
      * @param query which data to send (format unspecified so far)
      * 
-     * @see #toString(Date)
+     * @see #toDate(String)
      */
+    @Invisible
     public void setReplayStartInfo(String start, String end, float speed, String query) {
         setReplayStartInfo(toDate(start), toDate(end), speed, query);
     }
