@@ -36,6 +36,7 @@ import net.ssehub.easy.instantiation.rt.core.model.rtVil.Script;
 import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.common.monitoring.MonitoringPluginRegistry;
 import eu.qualimaster.coordination.RepositoryConnector;
+import eu.qualimaster.coordination.RepositoryConnector.Models;
 import eu.qualimaster.coordination.RepositoryConnector.Phase;
 import eu.qualimaster.coordination.RuntimeVariableMapping;
 import eu.qualimaster.easy.extension.QmConstants;
@@ -268,21 +269,21 @@ public class ReasoningTask extends TimerTask {
         /**
          * Returns the IVML configuration.
          * 
-         * @return the configuration (may change over time)
+         * @return the configuration (may change over time, may be <b>null</b> if loading failed)
          */
         public Configuration getConfiguration();
         
         /**
          * Returns the rt-VIL script.
          * 
-         * @return the script (may change over time)
+         * @return the script (may change over time, may be <b>null</b> if loading failed)
          */
         public Script getScript();
         
         /**
          * Returns the runtime variable mapping.
          * 
-         * @return the variable mapping (may change over time)
+         * @return the variable mapping (may change over time, may be <b>null</b> if loading failed)
          */
         public RuntimeVariableMapping getVariableMapping();
         
@@ -317,30 +318,48 @@ public class ReasoningTask extends TimerTask {
         public PhaseReasoningModelProvider(Phase phase) {
             this.phase = phase;
         }
+        
+        /**
+         * Returns the models for the phase of this provider.
+         * 
+         * @return the models
+         */
+        private Models getModels() {
+            return RepositoryConnector.getModels(phase);
+        }
 
         @Override
         public Configuration getConfiguration() {
-            return RepositoryConnector.getModels(phase).getConfiguration();
+            Models models = getModels();
+            return null == models ? null : models.getConfiguration();
         }
 
         @Override
         public Script getScript() {
-            return RepositoryConnector.getModels(phase).getAdaptationScript();
+            Models models = getModels();
+            return null == models ? null : models.getAdaptationScript();
         }
 
         @Override
         public RuntimeVariableMapping getVariableMapping() {
-            return RepositoryConnector.getModels(phase).getVariableMapping();
+            Models models = getModels();
+            return null == models ? null : models.getVariableMapping();
         }
 
         @Override
         public void startUsing() {
-            RepositoryConnector.getModels(phase).startUsing();
+            Models models = getModels();
+            if (null != models) {
+                models.startUsing();
+            }
         }
 
         @Override
         public void endUsing() {
-            RepositoryConnector.getModels(phase).endUsing();   
+            Models models = getModels();
+            if (null != models) {
+                models.endUsing();
+            }
         }
         
     }
@@ -477,13 +496,13 @@ public class ReasoningTask extends TimerTask {
         provider.startUsing();
         AdaptationEvent resultEvent = null;
         SystemState sysState = MonitoringManager.getSystemState();
-        PipelineAnalysis.analyze(config, sysState); // TODO use frozen state?
+        PipelineAnalysis.analyze(config, sysState);
         Map<String, PipelineLifecycleEvent.Status> pipStatus = sysState.getPipelinesStatus();
         FrozenSystemState state = sysState.freeze();
 
         if (WITH_DEBUG) {
             String logLocation = MonitoringConfiguration.getMonitoringLogInfraLocation();
-            if (!MonitoringConfiguration.isEmpty(logLocation)) { // TODO remove
+            if (!MonitoringConfiguration.isEmpty(logLocation)) {
                 File f = new File(logLocation, "monitoring_" + debugFileCount++);
                 try {
                     state.store(f);
