@@ -134,7 +134,7 @@ public class ReplayAdaptationEvent extends AdaptationEvent implements IPipelineA
      * 
      * @return the replay speed
      */
-    public float getSpeed() {
+    public double getSpeed() { // rtVIL needs double
         return speed;
     }
     
