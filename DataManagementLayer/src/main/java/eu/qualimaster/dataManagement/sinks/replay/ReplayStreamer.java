@@ -220,11 +220,11 @@ public class ReplayStreamer<T> {
         @Override
         public Result aggregate(String[] key, Result item) {
             Result result = null;
+            long timestamp = ReplayUtils.getTimestampFromResult(key);
             if (prevTimestamp == 0)
                 result = item;
             else {
                 // get the timestamp from the key
-                long timestamp = ReplayUtils.getTimestampFromResult(key);
                 long dev = (timestamp - prevTimestamp) / 1000;
 
                 // Strange case: The items are emitted not in chronological order
@@ -235,8 +235,8 @@ public class ReplayStreamer<T> {
                 if (dev >= speedFactor) {
                     result = item;
                 }
-                prevTimestamp = timestamp;
             }
+            prevTimestamp = timestamp;
             return result;
         }
     }
