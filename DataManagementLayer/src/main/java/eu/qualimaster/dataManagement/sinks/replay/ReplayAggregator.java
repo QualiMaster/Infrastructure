@@ -5,7 +5,7 @@ import org.apache.hadoop.hbase.client.Result;
 /**
  * Implement different aggregator strategies at the client side
  * to complement the server-side (Co-processor) aggregation
- * Created by tuan on 15/11/16.
+ * Created by tuan on 1/10/16.
  */
 public interface ReplayAggregator {
 
