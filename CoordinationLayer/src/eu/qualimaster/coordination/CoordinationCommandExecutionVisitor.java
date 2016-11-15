@@ -158,15 +158,32 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
         ISubPipeline subPip = mapping.getSubPipelineByAlgorithmName(command.getAlgorithm());
         if (null != subPip) {
-            CoordinationManager.deferCommand(pipelineName, PipelineLifecycleEvent.Status.STARTED, 
+            CoordinationManager.deferCommand(subPip.getName(), PipelineLifecycleEvent.Status.STARTED, 
                 new AlgorithmChangeAction(command, parameters, tracer));
             PipelineCommand cmd = new PipelineCommand(subPip.getName(), PipelineCommand.Status.START, 
-                CoordinationManager.getPipelineOptions(pipelineName));
+                getSubPipelineOptions(pipelineName));
             result = handlePipelineStart(cmd);
         } else {
             result = handleAlgorithmChangeImpl(command, parameters);
         }
         return result;
+    }
+
+    /**
+     * Returns the sub pipeline options.
+     * 
+     * @param mainPipeline th4e main pipeline
+     * @return the options for the sub-pipeline marked as sub-pipeline
+     */
+    private PipelineOptions getSubPipelineOptions(String mainPipeline) {
+        PipelineOptions opts = CoordinationManager.getPipelineOptions(mainPipeline);
+        if (null == opts) {
+            opts = new PipelineOptions(); // shall not occur
+        } else {
+            opts = new PipelineOptions(opts); // clone
+        }
+        opts.markAsSubPipeline(mainPipeline);
+        return opts;
     }
 
     /**
@@ -394,7 +411,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
             SignalMechanism.prepareMechanism(getNamespace(mapping));
         }
         EventManager.handle(new PipelineLifecycleEvent(pipelineName, PipelineLifecycleEvent.Status.STARTING, 
-            options.getAdaptationFilterName(), command));
+            options, command));
         // if monitoring detects, that all families are initialized, it switches to INITIALIZED causing the 
         // DataManger to connect the sources
     }

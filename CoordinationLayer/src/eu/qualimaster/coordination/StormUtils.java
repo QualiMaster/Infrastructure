@@ -330,6 +330,7 @@ public class StormUtils {
         if (CoordinationConfiguration.getPipelineStartSourceAutoconnect()) {
             stormConf.put(Constants.CONFIG_KEY_SOURCE_AUTOCONNECT, "true");
         }
+        stormConf.put(Constants.CONFIG_KEY_INIT_MODE, CoordinationConfiguration.getInitializationMode().name());
     }
 
     /**
