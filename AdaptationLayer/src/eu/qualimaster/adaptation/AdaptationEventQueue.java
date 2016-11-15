@@ -247,6 +247,9 @@ public class AdaptationEventQueue {
             LOGGER.info("handling " + event.getClass().getName());
         }
         adaptImpl(event, config, rtVilModel, tmp);
+        if (EventManager.shallBeLogged(event)) {
+            LOGGER.info("handling done for " + event.getClass().getName());
+        }
     }
     
     
