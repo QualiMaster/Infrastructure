@@ -201,13 +201,20 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
         if (nodePart.getObservedValue(ResourceUsage.TASKS) > 0) {
             InitializationMode initMode = MonitoringConfiguration.getInitializationMode();
             if (InitializationMode.DYNAMIC == initMode) {
+                // dynamic: we need an algorithm change before
                 up = null != nodePart.getCurrent();
                 if (MonitoringConfiguration.getStormExecutorStartupParallel()) { // to be on the safe side
                     up &= nodePart.getCurrentCount() == tasks;
                 }
+            } else if (InitializationMode.ADAPTIVE == initMode) {
+                // adaptive: nothing set, go to adaptive init as soon as possible but consider tasks
+                if (MonitoringConfiguration.getStormExecutorStartupParallel()) { // to be on the safe side
+                    up = nodePart.getCurrentCount() == tasks;
+                } else {
+                    up = true;
+                }
             } else {
-                // static: don't care
-                // adaptive: nothing set, go to adaptive init as soon as possible
+                // static: don't care - as beofre
                 up = true;
             }
         }
