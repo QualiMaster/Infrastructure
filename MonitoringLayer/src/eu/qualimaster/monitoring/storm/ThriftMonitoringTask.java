@@ -3,6 +3,7 @@ package eu.qualimaster.monitoring.storm;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.monitoring.AbstractContainerMonitoringTask;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.MonitoringManager;
+import eu.qualimaster.monitoring.MonitoringManager.PipelineInfo;
 import eu.qualimaster.monitoring.events.ComponentKey;
 import eu.qualimaster.monitoring.observations.ObservedValue;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
@@ -45,6 +47,7 @@ import backtype.storm.generated.ExecutorSpecificStats;
 import backtype.storm.generated.ExecutorStats;
 import backtype.storm.generated.ExecutorSummary;
 import backtype.storm.generated.NotAliveException;
+import backtype.storm.generated.StormTopology;
 import backtype.storm.generated.TopologyInfo;
 import backtype.storm.generated.TopologySummary;
 
@@ -93,7 +96,6 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
         if (connection.open()) {
             try {
                 ClusterSummary summary = connection.getClusterSummary();
-
                 List<TopologySummary> topologies = summary.get_topologies();
                 Set<PipelineSystemPart> modified = new HashSet<PipelineSystemPart>(); 
                 for (int t = 0; t < topologies.size(); t++) {
@@ -174,7 +176,19 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
         String pipelineName = mapping.getPipelineName();
         PipelineSystemPart part = state.obtainPipeline(pipelineName); // exists or creates
         if (null == part.getTopology()) {
-            PipelineTopology topo = Utils.buildPipelineTopology(connection.getTopology(topology), topology, mapping);
+            PipelineInfo info = MonitoringManager.getPipelineInfo(pipelineName);
+            Map<StormTopology, TopologyInfo> topologies = new HashMap<StormTopology, TopologyInfo>();
+            topologies.put(connection.getTopology(topology), topology);
+            for (PipelineInfo subInfo : info.getSubPipelines()) {
+                String subName = subInfo.getName();
+                try {
+                    TopologyInfo si = connection.getTopologyInfoByName(subName);
+                    topologies.put(connection.getTopology(si), si);        
+                } catch (NotAliveException e) {
+                    LOGGER.info("Sub-topology not alive: " + subName);
+                }
+            }
+            PipelineTopology topo = Utils.buildPipelineTopology(topologies, mapping);
             part.setTopology(topo);
             if (null != topo) {
                 LOGGER.info("TOPOLOGY for " + mapping.getPipelineName() + " " + topo);

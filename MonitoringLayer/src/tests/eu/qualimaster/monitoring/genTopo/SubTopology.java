@@ -27,10 +27,10 @@ import eu.qualimaster.coordination.StormUtils.TopologyTestInfo;
 import eu.qualimaster.coordination.commands.AlgorithmChangeCommand;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineOptions;
-import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
+import eu.qualimaster.observables.TimeBehavior;
 import tests.eu.qualimaster.coordination.AbstractCoordinationTests;
 import tests.eu.qualimaster.storm.ReceivingSpout;
 import tests.eu.qualimaster.storm.SendingBolt;
@@ -71,15 +71,6 @@ public class SubTopology extends AbstractTopology {
     protected String getAlgorithmName() {
         return "RandomSubPipelineAlgorithm1";
     }
-
-    /**
-     * Returns the name of the family.
-     * 
-     * @return the name of the family
-     */
-    protected String getSenderName() {
-        return "subSender";
-    }
     
     /**
      * Returns the name of the sink.
@@ -96,7 +87,7 @@ public class SubTopology extends AbstractTopology {
      * @return the name of the sub-topology receiver
      */
     protected String getSubReceiverName() {
-        return "subReceiver";
+        return "RandomSubPipeline1Intermediary";
     }
 
     /**
@@ -105,7 +96,7 @@ public class SubTopology extends AbstractTopology {
      * @return the name of the sub-topology processor
      */
     protected String getSubProcessorName() {
-        return "RandomSubPipeline1Processor";
+        return "SubPipelineVar_11_FamilyElement0";
     }
     
     /**
@@ -114,7 +105,7 @@ public class SubTopology extends AbstractTopology {
      * @return the name of the sub-topology sender
      */
     protected String getSubSenderName() {
-        return "subSender";
+        return "RandomSubPipeline1EndBolt";
     }
 
     @Override
@@ -144,22 +135,15 @@ public class SubTopology extends AbstractTopology {
 
     @Override
     public void assertState(SystemState state, INameMapping mapping, long pipRunTime) {
-        System.out.println(state.format());
         PipelineSystemPart pip = state.getPipeline(getName());
         Assert.assertNotNull(pip);
         PipelineNodeSystemPart source = getNode(getSourceName(), pip, mapping, true);
         PipelineNodeSystemPart family = getNode(getFamilyName(), pip, mapping, true);
         PipelineNodeSystemPart subProcessor = getNode(getSubProcessorName(), family, null, true);
-        NodeImplementationSystemPart algorithm = getAlgorithm(getAlgorithmName(), pip, null, true);
         
-        System.out.println(source);
-        System.out.println(family);
-        System.out.println(subProcessor);
-        System.out.println(algorithm);
-        /*assertGreaterEquals(1, source, TimeBehavior.THROUGHPUT_ITEMS);
+        assertGreaterEquals(1, source, TimeBehavior.THROUGHPUT_ITEMS);
         assertGreaterEquals(1, family, TimeBehavior.THROUGHPUT_ITEMS);
         assertGreaterEquals(1, subProcessor, TimeBehavior.THROUGHPUT_ITEMS);
-        assertGreaterEquals(1, algorithm, TimeBehavior.THROUGHPUT_ITEMS);*/
     }
 
     @Override

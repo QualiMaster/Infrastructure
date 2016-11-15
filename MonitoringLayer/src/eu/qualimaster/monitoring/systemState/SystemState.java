@@ -299,30 +299,6 @@ public class SystemState implements Serializable {
         if (null == result) {
             result = part.obtainPipelineNode(pipElementName); // exists or creates
         }
-        
-        /*PipelineNodeSystemPart result = null;
-        String pipElementName = mapping.getPipelineNodeByImplName(implName);
-        if (null == pipElementName) { // fallback, to avoid NPEs
-            Component subC = mapping.getComponentByImplName(implName);
-            if (null != subC && Type.UNKNOWN == subC.getType()) {
-                Algorithm alg = mapping.getAlgorithmByImplName(subC.getContainer());
-                if (null == alg) {
-                    alg = mapping.getAlgorithm(subC.getContainer()); // fallback
-                }
-                if (null != alg) {
-                    NodeImplementationSystemPart algPart = part.getAlgorithm(alg.getName());
-                    if (null != algPart) {
-                        result = algPart.obtainPipelineNode(subC.getName());
-                    }
-                }
-            }
-            if (null == result) {
-                pipElementName = implName;
-            }
-        }
-        if (null == result) {
-            result = part.obtainPipelineNode(pipElementName); // exists or creates
-        }*/
         return result;
     }
 

@@ -376,6 +376,7 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
                                     PipelineNodeSystemPart compNode 
                                         = algPart.obtainPipelineNode(comp.getName()); // force creation
                                     algPart.link(compNode, ILinkSelector.ALL_EXTERNAL);
+                                    elements.put(comp.getName(), compNode);
                                 }
                             }
                             result.link(algPart);

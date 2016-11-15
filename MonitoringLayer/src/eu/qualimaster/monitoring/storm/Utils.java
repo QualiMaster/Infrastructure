@@ -264,7 +264,7 @@ public class Utils {
         }
         return result;
     }
-    
+
     /**
      * Creates a pipeline topology from a Storm topology.
      * 
@@ -275,14 +275,34 @@ public class Utils {
      */
     public static PipelineTopology buildPipelineTopology(StormTopology topo, TopologyInfo topoInfo, 
         INameMapping mapping) {
-        Map<String, ExecutorSummary> executors = collectExecutors(topoInfo);
+        Map<StormTopology, TopologyInfo> topos = new HashMap<StormTopology, TopologyInfo>();
+        topos.put(topo, topoInfo);
+        return buildPipelineTopology(topos, mapping);
+    }
+    
+    /**
+     * Creates a pipeline topology from a Storm topology.
+     * 
+     * @param topologies the topologies to consider (including sub-topologies)
+     * @param mapping the name mapping instance
+     * @return the corresponding pipeline topology
+     */
+    public static PipelineTopology buildPipelineTopology(Map<StormTopology, TopologyInfo> topologies, 
+        INameMapping mapping) {
+        Map<String, ExecutorSummary> executors = new HashMap<String, ExecutorSummary>();
+        for (TopologyInfo topoInfo : topologies.values()) {
+            executors.putAll(collectExecutors(topoInfo));
+        }
+        
         Map<String, StormProcessor> procs = new HashMap<String, StormProcessor>();
-        // create the processors first, SpoutSpec and Bolt do not have a common interface to access ComponentCommon
-        createProcessors(mapping, executors, topo.get_spouts().entrySet(), procs, true);
-        createProcessors(mapping, executors, topo.get_bolts().entrySet(), procs, false);
-        // create then the flows, assuming that the Storm topology is consistent
-        createStreams(mapping, topo.get_spouts().entrySet(), procs);
-        createStreams(mapping, topo.get_bolts().entrySet(), procs);
+        for (StormTopology topo: topologies.keySet()) {
+            // create the processors first, SpoutSpec and Bolt do not have a common interface to access ComponentCommon
+            createProcessors(mapping, executors, topo.get_spouts().entrySet(), procs, true);
+            createProcessors(mapping, executors, topo.get_bolts().entrySet(), procs, false);
+            // create then the flows, assuming that the Storm topology is consistent
+            createStreams(mapping, topo.get_spouts().entrySet(), procs);
+            createStreams(mapping, topo.get_bolts().entrySet(), procs);
+        }
         // connect algorithms
         for (StormProcessor c : procs.values()) {
             createInvisibleStreams(mapping, procs, c);
@@ -369,7 +389,7 @@ public class Utils {
                             createInvisibleStreamForHwAlgorithm(algComponents, procs);
                         }
                         // ensure external connectivity
-                        createInvisbleBoundaryStreams(processor, algComponents, procs);
+                        createInvisibleBoundaryStreams(processor, algComponents, procs);
                     }
                 }
             }
@@ -415,13 +435,15 @@ public class Utils {
      * @param algComponents the algorithm components
      * @param procs already known processors
      */
-    private static void createInvisbleBoundaryStreams(StormProcessor algorithm, List<Component> algComponents, 
+    private static void createInvisibleBoundaryStreams(StormProcessor algorithm, List<Component> algComponents, 
         Map<String, StormProcessor> procs) {
         List<StormProcessor> algSources = new ArrayList<StormProcessor>();
         List<StormProcessor> algSinks = new ArrayList<StormProcessor>();
         List<StormProcessor> algIntermediary = new ArrayList<StormProcessor>();
         Set<String> algComponentNames = toNameSet(algComponents);
         // determine boundary nodes - sources to be connected to algorithm, intermediaries to sinks (conn to outside)
+        Set<Processor> alg = new HashSet<Processor>();
+        alg.add(algorithm);
         for (int c = 0; c < algComponents.size(); c++) {
             StormProcessor algComponent = getProcessor(algComponents.get(c), procs);
             if (null != algComponent) {
@@ -438,8 +460,10 @@ public class Utils {
                     // internal* -> algComponent
                     algIntermediary.add(algComponent);
                 }
+                alg.add(algComponent);
             }
         }
+        findDisconnectedSources(procs.values(), alg, algSinks);
 
         // create algorithm-source streams
         for (StormProcessor source : algSources) {
@@ -461,6 +485,41 @@ public class Utils {
                 }
                 if (!intermediary.hasOutputTo(sink)) {
                     intermediary.addOutput(s);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Finds all disconnected sources from <code>alg</code>, i.e., isolated nodes or sources that are not in 
+     * <code>alg</code> or transitively connected to <code>alg</code>.
+     * 
+     * @param procs the processors
+     * @param alg the algorithms (modified as a side effect, finally contains all connected nodes)
+     * @param result the list to add the found disconnected sources to (modified as a side effect)
+     */
+    private static void findDisconnectedSources(Collection<StormProcessor> procs, Set<Processor> alg, 
+        List<StormProcessor> result) {
+        int algSize = alg.size();
+        if (algSize > 0) {
+            int lastAlgSize = -1;
+            while (algSize != lastAlgSize) {
+                for (StormProcessor proc : procs) {
+                    if (!alg.contains(proc)) {
+                        for (int o = 0; o < proc.getOutputCount(); o++) {
+                            Processor t = proc.getOutput(o).getTarget();
+                            if (alg.contains(t)) { // proc -> t and t in alg
+                                alg.add(proc);
+                            }
+                        }
+                    }
+                }
+                lastAlgSize = algSize;
+                algSize = alg.size();
+            }
+            for (StormProcessor proc : procs) {
+                if (!alg.contains(proc) && (0 == proc.getStreamCount() || proc.isSource())) {
+                    result.add(proc);
                 }
             }
         }

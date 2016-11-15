@@ -11,12 +11,14 @@
           <component name="PipelineVar_1_Sink0" container="RandomPip" class="eu.qualimaster.RandomPip.topology.PipelineVar_1_Sink0Sink" receiver="true" thrift="false" tasks="1"/>
       </node>
       <algorithm name="RandomSubPipelineAlgorithm1" implName="RandomSubPipeline1SubTopology" class="eu.qualimaster.RandomSubPipeline1.topology.RandomSubPipeline1SubTopology">
-              <component name="RandomSubPipeline1Processor" container="RandomSubPipeline1" class="eu.qualimaster.RandomSubPipeline1.topology.SubPipelineVar_11_FamilyElement0FamilyElement" receiver="true" thrift="false" tasks="1"/>
+              <component name="SubPipelineVar_11_FamilyElement0" container="RandomSubPipeline1" class="eu.qualimaster.RandomSubPipeline1.topology.SubPipelineVar_11_FamilyElement0FamilyElement" receiver="true" thrift="false" tasks="1"/>
+              <component name="RandomSubPipeline1Intermediary" container="RandomSubPipeline1" class="eu.qualimaster.RandomSubPipeline1.topology.RandomSubPipeline1Intermediary" receiver="true" thrift="false" tasks="1"/>
+              <component name="RandomSubPipeline1EndBolt" container="RandomSubPipeline1" class="eu.qualimaster.RandomSubPipeline1.topology.RandomSubPipeline1EndBolt" receiver="true" thrift="false" tasks="1"/>
       </algorithm>
-      <parameter parameter="aggregationFactor" name="processor" receiver="RandomSubPipeline1Processor"/> 
-      <parameter parameter="delay" name="processor" receiver="RandomSubPipeline1Processor"/> 
-      <parameter parameter="flag" name="processor" receiver="RandomSubPipeline1Processor"/> 
-      <parameter parameter="windowSize" name="processor" receiver="RandomSubPipeline1Processor"/> 
+      <parameter parameter="aggregationFactor" name="processor" receiver="SubPipelineVar_11_FamilyElement0"/> 
+      <parameter parameter="delay" name="processor" receiver="SubPipelineVar_11_FamilyElement0"/> 
+      <parameter parameter="flag" name="processor" receiver="SubPipelineVar_11_FamilyElement0"/> 
+      <parameter parameter="windowSize" name="processor" receiver="SubPipelineVar_11_FamilyElement0"/> 
   </pipeline>
 
 </mapping>

@@ -6,6 +6,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -118,10 +119,11 @@ public class MonitoringManager {
      * 
      * @author Holger Eichelberger
      */
-    static class PipelineInfo {
+    public static class PipelineInfo {
         private String name;
         private Status status;
         private String mainPipeline;
+        private List<PipelineInfo> subPipelines = new ArrayList<PipelineInfo>();
         
         /**
          * Creates a pipeline information object.
@@ -135,6 +137,10 @@ public class MonitoringManager {
             this.name = name;
             this.status = status;
             this.mainPipeline = mainPipeline;
+            PipelineInfo parent = getMainPipelineInfo();
+            if (null != parent) {
+                parent.addSubPipeline(this);
+            }
         }
 
         /**
@@ -156,6 +162,52 @@ public class MonitoringManager {
         }
         
         /**
+         * Changes the status. Cleans up pipelines and sub-pipelines if {@link Status#STOPPED}
+         * 
+         * @param status the new status
+         */
+        private void setStatus(Status status) {
+            if (Status.STOPPED == status) {
+                pipelines.remove(this);
+                PipelineInfo parent = getMainPipelineInfo();
+                if (null != parent) {
+                    parent.removeSubPipeline(this);
+                }
+            }
+        }
+        
+        /**
+         * Returns the pipeline info of the main pipeline.
+         * 
+         * @return the pipeline info (may be <b>null</b> if not a subtopology)
+         */
+        private PipelineInfo getMainPipelineInfo() {
+            PipelineInfo result = null;
+            if (isSubPipeline()) {
+                result = pipelines.get(mainPipeline);
+            }
+            return result;
+        }
+        
+        /**
+         * Adds a sub-pipeline.
+         * 
+         * @param info the sub-pipeline info
+         */
+        private void addSubPipeline(PipelineInfo info) {
+            subPipelines.add(info);
+        }
+
+        /**
+         * Removes a sub-pipeline.
+         * 
+         * @param info the sub-pipeline info
+         */
+        private void removeSubPipeline(PipelineInfo info) {
+            subPipelines.remove(info);
+        }
+
+        /**
          * Returns the name of the main pipeline.
          * 
          * @return the name, may be <b>null</b> or empty for a top-level pipeline
@@ -171,6 +223,15 @@ public class MonitoringManager {
          */
         public boolean isSubPipeline() {
             return PipelineOptions.isSubPipeline(mainPipeline);
+        }
+        
+        /**
+         * Returns the sub-pipelines.
+         * 
+         * @return the sub-pipelines
+         */
+        public Collection<PipelineInfo> getSubPipelines() {
+            return subPipelines;
         }
         
         @Override
@@ -315,7 +376,7 @@ public class MonitoringManager {
      */
     private static void handleStarting(PipelineLifecycleEvent event) {
         String pipelineName = event.getPipeline();
-        if (null != pipelineName && !isSubPipeline(pipelineName)) {
+        if (null != pipelineName) {
             for (IMonitoringPlugin plugin : plugins) {
                 handleStarting(event, plugin);
             }
@@ -328,9 +389,7 @@ public class MonitoringManager {
                 }
             }
         } else {
-            if (null == pipelineName) {
-                System.out.println("Illegal lifecycle event [STARTING]. Pipeline null!");
-            }
+            System.out.println("Illegal lifecycle event [STARTING]. Pipeline null!");
         }
     }
 
@@ -435,7 +494,7 @@ public class MonitoringManager {
      */
     private static void handleStopping(PipelineLifecycleEvent event) {
         String pipelineName = event.getPipeline();
-        if (null != pipelineName && !isSubPipeline(pipelineName)) {
+        if (null != pipelineName) {
             // don't remove the pipeline - keep state
             PipelineSystemPart pipeline = state.getPipeline(pipelineName);
             if (null != pipeline) {
@@ -452,9 +511,7 @@ public class MonitoringManager {
                 } // else ignore
             }
         } else {
-            if (null == pipelineName) {
-                LOGGER.info("Illegal lifecycle event [STOPPING]. Pipeline null!");
-            }
+            LOGGER.info("Illegal lifecycle event [STOPPING]. Pipeline null!");
         }
     }
 
@@ -479,7 +536,6 @@ public class MonitoringManager {
             } else {
                 String pipelineName = event.getPipeline();
                 Status status = event.getStatus();
-                boolean changeStatus = true;
                 switch (status) {
                 case STARTING:
                     pipelines.put(pipelineName, new PipelineInfo(pipelineName, status, event.getMainPipeline()));
@@ -497,15 +553,19 @@ public class MonitoringManager {
                         pipeline.changeStatus(status, false, null);
                     }
                     break;
+                case INITIALIZED:
+                    PipelineInfo info = pipelines.get(pipelineName);
+                    if (null != info && info.isSubPipeline()) {
+                        PipelineSystemPart pipeline = state.getPipeline(info.getMainPipeline());
+                        pipeline.setTopology(null); // reset, force re-creation
+                    }
+                    break;
                 default:
-                    changeStatus = false;
                     // UNKNOWN is the default and shall not be send through a signal
                     // DISAPPEARED, CREATED, INITIALIZED are assigned during monitoring 
                     break;
                 }
-                if (changeStatus) {
-                    setStatus(event.getPipeline(), event.getStatus());
-                }
+                setStatus(event.getPipeline(), event.getStatus());
             }
             
             if (MonitoringConfiguration.isReasoningEnabled()) {
@@ -554,10 +614,7 @@ public class MonitoringManager {
     private static void setStatus(String pipelineName, Status status) {
         PipelineInfo info = pipelines.get(pipelineName);
         if (null != info) {
-            info.status = status;
-        }
-        if (Status.STOPPED == status) {
-            pipelines.remove(pipelineName);
+            info.setStatus(status);
         }
     }
     
@@ -574,6 +631,16 @@ public class MonitoringManager {
             }
         }
         return count;
+    }
+    
+    /**
+     * Returns the pipeline info object of a given pipeline.
+     * 
+     * @param pipelineName the pipeline name
+     * @return the information object
+     */
+    public static PipelineInfo getPipelineInfo(String pipelineName) {
+        return pipelines.get(pipelineName);
     }
     
     /**

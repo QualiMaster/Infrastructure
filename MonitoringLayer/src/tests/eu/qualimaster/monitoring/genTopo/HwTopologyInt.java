@@ -175,6 +175,7 @@ public class HwTopologyInt extends AbstractTopology {
 
     @Override
     public void assertState(SystemState state, INameMapping mapping, long pipRunTime) {
+        System.out.println(state.format());
         PipelineSystemPart pip = state.getPipeline(PIP);
         Assert.assertNotNull(pip);
         PipelineNodeSystemPart source = pip.getNode(getTestSourceName());

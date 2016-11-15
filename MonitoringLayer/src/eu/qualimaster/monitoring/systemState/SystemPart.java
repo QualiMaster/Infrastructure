@@ -564,7 +564,7 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
      * @return the textual representation
      */
     public String format(String indent) {
-        return toString();
+        return toString() + " " + System.identityHashCode(this);
     }
  
     @Override
