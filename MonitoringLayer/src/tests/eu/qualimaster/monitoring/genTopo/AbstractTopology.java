@@ -24,8 +24,13 @@ import backtype.storm.LocalCluster;
 import backtype.storm.StormSubmitter;
 import eu.qualimaster.base.pipeline.RecordingTopologyBuilder;
 import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.coordination.INameMapping.Algorithm;
+import eu.qualimaster.coordination.StormUtils.TopologyTestInfo;
 import eu.qualimaster.infrastructure.PipelineOptions;
+import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
+import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
+import eu.qualimaster.monitoring.systemState.SystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
 import eu.qualimaster.observables.IObservable;
 
@@ -128,4 +133,142 @@ public abstract class AbstractTopology {
         Assert.assertTrue("not greater ", expected < part.getObservedValue(obs));
     }
     
+    /**
+     * Registers sub-topologies.
+     * 
+     * @param info topology information to be modified as a side effect
+     */
+    public void registerSubTopologies(Map<String, TopologyTestInfo> info) {
+    }
+    
+    /**
+     * Notifies the topology that it has been started.
+     */
+    public void started() {
+    }
+    
+    /**
+     * Returns the planned execution time.
+     * 
+     * @return the planned execution time in ms (by default 10000)
+     */
+    public int plannedExecutionTime() {
+        return 10000;
+    }
+    
+    /**
+     * Asserts the <code>expected</code> value for the given <code>part</code> and <code>observable</code> within
+     * a given tolerance range around <code>expected</code>.
+     * 
+     * @param expected the expected value
+     * @param part the system part to check
+     * @param observable the observable to check
+     * @param absTolerance the absolute tolerance in (0-1)
+     */
+    protected void assertValue(double expected, SystemPart part, IObservable observable, double absTolerance) {
+        Double actual = part.getObservedValue(observable);
+        Assert.assertNotNull(actual);
+        double tolerance = expected * absTolerance;
+        Assert.assertTrue(actual + " for " + observable + " not within " + (absTolerance * 100) + "%/" + tolerance 
+            + " tolerance around " + expected + " - " + part, 
+            expected - tolerance <= actual && actual <= expected + tolerance);
+    }
+
+    /**
+     * Asserts that <code>min</code> is less or equal than the value of <code>part</code> and <code>observable</code>.
+     * 
+     * @param min the minimum expected value to pass
+     * @param part the system part to check
+     * @param observable the observable to check
+     */
+    protected void assertGreaterEquals(double min, SystemPart part, IObservable observable) {
+        Double actual = part.getObservedValue(observable);
+        Assert.assertNotNull(actual);
+        Assert.assertTrue("not " + actual + ">=" + min, actual >= min);
+    }
+    
+    /**
+     * Asserts that <code>min</code> is less or equal than the value of <code>part</code> and <code>observable</code>.
+     * 
+     * @param expected the expected value to pass
+     * @param part the system part to check
+     * @param observable the observable to check
+     * @param tolerance the tolerance in comparison
+     */
+    protected void assertEquals(double expected, SystemPart part, IObservable observable, double tolerance) {
+        Double actual = part.getObservedValue(observable);
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected, actual.doubleValue(), tolerance);
+    }
+
+    /**
+     * Returns a pipeline node for a given implementation name.
+     * 
+     * @param name the name
+     * @param pip the pipeline
+     * @param mapping the name mapping (<b>null</b> for no mapping if <code>name</code> is already a logical name)
+     * @param assertExistence assert the existence of the node or not
+     * @return the node
+     */
+    protected PipelineNodeSystemPart getNode(String name, PipelineSystemPart pip, INameMapping mapping, 
+        boolean assertExistence) {
+        String tmp = name;
+        if (null != mapping) {
+            tmp = mapping.getPipelineNodeByImplName(name);
+            Assert.assertNotNull(tmp);
+        }
+        PipelineNodeSystemPart node = pip.getNode(tmp);
+        if (assertExistence) {
+            Assert.assertNotNull(node);
+        }
+        return node;
+    }
+    
+    /**
+     * Returns a pipeline node for a given implementation name.
+     * 
+     * @param name the name
+     * @param pip the pipeline
+     * @param mapping the name mapping (<b>null</b> for no mapping if <code>name</code> is already a logical name)
+     * @param assertExistence assert the existence of the node or not
+     * @return the node
+     */
+    protected PipelineNodeSystemPart getNode(String name, PipelineNodeSystemPart pip, INameMapping mapping, 
+        boolean assertExistence) {
+        String tmp = name;
+        if (null != mapping) {
+            tmp = mapping.getPipelineNodeByImplName(name);
+            Assert.assertNotNull(tmp);
+        }
+        PipelineNodeSystemPart node = pip.getNode(tmp);
+        if (assertExistence) {
+            Assert.assertNotNull(node);
+        }
+        return node;
+    }
+
+    /**
+     * Returns a pipeline node for a given implementation name.
+     * 
+     * @param name the name
+     * @param pip the pipeline
+     * @param mapping the name mapping (<b>null</b> for no mapping if <code>name</code> is already a logical name)
+     * @param assertExistence assert the existence of the node or not
+     * @return the algorithm
+     */
+    protected NodeImplementationSystemPart getAlgorithm(String name, PipelineSystemPart pip, INameMapping mapping, 
+        boolean assertExistence) {
+        String tmp = name;
+        if (null != mapping) {
+            Algorithm alg = mapping.getAlgorithmByImplName(name);
+            Assert.assertNotNull(alg);
+            tmp = alg.getName();
+        }
+        NodeImplementationSystemPart node = pip.getAlgorithm(tmp);
+        if (assertExistence) {
+            Assert.assertNotNull(node);
+        }
+        return node;
+    }
+
 }

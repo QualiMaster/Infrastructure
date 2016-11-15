@@ -51,15 +51,13 @@ public class AlgorithmChangedMonitoringEventHandler extends MonitoringEventHandl
             Algorithm alg = mapping.getAlgorithmByImplName(event.getAlgorithm());
             if (null != alg) {
                 algName = alg.getName();
-            } else {
-                getLogger().warn("cannot map back " + event.getAlgorithm() + " to the configured name. " + mapping);
             }
             PipelineSystemPart pip = state.obtainPipeline(event.getPipeline());
             NodeImplementationSystemPart aPart = pip.getAlgorithm(algName);
             if (null != aPart) {
                 ((PipelineNodeSystemPart) target).setCurrent(aPart);
             } else {
-                getLogger().info("cannot find algorithm '" + event.getAlgorithm() + "': ignoring " + event);
+                getLogger().info("cannot find/map back algorithm '" + event.getAlgorithm() + "': ignoring " + event);
             }
         }
         AlgorithmProfilePredictionManager.notifyAlgorithmChanged(event);

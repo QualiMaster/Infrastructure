@@ -18,13 +18,10 @@ package tests.eu.qualimaster.monitoring.genTopo;
 import org.junit.Assert;
 
 import eu.qualimaster.coordination.INameMapping;
-import eu.qualimaster.coordination.INameMapping.Algorithm;
 import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
-import eu.qualimaster.monitoring.systemState.SystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
-import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.Scalability;
 import eu.qualimaster.observables.TimeBehavior;
 
@@ -87,121 +84,6 @@ public abstract class AbstractHyTopology extends AbstractTopology {
      * @return <code>true</code> for thrift, <code>false</code> else
      */
     protected abstract boolean isThrift();
-    
-    /**
-     * Asserts the <code>expected</code> value for the given <code>part</code> and <code>observable</code> within
-     * a given tolerance range around <code>expected</code>.
-     * 
-     * @param expected the expected value
-     * @param part the system part to check
-     * @param observable the observable to check
-     * @param absTolerance the absolute tolerance in (0-1)
-     */
-    private void assertValue(double expected, SystemPart part, IObservable observable, double absTolerance) {
-        Double actual = part.getObservedValue(observable);
-        Assert.assertNotNull(actual);
-        double tolerance = expected * absTolerance;
-        Assert.assertTrue(actual + " for " + observable + " not within " + (absTolerance * 100) + "%/" + tolerance 
-            + " tolerance around " + expected + " - " + part, 
-            expected - tolerance <= actual && actual <= expected + tolerance);
-    }
-
-    /**
-     * Asserts that <code>min</code> is less or equal than the value of <code>part</code> and <code>observable</code>.
-     * 
-     * @param min the minimum expected value to pass
-     * @param part the system part to check
-     * @param observable the observable to check
-     */
-    private void assertGreaterEquals(double min, SystemPart part, IObservable observable) {
-        Double actual = part.getObservedValue(observable);
-        Assert.assertNotNull(actual);
-        Assert.assertTrue("not " + actual + ">=" + min, actual >= min);
-    }
-    
-    /**
-     * Asserts that <code>min</code> is less or equal than the value of <code>part</code> and <code>observable</code>.
-     * 
-     * @param expected the expected value to pass
-     * @param part the system part to check
-     * @param observable the observable to check
-     * @param tolerance the tolerance in comparison
-     */
-    private void assertEquals(double expected, SystemPart part, IObservable observable, double tolerance) {
-        Double actual = part.getObservedValue(observable);
-        Assert.assertNotNull(actual);
-        Assert.assertEquals(expected, actual.doubleValue(), tolerance);
-    }
-
-    /**
-     * Returns a pipeline node for a given implementation name.
-     * 
-     * @param name the name
-     * @param pip the pipeline
-     * @param mapping the name mapping (<b>null</b> for no mapping if <code>name</code> is already a logical name)
-     * @param assertExistence assert the existence of the node or not
-     * @return the node
-     */
-    private PipelineNodeSystemPart getNode(String name, PipelineSystemPart pip, INameMapping mapping, 
-        boolean assertExistence) {
-        String tmp = name;
-        if (null != mapping) {
-            tmp = mapping.getPipelineNodeByImplName(name);
-            Assert.assertNotNull(tmp);
-        }
-        PipelineNodeSystemPart node = pip.getNode(tmp);
-        if (assertExistence) {
-            Assert.assertNotNull(node);
-        }
-        return node;
-    }
-    
-    /**
-     * Returns a pipeline node for a given implementation name.
-     * 
-     * @param name the name
-     * @param pip the pipeline
-     * @param mapping the name mapping (<b>null</b> for no mapping if <code>name</code> is already a logical name)
-     * @param assertExistence assert the existence of the node or not
-     * @return the node
-     */
-    private PipelineNodeSystemPart getNode(String name, PipelineNodeSystemPart pip, INameMapping mapping, 
-        boolean assertExistence) {
-        String tmp = name;
-        if (null != mapping) {
-            tmp = mapping.getPipelineNodeByImplName(name);
-            Assert.assertNotNull(tmp);
-        }
-        PipelineNodeSystemPart node = pip.getNode(tmp);
-        if (assertExistence) {
-            Assert.assertNotNull(node);
-        }
-        return node;
-    }
-
-    /**
-     * Returns a pipeline node for a given implementation name.
-     * 
-     * @param name the name
-     * @param pip the pipeline
-     * @param mapping the name mapping (<b>null</b> for no mapping if <code>name</code> is already a logical name)
-     * @param assertExistence assert the existence of the node or not
-     * @return the algorithm
-     */
-    private NodeImplementationSystemPart getAlgorithm(String name, PipelineSystemPart pip, INameMapping mapping, 
-        boolean assertExistence) {
-        String tmp = name;
-        if (null != mapping) {
-            Algorithm alg = mapping.getAlgorithmByImplName(name);
-            Assert.assertNotNull(alg);
-            tmp = alg.getName();
-        }
-        NodeImplementationSystemPart node = pip.getAlgorithm(tmp);
-        if (assertExistence) {
-            Assert.assertNotNull(node);
-        }
-        return node;
-    }
     
     /**
      * Returns the name of the test source.

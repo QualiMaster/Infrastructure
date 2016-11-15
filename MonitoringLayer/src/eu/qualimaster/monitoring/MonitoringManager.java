@@ -36,6 +36,7 @@ import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent.Status;
+import eu.qualimaster.infrastructure.PipelineOptions;
 import eu.qualimaster.monitoring.AbstractMonitoringTask.IPiggybackTask;
 import eu.qualimaster.monitoring.ReasoningTask.IReasoningModelProvider;
 import eu.qualimaster.monitoring.ReasoningTask.PhaseReasoningModelProvider;
@@ -97,9 +98,9 @@ public class MonitoringManager {
         | DEMO_MSG_PROCESSING_ALGORITHM // currently the default
         | DEMO_MSG_PROCESSING_ELEMENT; // for init testing
     private static List<URLClassLoader> loaders = new ArrayList<URLClassLoader>();
-
+    private static Map<String, PipelineInfo> pipelines 
+        = Collections.synchronizedMap(new HashMap<String, PipelineInfo>());
     private static ReasoningTask reasoningTask;
-    private static int runningPipelines = 0;
     
     private static IScheduler scheduler = new IScheduler() {
         
@@ -109,6 +110,76 @@ public class MonitoringManager {
         }
 
     };
+    
+    /**
+     * Stores information about a pipeline. This seems to be redundant, but as sub-pipelines are not explicit
+     * part of the {@link SystemState}, we need this information. Moreover, each layer should store information 
+     * on its own in order to be distributable.
+     * 
+     * @author Holger Eichelberger
+     */
+    static class PipelineInfo {
+        private String name;
+        private Status status;
+        private String mainPipeline;
+        
+        /**
+         * Creates a pipeline information object.
+         * 
+         * @param name the name of the pipeline
+         * @param status the execution status
+         * @param mainPipeline the name of the main pipeline indicating a sub-pipeline (may be<b>null</b> or empty
+         *   for a top-level pipeline)
+         */
+        private PipelineInfo(String name, Status status, String mainPipeline) {
+            this.name = name;
+            this.status = status;
+            this.mainPipeline = mainPipeline;
+        }
+
+        /**
+         * Returns the name of the pipeline.
+         * 
+         * @return the name
+         */
+        public String getName() {
+            return name;
+        }
+        
+        /**
+         * Returns the lifecycle status of the pipeline.
+         * 
+         * @return the lifecycle status
+         */
+        public Status getStatus() {
+            return status;
+        }
+        
+        /**
+         * Returns the name of the main pipeline.
+         * 
+         * @return the name, may be <b>null</b> or empty for a top-level pipeline
+         */
+        public String getMainPipeline() {
+            return mainPipeline;
+        }
+        
+        /**
+         * Returns whether this pipeline is a sub-pipeline.
+         * 
+         * @return <code>true</code> for sub-pipeline, <code>false</code> else
+         */
+        public boolean isSubPipeline() {
+            return PipelineOptions.isSubPipeline(mainPipeline);
+        }
+        
+        @Override
+        public String toString() {
+            return "pipeline " + name + " status " + status + " mainPipeline " + mainPipeline 
+                + " isSubPipeline " + isSubPipeline();  
+        }
+        
+    }
 
     /**
      * Prevents external creation.
@@ -244,7 +315,7 @@ public class MonitoringManager {
      */
     private static void handleStarting(PipelineLifecycleEvent event) {
         String pipelineName = event.getPipeline();
-        if (null != pipelineName) {
+        if (null != pipelineName && !isSubPipeline(pipelineName)) {
             for (IMonitoringPlugin plugin : plugins) {
                 handleStarting(event, plugin);
             }
@@ -257,7 +328,9 @@ public class MonitoringManager {
                 }
             }
         } else {
-            System.out.println("Illegal event lifecycle event [STARTING]. Pipeline null!");
+            if (null == pipelineName) {
+                System.out.println("Illegal lifecycle event [STARTING]. Pipeline null!");
+            }
         }
     }
 
@@ -362,7 +435,7 @@ public class MonitoringManager {
      */
     private static void handleStopping(PipelineLifecycleEvent event) {
         String pipelineName = event.getPipeline();
-        if (null != pipelineName) {
+        if (null != pipelineName && !isSubPipeline(pipelineName)) {
             // don't remove the pipeline - keep state
             PipelineSystemPart pipeline = state.getPipeline(pipelineName);
             if (null != pipeline) {
@@ -379,7 +452,9 @@ public class MonitoringManager {
                 } // else ignore
             }
         } else {
-            LOGGER.info("Illegal event lifecycle event [STOPPING]. Pipeline null!");
+            if (null == pipelineName) {
+                LOGGER.info("Illegal lifecycle event [STOPPING]. Pipeline null!");
+            }
         }
     }
 
@@ -402,30 +477,39 @@ public class MonitoringManager {
             if (null == timer) {
                 LOGGER.error("Monitoring Manager not started properly! Call start before!"); 
             } else {
-                switch (event.getStatus()) {
+                String pipelineName = event.getPipeline();
+                Status status = event.getStatus();
+                boolean changeStatus = true;
+                switch (status) {
                 case STARTING:
+                    pipelines.put(pipelineName, new PipelineInfo(pipelineName, status, event.getMainPipeline()));
                     handleStarting(event);
                     break;
                 case STOPPING:
-                    Tracing.logMonitoringData(state, event.getPipeline());
+                    Tracing.logMonitoringData(state, pipelineName);
                     handleStopping(event);
-                    runningPipelines--;
                     break;
                 case STARTED:
-                    runningPipelines++;
                     // fallthrough
                 case STOPPED:
-                    PipelineSystemPart pipeline = state.obtainPipeline(event.getPipeline());
-                    pipeline.changeStatus(event.getStatus(), false, null);
+                    if (!isSubPipeline(pipelineName)) {
+                        PipelineSystemPart pipeline = state.obtainPipeline(pipelineName);
+                        pipeline.changeStatus(status, false, null);
+                    }
                     break;
                 default:
+                    changeStatus = false;
                     // UNKNOWN is the default and shall not be send through a signal
                     // DISAPPEARED, CREATED, INITIALIZED are assigned during monitoring 
                     break;
                 }
+                if (changeStatus) {
+                    setStatus(event.getPipeline(), event.getStatus());
+                }
             }
             
             if (MonitoringConfiguration.isReasoningEnabled()) {
+                int runningPipelines = getRunningPipelinesCount();
                 if (0 == runningPipelines && null != reasoningTask) {
                     reasoningTask.cancel();
                 } else if (runningPipelines > 0 && null == reasoningTask) {
@@ -442,6 +526,54 @@ public class MonitoringManager {
             VolumePredictionManager.notifyPipelineLifecycleChange(event);
         }
         
+    }
+    
+    /**
+     * Returns whether the given pipeline is a sub-pipeline. Use this method rather than 
+     * {@link PipelineLifecycleEvent#isSubPipeline()} as the information in the even depends on the presence of 
+     * pipeline options.
+     * 
+     * @param pipelineName the name of the pipeline
+     * @return <b>true</b> for sub-pipeline, <code>false</code> else
+     */
+    private static boolean isSubPipeline(String pipelineName) {
+        boolean result = false;
+        PipelineInfo info = pipelines.get(pipelineName);
+        if (null != info) {
+            result = info.isSubPipeline();
+        }
+        return result;
+    }
+    
+    /**
+     * Changes the status of the given pipeline removing it from {@link #pipelines} if {@link Status#STOPPED}.
+     * 
+     * @param pipelineName the name of the pipeline
+     * @param status the new status
+     */
+    private static void setStatus(String pipelineName, Status status) {
+        PipelineInfo info = pipelines.get(pipelineName);
+        if (null != info) {
+            info.status = status;
+        }
+        if (Status.STOPPED == status) {
+            pipelines.remove(pipelineName);
+        }
+    }
+    
+    /**
+     * Returns the number of running pipelines.
+     * 
+     * @return the number of running pipelines
+     */
+    private static int getRunningPipelinesCount() {
+        int count = 0;
+        for (PipelineInfo info : pipelines.values()) {
+            if (Status.STARTED == info.getStatus()) {
+                count++;
+            }
+        }
+        return count;
     }
     
     /**

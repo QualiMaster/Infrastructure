@@ -20,6 +20,7 @@ import tests.eu.qualimaster.monitoring.genTopo.GenTopology;
 import tests.eu.qualimaster.monitoring.genTopo.HwTopology;
 import tests.eu.qualimaster.monitoring.genTopo.HwTopologyInt;
 import tests.eu.qualimaster.monitoring.genTopo.ManTopology;
+import tests.eu.qualimaster.monitoring.genTopo.SubTopology;
 import tests.eu.qualimaster.monitoring.genTopo.SwitchTopology;
 import tests.eu.qualimaster.storm.Naming;
 import tests.eu.qualimaster.storm.TestTopology;
@@ -304,6 +305,7 @@ public class StormTest extends AbstractCoordinationTests {
         StormTopology topology = builder.createTopology();
         
         Map<String, TopologyTestInfo> topologies = new HashMap<String, TopologyTestInfo>();
+        topo.registerSubTopologies(topologies);
         topologies.put(topo.getName(), new TopologyTestInfo(topology, 
             new File(Utils.getTestdataDir(), mappingFile), topoCfg));
         env.setTopologies(topologies);
@@ -314,9 +316,10 @@ public class StormTest extends AbstractCoordinationTests {
         getPipelineStatusTracker().waitFor(topo.getName(), Status.STARTED, 30000);
         long pipRunTime = System.currentTimeMillis();
         // mapped to the created family
+        topo.started();
         //Tracing.handleEvent(new AlgorithmProfilingEvent(topo.getName(), "TestFamily", "CorrelationSW", 
         //    AlgorithmProfilingEvent.Status.START));
-        sleep(10000);
+        sleep(topo.plannedExecutionTime());
         EventManager.cleanup();
         // get system state here as otherwise stopping the pipeline may accidentally clear the dynamic part
         // of the state
@@ -509,6 +512,14 @@ public class StormTest extends AbstractCoordinationTests {
         prop.put(MonitoringConfiguration.PATH_DFS, path);
         MonitoringConfiguration.configure(prop, false);
         return result;
+    }
+
+    /**
+     * Tests a topology emulating a generated hardware sub-topology (with sink).
+     */
+    @Test
+    public void testSubTopology() {
+        testTopology(new SubTopology());
     }
 
 }
