@@ -69,7 +69,7 @@ public class ReplaySignalTest {
             if (expected.getStartReplay()) {
                 Assert.assertEquals(expected.getStart(), signal.getStart());
                 Assert.assertEquals(expected.getEnd(), signal.getEnd());
-                Assert.assertEquals(expected.getSpeed(), signal.getSpeed());
+                Assert.assertEquals(expected.getSpeed(), signal.getSpeed(), 0.05);
                 Assert.assertEquals(expected.getQuery(), signal.getQuery());
             }
             receivedSignal = true;
