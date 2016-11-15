@@ -31,4 +31,10 @@ public class Constants {
      * Configuration key set by the infrastructure into the storm pipeline conf if data sources shall do autoconnects.
      */
     public static final String CONFIG_KEY_SOURCE_AUTOCONNECT = "qm.source.autoconnect";
+    
+    /**
+     * Configuration key set by the infrastructure passing the actual initialization mode.
+     */    
+    public static final String CONFIG_KEY_INIT_MODE = "qm.ivml.initMode";
+    
 }
