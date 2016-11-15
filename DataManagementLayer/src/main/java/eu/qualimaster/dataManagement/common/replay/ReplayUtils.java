@@ -53,6 +53,10 @@ public class ReplayUtils {
         return timeValue;
     }
 
+    public static long getTimestampFromResult(String[] hbaseKey) {
+        return Long.parseLong(hbaseKey[hbaseKey.length-1]);
+    }
+
     /***************************************************************************
      * Primitive arrays conversion utilities.
      **************************************************************************/

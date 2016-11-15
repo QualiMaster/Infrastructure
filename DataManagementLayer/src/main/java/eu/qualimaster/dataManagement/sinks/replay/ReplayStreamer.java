@@ -1,12 +1,14 @@
 package eu.qualimaster.dataManagement.sinks.replay;
 
 import eu.qualimaster.dataManagement.DataManager;
+import eu.qualimaster.dataManagement.common.replay.ReplayUtils;
 import eu.qualimaster.dataManagement.common.replay.Tuple;
 import eu.qualimaster.dataManagement.serialization.ISerializer;
 import eu.qualimaster.dataManagement.serialization.SerializerRegistry;
 import eu.qualimaster.dataManagement.storage.AbstractStorageTable;
 import eu.qualimaster.dataManagement.storage.support.IStorageSupport;
 import eu.qualimaster.dataManagement.strategies.IStorageStrategyDescriptor;
+import org.apache.hadoop.hbase.client.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +53,7 @@ public class ReplayStreamer<T> {
     private ISerializer<T> serializer;
     private ReplayDataInput resultWrapper;
     private ExecutorService fetcherThread;
+    private ReplayAggregator aggregator;
 
     public ReplayStreamer(Class<T> cls, Tuple schema, String location, IStorageStrategyDescriptor d) {
         AbstractStorageTable table = DataManager.REPLAY_STORAGE_MANAGER.getTable(location, schema.getName(), d);
@@ -60,6 +63,7 @@ public class ReplayStreamer<T> {
         buffer = new LinkedBlockingQueue<>(100);
         fetcherThread = Executors.newSingleThreadExecutor();
         fetcherThread.submit(new DataFetcher());
+        aggregator = new LastItemAggregator();
     }
 
     /* Need to synchronize the speed set with other thread as well ? */
@@ -67,7 +71,7 @@ public class ReplayStreamer<T> {
         stopFetchingDataThread = true;
         buffer.clear();
         speedFactor = speed;
-        updateQuery();
+        // updateQuery();
         stopFetchingDataThread = false;
     }
 
@@ -204,6 +208,39 @@ public class ReplayStreamer<T> {
             }
         }
     }
+
+    /**
+     * The current aggregation strategy is removing all
+     * but the last item in the stream
+     */
+    private class LastItemAggregator implements ReplayAggregator {
+
+        private long prevTimestamp = 0L;
+
+        @Override
+        public Result aggregate(String[] key, Result item) {
+            Result result = null;
+            if (prevTimestamp == 0)
+                result = item;
+            else {
+                // get the timestamp from the key
+                long timestamp = ReplayUtils.getTimestampFromResult(key);
+                long dev = (timestamp - prevTimestamp) / 1000;
+
+                // Strange case: The items are emitted not in chronological order
+                if (dev < 0) {
+                    LOG.warn("The message are not come in order: "
+                             + timestamp + " < " + prevTimestamp);
+                }
+                if (dev >= speedFactor) {
+                    result = item;
+                }
+                prevTimestamp = timestamp;
+            }
+            return result;
+        }
+    }
+
 
     /** This method is to checked that the null return values of the getData() is caused
      * by some internal error, or by the complete of the data fetch */

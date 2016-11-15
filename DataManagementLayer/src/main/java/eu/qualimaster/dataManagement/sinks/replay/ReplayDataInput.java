@@ -80,6 +80,9 @@ public class ReplayDataInput implements IDataInput, Closeable {
     /* for logging purpose */
     private String queryStr;
 
+    /** Reference to the aggregator */
+    private ReplayAggregator aggregator;
+
     public ReplayDataInput(Tuple schema, IStorageSupport db) {
         if (!(db instanceof HBaseBatchStorageSupport)) {
             throw new RuntimeException("Invalid replay store: "
@@ -110,8 +113,9 @@ public class ReplayDataInput implements IDataInput, Closeable {
         this.db.connect();
     }
 
-    public void updateQuery(String query, Date startDate, Date enDate) {
+    public void updateQuery(String query, Date startDate, Date enDate, ReplayAggregator aggregator) {
         parseQuery(query, startDate, enDate);
+        this.aggregator = aggregator;
         eod = true;
         if (scanner != null)
             scanner.close();
@@ -127,15 +131,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
             isClosed = false;
 
             iter = scanner.iterator();
-            if (iter.hasNext()) {
-                peekedRow = iter.next();
-                eod = false;
-                rowKey = (peekedRow != null) ? new String(peekedRow.getRow(),Charset.forName("UTF-8")).split("-") : null;
-                LOG.info("Fetch internally one data from the scanner: " + peekedRow + ", eod = " + eod);
-            }
-            else {
-                LOG.info("Empty internal result");
-            }
+            _advance();
         } catch (Exception e) {
             LOG.warn("ERROR processing the query " + query, e);
         }
@@ -201,7 +197,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
 
     @Override
     public int nextInt() throws IOException {
-        LOG.info("Check integer at index " + idx + "( name: " + new String(fields[idx],Charset.forName("UTF-8")) + " )");
+        // LOG.info("Check integer at index " + idx + "( name: " + new String(fields[idx],Charset.forName("UTF-8")) + " )");
         if (peekedRow == null) throw new IOException("Corrupted data when reading" +
                 " from Hbase result for query " + queryStr);
         int i = _searchKeyIndex();
@@ -447,23 +443,31 @@ public class ReplayDataInput implements IDataInput, Closeable {
         idx++;
         if (idx == fields.length) {
             // LOG.info("Going to the next item");
-            if (iter.hasNext()) {
-                LOG.info("Iterator still has one more item, fetch it");
-                peekedRow = iter.next();
-                rowKey = (peekedRow != null) ? new String(peekedRow.getRow(), Charset.forName("UTF-8")).split("-") : null;
-                eod = false;
-            }
-            else {
-                LOG.info("The iterator is exhausted. Return null");
-                peekedRow = null;
-                eod = true;
-            }
+            _advance();
             idx = 0;
         }
+    }
+
+    private void _advance() {
+        while (iter.hasNext()) {
+            Result r = iter.next();
+            String[] rKey = (peekedRow != null) ? new String(r.getRow(), Charset.forName("UTF-8")).split("-") : null;
+            Result aggregatedRow = aggregator.aggregate(rKey, r);
+            if (aggregatedRow != null) {
+                peekedRow = aggregatedRow;
+                rowKey = rKey;
+                eod = false;
+                return;
+            }
+        }
+        LOG.info("The iterator is empty exhausted. Return null");
+        peekedRow = null;
+        eod = true;
     }
 
     @Override
     public void close() throws IOException {
         db.disconnect();
     }
+
 }
