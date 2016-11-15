@@ -39,6 +39,7 @@ public class PipelineOptions implements Serializable {
     
     public static final String SEPARATOR = ".";
     public static final String KEY_WORKERS = "numWorkers";
+    public static final String KEY_MAINPIP = "mainPipeline";
     public static final String KEY_PROFILINGMODE = "profilingMode";
     public static final String PREFIX_EXECUTOR = "executor" + SEPARATOR;
     public static final String KEY_WAIT_TIME = "waitTime";
@@ -123,6 +124,35 @@ public class PipelineOptions implements Serializable {
      */
     public PipelineOptions(PipelineOptions opts) {
         this.options.putAll(opts.options);
+    }
+    
+    /**
+     * Marks the related pipeline as loosely integrated sub-pipeline.
+     * 
+     * @param mainPipeline the name of the main pipeline
+     */
+    public void markAsSubPipeline(String mainPipeline) {
+        options.put(KEY_MAINPIP, mainPipeline);
+    }
+
+    /**
+     * Returns whether this pipeline is marked as a loosely integrated sub-pipeline.
+     * 
+     * @return <code>true</code> for sub-pipeline, <code>false</code> else
+     * @see PipelineOptions#markAsSubPipeline(String)
+     */
+    public boolean isSubPipeline() {
+        return isSubPipeline(getMainPipeline());
+    }
+    
+    /**
+     * Returns the name of the main pipeline in case of a sub pipeline.
+     * 
+     * @return the name of the main pipeline, if not a sub-pipeline empty or <b>null</b>
+     * @see PipelineOptions#markAsSubPipeline(String)
+     */
+    public String getMainPipeline() {
+        return getStringValue(options.get(KEY_MAINPIP), null);
     }
 
     /**
@@ -855,6 +885,26 @@ public class PipelineOptions implements Serializable {
      */
     public static int getNumberOfWorkers(@SuppressWarnings("rawtypes") Map map, int dflt) {
         return getIntValue(map.get(KEY_WORKERS), dflt);
+    }
+    
+    /**
+     * In case of a sub-pipeline, the name of the including main pipeline.
+     * 
+     * @param map the map (Storm conf) containing the name-value binding
+     * @return the name of the main pipeline, may be <b>null</b> or empty if this is not a sub-pipeline
+     */
+    public static String getMainPipeline(@SuppressWarnings("rawtypes") Map map) {
+        return getStringValue(map.get(KEY_MAINPIP), null);
+    }
+    
+    /**
+     * Returns whether a pipeline based on its <code>mainPipeline</code> is a sub-pipeline.
+     * 
+     * @param mainPipeline the main-pipeline
+     * @return <code>true</code> for sub-pipeline, <code>false</code> else
+     */
+    public static boolean isSubPipeline(String mainPipeline) {
+        return null != mainPipeline && mainPipeline.length() > 0;
     }
     
     /**

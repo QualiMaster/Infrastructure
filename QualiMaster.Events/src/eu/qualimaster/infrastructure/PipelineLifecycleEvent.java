@@ -209,6 +209,25 @@ public class PipelineLifecycleEvent extends InfrastructureEvent {
     public PipelineLifecycleEvent(PipelineLifecycleEvent event, Status status) {
         this(event, status, event.options);
     }
+    
+    /**
+     * Returns whether the underlying pipeline is marked as a sub-pipeline. 
+     * 
+     * @return the sub-pipeline status through given pipeline options, <code>false</code> else
+     */
+    public boolean isSubPipeline() {
+        return null == options ? false : options.isSubPipeline();
+    }
+
+    /**
+     * Returns the name of the main pipeline in case of a sub pipeline.
+     * 
+     * @return the name of the main pipeline, if not a sub-pipeline empty or <b>null</b>
+     * @see #isSubPipeline()
+     */
+    public String getMainPipeline() {
+        return null == options ? null : options.getMainPipeline();
+    }
 
     /**
      * Returns the causing sender id for sending return events at a certain lifecycle status.
