@@ -291,7 +291,7 @@ public class Cli {
                         if (args.length >= 9) {
                             Date from = parseDate(args[5], "from");
                             Date to = parseDate(args[6], "to");
-                            int speed = parseInt(args[7], "speed");
+                            float speed = parseFloat(args[7], "speed");
                             String query = "";
                             for (int i = 8; i < args.length; i++) {
                                 if (query.length() > 0) {
@@ -316,6 +316,23 @@ public class Cli {
             }
         }
 
+        /**
+         * Parses a float value throwing an exception containing <code>argName</code> in case of
+         * failures.
+         * 
+         * @param text the text to parse
+         * @param argName the argument name
+         * @return the value
+         * @throws NumberFormatException in case that parsing is not possible
+         */
+        private float parseFloat(String text, String argName) throws NumberFormatException {
+            try {
+                return Float.parseFloat(text);
+            } catch (NumberFormatException e) {
+                throw new NumberFormatException("Parsing " + argName + ": " + e.getMessage());
+            }
+        }
+        
         /**
          * Parses an int value throwing an exception containing <code>argName</code> in case of
          * failures.
