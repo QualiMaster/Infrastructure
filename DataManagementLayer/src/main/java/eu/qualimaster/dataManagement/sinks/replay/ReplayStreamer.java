@@ -154,7 +154,7 @@ public class ReplayStreamer<T> {
             LOG.warn("The streamer is not ready. Set the parameters first !!");
             return;
         }
-        resultWrapper.updateQuery(query, startDate, endDate);
+        resultWrapper.updateQuery(query, startDate, endDate, aggregator);
     }
 
     /* It's dangerous to override this class */
