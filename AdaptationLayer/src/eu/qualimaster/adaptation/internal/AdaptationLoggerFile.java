@@ -51,6 +51,13 @@ public class AdaptationLoggerFile implements IAdaptationLogger {
 
     @Override
     public void startAdaptation(AdaptationEvent event, FrozenSystemState state) {
+        if(event == null || state == null){
+            System.out.println("ERROR: null AdaptationEvent or FrozenSystemState" +
+            		" in startAdaptation() method, could not write in the " +
+            		"adaptation log.");
+            return;
+        }
+        
         // create a new adaptation unit
         this.currentAdaptation = new AdaptationUnit();
         this.currentAdaptation.setStartTime(System.currentTimeMillis());
@@ -62,18 +69,34 @@ public class AdaptationLoggerFile implements IAdaptationLogger {
 
     @Override
     public void executedStrategy(String name, boolean successful) {
+        if(name == null){
+            System.out.println("ERROR: null name in executedStrategy() method, " +
+            		"could not write in the adaptation log.");
+            return;
+        }
+        
         this.currentAdaptation.setStrategy(name);
         this.currentAdaptation.setStrategySuccess(successful);
     }
 
     @Override
     public void executedTactic(String name, boolean successful) {
+        if(name == null){
+            System.out.println("ERROR: null name in executedTactic() method, " +
+                    "could not write in the adaptation log.");
+            return;
+        }
         this.currentAdaptation.setTactic(name);
         this.currentAdaptation.setTacticSuccess(successful);
     }
 
     @Override
     public void enacting(CoordinationCommand command) {
+        if(command == null){
+            System.out.println("ERROR: null CoordinationCommand in enacting()" +
+            		" method, could not write in the adaptation log.");
+            return;
+        }
         this.currentAdaptation.setMessage(command.getMessageId());
     }
 
@@ -88,6 +111,12 @@ public class AdaptationLoggerFile implements IAdaptationLogger {
 
     @Override
     public void enacted(CoordinationCommand command, CoordinationCommandExecutionEvent event) {
+        if(command == null || event == null){
+            System.out.println("ERROR: null CoordinationCommand or CoordinationCommandExecutionEvent" +
+                    " in enacted() method, could not write in the adaptation log.");
+            return;
+        }
+        
         // get the corresponding adaptation unit via the message id
         Long endTime = System.currentTimeMillis();
         AdaptationUnit unit = this.adaptationsMap.get(command.getMessageId());
