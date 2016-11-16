@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.INameMapping.Algorithm;
 import eu.qualimaster.coordination.INameMapping.Component;
@@ -248,13 +247,11 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
      * @param status the new status
      * @param checkNotify whether the infrastructure shall be notified about this new state; for received 
      *     infrastructure events this method must be called with <code>false</code> 
-     * @param adaptationFilter the adaptation filter for the pipeline, <b>null</b> if there is no adaptation filter
      * @return <code>true</code> if the new status was accepted and the pipeline status was changed, 
      *   <code>false</code> else
      */
-    public boolean changeStatus(PipelineLifecycleEvent.Status status, boolean checkNotify, 
-        Class<? extends AdaptationEvent> adaptationFilter) {
-        return changeStatus(status, checkNotify, adaptationFilter, null);
+    public boolean changeStatus(PipelineLifecycleEvent.Status status, boolean checkNotify) {
+        return changeStatus(status, checkNotify, null);
     }
     
     /**
@@ -263,13 +260,12 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
      * @param status the new status
      * @param checkNotify whether the infrastructure shall be notified about this new state; for received 
      *     infrastructure events this method must be called with <code>false</code> 
-     * @param adaptationFilter the adaptation filter for the pipeline, <b>null</b> if there is no adaptation filter
      * @param cause optional cause to set the current sender/messageId, may be <b>null</b>
      * @return <code>true</code> if the new status was accepted and the pipeline status was changed, 
      *   <code>false</code> else
      */
     public boolean changeStatus(PipelineLifecycleEvent.Status status, boolean checkNotify, 
-        Class<? extends AdaptationEvent> adaptationFilter, PipelineLifecycleEvent cause) {
+        PipelineLifecycleEvent cause) {
         if (null != cause) {
             currentOrigin.setMessageId(cause.getCauseMessageId());
             currentOrigin.setSenderId(cause.getCauseSenderId());
@@ -289,11 +285,11 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
                 lastStateChange = System.currentTimeMillis();
             }
             if (notifyNewStatus) {
-                // not full pipeline options here for now, just transport relevant information
-                // possible - store pipelineOptions completely in PipelineInfo and remove passing adaptationFilter
-                PipelineOptions opts = new PipelineOptions(adaptationFilter);
+                PipelineOptions opts = new PipelineOptions();
                 PipelineInfo info = MonitoringManager.getPipelineInfo(getName());
-                opts.markAsSubPipeline(info.getMainPipeline());
+                if (null != info) {
+                    opts.merge(info.getOptions());
+                }
                 EventManager.send(new PipelineLifecycleEvent(getName(), this.status, opts, currentOrigin));
             }
         }

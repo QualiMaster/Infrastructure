@@ -20,7 +20,6 @@ import java.util.TimerTask;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.common.monitoring.MonitoringPluginRegistry;
 import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.coordination.INameMapping;
@@ -122,7 +121,7 @@ public class MonitoringManager {
     public static class PipelineInfo {
         private String name;
         private Status status;
-        private String mainPipeline;
+        private PipelineOptions options;
         private List<PipelineInfo> subPipelines = new ArrayList<PipelineInfo>();
         
         /**
@@ -130,13 +129,12 @@ public class MonitoringManager {
          * 
          * @param name the name of the pipeline
          * @param status the execution status
-         * @param mainPipeline the name of the main pipeline indicating a sub-pipeline (may be<b>null</b> or empty
-         *   for a top-level pipeline)
+         * @param options the pipeline options
          */
-        private PipelineInfo(String name, Status status, String mainPipeline) {
+        private PipelineInfo(String name, Status status, PipelineOptions options) {
             this.name = name;
             this.status = status;
-            this.mainPipeline = mainPipeline;
+            this.options = options;
             PipelineInfo parent = getMainPipelineInfo();
             if (null != parent) {
                 parent.addSubPipeline(this);
@@ -184,7 +182,7 @@ public class MonitoringManager {
         private PipelineInfo getMainPipelineInfo() {
             PipelineInfo result = null;
             if (isSubPipeline()) {
-                result = pipelines.get(mainPipeline);
+                result = pipelines.get(getMainPipeline());
             }
             return result;
         }
@@ -213,7 +211,7 @@ public class MonitoringManager {
          * @return the name, may be <b>null</b> or empty for a top-level pipeline
          */
         public String getMainPipeline() {
-            return mainPipeline;
+            return options.getMainPipeline();
         }
         
         /**
@@ -222,7 +220,16 @@ public class MonitoringManager {
          * @return <code>true</code> for sub-pipeline, <code>false</code> else
          */
         public boolean isSubPipeline() {
-            return PipelineOptions.isSubPipeline(mainPipeline);
+            return options.isSubPipeline();
+        }
+        
+        /**
+         * Returns the pipeline options.
+         * 
+         * @return the pipeline options
+         */
+        public PipelineOptions getOptions() {
+            return options;
         }
         
         /**
@@ -236,8 +243,8 @@ public class MonitoringManager {
         
         @Override
         public String toString() {
-            return "pipeline " + name + " status " + status + " mainPipeline " + mainPipeline 
-                + " isSubPipeline " + isSubPipeline();  
+            return "pipeline " + name + " status " + status + " mainPipeline " + getMainPipeline()
+                + " isSubPipeline " + isSubPipeline() + " options " + options;  
         }
         
     }
@@ -381,7 +388,7 @@ public class MonitoringManager {
                 handleStarting(event, plugin);
             }
             PipelineSystemPart pipeline = state.obtainPipeline(pipelineName); // cache pipeline
-            pipeline.changeStatus(PipelineLifecycleEvent.Status.STARTING, false, null, event);
+            pipeline.changeStatus(PipelineLifecycleEvent.Status.STARTING, false, event);
             List<MonitoringEvent> evt = deferred.remove(pipelineName);
             if (null != evt) {
                 for (int e = 0; e < evt.size(); e++) {
@@ -403,7 +410,6 @@ public class MonitoringManager {
     private static void handleStarting(PipelineLifecycleEvent event, IMonitoringPlugin plugin) {
         Map<String, AbstractMonitoringTask> pluginTasks = tasks.get(plugin);
         String pipelineName = event.getPipeline();
-        Class<? extends AdaptationEvent> adaptationFilter = event.getAdaptationFilter();
         boolean createTask = true;
         if (null != pluginTasks) {
             AbstractMonitoringTask mTask = pluginTasks.get(pipelineName);
@@ -422,8 +428,7 @@ public class MonitoringManager {
             } // pipeline monitoring not enabled - do it now
         }
         if (createTask) {
-            AbstractContainerMonitoringTask task = plugin.createPipelineTask(pipelineName, state, 
-                adaptationFilter);
+            AbstractContainerMonitoringTask task = plugin.createPipelineTask(pipelineName, state);
             if (null != task) {
                 task.add(new TracingTask(task));
                 if (null == pluginTasks) {
@@ -498,7 +503,7 @@ public class MonitoringManager {
             // don't remove the pipeline - keep state
             PipelineSystemPart pipeline = state.getPipeline(pipelineName);
             if (null != pipeline) {
-                pipeline.changeStatus(PipelineLifecycleEvent.Status.STOPPING, false, null, event);
+                pipeline.changeStatus(PipelineLifecycleEvent.Status.STOPPING, false, event);
             }
             for (IMonitoringPlugin plugin : plugins) {
                 Map<String, AbstractMonitoringTask> pluginTasks = tasks.get(plugin);
@@ -538,7 +543,7 @@ public class MonitoringManager {
                 Status status = event.getStatus();
                 switch (status) {
                 case STARTING:
-                    pipelines.put(pipelineName, new PipelineInfo(pipelineName, status, event.getMainPipeline()));
+                    pipelines.put(pipelineName, new PipelineInfo(pipelineName, status, event.getOptions()));
                     handleStarting(event);
                     break;
                 case STOPPING:

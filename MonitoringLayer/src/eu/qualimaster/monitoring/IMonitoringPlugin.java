@@ -1,6 +1,5 @@
 package eu.qualimaster.monitoring;
 
-import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.monitoring.systemState.SystemState;
 
 /**
@@ -26,11 +25,9 @@ public interface IMonitoringPlugin {
      * 
      * @param componentName the name of the component to create the task for
      * @param state the system state to be modified due to monitoring
-     * @param adaptationFilter the adaptation filter, <b>null</b> if there is none
      * @return the monitoring task or <b>null</b> if no monitoring shall happen
      */
-    public AbstractContainerMonitoringTask createPipelineTask(String componentName, SystemState state, 
-        Class<? extends AdaptationEvent> adaptationFilter);
+    public AbstractContainerMonitoringTask createPipelineTask(String componentName, SystemState state);
 
     /**
      * Creates a cluster monitoring task for monitoring on cluster level.

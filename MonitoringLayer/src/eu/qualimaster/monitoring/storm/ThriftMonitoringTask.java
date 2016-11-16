@@ -14,7 +14,6 @@ import org.apache.log4j.Logger;
 import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.thrift7.TException;
 
-import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.coordination.HostPort;
 import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.TaskAssignment;
@@ -67,7 +66,6 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
     private String pipeline;
     private Set<String> topologyNames = new HashSet<String>();
     private StormConnection connection;
-    private Class<? extends AdaptationEvent> adaptationFilter;
 
     /**
      * Creates the monitoring task.
@@ -75,14 +73,11 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
      * @param pipeline the pipeline name
      * @param connection the Storm connection
      * @param state the system state to be modified due to monitoring
-     * @param adaptationFilter the adaptation filter, may be <b>null</b> if there is none
      */
-    ThriftMonitoringTask(String pipeline, StormConnection connection, SystemState state, 
-        Class<? extends AdaptationEvent> adaptationFilter) {
+    ThriftMonitoringTask(String pipeline, StormConnection connection, SystemState state) {
         super(state);
         this.pipeline = pipeline;
         this.connection = connection;
-        this.adaptationFilter = adaptationFilter;
         INameMapping mapping = MonitoringManager.getNameMapping(pipeline);
         if (null != mapping) {
             topologyNames.addAll(mapping.getPipelineNames());
@@ -114,7 +109,7 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
                 Collection<PipelineSystemPart> pipelines = getState().getPipelines();
                 for (PipelineSystemPart pipeline : pipelines) {
                     if (!modified.contains(pipeline) && pipeline.getStatus().wasStarted()) {
-                        pipeline.changeStatus(PipelineLifecycleEvent.Status.DISAPPEARED, true, adaptationFilter);
+                        pipeline.changeStatus(PipelineLifecycleEvent.Status.DISAPPEARED, true);
                     }
                 }
             } catch (TException e) {
@@ -197,7 +192,7 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
         if (PipelineLifecycleEvent.Status.INITIALIZED == part.getStatus() && !DataManager.isStarted()) {
             if (System.currentTimeMillis() - part.getLastStateChange() // TODO WORKAROUND FOR DML 
                 > MonitoringConfiguration.getPipelineStartNotificationDelay()) {
-                part.changeStatus(PipelineLifecycleEvent.Status.STARTED, true, adaptationFilter);
+                part.changeStatus(PipelineLifecycleEvent.Status.STARTED, true);
             }
         }
         return part;
@@ -299,12 +294,12 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
                     + executors.size() + " " + executorRunningCount + " event received " + eventsReceived + " " 
                     + nonInternalCount + " " + nonInternalRunningCount);
                 if (executors.size() == executorRunningCount || nonInternalCount == nonInternalRunningCount) {
-                    part.changeStatus(PipelineLifecycleEvent.Status.CREATED, true, adaptationFilter);
+                    part.changeStatus(PipelineLifecycleEvent.Status.CREATED, true);
                     createdChanged = true;
                 }
             } 
             if (!createdChanged && allInitialized && PipelineLifecycleEvent.Status.CREATED == part.getStatus()) {
-                part.changeStatus(PipelineLifecycleEvent.Status.INITIALIZED, true, adaptationFilter);
+                part.changeStatus(PipelineLifecycleEvent.Status.INITIALIZED, true);
             }
         } else {
             LOGGER.error("no mapping for " + topology.get_name());

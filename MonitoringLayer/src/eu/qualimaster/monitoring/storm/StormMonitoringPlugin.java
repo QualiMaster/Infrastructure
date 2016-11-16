@@ -1,6 +1,5 @@
 package eu.qualimaster.monitoring.storm;
 
-import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.monitoring.AbstractClusterMonitoringTask;
 import eu.qualimaster.monitoring.AbstractContainerMonitoringTask;
 import eu.qualimaster.monitoring.IMonitoringPlugin;
@@ -30,9 +29,8 @@ public class StormMonitoringPlugin implements IMonitoringPlugin {
     }
 
     @Override
-    public AbstractContainerMonitoringTask createPipelineTask(String pipeline, SystemState state, 
-        Class<? extends AdaptationEvent> adaptationFilter) {
-        return new ThriftMonitoringTask(pipeline, connection, state, adaptationFilter);
+    public AbstractContainerMonitoringTask createPipelineTask(String pipeline, SystemState state) {
+        return new ThriftMonitoringTask(pipeline, connection, state);
     }
     
     @Override
