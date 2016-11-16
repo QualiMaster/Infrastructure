@@ -42,7 +42,12 @@ public class EventTests {
         
         StartupAdaptationEvent sEvt = new StartupAdaptationEvent("pip");
         Assert.assertEquals("pip", sEvt.getPipeline());
-        
+        Assert.assertEquals("", sEvt.getMainPipeline());
+
+        sEvt = new StartupAdaptationEvent("pip", "mainPip");
+        Assert.assertEquals("pip", sEvt.getPipeline());
+        Assert.assertEquals("mainPip", sEvt.getMainPipeline());
+
         PipelineLifecycleEvent pEvt = new PipelineLifecycleEvent("pip", Status.CHECKING, null);
         CheckBeforeStartupAdaptationEvent cEvt = new CheckBeforeStartupAdaptationEvent(pEvt);
         Assert.assertEquals("pip", cEvt.getPipeline());

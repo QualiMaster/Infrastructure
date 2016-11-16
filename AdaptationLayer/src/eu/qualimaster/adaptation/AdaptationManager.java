@@ -116,7 +116,7 @@ public class AdaptationManager {
             case CREATED:
                 AdaptationEventQueue.setAdaptationFilter(event.getPipeline(), event.getAdaptationFilter());
                 // individually initialized algorithms will cause the switch to INITIALIZED in Thrift Monitoring
-                handleEvent(new StartupAdaptationEvent(event.getPipeline()));
+                handleEvent(new StartupAdaptationEvent(event.getPipeline(), event.getMainPipeline()));
                 break;
             case STARTED:
                 synchronized (activePipelines) {
