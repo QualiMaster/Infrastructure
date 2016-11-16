@@ -348,21 +348,31 @@ public class RepositoryConnector {
             update = !modelExists;
         }
         if (update) {
+            boolean unpack = true;
             if (modelExists) {
-                FileUtils.deleteDirectory(modelPathF);
-            }
-            modelPathF.mkdirs();
-            File artifact = obtainArtifact(artifactSpec, "infrastructure_model", ".jar");
-            if (null == artifact) {
-                String tmp = CoordinationConfiguration.getLocalConfigModelArtifactLocation();
-                if (null != tmp && !CoordinationConfiguration.isEmpty(tmp)) {
-                    artifact = new File(tmp);
+                if (Utils.canDelete(modelPathF)) {
+                    FileUtils.deleteDirectory(modelPathF);
                 } else {
-                    getLogger().info("Local config model artifact location not available as fallback.");
+                    unpack = false;
+                    getLogger().info("Cannot delete model in " + modelPathF + " due to file system permissions. "
+                        + "Trying to reuse existing model.");
                 }
             }
-            Utils.unjar(artifact, modelPath);
-            getLogger().info("Unpacked infrastructure model into " + modelPath);
+            if (unpack) {
+                modelPathF.mkdirs();
+                Utils.setDefaultPermissions(modelPathF);
+                File artifact = obtainArtifact(artifactSpec, "infrastructure_model", ".jar");
+                if (null == artifact) {
+                    String tmp = CoordinationConfiguration.getLocalConfigModelArtifactLocation();
+                    if (null != tmp && !CoordinationConfiguration.isEmpty(tmp)) {
+                        artifact = new File(tmp);
+                    } else {
+                        getLogger().info("Local config model artifact location not available as fallback.");
+                    }
+                }
+                Utils.unjar(artifact, modelPath);
+                getLogger().info("Unpacked infrastructure model into " + modelPath);
+            }
         }
     }
     

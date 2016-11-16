@@ -87,9 +87,43 @@ public class Utils {
                 } while (readCount > 0);
                 fos.close();
                 is.close();
+                setDefaultPermissions(f);
             }
             jar.close();
         }
+    }
+    
+    /**
+     * Sets the default permissions for unpacked files.
+     * 
+     * @param file the file to set the permissions for
+     */
+    public static void setDefaultPermissions(File file) {
+        file.setWritable(true); // for TSI installation
+        file.setReadable(true); // for TSI installation
+    }
+    
+    /**
+     * Returns whether we can delete <code>file</code>, i.e., a single file or an entire directory with 
+     * all contained files.
+     * 
+     * @param file the file to check
+     * @return <code>true</code> if deletion is possible, <code>false</code> else
+     */
+    public static boolean canDelete(File file) {
+        boolean canDelete = file.canRead() && file.canWrite();
+        if (canDelete && file.isDirectory()) {
+            File[] contained = file.listFiles();
+            if (null != contained) {
+                for (File f : contained) {
+                    canDelete = canDelete(f);
+                    if (canDelete) {
+                        break;
+                    }
+                }
+            }
+        }
+        return canDelete;
     }
     
     /**
