@@ -45,6 +45,9 @@ public class VolumePredictionManager {
 
     /** Indicates the status of the component */
     private static String status = "idle";
+    
+    /** Used to print error messages only once for the same pipeline. */
+    private static HashSet<String> pipelinesWithErrors = new HashSet<>();
 
     /**
      * Initializes the volume predictor for a given source (either Spring or
@@ -69,10 +72,14 @@ public class VolumePredictionManager {
         VolumePredictor predictor = volumePredictors.get(source);
         if (predictor != null)
             predictor.initialize(monitoredTerms, blindTerms, path);
-        else
-            System.out
-                    .println("ERROR: no volume predictor available for the input source"
-                            + source);
+        else{
+            if (!pipelinesWithErrors.contains(source)){
+                System.out
+                .println(" "
+                        + source);
+                pipelinesWithErrors.add(source);
+            }
+        }   
     }
 
     /**
@@ -81,17 +88,20 @@ public class VolumePredictionManager {
      * 
      * @param source the source containing the term
      * @param term the term whose volume has to be predicted
-     * @return the predicted volume of the term; -1 if a model with historcal
+     * @return the predicted volume of the term; -1 if a model with historical
      *         data for the input term is not available.
      */
     public static double predictBlindly(String source, String term) {
         VolumePredictor predictor = volumePredictors.get(source);
         if (predictor != null)
             return predictor.predictBlindly(term);
-        else {
-            System.out
-                    .println("ERROR: no volume predictor available for the input source"
-                            + source);
+        else{
+            if (!pipelinesWithErrors.contains(source)){
+                System.out
+                .println("ERROR: no volume predictor available for the input source "
+                        + source);
+                pipelinesWithErrors.add(source);
+            }
             return -1;
         }
     }
@@ -114,10 +124,14 @@ public class VolumePredictionManager {
         VolumePredictor predictor = volumePredictors.get(source);
         if (predictor != null)
             predictor.updatePrediction();
-        else
-            System.out
-                    .println("ERROR: no volume predictor available for the input source"
-                            + source);
+        else{
+            if (!pipelinesWithErrors.contains(source)){
+                System.out
+                .println("ERROR: no volume predictor available for the input source "
+                        + source);
+                pipelinesWithErrors.add(source);
+            }
+        } 
     }
 
     /**
@@ -132,10 +146,14 @@ public class VolumePredictionManager {
         VolumePredictor predictor = volumePredictors.get(source);
         if (predictor != null)
             predictor.addMonitoredTerm(term);
-        else
-            System.out
-                    .println("ERROR: no volume predictor available for the input source"
-                            + source);
+        else{
+            if (!pipelinesWithErrors.contains(source)){
+                System.out
+                .println("ERROR: no volume predictor available for the input source "
+                        + source);
+                pipelinesWithErrors.add(source);
+            }
+        }     
     }
 
     /**
@@ -149,10 +167,14 @@ public class VolumePredictionManager {
         VolumePredictor predictor = volumePredictors.get(source);
         if (predictor != null)
             predictor.removeMonitoredTerm(term);
-        else
-            System.out
-                    .println("ERROR: no volume predictor available for the input source"
-                            + source);
+        else{
+            if (!pipelinesWithErrors.contains(source)){
+                System.out
+                .println("ERROR: no volume predictor available for the input source "
+                        + source);
+                pipelinesWithErrors.add(source);
+            }
+        }
     }
 
     /**
@@ -165,10 +187,14 @@ public class VolumePredictionManager {
         VolumePredictor predictor = volumePredictors.get(source);
         if (predictor != null)
             predictor.addBlindTerm(term);
-        else
-            System.out
-                    .println("ERROR: no volume predictor available for the input source"
-                            + source);
+        else{
+            if (!pipelinesWithErrors.contains(source)){
+                System.out
+                .println("ERROR: no volume predictor available for the input source "
+                        + source);
+                pipelinesWithErrors.add(source);
+            }
+        }
     }
 
     /**
@@ -182,10 +208,14 @@ public class VolumePredictionManager {
         VolumePredictor predictor = volumePredictors.get(source);
         if (predictor != null)
             predictor.removeBlindTerm(term);
-        else
-            System.out
-                    .println("ERROR: no volume predictor available for the input source"
-                            + source);
+        else{
+            if (!pipelinesWithErrors.contains(source)){
+                System.out
+                .println("ERROR: no volume predictor available for the input source "
+                        + source);
+                pipelinesWithErrors.add(source);
+            }
+        }
     }
 
     /**
@@ -307,10 +337,14 @@ public class VolumePredictionManager {
                 .getPipelineElement());
         if (predictor != null)
             predictor.handlePredictionStep(event.getObservations());
-        else
-            System.out
-                    .println("ERROR: no volume predictor available for the input source"
-                            + event.getPipelineElement());
+        else{
+            if (!pipelinesWithErrors.contains(event.getPipelineElement())){
+                System.out
+                .println("ERROR: no volume predictor available for the input source "
+                        + event.getPipelineElement());
+                pipelinesWithErrors.add(event.getPipelineElement());
+            }
+        }
         status = "ready";
     }
 
@@ -347,6 +381,7 @@ public class VolumePredictionManager {
     public static void stop() {
         EventManager.unregister(HISTORICAL_DATA_REGISTRATION_EVENT_HANDLER);
         EventManager.unregister(SOURCE_VOLUME_PREDICTION_REQUEST_HANDLER);
+        pipelinesWithErrors.clear();
     }
 
     /**
@@ -379,10 +414,14 @@ public class VolumePredictionManager {
                 .getPipelineElement());
         if (predictor != null)
             predictor.handlePredictionStep(event.getObservations());
-        else
-            System.out
-                    .println("ERROR: no volume predictor available for the input source"
-                            + event.getPipelineElement());
+        else{
+            if (!pipelinesWithErrors.contains(event.getPipelineElement())){
+                System.out
+                .println("ERROR: no volume predictor available for the input source "
+                        + event.getPipelineElement());
+                pipelinesWithErrors.add(event.getPipelineElement());
+            }
+        }
     }
 
     /**
