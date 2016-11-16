@@ -1,5 +1,7 @@
 package eu.qualimaster.coordination.commands;
 
+import eu.qualimaster.coordination.CoordinationExecutionCode;
+
 /**
  * Represents an execution result.
  * 
@@ -49,6 +51,32 @@ public class CoordinationExecutionResult {
      */
     public String getMessage() {
         return message;
+    }
+    
+    /**
+     * Returns whether iterative execution shall fail if this execution result is seen.
+     * Must implement {@link #merge(CoordinationExecutionResult)} accordingly.
+     * 
+     * @return <code>true</code> continue, <code>false</code> else
+     */
+    public boolean continueIteration() {
+        return code == CoordinationExecutionCode.SIGNAL_SENDING_ERROR;
+    }
+    
+    /**
+     * Merges two execution results.
+     * 
+     * @param result the other result
+     * @return the merged result
+     */
+    public CoordinationExecutionResult merge(CoordinationExecutionResult result) {
+        return new CoordinationExecutionResult(result.getCommand(), result.getMessage()
+            + ", " + getMessage(), result.getCode());
+    }
+    
+    @Override
+    public String toString() {
+        return "[" + message + " " + code + " " + command + "]"; 
     }
 
 }

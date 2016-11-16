@@ -8,8 +8,7 @@ package eu.qualimaster.coordination;
 public class CoordinationExecutionCode {
 
     public static final int SUCCESSFUL = 0;
-    public static final int NO_SIGNAL_RECEIVER = 1;
-    public static final int NO_SIGNAL_SENDING_ERROR = 2;
+    public static final int SIGNAL_SENDING_ERROR = 1;
 
     public static final int STARTING_PIPELINE = 3;
     public static final int STOPPING_PIPELINE = 4;

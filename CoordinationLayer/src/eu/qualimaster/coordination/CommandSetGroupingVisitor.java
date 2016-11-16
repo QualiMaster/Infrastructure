@@ -49,7 +49,7 @@ import eu.qualimaster.coordination.commands.UpdateCommand;
 class CommandSetGroupingVisitor implements ICoordinationCommandVisitor {
 
     private Map<String, CommandGroup> groups = new HashMap<String, CommandGroup>();
-    private CoordinationCommandExecutionVisitor executor;
+    private AbstractCoordinationCommandExecutionVisitor executor;
     
     /**
      * Stores information about a group of commands for the same pipeline element.
@@ -154,10 +154,10 @@ class CommandSetGroupingVisitor implements ICoordinationCommandVisitor {
                 CommandGroup group = groups.get(key);
                 if (null != group) {
                     if (1 == group.algCmds.size()) {
-                        executor.handleAlgorithmChange(group.algCmds.get(0), group.parameterChanges(false));
+                        result = executor.handleAlgorithmChange(group.algCmds.get(0), group.parameterChanges(false));
                         groups.remove(key);
                     } else if (0 == group.algCmds.size()) {
-                        executor.handleParameterChange(group.paramCmds.get(0), group.parameterChanges(true));
+                        result = executor.handleParameterChange(group.paramCmds.get(0), group.parameterChanges(true));
                         groups.remove(key);
                     } else {
                         groups.put(key, null); // mark as non-groupable
@@ -191,7 +191,7 @@ class CommandSetGroupingVisitor implements ICoordinationCommandVisitor {
      * 
      * @param executor the executor
      */
-    void setExecutor(CoordinationCommandExecutionVisitor executor) {
+    void setExecutor(AbstractCoordinationCommandExecutionVisitor executor) {
         this.executor = executor;
     }
     

@@ -45,7 +45,7 @@ import eu.qualimaster.coordination.commands.UpdateCommand;
 public class CommandSequenceGroupingVisitor implements ICoordinationCommandVisitor {
 
     private String key;
-    private CoordinationCommandExecutionVisitor executor;
+    private AbstractCoordinationCommandExecutionVisitor executor;
     private AlgorithmChangeCommand algCmd;
     private List<ParameterChangeCommand<?>> paramCmds = new ArrayList<ParameterChangeCommand<?>>();
     
@@ -54,7 +54,7 @@ public class CommandSequenceGroupingVisitor implements ICoordinationCommandVisit
      * 
      * @param executor the executor
      */
-    void setExecutor(CoordinationCommandExecutionVisitor executor) {
+    void setExecutor(AbstractCoordinationCommandExecutionVisitor executor) {
         this.executor = executor;
         this.key = null;
         this.algCmd = null;
@@ -106,8 +106,8 @@ public class CommandSequenceGroupingVisitor implements ICoordinationCommandVisit
      */
     private CoordinationExecutionResult handleOther(CoordinationCommand command) {
         CoordinationExecutionResult result = flush();
-        if (null == result) {
-            result = command.accept(executor);
+        if (null == result || result.continueIteration()) {
+            result = AbstractCoordinationCommandExecutionVisitor.merge(result, command.accept(executor));
         }
         return result;
     }

@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.LogManager;
@@ -35,7 +34,6 @@ import eu.qualimaster.coordination.commands.CommandSequence;
 import eu.qualimaster.coordination.commands.CommandSet;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.coordination.commands.CoordinationExecutionResult;
-import eu.qualimaster.coordination.commands.ICoordinationCommandVisitor;
 import eu.qualimaster.coordination.commands.LoadSheddingCommand;
 import eu.qualimaster.coordination.commands.MonitoringChangeCommand;
 import eu.qualimaster.coordination.commands.ParallelismChangeCommand;
@@ -72,13 +70,11 @@ import static eu.qualimaster.coordination.CoordinationUtils.getNamespace;
  * 
  * @author Holger Eichelberger
  */
-class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor {
+class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExecutionVisitor {
 
     private static final Set<Class<? extends CoordinationCommand>> DEFER_SUCCESSFUL_EXECUTION 
         = new HashSet<Class<? extends CoordinationCommand>>();
-    private Stack<CoordinationCommand> commandStack = new Stack<CoordinationCommand>();
     private long timestamp = System.currentTimeMillis();
-    private IExecutionTracer tracer;
     private ActiveCommands activeCommands = null;
     
     static {
@@ -92,7 +88,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
      * @param tracer a tracer for obtaining information about the execution
      */
     CoordinationCommandExecutionVisitor(IExecutionTracer tracer) {
-        this.tracer = tracer;
+        super(tracer);
     }
     
     /**
@@ -132,7 +128,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
             }
         } catch (SignalException e) {
             failing = new CoordinationExecutionResult(command, e.getMessage(), 
-                CoordinationExecutionCode.NO_SIGNAL_SENDING_ERROR);
+                CoordinationExecutionCode.SIGNAL_SENDING_ERROR);
         }
         return failing;
     }
@@ -142,16 +138,8 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         return handleAlgorithmChange(command, null);
     }
     
-    /**
-     * Handles an algorithm change command with optional parameters. While 
-     * {@link #handleAlgorithmChangeImpl(AlgorithmChangeCommand, List)} is actually implementing the handling of an 
-     * algorithm changed command, this method also takes starting related sub-pipelines into account.
-     * 
-     * @param command the command
-     * @param parameters explicit parameters (may be <b>null</b> than only the cached ones will be used)
-     * @return the coordination execution result
-     */
-    CoordinationExecutionResult handleAlgorithmChange(AlgorithmChangeCommand command, 
+    @Override
+    protected CoordinationExecutionResult handleAlgorithmChange(AlgorithmChangeCommand command, 
         List<ParameterChange> parameters) {
         CoordinationExecutionResult result;
         String pipelineName = command.getPipeline();
@@ -159,7 +147,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         ISubPipeline subPip = mapping.getSubPipelineByAlgorithmName(command.getAlgorithm());
         if (null != subPip) {
             CoordinationManager.deferCommand(subPip.getName(), PipelineLifecycleEvent.Status.STARTED, 
-                new AlgorithmChangeAction(command, parameters, tracer));
+                new AlgorithmChangeAction(command, parameters, getTracer()));
             PipelineCommand cmd = new PipelineCommand(subPip.getName(), PipelineCommand.Status.START, 
                 getSubPipelineOptions(pipelineName));
             result = handlePipelineStart(cmd);
@@ -198,7 +186,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         List<ParameterChange> parameters) {
         CoordinationExecutionResult failing = null;
         
-        commandStack.push(command);
+        startingCommand(command);
         String pipelineName = command.getPipeline();
         INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
         Component receiver = CoordinationUtils.getReceiverComponent(
@@ -206,7 +194,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         if (null == receiver) {
             String message = "no receiver for changing the algorithm on " + command.getPipeline() + "/" 
                 + command.getPipelineElement();
-            failing = new CoordinationExecutionResult(command, message, CoordinationExecutionCode.NO_SIGNAL_RECEIVER);
+            failing = new CoordinationExecutionResult(command, message, CoordinationExecutionCode.SIGNAL_SENDING_ERROR);
         } else {
             PipelineElementCache cache = PipelineCache.getCache(command);
             if (null == parameters) {
@@ -223,8 +211,8 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
             send(command, signal);
             cache.setAlgorithm(command.getAlgorithm(), parameters);
         }
-        if (null != tracer) {
-            tracer.executedAlgorithmChangeCommand(command, failing);
+        if (null != getTracer()) {
+            getTracer().executedAlgorithmChangeCommand(command, failing);
         }
         return writeCoordinationLog(command, failing);        
     }
@@ -234,17 +222,11 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         return handleParameterChange(command, null);
     }
 
-    /**
-     * Handles a parameter change command with potential further huckup changes.
-     * 
-     * @param command the parameter change command
-     * @param huckup the huckup / additional changes (ignored if <b>null</b>)
-     * @return the execution result
-     */
-    CoordinationExecutionResult handleParameterChange(ParameterChangeCommand<?> command, 
+    @Override
+    protected CoordinationExecutionResult handleParameterChange(ParameterChangeCommand<?> command, 
         List<ParameterChange> huckup) {
         CoordinationExecutionResult failing = null;
-        commandStack.push(command);
+        startingCommand(command);
         String pipelineName = command.getPipeline();
         INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
         Component receiver = CoordinationUtils.getReceiverComponent(CoordinationUtils.getParameterReceiverComponent(
@@ -252,7 +234,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         if (null == receiver) {
             String message = "no receiver for changing the parameter on " + command.getPipeline() + "/" 
                 + command.getPipelineElement();
-            failing = new CoordinationExecutionResult(command, message, CoordinationExecutionCode.NO_SIGNAL_RECEIVER);
+            failing = new CoordinationExecutionResult(command, message, CoordinationExecutionCode.SIGNAL_SENDING_ERROR);
         } else {
             List<ParameterChange> changes = new ArrayList<ParameterChange>();
             changes.add(new ParameterChange(command.getParameter(), command.getValue()));
@@ -264,8 +246,8 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
             send(command, signal);
             PipelineCache.getCache(command).setParameters(changes, false);
         }
-        if (null != tracer) {
-            tracer.executedParameterChangeCommand(command, failing);
+        if (null != getTracer()) {
+            getTracer().executedParameterChangeCommand(command, failing);
         }
         return writeCoordinationLog(command, failing);
     }
@@ -273,7 +255,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
     @Override
     public CoordinationExecutionResult visitCommandSequence(CommandSequence command) {
         CoordinationExecutionResult failed = null;
-        commandStack.push(command);
+        startingCommand(command);
         CommandSequenceGroupingVisitor gVisitor = new CommandSequenceGroupingVisitor();
         gVisitor.setExecutor(this);
         for (int c = 0; null == failed && c < command.getCommandCount(); c++) {
@@ -282,8 +264,8 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         if (null == failed) {
             failed = gVisitor.flush();
         }
-        if (null != tracer) {
-            tracer.executedCommandSequence(command, failed);
+        if (null != getTracer()) {
+            getTracer().executedCommandSequence(command, failed);
         }
         return writeCoordinationLog(command, failed);
     }
@@ -291,7 +273,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
     @Override
     public CoordinationExecutionResult visitCommandSet(CommandSet command) {
         CoordinationExecutionResult failed = null;
-        commandStack.push(command);
+        startingCommand(command);
         CommandSetGroupingVisitor gVisitor = new CommandSetGroupingVisitor();
         for (int c = 0; c < command.getCommandCount(); c++) {
             command.getCommand(c).accept(gVisitor);
@@ -300,8 +282,8 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         for (int c = 0; null == failed && c < command.getCommandCount(); c++) {
             failed = command.getCommand(c).accept(gVisitor);
         }
-        if (null != tracer) {
-            tracer.executedCommandSet(command, failed);
+        if (null != getTracer()) {
+            getTracer().executedCommandSet(command, failed);
         }
         return writeCoordinationLog(command, failed);
     }
@@ -310,7 +292,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
     public CoordinationExecutionResult visitPipelineCommand(PipelineCommand command) {
         CoordinationExecutionResult failing = null;
         boolean deferred = false;
-        commandStack.push(command);
+        startingCommand(command);
         Status status = command.getStatus();
         boolean knownCommand = false;
         if (null != status) {
@@ -353,8 +335,8 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
             failing = new CoordinationExecutionResult(command, message, CoordinationExecutionCode.UNKNOWN_COMMAND);
         }
         if (!deferred) {
-            if (null != tracer) {
-                tracer.executedPipelineCommand(command, failing);
+            if (null != getTracer()) {
+                getTracer().executedPipelineCommand(command, failing);
             }
             failing = writeCoordinationLog(command, failing);
         }
@@ -480,10 +462,10 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
     @Override
     public CoordinationExecutionResult visitScheduleWavefrontAdaptationCommand(
         ScheduleWavefrontAdaptationCommand command) {
-        commandStack.push(command);
+        startingCommand(command);
         // TODO to be done later, writeCoordinationLog
-        if (null != tracer) {
-            tracer.executedScheduleWavefrontAdaptationCommand(command, null);
+        if (null != getTracer()) {
+            getTracer().executedScheduleWavefrontAdaptationCommand(command, null);
         }
         return writeCoordinationLog(command, new CoordinationExecutionResult(command, "not yet implemented", 
             CoordinationExecutionCode.NOT_IMPLEMENTED));
@@ -491,7 +473,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
 
     @Override
     public CoordinationExecutionResult visitMonitoringChangeCommand(MonitoringChangeCommand command) {
-        commandStack.push(command);
+        startingCommand(command);
         // just forward to the monitoring layer
 
         String pipelineName = command.getPipeline();
@@ -508,8 +490,8 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         
         EventManager.handle(new ChangeMonitoringEvent(command.getPipeline(), command.getPipelineElement(), 
             command.getFrequencies(), command.getObservables(), command));
-        if (null != tracer) {
-            tracer.executedMonitoringChangeCommand(command, null);
+        if (null != getTracer()) {
+            getTracer().executedMonitoringChangeCommand(command, null);
         }
         return writeCoordinationLog(command, null);
     }
@@ -522,13 +504,13 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
      * @param failing the failing command (may be <b>null</b> if no execution failure)
      * @return <code>failing</code>
      */
-    private CoordinationExecutionResult writeCoordinationLog(CoordinationCommand command, 
+    protected CoordinationExecutionResult writeCoordinationLog(CoordinationCommand command, 
         CoordinationExecutionResult failing) {
-        commandStack.pop();
+        endingCommand(command);
         if (null != failing) {
             getLogger().error("enactment failed: " + failing.getMessage());
         }
-        if (commandStack.isEmpty()) {
+        if (isProcessingCommands()) {
             CoordinationCommand cmd;
             String message;
             int code;
@@ -547,8 +529,8 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
             // TODO this shall go to the data management layer
             String text = "CoordinationLog: " + timestamp + " " + cmd.getClass().getName() + " " + message + " " + code;
             System.out.println(text);
-            if (null != tracer) {
-                tracer.logEntryWritten(text);
+            if (null != getTracer()) {
+                getTracer().logEntryWritten(text);
             }
             if (sendEvent) {
                 EventManager.handle(new CoordinationCommandExecutionEvent(command, cmd, code, message));
@@ -560,7 +542,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
     @Override
     public CoordinationExecutionResult visitParallelismChangeCommand(ParallelismChangeCommand command) {
         CoordinationExecutionResult failing = null;
-        commandStack.push(command);
+        startingCommand(command);
         String pipelineName = command.getPipeline();
         INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
         String errorMsg = null;
@@ -597,8 +579,8 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
             failing = new CoordinationExecutionResult(command, errorMsg,
                 CoordinationExecutionCode.CHANGING_PARALLELISM);
         }
-        if (null != tracer) {
-            tracer.executedParallelismChangeCommand(command, failing);
+        if (null != getTracer()) {
+            getTracer().executedParallelismChangeCommand(command, failing);
         }
         return writeCoordinationLog(command, failing);
     }
@@ -634,7 +616,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
     @Override
     public CoordinationExecutionResult visitProfileAlgorithmCommand(ProfileAlgorithmCommand command) {
         CoordinationExecutionResult failing = null;
-        commandStack.push(command);
+        startingCommand(command);
         Models models = RepositoryConnector.getModels(RepositoryConnector.getPhaseWithVil());
         if (null == models) {
             failing = new CoordinationExecutionResult(command, "Configuration model is not available "
@@ -704,7 +686,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
     @Override
     public CoordinationExecutionResult visitShutdownCommand(ShutdownCommand command) {
         CoordinationExecutionResult failing = null;
-        commandStack.push(command);
+        startingCommand(command);
         Set<String> pips;
         do { // as stopping sub-pipelines affects getRegisteredPipelines, do it rather carefully
             pips = CoordinationManager.getRegisteredPipelines();
@@ -720,7 +702,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
     @Override
     public CoordinationExecutionResult visitUpdateCommand(UpdateCommand command) {
         CoordinationExecutionResult failing = null;
-        commandStack.push(command);
+        startingCommand(command);
         RepositoryConnector.updateModels();
         return writeCoordinationLog(command, failing);
     }
@@ -728,7 +710,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
     @Override
     public CoordinationExecutionResult visitReplayCommand(ReplayCommand command) {
         CoordinationExecutionResult failing = null;
-        commandStack.push(command);
+        startingCommand(command);
         String pipelineName = command.getPipeline();
         INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
         Component receiver = CoordinationUtils.getReceiverComponent(
@@ -736,7 +718,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         if (null == receiver) {
             String message = "no receiver for sending replay command on " + command.getPipeline() + "/" 
                 + command.getPipelineElement();
-            failing = new CoordinationExecutionResult(command, message, CoordinationExecutionCode.NO_SIGNAL_RECEIVER);
+            failing = new CoordinationExecutionResult(command, message, CoordinationExecutionCode.SIGNAL_SENDING_ERROR);
         } else {
             ReplaySignal signal = new ReplaySignal(getNamespace(mapping), receiver.getName(), 
                 command.getStartReplay(), command.getTicket(), getCauseMessageId());
@@ -745,8 +727,8 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
             }
             send(command, signal);
         }
-        if (null != tracer) {
-            tracer.executedReplayCommand(command, failing);
+        if (null != getTracer()) {
+            getTracer().executedReplayCommand(command, failing);
         }
         return writeCoordinationLog(command, failing);        
     }
@@ -754,7 +736,7 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
     @Override
     public CoordinationExecutionResult visitLoadScheddingCommand(LoadSheddingCommand command) {
         CoordinationExecutionResult failing = null;
-        commandStack.push(command);
+        startingCommand(command);
         String pipelineName = command.getPipeline();
         INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
         Component receiver = CoordinationUtils.getReceiverComponent(
@@ -762,14 +744,14 @@ class CoordinationCommandExecutionVisitor implements ICoordinationCommandVisitor
         if (null == receiver) {
             String message = "no receiver for sending replay command on " + command.getPipeline() + "/" 
                 + command.getPipelineElement();
-            failing = new CoordinationExecutionResult(command, message, CoordinationExecutionCode.NO_SIGNAL_RECEIVER);
+            failing = new CoordinationExecutionResult(command, message, CoordinationExecutionCode.SIGNAL_SENDING_ERROR);
         } else {
             LoadSheddingSignal signal = new LoadSheddingSignal(getNamespace(mapping), receiver.getName(), 
                 command.getShedder(), command.parameters(), getCauseMessageId());
             send(command, signal);
         }
-        if (null != tracer) {
-            tracer.executedLoadScheddingCommand(command, failing);
+        if (null != getTracer()) {
+            getTracer().executedLoadScheddingCommand(command, failing);
         }
         return writeCoordinationLog(command, failing);        
     }
