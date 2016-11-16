@@ -44,9 +44,10 @@ import tests.eu.qualimaster.coordination.TestNameMapping;
 import tests.eu.qualimaster.coordination.Utils;
 
 /**
- * Tests {@link ReasoningTask}.
+ * Tests the runtime VIL value mapping through the BindValues instantiator.
  * 
  * @author Holger Eichelberger
+ * @author Sascha El-Sharkawy
  */
 public class ValueBindingTest {
 
