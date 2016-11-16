@@ -33,7 +33,9 @@ import eu.qualimaster.events.AbstractReturnableEvent;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.events.IReturnableEvent;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
+import eu.qualimaster.infrastructure.PipelineOptions;
 import eu.qualimaster.monitoring.MonitoringManager;
+import eu.qualimaster.monitoring.MonitoringManager.PipelineInfo;
 import eu.qualimaster.monitoring.events.ComponentKey;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
 import eu.qualimaster.monitoring.parts.IPartType;
@@ -287,7 +289,12 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
                 lastStateChange = System.currentTimeMillis();
             }
             if (notifyNewStatus) {
-                EventManager.send(new PipelineLifecycleEvent(getName(), this.status, adaptationFilter, currentOrigin));
+                // not full pipeline options here for now, just transport relevant information
+                // possible - store pipelineOptions completely in PipelineInfo and remove passing adaptationFilter
+                PipelineOptions opts = new PipelineOptions(adaptationFilter);
+                PipelineInfo info = MonitoringManager.getPipelineInfo(getName());
+                opts.markAsSubPipeline(info.getMainPipeline());
+                EventManager.send(new PipelineLifecycleEvent(getName(), this.status, opts, currentOrigin));
             }
         }
         return oldStatus != this.status;
