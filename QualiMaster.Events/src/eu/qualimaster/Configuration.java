@@ -36,6 +36,9 @@ public class Configuration {
      */
     public static final String EMPTY_VALUE = "";
 
+    public static final String CONFIG_KEY_STORM_ZOOKEEPER_PORT = "storm.zookeeper.port";
+    public static final String CONFIG_KEY_STORM_ZOOKEEPER_SERVERS = "storm.zookeeper.servers";
+
     /**
      * Denotes the timeout for clearing response messages in the infrastructure (non-negative Integer).
      */
@@ -632,22 +635,29 @@ public class Configuration {
     @SuppressWarnings({ "rawtypes" })
     public static void transferConfigurationFrom(Map conf) {
         Properties prop = new Properties();
+        // transfer zookeeper information so that SignalMechanism can create Zookeeper frameworks
+        if (null != conf.get(CONFIG_KEY_STORM_ZOOKEEPER_PORT)) {
+            prop.put(PORT_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_PORT));
+        }
+        if (null != conf.get(CONFIG_KEY_STORM_ZOOKEEPER_SERVERS)) {
+            prop.put(HOST_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_SERVERS));
+        }
         // if storm has a configuration value and the actual configuration is not already
         // changed, than change the event bus configuration
-        if (null != conf.get(Configuration.HOST_EVENT)) {
-            prop.put(Configuration.HOST_EVENT, conf.get(Configuration.HOST_EVENT));
+        if (null != conf.get(HOST_EVENT)) {
+            prop.put(HOST_EVENT, conf.get(HOST_EVENT));
         }
         if (null != conf.get(Configuration.PORT_EVENT)) {
-            prop.put(Configuration.PORT_EVENT, conf.get(Configuration.PORT_EVENT));
+            prop.put(PORT_EVENT, conf.get(PORT_EVENT));
         }
-        if (null != conf.get(Configuration.EVENT_DISABLE_LOGGING)) {
-            prop.put(Configuration.EVENT_DISABLE_LOGGING, conf.get(Configuration.EVENT_DISABLE_LOGGING));
+        if (null != conf.get(EVENT_DISABLE_LOGGING)) {
+            prop.put(EVENT_DISABLE_LOGGING, conf.get(EVENT_DISABLE_LOGGING));
         }
-        if (null != conf.get(Configuration.PIPELINE_INTERCONN_PORTS)) {
-            prop.put(Configuration.PIPELINE_INTERCONN_PORTS, conf.get(Configuration.PIPELINE_INTERCONN_PORTS));
+        if (null != conf.get(PIPELINE_INTERCONN_PORTS)) {
+            prop.put(PIPELINE_INTERCONN_PORTS, conf.get(PIPELINE_INTERCONN_PORTS));
         }
         if (prop.size() > 0) {
-            Configuration.configure(prop, false);
+            configure(prop, false);
         }
     }
     
