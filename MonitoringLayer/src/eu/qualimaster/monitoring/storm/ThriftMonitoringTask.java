@@ -202,28 +202,31 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
      * Returns whether the given node is considered to be up.
      * 
      * @param nodePart the node part
+     * @param executor the executor
      * @return <code>true</code> for up, <code>false</code> else
      */
-    private static boolean isUp(PipelineNodeSystemPart nodePart) {
+    private static boolean isUp(PipelineNodeSystemPart nodePart, ExecutorSummary executor) {
         boolean up = false;
-        int tasks = (int) nodePart.getObservedValue(ResourceUsage.TASKS);
+        int currentTasks = (int) nodePart.getObservedValue(ResourceUsage.TASKS);
         if (nodePart.getObservedValue(ResourceUsage.TASKS) > 0) {
             InitializationMode initMode = MonitoringConfiguration.getInitializationMode();
             if (InitializationMode.DYNAMIC == initMode) {
                 // dynamic: we need an algorithm change before
                 up = null != nodePart.getCurrent();
-                if (MonitoringConfiguration.getStormExecutorStartupParallel()) { // to be on the safe side
-                    up &= nodePart.getCurrentCount() == tasks;
+                if (MonitoringConfiguration.getStormExecutorStartupParallel()) { // enable debugging
+                    up &= nodePart.getCurrentCount() == currentTasks;
+                    // consider Utils.taskCount as required upper limit?
                 }
             } else if (InitializationMode.ADAPTIVE == initMode) {
                 // adaptive: nothing set, go to adaptive init as soon as possible but consider tasks
-                if (MonitoringConfiguration.getStormExecutorStartupParallel()) { // to be on the safe side
-                    up = nodePart.getCurrentCount() == tasks;
+                if (MonitoringConfiguration.getStormExecutorStartupParallel()) { // enable debugging
+                    int neededTasks = Utils.taskCount(executor);
+                    up = neededTasks == currentTasks;
                 } else {
                     up = true;
                 }
             } else {
-                // static: don't care - as beofre
+                // static: don't care - as before
                 up = true;
             }
         }
@@ -264,7 +267,7 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
                 PipelineNodeSystemPart nodePart = SystemState.getNodePart(mapping, part, nodeName);
                 if (!isInternal) {
                     nonInternalCount++;
-                    if (isUp(nodePart)) {
+                    if (isUp(nodePart, executor)) {
                         nonInternalRunningCount++;
                         eventsReceived.add(nodeName);
                     }
@@ -279,8 +282,8 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
                     if (!isInternal) {
                         sendSummaryEvent(nodePart, part.getName(), MonitoringManager.DEMO_MSG_PROCESSING_ELEMENT);
                     }
-                    pStat.collect(nodePart);
                 } // no stats... in particular if
+                pStat.collect(nodePart);
             }
             debugExecutors(executors, mapping, part);
             

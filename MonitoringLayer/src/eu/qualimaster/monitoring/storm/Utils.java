@@ -139,18 +139,44 @@ public class Utils {
      * @param executor the executor (may be <b>null</b>)
      * @return all task identifiers, may be <b>null</b> if <code>executor</code> is null
      */
-    private static int[] toTasks(ExecutorSummary executor) {
+    static int[] toTasks(ExecutorSummary executor) {
         int[] result = null;
         if (null != executor) {
             ExecutorInfo info = executor.get_executor_info();
             int start = info.get_task_start();
             int end = info.get_task_end();
-            result = new int[end - start + 1];
+            result = new int[taskCount(start, end)];
             for (int t = start; t <= end; t++) {
                 result[t - start] = t;
             }
         }
         return result;
+    }
+
+    /**
+     * Returns the number of tasks for <code>executor</code>.
+     * 
+     * @param executor the executor (may be <b>null</b>)
+     * @return the number of tasks.
+     */
+    static int taskCount(ExecutorSummary executor) {
+        int result = 0;
+        if (null != executor) {
+            ExecutorInfo info = executor.get_executor_info();
+            result = taskCount(info.get_task_start(), info.get_task_end());
+        }
+        return result;
+    }
+    
+    /**
+     * Returns the number of tasks indicated by start and end task.
+     * 
+     * @param start the start task number (<code>start &lt;= end</code>)
+     * @param end the end task number (<code>start &lt;= end</code>)
+     * @return the number of tasks
+     */
+    private static int taskCount(int start, int end) {
+        return end - start + 1;
     }
     
     /**

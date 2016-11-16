@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.LogManager;
-
 import eu.qualimaster.coordination.INameMapping.Component.Type;
 import eu.qualimaster.monitoring.events.ComponentKey;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
@@ -166,7 +164,6 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
         } else {
             ready = false;
         }
-LogManager.getLogger(getClass()).info("ISINIT " + getName() + " " + getComponentType() + " " + current);
         return ready;
     }
     

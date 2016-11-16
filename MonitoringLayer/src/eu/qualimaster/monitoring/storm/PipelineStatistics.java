@@ -74,7 +74,6 @@ public class PipelineStatistics {
         setPartPositiveValue(part, ResourceUsage.CAPACITY, 
             needInitalization > 0 ? topologyCapacity / needInitalization : 0);
         // do not summarize the executors, they are set implicitly
-        
         if (!allInitialized && !MonitoringManager.hasAdaptationModel()) { // enable DML connect if no model
             allInitialized = true;
         }
