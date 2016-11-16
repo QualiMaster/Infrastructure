@@ -77,8 +77,8 @@ public class StormSignalConnection extends AbstractSignalConnection {
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public static String zkHosts(Map conf) {
-        int zkPort = Utils.getInt(conf.get("storm.zookeeper.port"));
-        List<String> zkServers = (List<String>) conf.get("storm.zookeeper.servers");
+        int zkPort = Utils.getInt(conf.get(Constants.CONFIG_KEY_STORM_ZOOKEEPER_PORT));
+        List<String> zkServers = (List<String>) conf.get(Constants.CONFIG_KEY_STORM_ZOOKEEPER_SERVERS);
 
         Iterator<String> it = zkServers.iterator();
         StringBuffer sb = new StringBuffer();
