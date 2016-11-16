@@ -15,12 +15,17 @@
  */
 package eu.qualimaster.common.signal;
 
+import eu.qualimaster.Configuration;
+
 /**
  * Some common constants.
  * 
  * @author Holger Eichelberger
  */
 public class Constants {
+    
+    public static final String CONFIG_KEY_STORM_ZOOKEEPER_PORT = Configuration.CONFIG_KEY_STORM_ZOOKEEPER_PORT;
+    public static final String CONFIG_KEY_STORM_ZOOKEEPER_SERVERS = Configuration.CONFIG_KEY_STORM_ZOOKEEPER_SERVERS;
 
     public static final String CONFIG_KEY_SUBPIPELINE_NAME = "SUBPIPELINE.NAME";
     
