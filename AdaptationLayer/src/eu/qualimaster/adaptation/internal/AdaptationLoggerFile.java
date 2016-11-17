@@ -51,10 +51,10 @@ public class AdaptationLoggerFile implements IAdaptationLogger {
 
     @Override
     public void startAdaptation(AdaptationEvent event, FrozenSystemState state) {
-        if(event == null || state == null){
-            System.out.println("ERROR: null AdaptationEvent or FrozenSystemState" +
-            		" in startAdaptation() method, could not write in the " +
-            		"adaptation log.");
+        if (event == null || state == null) {
+            System.out.println("ERROR: null AdaptationEvent or FrozenSystemState" 
+                + " in startAdaptation() method, could not write in the " 
+                + "adaptation log.");
             return;
         }
         
@@ -69,9 +69,9 @@ public class AdaptationLoggerFile implements IAdaptationLogger {
 
     @Override
     public void executedStrategy(String name, boolean successful) {
-        if(name == null){
-            System.out.println("ERROR: null name in executedStrategy() method, " +
-            		"could not write in the adaptation log.");
+        if (name == null) {
+            System.out.println("ERROR: null name in executedStrategy() method, " 
+                + "could not write in the adaptation log.");
             return;
         }
         
@@ -81,9 +81,9 @@ public class AdaptationLoggerFile implements IAdaptationLogger {
 
     @Override
     public void executedTactic(String name, boolean successful) {
-        if(name == null){
-            System.out.println("ERROR: null name in executedTactic() method, " +
-                    "could not write in the adaptation log.");
+        if (name == null) {
+            System.out.println("ERROR: null name in executedTactic() method, " 
+                + "could not write in the adaptation log.");
             return;
         }
         this.currentAdaptation.setTactic(name);
@@ -92,9 +92,9 @@ public class AdaptationLoggerFile implements IAdaptationLogger {
 
     @Override
     public void enacting(CoordinationCommand command) {
-        if(command == null){
-            System.out.println("ERROR: null CoordinationCommand in enacting()" +
-            		" method, could not write in the adaptation log.");
+        if (command == null) {
+            System.out.println("ERROR: null CoordinationCommand in enacting()" 
+                + " method, could not write in the adaptation log.");
             return;
         }
         this.currentAdaptation.setMessage(command.getMessageId());
@@ -102,10 +102,10 @@ public class AdaptationLoggerFile implements IAdaptationLogger {
 
     @Override
     public void endAdaptation(boolean successful) {
-        if(this.currentAdaptation == null){
-            System.out.println("ERROR: null AdaptationUnit" +
-                    " in endAdaptation() method, could not write in the " +
-                    "adaptation log.");
+        if (this.currentAdaptation == null) {
+            System.out.println("ERROR: null AdaptationUnit" 
+                + " in endAdaptation() method, could not write in the " 
+                + "adaptation log.");
             return;
         }
         
@@ -118,9 +118,9 @@ public class AdaptationLoggerFile implements IAdaptationLogger {
 
     @Override
     public void enacted(CoordinationCommand command, CoordinationCommandExecutionEvent event) {
-        if(command == null || event == null){
-            System.out.println("ERROR: null CoordinationCommand or CoordinationCommandExecutionEvent" +
-                    " in enacted() method, could not write in the adaptation log.");
+        if (command == null || event == null) {
+            System.out.println("ERROR: null CoordinationCommand or CoordinationCommandExecutionEvent" 
+                + " in enacted() method, could not write in the adaptation log.");
             return;
         }
         
