@@ -205,6 +205,10 @@ public class TestTracerFactory extends TracerFactory {
         @Override
         public void visitedWhileBody() {
         }
+
+        @Override
+        public void visitScriptBody(Script arg0, RuntimeEnvironment arg1) {
+        }
         
     }
 
