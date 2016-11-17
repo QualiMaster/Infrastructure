@@ -26,7 +26,7 @@ import org.apache.log4j.Logger;
 import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.storm.curator.framework.CuratorFrameworkFactory;
 import org.apache.storm.curator.framework.imps.CuratorFrameworkState;
-import org.apache.storm.curator.retry.RetryOneTime;
+import org.apache.storm.curator.retry.RetryNTimes;
 
 import eu.qualimaster.Configuration;
 import eu.qualimaster.events.EventManager;
@@ -251,6 +251,26 @@ public class SignalMechanism {
      */
     public static void setConnectString(String namespace, String connectString) {
         CONNECT_INFO.put(namespace, connectString);
+        if (null == CONNECT_INFO.get(GLOBAL_NAMESPACE)) { // just as a fallback
+            CONNECT_INFO.put(GLOBAL_NAMESPACE, connectString);    
+        }
+    }
+    
+    /**
+     * Returns the namespace-specific (or as fallback global) connect information for the given <code>namespace</code>.
+     * 
+     * @param namespace the namespace
+     * @return the connectioninfo (may be fallback)
+     */
+    public static String getConnectString(String namespace) {
+        String connectInfo = CONNECT_INFO.get(namespace);
+        if (null == connectInfo) {
+            connectInfo = CONNECT_INFO.get(GLOBAL_NAMESPACE);
+        }
+        if (null == connectInfo) {
+            connectInfo = Configuration.getZookeeperConnectString();
+        }
+        return connectInfo;
     }
     
     /**
@@ -315,14 +335,13 @@ public class SignalMechanism {
     static CuratorFramework obtainFramework(String namespace) throws IOException {
         CuratorFramework result = FRAMEWORKS.get(namespace);
         if (null == result) {
-            String connectString = CONNECT_INFO.get(namespace);
-            if (null == connectString) {
-                connectString = Configuration.getZookeeperConnectString();
-            }
-            getLogger().info("Creating a curator framwork...");
+            String connectString = getConnectString(namespace);
+            getLogger().info("Creating a curator framwork for " + namespace + "using" + connectString);
             result = CuratorFrameworkFactory.builder().namespace(namespace)
                 .connectString(connectString)
-                .retryPolicy(new RetryOneTime(500)).build();
+                //.retryPolicy(new RetryOneTime(500)).build();
+                .retryPolicy(new RetryNTimes(Configuration.getZookeeperRetryTimes(), 
+                    Configuration.getZookeeperRetryInterval())).build();
             getLogger().info("Created a curator framwork: " + result);
             FRAMEWORKS.put(namespace, result);
             result.start();
