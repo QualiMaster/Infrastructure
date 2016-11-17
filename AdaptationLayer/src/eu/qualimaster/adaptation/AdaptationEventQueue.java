@@ -74,6 +74,28 @@ public class AdaptationEventQueue {
     private static InformationMessageVisitor cmdVisitor = new InformationMessageVisitor(null);
     private static RtVilValueMapping rtVilMapping = new RtVilValueMapping();
 
+    private static final TracerFactory ADAPTATION_TRACER_FACTORY = new TracerFactory() {
+
+        private final TracerFactory current = TracerFactory.getInstance();
+        
+        @Override
+        public ITracer createBuildLanguageTracerImpl() {
+            return AdaptationLoggerFactory.createTracer(current.createBuildLanguageTracerImpl());
+        }
+
+        @Override
+        public IInstantiatorTracer createInstantiatorTracerImpl() {
+            return current.createInstantiatorTracerImpl();
+        }
+
+        @Override
+        public net.ssehub.easy.instantiation.core.model.templateModel.ITracer 
+            createTemplateLanguageTracerImpl() {
+            return current.createTemplateLanguageTracerImpl();
+        }
+
+    };
+
     static {
         VariableValueMapping.setInstance(rtVilMapping);
         RtVilExecution.REASONER_CONFIGURATION.setAdditionalInformationLogger(new IAdditionalInformationLogger() {
@@ -370,26 +392,7 @@ public class AdaptationEventQueue {
             }
         }
         if (!done) {
-            final TracerFactory current = TracerFactory.getInstance();
-            TracerFactory.setInstance(new TracerFactory() {
-
-                @Override
-                public ITracer createBuildLanguageTracerImpl() {
-                    return AdaptationLoggerFactory.createTracer(current.createBuildLanguageTracerImpl());
-                }
-
-                @Override
-                public IInstantiatorTracer createInstantiatorTracerImpl() {
-                    return current.createInstantiatorTracerImpl();
-                }
-
-                @Override
-                public net.ssehub.easy.instantiation.core.model.templateModel.ITracer 
-                    createTemplateLanguageTracerImpl() {
-                    return current.createTemplateLanguageTracerImpl();
-                }
-                
-            });
+            TracerFactory.setInstance(ADAPTATION_TRACER_FACTORY);
         }
         return done;
     }

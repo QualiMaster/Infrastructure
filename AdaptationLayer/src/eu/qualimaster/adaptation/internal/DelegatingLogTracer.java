@@ -60,11 +60,16 @@ public class DelegatingLogTracer extends DelegatingTracer implements ICoordinati
         this.logger = null == logger ? new AdaptationLoggerAdapter() : logger;
     }
     
-    @SuppressWarnings("unchecked")
     @Override
     public void visitScript(Script script, RuntimeEnvironment environment) {
         scripts.push(script);
         super.visitScript(script, environment);
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    public void visitScriptBody(Script script, RuntimeEnvironment environment) {
+        super.visitScriptBody(script, environment);
         if (isMainVil()) { // inform only about main script, not imports or calls to other scripts
             CoordinationCommandNotifier.addNotifier(this);
             AdaptationEvent event = getParameterValue(script, 3, environment, AdaptationEvent.class);
