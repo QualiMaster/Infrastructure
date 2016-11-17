@@ -36,9 +36,11 @@ public class Configuration {
      */
     public static final String EMPTY_VALUE = "";
 
-    public static final String CONFIG_KEY_STORM_ZOOKEEPER_PORT = "storm.zookeeper.port";
-    public static final String CONFIG_KEY_STORM_ZOOKEEPER_SERVERS = "storm.zookeeper.servers";
-
+    public static final String CONFIG_KEY_STORM_ZOOKEEPER_PORT = Config.STORM_ZOOKEEPER_PORT;
+    public static final String CONFIG_KEY_STORM_ZOOKEEPER_SERVERS = Config.STORM_ZOOKEEPER_SERVERS;
+    public static final String CONFIG_KEY_STORM_ZOOKEEPER_RETRY_TIMES = Config.STORM_ZOOKEEPER_RETRY_TIMES;
+    public static final String CONFIG_KEY_STORM_ZOOKEEPER_RETRY_INTERVAL = Config.STORM_ZOOKEEPER_RETRY_INTERVAL;
+    
     /**
      * Denotes the timeout for clearing response messages in the infrastructure (non-negative Integer).
      */
@@ -113,6 +115,26 @@ public class Configuration {
      */
     public static final int DEFAULT_PORT_ZOOKEEPER = 2181;
 
+    /**
+     * Denotes the retry times for connecting to the zookeepers (trials).
+     */
+    public static final String RETRY_TIMES_ZOOKEEPER = "zookeeper.retry.times";
+
+    /**
+     * The default value for {@link #RETRY_TIMES_ZOOKEEPER} ({@value}).
+     */
+    public static final int DEFAULT_RETRY_TIMES_ZOOKEEPER = 5;
+    
+    /**
+     * Denotes the retry interval for connecting to the zookeepers (ms).
+     */
+    public static final String RETRY_INTERVAL_ZOOKEEPER = "zookeeper.retry.interval";
+
+    /**
+     * The default value for {@link #RETRY_INTERVAL_ZOOKEEPER} ({@value}).
+     */
+    public static final int DEFAULT_RETRY_INTERVAL_ZOOKEEPER = 1000;
+    
     /**
      * Defines the ports to be used for (dynamic) data connections among pipeline parts on software level 
      * (hardware ports are communicated differently).
@@ -262,6 +284,10 @@ public class Configuration {
     private static ConfigurationOption<String> zookeeper = createStringOption(HOST_ZOOKEEPER, DEFAULT_HOST_ZOOKEEPER);
     private static ConfigurationOption<Integer> zookeeperPort 
         = createIntegerOption(PORT_ZOOKEEPER, DEFAULT_PORT_ZOOKEEPER);
+    private static ConfigurationOption<Integer> zookeeperRetryTimes 
+        = createIntegerOption(RETRY_TIMES_ZOOKEEPER, DEFAULT_RETRY_TIMES_ZOOKEEPER);
+    private static ConfigurationOption<Integer> zookeeperRetryInterval 
+        = createIntegerOption(RETRY_INTERVAL_ZOOKEEPER, DEFAULT_RETRY_INTERVAL_ZOOKEEPER);
     private static ConfigurationOption<Boolean> pipelineSignalsCurator 
         = createBooleanOption(PIPELINE_SIGNALS_CURATOR, DEFAULT_PIPELINE_SIGNALS_CURATOR);
     private static ConfigurationOption<Integer> shutdownEventWaitingTime 
@@ -455,16 +481,16 @@ public class Configuration {
     public static String getZookeeper() {
         return zookeeper.getValue();
     }
-    
+
     /**
-     * Returns the zookeeper connect string from the currently configured {@link #getZookeeper() zookeeper(s)}
-     * and the {@link #getZookeeperPort() zookeeper port}.
+     * Returns the zookeeper connect string from the given parameters.
      * 
+     * @param zookeepers the zookeepers
+     * @param zkPort the zookeeper port number
      * @return the zookeeper connect string, host name and port separated by ":", multiple zookeepers by ","
      */
-    public static String getZookeeperConnectString() {
-        int zkPort = getZookeeperPort();
-        StringTokenizer hosts = new StringTokenizer(getZookeeper(), ",");
+    public static String getZookeeperConnectString(String zookeepers, int zkPort) {
+        StringTokenizer hosts = new StringTokenizer(zookeepers, ",");
         StringBuffer result = new StringBuffer();
         while (hosts.hasMoreTokens()) {
             result.append(hosts.nextToken());
@@ -478,12 +504,40 @@ public class Configuration {
     }
     
     /**
+     * Returns the zookeeper connect string from the currently configured {@link #getZookeeper() zookeeper(s)}
+     * and the {@link #getZookeeperPort() zookeeper port}.
+     * 
+     * @return the zookeeper connect string, host name and port separated by ":", multiple zookeepers by ","
+     */
+    public static String getZookeeperConnectString() {
+        return getZookeeperConnectString(getZookeeper(), getZookeeperPort());
+    }
+    
+    /**
      * Returns the IP port to be used for zookeeper communications (curator).
      * 
      * @return the IP port
      */
     public static int getZookeeperPort() {
         return zookeeperPort.getValue();
+    }
+
+    /**
+     * Returns the Zookeeper retry times.
+     * 
+     * @return the Zookeeper retry times
+     */
+    public static int getZookeeperRetryTimes() {
+        return zookeeperRetryTimes.getValue();
+    }
+
+    /**
+     * Returns the Zookeeper retry interval.
+     * 
+     * @return the Zookeeper retry interval
+     */
+    public static int getZookeeperRetryInterval() {
+        return zookeeperRetryInterval.getValue();
     }
     
     /**
@@ -642,6 +696,13 @@ public class Configuration {
         if (null != conf.get(CONFIG_KEY_STORM_ZOOKEEPER_SERVERS)) {
             prop.put(HOST_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_SERVERS));
         }
+        if (null != conf.get(CONFIG_KEY_STORM_ZOOKEEPER_RETRY_TIMES)) {
+            prop.put(RETRY_TIMES_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_RETRY_TIMES));
+        }
+        if (null != conf.get(CONFIG_KEY_STORM_ZOOKEEPER_RETRY_INTERVAL)) {
+            prop.put(RETRY_INTERVAL_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_RETRY_INTERVAL));
+        }
+
         // if storm has a configuration value and the actual configuration is not already
         // changed, than change the event bus configuration
         if (null != conf.get(HOST_EVENT)) {
@@ -657,6 +718,7 @@ public class Configuration {
             prop.put(PIPELINE_INTERCONN_PORTS, conf.get(PIPELINE_INTERCONN_PORTS));
         }
         if (prop.size() > 0) {
+            System.out.println("Reconfiguring infrastructure settings: " + prop + " from " + conf);
             configure(prop, false);
         }
     }
