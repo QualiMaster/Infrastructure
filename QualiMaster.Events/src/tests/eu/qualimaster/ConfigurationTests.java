@@ -121,8 +121,19 @@ public class ConfigurationTests {
         
         System.out.println("Replay test");
         Config config = new Config();
+        config.put(Configuration.CONFIG_KEY_STORM_ZOOKEEPER_PORT, 1024);
+        config.put(Configuration.CONFIG_KEY_STORM_ZOOKEEPER_RETRY_INTERVAL, 100);
+        config.put(Configuration.CONFIG_KEY_STORM_ZOOKEEPER_RETRY_TIMES, 4);
+        List<String> zks = new ArrayList<String>();
+        zks.add("localhost");
+        zks.add("myserver.de");
+        config.put(Configuration.CONFIG_KEY_STORM_ZOOKEEPER_SERVERS, zks);
         Configuration.transferConfigurationTo(config);
         Configuration.transferConfigurationFrom(config);
+        Assert.assertEquals(1024, Configuration.getZookeeperPort());
+        Assert.assertEquals(100, Configuration.getZookeeperRetryInterval());
+        Assert.assertEquals(4, Configuration.getZookeeperRetryTimes());
+        Assert.assertEquals("localhost,myserver.de", Configuration.getZookeeper());
         testAfterReplay();
         
         // last:

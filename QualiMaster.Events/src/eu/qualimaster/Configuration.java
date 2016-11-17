@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -691,16 +692,27 @@ public class Configuration {
         Properties prop = new Properties();
         // transfer zookeeper information so that SignalMechanism can create Zookeeper frameworks
         if (null != conf.get(CONFIG_KEY_STORM_ZOOKEEPER_PORT)) {
-            prop.put(PORT_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_PORT));
+            prop.put(PORT_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_PORT).toString());
         }
         if (null != conf.get(CONFIG_KEY_STORM_ZOOKEEPER_SERVERS)) {
-            prop.put(HOST_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_SERVERS));
+            Object zks = conf.get(CONFIG_KEY_STORM_ZOOKEEPER_SERVERS);
+            String tmp = zks.toString();
+            if (zks instanceof Collection) {
+                tmp = "";
+                for (Object o : (Collection) zks) {
+                    if (tmp.length() > 0) {
+                        tmp += ",";
+                    }
+                    tmp += o.toString();
+                }
+            }
+            prop.put(HOST_ZOOKEEPER, tmp);
         }
         if (null != conf.get(CONFIG_KEY_STORM_ZOOKEEPER_RETRY_TIMES)) {
-            prop.put(RETRY_TIMES_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_RETRY_TIMES));
+            prop.put(RETRY_TIMES_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_RETRY_TIMES).toString());
         }
         if (null != conf.get(CONFIG_KEY_STORM_ZOOKEEPER_RETRY_INTERVAL)) {
-            prop.put(RETRY_INTERVAL_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_RETRY_INTERVAL));
+            prop.put(RETRY_INTERVAL_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_RETRY_INTERVAL).toString());
         }
 
         // if storm has a configuration value and the actual configuration is not already
