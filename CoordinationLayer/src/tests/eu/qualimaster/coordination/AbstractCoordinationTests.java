@@ -393,6 +393,7 @@ public class AbstractCoordinationTests {
      */
     @Before
     public void setUp() {
+        SignalMechanism.setTestMode(true);
         Naming.clearLogs();        
         configure();
         EventManager.start();
@@ -418,7 +419,7 @@ public class AbstractCoordinationTests {
      */
     @After
     public void tearDown() {
-        SignalMechanism.clear(true);
+        SignalMechanism.clear();
         CoordinationManager.stop();
         EventManager.unregister(tracker);
         EventManager.stop();
