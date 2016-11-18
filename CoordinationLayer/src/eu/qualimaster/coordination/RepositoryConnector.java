@@ -336,9 +336,10 @@ public class RepositoryConnector {
      *     
      * @param modelPath the path to the model
      * @param artifactSpec the artifact spec
+     * @return the actual path to the model 
      * @throws IOException in case of I/O problems
      */
-    private static void updateModel(Path modelPath, String artifactSpec) throws IOException {
+    private static Path updateModel(Path modelPath, String artifactSpec) throws IOException {
         File modelPathF = modelPath.toFile();
         boolean modelExists = modelPathF.exists();
         boolean update;
@@ -372,10 +373,16 @@ public class RepositoryConnector {
                         getLogger().info("Local config model artifact location not available as fallback.");
                     }
                 }
-                Utils.unjar(artifact, modelPath);
-                getLogger().info("Unpacked infrastructure model into " + modelPath);
+                if (artifact.isFile()) {
+                    Utils.unjar(artifact, modelPath);
+                    getLogger().info("Unpacked infrastructure model into " + modelPath);
+                } else {
+                    modelPath = artifact.toPath();
+                    getLogger().info("Using model in " + artifact);
+                }
             }
         }
+        return modelPath;
     }
     
     /**
@@ -427,8 +434,8 @@ public class RepositoryConnector {
         if (null != artifactSpec && artifactSpec.length() > 0) { 
             try {
                 Path modelPath = getCurrentModelPath();
+                modelPath = updateModel(modelPath, artifactSpec);
                 File modelPathF = modelPath.toFile();
-                updateModel(modelPath, artifactSpec);
 
                 File propLocation = modelPathF;
                 File location = new File(modelPathF, "qm.xml");

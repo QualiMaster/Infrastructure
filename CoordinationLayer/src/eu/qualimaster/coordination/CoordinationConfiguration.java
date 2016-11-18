@@ -46,7 +46,7 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
 
     /**
      * Denotes the (optional - empty) local location of the artifact containing configuration model to be used as 
-     * a fallback.
+     * a fallback. Can also be a folder with an unpacked model.
      */
     public static final String LOCAL_CONFIG_MODEL_ARTIFACT_LOCATION = "repository.confModel.local";
 
