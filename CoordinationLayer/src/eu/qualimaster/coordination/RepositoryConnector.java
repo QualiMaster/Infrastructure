@@ -349,19 +349,21 @@ public class RepositoryConnector {
         }
         if (update) {
             boolean unpack = true;
-            if (modelExists) {
-                if (Utils.canDelete(modelPathF)) {
-                    FileUtils.deleteDirectory(modelPathF);
-                } else {
-                    unpack = false;
-                    getLogger().info("Cannot delete model in " + modelPathF + " due to file system permissions. "
-                        + "Trying to reuse existing model.");
+            File artifact = obtainArtifact(artifactSpec, "infrastructure_model", ".jar");
+            if (null != artifact) { // delete only if we have something to override
+                if (modelExists) {
+                    if (Utils.canDelete(modelPathF)) {
+                        FileUtils.deleteDirectory(modelPathF);
+                    } else {
+                        unpack = false;
+                        getLogger().info("Cannot delete model in " + modelPathF + " due to file system permissions. "
+                            + "Trying to reuse existing model.");
+                    }
                 }
             }
             if (unpack) {
                 modelPathF.mkdirs();
                 Utils.setDefaultPermissions(modelPathF);
-                File artifact = obtainArtifact(artifactSpec, "infrastructure_model", ".jar");
                 if (null == artifact) {
                     String tmp = CoordinationConfiguration.getLocalConfigModelArtifactLocation();
                     if (null != tmp && !CoordinationConfiguration.isEmpty(tmp)) {
