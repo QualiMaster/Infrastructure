@@ -83,7 +83,7 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
         if (null != component) {
             PipelineSystemPart pip = getActivePipeline(state, mapping.getPipelineName());
             if (null != pip) {
-                part = pip.getPipelineNode(component.getName());
+                part = pip.obtainPipelineNode(component.getName());
             } else {
                 cause = -1;
             }

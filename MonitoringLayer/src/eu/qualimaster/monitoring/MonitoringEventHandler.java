@@ -56,12 +56,12 @@ public abstract class MonitoringEventHandler <E extends MonitoringEvent> {
     }
     
     /**
-     * Called internally to handle a generic event.
+     * Called internally to handle a generic event. [public for testing]
      * 
      * @param event the event to handle
      * @param state the actual system state to be modified
      */
-    void doHandle(IEvent event, SystemState state) {
+    public void doHandle(IEvent event, SystemState state) {
         handle(handles().cast(event), state);
     }
     
