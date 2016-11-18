@@ -59,6 +59,7 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
 
     private static final long serialVersionUID = -174499344220659669L;
     private Map<String, PipelineNodeSystemPart> elements = new HashMap<String, PipelineNodeSystemPart>();
+    private Map<String, PipelineNodeSystemPart> algElements = new HashMap<String, PipelineNodeSystemPart>();
     private Map<String, PipelineNodeSystemPart> allElements = new HashMap<String, PipelineNodeSystemPart>();
     private Map<String, NodeImplementationSystemPart> algorithms = 
         Collections.synchronizedMap(new HashMap<String, NodeImplementationSystemPart>());
@@ -104,7 +105,11 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
         }
         synchronized (algorithms) {
             for (Map.Entry<String, NodeImplementationSystemPart> entry : source.algorithms.entrySet()) {
-                algorithms.put(entry.getKey(), new NodeImplementationSystemPart(entry.getValue(), this, state));
+                NodeImplementationSystemPart impl = new NodeImplementationSystemPart(entry.getValue(), this, state); 
+                algorithms.put(entry.getKey(), impl);
+                for (PipelineNodeSystemPart node : impl.getNodes()) {
+                    algElements.put(node.getName(), node);
+                }
             }
         }
         synchronized (sources) {
@@ -333,7 +338,7 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
      */
     public PipelineNodeSystemPart getPipelineNode(String nodeName) {
         synchronized (elements) {
-            return elements.get(nodeName);
+            return getPipelineNodeImpl(nodeName);
         }
     }
     
@@ -347,6 +352,20 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
     }
     
     /**
+     * Returns a pipeline node without synchronization, i.e., assuming that we are in a thread-safe code part.
+     * 
+     * @param nodeName the name of the pipeline element
+     * @return the related system part (may be <b>null</b> if not found)
+     */
+    private PipelineNodeSystemPart getPipelineNodeImpl(String nodeName) {
+        PipelineNodeSystemPart result = elements.get(nodeName);
+        if (null == result) {
+            result = algElements.get(nodeName);
+        }
+        return result;
+    }
+    
+    /**
      * Returns a node of a pipeline via its node name or creates it if it does not exist.
      * 
      * @param nodeName the name of the pipeline element
@@ -354,7 +373,7 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
      */
     public PipelineNodeSystemPart obtainPipelineNode(String nodeName) {
         synchronized (elements) {
-            PipelineNodeSystemPart result = elements.get(nodeName);
+            PipelineNodeSystemPart result = getPipelineNodeImpl(nodeName);
             if (null == result) {
                 INameMapping mapping = getNameMapping();
                 Component component = mapping.getPipelineNodeComponent(nodeName);
@@ -379,7 +398,8 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
                                     PipelineNodeSystemPart compNode 
                                         = algPart.obtainPipelineNode(comp.getName()); // force creation
                                     algPart.link(compNode, ILinkSelector.ALL_EXTERNAL);
-                                    elements.put(comp.getName(), compNode);
+                                    // elements may cause endless recursions in aggregation
+                                    algElements.put(comp.getName(), compNode);
                                 }
                             }
                             result.link(algPart);

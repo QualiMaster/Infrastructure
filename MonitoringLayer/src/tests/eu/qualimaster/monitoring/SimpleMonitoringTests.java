@@ -15,6 +15,7 @@ import tests.eu.qualimaster.coordination.AbstractCoordinationTests;
 import tests.eu.qualimaster.coordination.TestNameMapping;
 import tests.eu.qualimaster.coordination.Utils;
 import tests.eu.qualimaster.storm.Naming;
+import eu.qualimaster.common.signal.SignalMechanism;
 import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
@@ -45,6 +46,7 @@ public class SimpleMonitoringTests {
      */
     @Before
     public void setUp() {
+        SignalMechanism.setTestMode(true);
         Utils.setModelProvider(Utils.INFRASTRUCTURE_TEST_MODEL_PROVIDER);
         Utils.configure();
         EventManager.start();
