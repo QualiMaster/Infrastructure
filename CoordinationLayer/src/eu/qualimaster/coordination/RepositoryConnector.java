@@ -373,12 +373,14 @@ public class RepositoryConnector {
                         getLogger().info("Local config model artifact location not available as fallback.");
                     }
                 }
-                if (artifact.isFile()) {
-                    Utils.unjar(artifact, modelPath);
-                    getLogger().info("Unpacked infrastructure model into " + modelPath);
-                } else {
-                    modelPath = artifact.toPath();
-                    getLogger().info("Using model in " + artifact);
+                if (null != artifact) {
+                    if (artifact.isFile()) {
+                        Utils.unjar(artifact, modelPath);
+                        getLogger().info("Unpacked infrastructure model into " + modelPath);
+                    } else {
+                        modelPath = artifact.toPath();
+                        getLogger().info("Using model in " + artifact);
+                    }
                 }
             }
         }
