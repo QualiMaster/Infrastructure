@@ -308,7 +308,8 @@ public abstract class AbstractDirectAdaptationTests {
         protected void assertAlgorithmChangeCommand(String pipeline, String element, String algorithm, 
             Map<AlgorithmChangeParameter, Serializable> params, boolean single) {
             List<AlgorithmChangeCommand> cmds = findExecutedCommands(AlgorithmChangeCommand.class);
-            Assert.assertNotNull(cmds);
+            Assert.assertNotNull("Expected AlgorithmChangeCommand for algorithm \"" + algorithm + "\" of element \""
+                + element + "\" of pipeline \"" + pipeline + "\".", cmds);
             int found = 0;
             for (int c = 0; c < cmds.size(); c++) {
                 AlgorithmChangeCommand cmd = cmds.get(c);
