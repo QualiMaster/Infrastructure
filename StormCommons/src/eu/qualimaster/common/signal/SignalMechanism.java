@@ -48,6 +48,7 @@ public class SignalMechanism {
         Collections.synchronizedMap(new HashMap<String, String>());
     private static final Map<String, Namespace> NAMESPACES = 
         Collections.synchronizedMap(new HashMap<String, Namespace>());
+    private static boolean testMode = false;
     
     /**
      * Represents a namespace that is able to cache signals if needed.
@@ -216,30 +217,31 @@ public class SignalMechanism {
      * Clears the internal state of this class.
      */
     public static void clear() {
-        clear(false);
-    }
-    
-    /**
-     * Clears the internal state of this class.
-     * 
-     * @param test clears in testing mode
-     */
-    public static void clear(boolean test) {
-        for (CuratorFramework framework: FRAMEWORKS.values()) {
+        PortManager mgr = null;
+        try {
+            mgr = getPortManager();
+        } catch (SignalException e) {
+            getLogger().error(e.getMessage());
+        }
+        for (Map.Entry<String, CuratorFramework> entry: FRAMEWORKS.entrySet()) {
+            String namespace = entry.getKey();
+            CuratorFramework framework = entry.getValue();
             if (CuratorFrameworkState.STARTED == framework.getState()) {
-                if (!test) {
-                    PortManager mgr = new PortManager(framework);
-                    try {
-                        mgr.clearAllPortAssignments();
-                    } catch (SignalException e) {
-                        getLogger().error(e.getMessage());
-                    }
+                if (!testMode) {
+                    clearPipeline(framework, namespace);
                 }
                 framework.close();
             }
         }
         FRAMEWORKS.clear();
         NAMESPACES.clear();
+        if (null != mgr && !testMode) {
+            try {
+                mgr.clearAllPortAssignments();
+            } catch (SignalException e) {
+                getLogger().error(e.getMessage());
+            }
+        }
     }
     
     /**
@@ -277,23 +279,17 @@ public class SignalMechanism {
      * Releases the signal mechanism instance for the given <code>pipeline</code>
      * from the internal cache and closes the mechanism.
      *   
-     * @param pipeline the pipeline name / namespace to clear (for port manager)
+     * @param namespace the pipeline name / namespace to clear (for port manager)
      */
-    public static void releaseMechanism(String pipeline) {
-        CuratorFramework framework = FRAMEWORKS.remove(pipeline);
-        CuratorFramework toClear = framework;
-        if (null == toClear) {
-            toClear = FRAMEWORKS.get(GLOBAL_NAMESPACE);
-        }
-        if (null != toClear && null != pipeline) {
-            PortManager mgr = new PortManager(toClear);
-            try {
-                mgr.clearPortAssignments(pipeline);
-            } catch (SignalException e) {
-                getLogger().error(e.getMessage());
-            }
+    public static void releaseMechanism(String namespace) {
+        CuratorFramework framework = FRAMEWORKS.remove(namespace);
+        try {
+            getPortManager().clearPortAssignments(namespace);
+        } catch (SignalException e) {
+            getLogger().error(e.getMessage());
         }
         if (null != framework) {
+            clearPipeline(framework, namespace);
             framework.close();
         }
     }
@@ -396,6 +392,38 @@ public class SignalMechanism {
             throw new SignalException(e);
         }
     }
+
+    /**
+     * Clears a pipeline structure.
+     * 
+     * @param namespace the pipeline / namespace name
+     */
+    public static void clearPipeline(String namespace) {
+        try {
+            CuratorFramework framework = obtainFramework(namespace);
+            clearPipeline(framework, namespace);
+        } catch (IOException e) {
+            getLogger().warn("While clearing pipeline " + namespace + ": " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Clears a pipeline structure on the zookeeper.
+     * 
+     * @param framework the framework instance to use
+     * @param namespace the pipeline / namespace name
+     */
+    private static void clearPipeline(CuratorFramework framework, String namespace) {
+        try {
+            String path = PIPELINES_PREFIX + namespace;
+            if (null != framework.checkExists().forPath(path)) {
+                framework.delete().deletingChildrenIfNeeded().forPath(PIPELINES_PREFIX + namespace);
+            }
+            getPortManager().clearPortAssignments(namespace);
+        } catch (Exception e) {
+            getLogger().warn("While clearing pipeline " + namespace + ": " + e.getMessage());
+        }
+    }
     
     // checkstyle: resume exception type check
     
@@ -431,7 +459,6 @@ public class SignalMechanism {
     static void sendSignal(CuratorFramework mechanism, AbstractTopologyExecutorSignal signal) throws SignalException {
         Namespace space = obtainNamespace(signal.getNamespace());
         getLogger().info("Sending the signal: " + signal + ", with the namespace enabled? " + space.getState());
-        //space.setState(NamespaceState.ENABLE); //TODO revert debug: ENABLE SIGNALS FOR THE MOMENT!!
         if (Configuration.getPipelineSignalsCurator()) {
             if (null == mechanism) {
                 try {
@@ -578,6 +605,15 @@ public class SignalMechanism {
             }
             getLogger().info("Changed namespace state: " + namespace + " " + NAMESPACES.get(namespace));
         }
+    }
+    
+    /**
+     * Sets the signal mechanism to test mode. [testing]
+     * 
+     * @param tests whether we are in test mode or not
+     */
+    public static void setTestMode(boolean tests) {
+        testMode = tests;
     }
 
 }

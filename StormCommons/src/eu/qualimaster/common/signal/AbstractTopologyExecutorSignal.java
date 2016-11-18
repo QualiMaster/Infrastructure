@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 import org.apache.storm.curator.framework.CuratorFramework;
 
 import eu.qualimaster.common.QMInternal;
@@ -194,15 +192,6 @@ public abstract class AbstractTopologyExecutorSignal extends TopologySignal {
             }
         }
         return result;
-    }
-    
-    /**
-     * Returns the logger for this class.
-     * 
-     * @return the logger
-     */
-    private static Logger getLogger() {
-        return LogManager.getLogger(AbstractTopologyExecutorSignal.class);
     }
     
 }

@@ -101,7 +101,7 @@ public abstract class AbstractSignalConnection implements Watcher {
             try {
                 client.checkExists().usingWatcher(this).forPath(path);
             } catch (Exception ex) {
-                LOGGER.error("Error renewing watch." + ex);
+                LOGGER.error("Error renewing watch." + ex.getMessage());
             }
     
             switch (we.getType()) {
