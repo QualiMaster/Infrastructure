@@ -508,8 +508,8 @@ public class PortManager {
      * 
      * @return <code>true</code> for connected, <code>false</code> else
      */
-    protected boolean isConnected() {
-        return CuratorFrameworkState.STARTED == client.getState();
+    public boolean isConnected() {
+        return null != client && CuratorFrameworkState.STARTED == client.getState();
     }
 
     /**
@@ -623,7 +623,6 @@ public class PortManager {
         client = null;
     }
     
-    
     /**
      * Lists all currently assigned ports.
      * 
@@ -631,8 +630,10 @@ public class PortManager {
      * @throws SignalException in case that reading from zookeeper fails
      */
     public void listPorts(PrintStream out) throws SignalException {
-        list(System.out, NODES, new DeserializingNodePrinter(4, PortsTable.class));
-        list(System.out, HOSTS, new DeserializingNodePrinter(HostTable.class));
+        if (isConnected()) {
+            list(System.out, NODES, new DeserializingNodePrinter(4, PortsTable.class));
+            list(System.out, HOSTS, new DeserializingNodePrinter(HostTable.class));
+        }
     }
     
     // checkstyle: stop exception type check
@@ -852,6 +853,8 @@ public class PortManager {
         }
         return result;
     }
+    
+    // from here we assume that we are connected!!!
     
     /**
      * Returns whether the specified port is free.
