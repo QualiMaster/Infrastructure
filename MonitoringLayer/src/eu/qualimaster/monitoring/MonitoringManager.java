@@ -812,20 +812,22 @@ public class MonitoringManager {
         Models models = RepositoryConnector.getModels(Phase.MONITORING);
         if (null != models) {
             Configuration config = models.getConfiguration();
-            try {
-                AbstractVariable var = ModelQuery.findVariable(config.getProject(), 
-                    QmConstants.VAR_OBSERVABLES_CONFIGUREDPARAMS, null);
-                if (null != var) {
-                    IDecisionVariable dec = config.getDecision(var);
-                    if (null != dec) {
-                        error = loadMonitoringPlugins(dec);
+            if (null != config) {
+                try {
+                    AbstractVariable var = ModelQuery.findVariable(config.getProject(), 
+                        QmConstants.VAR_OBSERVABLES_CONFIGUREDPARAMS, null);
+                    if (null != var) {
+                        IDecisionVariable dec = config.getDecision(var);
+                        if (null != dec) {
+                            error = loadMonitoringPlugins(dec);
+                        }
+                    } else {
+                        error = "Cannot find configuration variable (ignored) " 
+                            + QmConstants.VAR_OBSERVABLES_CONFIGUREDPARAMS;
                     }
-                } else {
-                    error = "Cannot find configuration variable (ignored) " 
-                        + QmConstants.VAR_OBSERVABLES_CONFIGUREDPARAMS;
+                } catch (ModelQueryException e) {
+                    error = e.getMessage();
                 }
-            } catch (ModelQueryException e) {
-                error = e.getMessage();
             }
         } else {
             error = "No configuration available";
