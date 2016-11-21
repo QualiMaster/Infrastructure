@@ -68,6 +68,7 @@ public class Pipelines {
     static Pipeline releasePipeline(String name) {
         Pipeline pip = pipelines.remove(name);
         if (null != pip) {
+            pip.store();
             pip.clear();
         }
         return pip;
@@ -81,7 +82,9 @@ public class Pipelines {
     static void releaseAllPipelines() {
         Iterator<Pipeline> iter = pipelines.values().iterator();
         while (iter.hasNext()) {
-            iter.next().clear();
+            Pipeline pip = iter.next();
+            pip.store();
+            pip.clear();
             iter.remove();
         }
     }
