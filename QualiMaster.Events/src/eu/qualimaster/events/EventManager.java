@@ -25,6 +25,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.LogManager;
@@ -51,6 +52,7 @@ public class EventManager {
     private static final Logger LOGGER = LogManager.getLogger(EventManager.class);
     private static final EventManager INSTANCE = new EventManager();
     private static final long WRITE_WAIT = 20;
+    private static ExecutorService sender = Executors.newCachedThreadPool();
     
     private final String managerId = new VMID().toString() + "-" +  System.nanoTime(); // not static for testing
     private final Map<String, List<EventHandler<? extends IEvent>>> registrations = 
@@ -68,6 +70,7 @@ public class EventManager {
     private Set<Thread> threads = Collections.synchronizedSet(new HashSet<Thread>());
     private boolean isClient;
     private long timerPeriod;
+    private AtomicBoolean initializing = new AtomicBoolean();
     
     /**
      * Registers an event handler.
@@ -92,7 +95,7 @@ public class EventManager {
         }
         if (isClient) {
             if (null == executor) {
-                executor = Executors.newCachedThreadPool();                    
+                executor = Executors.newCachedThreadPool();
             }
             if (!ILocalEvent.class.isAssignableFrom(eClass)) {
                 // this is one, we may have multiple forward handlers for different events
@@ -172,12 +175,37 @@ public class EventManager {
     public static void handle(IEvent event) {
         INSTANCE.doHandle(event);
     }
+    
+    /**
+     * Sends events asynchronously.
+     * 
+     * @param event the event to be sent.
+     */
+    public static void asyncSend(final IEvent event) {
+        INSTANCE.doAsyncSend(event);
+    }
+
+    /**
+     * Sends events asynchronously.
+     * 
+     * @param event the event to be sent.
+     */
+    public void doAsyncSend(final IEvent event) {
+        sender.execute(new Runnable() {
+
+            @Override
+            public void run() {
+                send(event);
+            }
+            
+        });
+    }
 
     /**
      * Sends a given event. If the {@link EventManager} was not started,
      * it will try connecting to its {@link Configuration configured} server.
      * 
-     * @param event the event to be handled.
+     * @param event the event to be sent.
      */
     public static void send(IEvent event) {
         INSTANCE.doSend(event);
@@ -240,7 +268,7 @@ public class EventManager {
      */
     public void doSend(IEvent event) {
         if (null != event) {
-            if (!isRunning) {
+            if (!isRunning && !initializing.get()) {
                 doStart(isLocalhost(Configuration.getEventHost()), false);
             }
             doHandle(event);
@@ -567,6 +595,7 @@ public class EventManager {
      * @param server start as server (with remote receiver thread)
      */
     public void doStart(boolean localMode, boolean server) {
+        initializing.set(true);
         if (!isRunning) {
             if (server) {
                 executor = Executors.newCachedThreadPool();
@@ -609,6 +638,7 @@ public class EventManager {
         }
         disableLoggingFor(TimerEvent.class); // don't show internal regular events which can be consumed locally
         disableLoggingFor(Configuration.getEventDisableLogging());
+        initializing.set(false);
     }
 
     /**

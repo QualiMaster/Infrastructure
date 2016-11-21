@@ -100,7 +100,6 @@ public class RemoteHandlerTests {
 
         PipelineLifecycleEvent evt = new PipelineLifecycleEvent("pipeline", Status.CHECKING, null);
         EventManager.send(evt); // the pipeline case
-        
         EventManager.cleanup();
         EventManager.stop();
         
@@ -109,7 +108,34 @@ public class RemoteHandlerTests {
         EventManager.unregister(rec);
         System.out.println();
     }
-    
+
+    /**
+     * Tests local functionality.
+     */
+    @Test(timeout = 5000 + EventManager.SO_TIMEOUT)
+    public void testLocalAsync() {
+        Configuration.configureLocal();
+        EventManager.start(); // legacy
+        RecordingEventHandler<InfrastructureEvent> rec = RecordingEventHandler.create(InfrastructureEvent.class);
+        EventManager.register(rec);
+
+        PipelineLifecycleEvent evt = new PipelineLifecycleEvent("pipeline", Status.CHECKING, null);
+        EventManager.send(evt); // the pipeline case
+        while (!rec.received(evt)) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+            }
+        }
+        EventManager.cleanup();
+        EventManager.stop();
+        
+        // evt not serialized
+        Assert.assertTrue(rec.received(evt));
+        EventManager.unregister(rec);
+        System.out.println();
+    }
+
     /**
      * Tests local functionality.
      */
