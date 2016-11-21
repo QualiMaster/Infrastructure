@@ -62,7 +62,7 @@ public class AlgorithmMonitoringEventTest {
         CoordinationManager.unregisterNameMapping(mapping);
 
         // knowledge from mapping
-        PipelineNodeSystemPart node = pip.getPipelineNode("PipelineVar_1_Sink0");
+        PipelineNodeSystemPart node = pip.getPipelineNode("snk");
         Assert.assertNotNull(node);
         Assert.assertEquals(432, node.getObservedValue(ResourceUsage.USED_MEMORY), 0.05);
     }

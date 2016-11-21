@@ -83,7 +83,11 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
         if (null != component) {
             PipelineSystemPart pip = getActivePipeline(state, mapping.getPipelineName());
             if (null != pip) {
-                part = pip.obtainPipelineNode(component.getName());
+                // obtain the implementation name
+                String name = component.getName();
+                // map back to configured name
+                name = mapping.getPipelineNodeByImplName(name);
+                part = pip.obtainPipelineNode(name);
             } else {
                 cause = -1;
             }
@@ -93,7 +97,11 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
             if (null != algorithm) {
                 PipelineSystemPart pip = getActivePipeline(state, mapping.getPipelineName());
                 if (null != pip) {
-                    part = pip.getAlgorithm(algorithm.getName());
+                    // obtain the implementation name
+                    String name = algorithm.getName();
+                    // map back to configured name
+                    name = mapping.getPipelineNodeByImplName(name);
+                    part = pip.getAlgorithm(name);
                 } else {
                     cause = -2;
                 }
