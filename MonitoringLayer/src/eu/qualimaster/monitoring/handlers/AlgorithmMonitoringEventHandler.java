@@ -83,11 +83,7 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
         if (null != component) {
             PipelineSystemPart pip = getActivePipeline(state, mapping.getPipelineName());
             if (null != pip) {
-                // obtain the implementation name
-                String name = component.getName();
-                // map back to configured name
-                name = mapping.getPipelineNodeByImplName(name);
-                part = pip.obtainPipelineNode(name);
+                part = pip.obtainPipelineNode(mapName(mapping, component.getName()));
             } else {
                 cause = -1;
             }
@@ -97,11 +93,7 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
             if (null != algorithm) {
                 PipelineSystemPart pip = getActivePipeline(state, mapping.getPipelineName());
                 if (null != pip) {
-                    // obtain the implementation name
-                    String name = algorithm.getName();
-                    // map back to configured name
-                    name = mapping.getPipelineNodeByImplName(name);
-                    part = pip.getAlgorithm(name);
+                    part = pip.getAlgorithm(mapName(mapping, algorithm.getName()));
                 } else {
                     cause = -2;
                 }
@@ -114,6 +106,18 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
             cause = 1;
         }
         return cause;
+    }
+    
+    /**
+     * Maps back an implementation name.
+     * 
+     * @param mapping the name mapping
+     * @param implementationName the implementation name
+     * @return the mapped name
+     */
+    private static String mapName(INameMapping mapping, String implementationName) {
+        String tmp = mapping.getPipelineNodeByImplName(implementationName);
+        return null != tmp ? tmp : implementationName;
     }
 
 }
