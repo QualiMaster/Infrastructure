@@ -58,6 +58,7 @@ public class PipelineElementMultiObservationMonitoringEventHandler
             if (updateCapacity) {
                 StateUtils.updateCapacity(target, key, false);
             }
+            StateUtils.checkTaskAndExecutors(target, key);
         }
     }
 

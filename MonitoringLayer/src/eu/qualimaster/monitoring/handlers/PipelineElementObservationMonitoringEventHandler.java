@@ -44,15 +44,17 @@ public class PipelineElementObservationMonitoringEventHandler
     protected void handle(PipelineElementObservationMonitoringEvent event, SystemState state) {
         SystemPart target = determineAggregationPart(event, state);
         if (null != target) {
+            Object key = event.getKey();
             IObservable observable = event.getObservable();
             if (!observable.isInternal()) {
-                Object key = event.getKey();
                 StateUtils.setValue(target, observable, event.getObservation(), key);
                 if (StateUtils.changesLatency(observable)) {
                     StateUtils.updateCapacity(target, key, false);
                 }
             }
+            StateUtils.checkTaskAndExecutors(target, key);
         }
     }
+    
 
 }

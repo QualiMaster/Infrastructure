@@ -94,9 +94,21 @@ public class StateUtils {
         part.setValue(observable, observation, key);
         if (TimeBehavior.THROUGHPUT_ITEMS == observable) {
             part.setValue(Scalability.ITEMS, observation, key);
-//double it =
-            //part.getObservedValue(Scalability.ITEMS); // TODO fix me: force calculation
-//System.err.println(part.getName()+ " " + it+" "+observation+" "+key);
+        }
+    }
+
+    /**
+     * Checks tasks and executors to be sure, in particular for startup modes that wait on this information.
+     * 
+     * @param target the target system part
+     * @param key the aggregation key
+     */
+    public static void checkTaskAndExecutors(SystemPart target, Object key) {
+        if (0 == target.getObservedValue(ResourceUsage.TASKS)) {
+            StateUtils.setValue(target, ResourceUsage.TASKS, 1.0, key);
+        }
+        if (0 == target.getObservedValue(ResourceUsage.EXECUTORS)) {
+            StateUtils.setValue(target, ResourceUsage.EXECUTORS, 1.0, key);
         }
     }
 
