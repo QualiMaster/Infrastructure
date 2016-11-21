@@ -261,6 +261,13 @@ public class Configuration {
             value = reader.read(properties, key, value);
         }
         
+        /**
+         * Clears this option by setting it to its default value.
+         */
+        protected void clear() {
+            setValue(getDefault());
+        }
+        
         @Override
         public String toString() {
             return key + " = " + value;
@@ -313,7 +320,7 @@ public class Configuration {
         try {
             result = new URL(url);
         } catch (MalformedURLException e) {
-            LogManager.getLogger(Configuration.class).info("Turning " + url + "into URL :" + e.getMessage());
+            LogManager.getLogger(Configuration.class).info("Turning " + url + " into URL : " + e.getMessage());
             result = null;
         }
         return result;
@@ -668,17 +675,16 @@ public class Configuration {
     
     /**
      * Transfers relevant infrastructure configuration information from this configuration
-     * to a Storm configuration. 
+     * to an options object. 
      * 
-     * @param config the Storm configuration to be modified as a side effect
+     * @param options the options object to be modified as a side effect
      * @see #transferConfigurationFrom(Map)
      */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public static void transferConfigurationTo(Map config) {
-        config.put(Configuration.HOST_EVENT, getEventHost());
-        config.put(Configuration.PORT_EVENT, getEventPort());
-        config.put(Configuration.EVENT_DISABLE_LOGGING, getEventDisableLogging());
-        config.put(Configuration.PIPELINE_INTERCONN_PORTS, getPipelinePorts());
+    public static void transferConfigurationTo(IOptionSetter options) {
+        options.setOption(Configuration.HOST_EVENT, getEventHost());
+        options.setOption(Configuration.PORT_EVENT, getEventPort());
+        options.setOption(Configuration.EVENT_DISABLE_LOGGING, getEventDisableLogging());
+        options.setOption(Configuration.PIPELINE_INTERCONN_PORTS, getPipelinePorts());
     }
 
     /**
@@ -739,7 +745,9 @@ public class Configuration {
      * Clears the configuration. Intended for testing to ensure a fresh state.
      */
     public static void clear() {
-        OPTIONS.clear();
+        for (ConfigurationOption<?> opt : OPTIONS.values()) {
+            opt.clear();
+        }
     }
 
     /**

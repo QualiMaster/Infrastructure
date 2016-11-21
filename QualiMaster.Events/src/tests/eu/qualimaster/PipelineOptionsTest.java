@@ -30,14 +30,13 @@ import eu.qualimaster.infrastructure.PipelineOptions;
  * @author Holger Eichelberger
  */
 public class PipelineOptionsTest {
-
+    
     /**
      * Tests the pipeline options.
      */
     @Test
     public void pipelineOptionsTest() {
         PipelineOptions options = new PipelineOptions();
-        
         Assert.assertEquals(7, options.getNumberOfWorkers(7));
         Assert.assertEquals(4, options.getWaitTime(4));
         Assert.assertEquals(3, options.getExecutorParallelism("exec", 3));
@@ -47,10 +46,12 @@ public class PipelineOptionsTest {
         Assert.assertFalse(options.isSubPipeline());
         assertThroughArgs(options);
 
+        options.setOption("myKey", "1");
+        Assert.assertEquals("1", options.getOption("myKey"));
+
         options.markAsSubPipeline("");
         Assert.assertEquals("", options.getMainPipeline());
         Assert.assertFalse(options.isSubPipeline());
-
         options.markAsSubPipeline("mainPip");
         Assert.assertEquals("mainPip", options.getMainPipeline());
         Assert.assertTrue(options.isSubPipeline());

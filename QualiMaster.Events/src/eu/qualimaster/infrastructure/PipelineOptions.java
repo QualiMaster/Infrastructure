@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import eu.qualimaster.IOptionSetter;
 import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.common.QMSupport;
 
@@ -35,7 +36,7 @@ import eu.qualimaster.common.QMSupport;
  * @author Holger Eichelberger
  */
 @QMSupport
-public class PipelineOptions implements Serializable {
+public class PipelineOptions implements Serializable, IOptionSetter {
     
     public static final String SEPARATOR = ".";
     public static final String KEY_WORKERS = "numWorkers";
@@ -47,6 +48,7 @@ public class PipelineOptions implements Serializable {
     public static final String SUFFIX_TASKS = SEPARATOR + "tasks";
     public static final String SUFFIX_ARGUMENT = SEPARATOR + "arg";
     public static final String KEY_ADAPTATION = "qm.adaptation";
+    public static final String PREFIX_FREE = "free" + SEPARATOR;
 
     private static final long serialVersionUID = 7622146883311355571L;
     private Map<String, Serializable> options = new HashMap<String, Serializable>();
@@ -80,7 +82,7 @@ public class PipelineOptions implements Serializable {
         while (a + 1 < args.length) { // name + param
             boolean successful = true;
             String arg = args[a];
-            a++; // increase anyway, endless loop else
+            a++; // increase anyway, args[a] is now the value of arg
             try {
                 if (arg.equals(KEY_WORKERS)) {
                     setNumberOfWorkers(parseIntArg(args, a));
@@ -107,7 +109,11 @@ public class PipelineOptions implements Serializable {
                 } else if (arg.equals(KEY_ADAPTATION)) {
                     setAdaptationFilter(parseStringArg(args, a));
                 } else {
-                    successful = false;
+                    if (a > 1 && arg.startsWith(PREFIX_FREE)) { // bypass pipeline name
+                        options.put(arg, args[a]);
+                    } else {
+                        successful = false;
+                    }
                 }
             } catch (NumberFormatException e) {
                 successful = false; // ignore, try next
@@ -126,6 +132,35 @@ public class PipelineOptions implements Serializable {
      */
     public PipelineOptions(PipelineOptions opts) {
         this.options.putAll(opts.options);
+    }
+    
+    /**
+     * Returns the value of an option. Using the more specific setters shall be preferred except for free/unknown 
+     * options.
+     * 
+     * @param key the key to return the option for
+     * @return the value or <b>null</b> if there is no value for <code>key</code> or <code>key == <b>null</b></code>
+     */
+    public Serializable getOption(String key) {
+        Serializable result;
+        if (null != key) {
+            result = options.get(PREFIX_FREE + key);
+        } else {
+            result = null;
+        }
+        return result;
+    }
+
+    /**
+     * Explicitly sets an option. Using the more specific setters shall be preferred except for free/unknown options.
+     * 
+     * @param key the key to set the value for (<b>null</b> is ignored)
+     * @param value the value
+     */
+    public void setOption(String key, Serializable value) {
+        if (null != key) {
+            options.put(PREFIX_FREE + key, value);
+        }
     }
     
     /**
@@ -599,6 +634,8 @@ public class PipelineOptions implements Serializable {
                     conf = new HashMap();
                 }
                 conf.put(key, entry.getValue());
+            } else if (key.startsWith(PREFIX_FREE)) {
+                conf.put(key.substring(PREFIX_FREE.length()), entry.getValue());
             }
         }
         return conf;

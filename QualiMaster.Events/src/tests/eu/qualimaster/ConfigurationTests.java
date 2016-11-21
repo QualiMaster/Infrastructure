@@ -1,6 +1,7 @@
 package tests.eu.qualimaster;
 
 import java.io.File;
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import org.junit.Test;
 
 import backtype.storm.Config;
 import eu.qualimaster.Configuration;
+import eu.qualimaster.IOptionSetter;
 
 /**
  * Tests the configuration.
@@ -120,7 +122,7 @@ public class ConfigurationTests {
         testViaProperties();
         
         System.out.println("Replay test");
-        Config config = new Config();
+        final Config config = new Config();
         config.put(Configuration.CONFIG_KEY_STORM_ZOOKEEPER_PORT, 1024);
         config.put(Configuration.CONFIG_KEY_STORM_ZOOKEEPER_RETRY_INTERVAL, 100);
         config.put(Configuration.CONFIG_KEY_STORM_ZOOKEEPER_RETRY_TIMES, 4);
@@ -128,7 +130,13 @@ public class ConfigurationTests {
         zks.add("localhost");
         zks.add("myserver.de");
         config.put(Configuration.CONFIG_KEY_STORM_ZOOKEEPER_SERVERS, zks);
-        Configuration.transferConfigurationTo(config);
+        Configuration.transferConfigurationTo(new IOptionSetter() {
+            
+            @Override
+            public void setOption(String key, Serializable value) {
+                config.put(key, value);
+            }
+        });
         Configuration.transferConfigurationFrom(config);
         Assert.assertEquals(1024, Configuration.getZookeeperPort());
         Assert.assertEquals(100, Configuration.getZookeeperRetryInterval());
