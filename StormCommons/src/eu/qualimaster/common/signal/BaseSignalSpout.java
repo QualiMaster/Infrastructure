@@ -69,7 +69,10 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
             pipeline = (String) conf.get(Constants.CONFIG_KEY_SUBPIPELINE_NAME);
         }
         StormSignalConnection.configureEventBus(conf);
-        monitor = createMonitor(pipeline, name, true, context, sendRegular);
+        monitor = createMonitor(pipeline, name, true, context);
+        if (initMonitorDuringOpen()) {
+            initMonitor();
+        }
         if (Constants.MEASURE_BY_TASK_HOOKS) {
             context.addTaskHook(monitor);
         }
@@ -96,13 +99,29 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      * @param name the element name
      * @param includeItems whether the send items shall also be included
      * @param context the topology context for creating the component id
-     * @param sendRegular whether this monitor shall care for sending regular events (<code>true</code>) or 
-     *     not (<code>false</code>, for thrift-based monitoring)
+
      * @return the monitor instance (must not be <b>null</b>)
      */
-    protected Monitor createMonitor(String namespace, String name, boolean includeItems, TopologyContext context, 
-        boolean sendRegular) {
-        return new Monitor(namespace, name, true, context, sendRegular);
+    protected Monitor createMonitor(String namespace, String name, boolean includeItems, TopologyContext context) {
+        return new Monitor(namespace, name, true, context);
+    }
+    
+    /**
+     * Initialize monitoring during {@link #open(Map, TopologyContext, SpoutOutputCollector)}. This method is intended
+     * to be overridden if the subclass takes over the responsibility and must call {@link #initMonitor()} on its own. #
+     * Otherwise data processing may not start.
+     * 
+     * @return <code>true</code> for starting the monitor during open, <code>false</code> else 
+     */
+    protected boolean initMonitorDuringOpen() {
+        return true;
+    }
+    
+    /**
+     * Initializes monitoring for this node.
+     */
+    protected final void initMonitor() {
+        monitor.init(sendRegular);
     }
     
     /**

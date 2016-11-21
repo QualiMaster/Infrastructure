@@ -19,11 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.LogManager;
-
-//import de.uni_hildesheim.sse.system.GathererFactory;
-//import de.uni_hildesheim.sse.system.IMemoryDataGatherer;
-
 import backtype.storm.hooks.ITaskHook;
 import backtype.storm.hooks.info.BoltAckInfo;
 import backtype.storm.hooks.info.BoltExecuteInfo;
@@ -77,18 +72,20 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     private boolean includeItems;
     private TimerEventHandler timerHandler;
     private boolean collectVolume = true; //false; // TODO activate by default?
+    private boolean initialized = false;
     
     /**
-     * Creates a monitor and sends once the executors resource usage event.
+     * Creates a monitor and sends once the executors resource usage event. Call {@link #start(boolean)} as soon as the 
+     * underlying node is ready for processing.
      * 
      * @param namespace the namespace (pipeline name)
      * @param name the element name
      * @param includeItems whether the send items shall also be included
      * @param context the topology context for creating the component id
-     * @param sendRegular whether this monitor shall care for sending regular events (<code>true</code>) or 
-     *     not (<code>false</code>, for thrift-based monitoring)
+     *     
+     * @see #init(boolean)
      */
-    public Monitor(String namespace, String name, boolean includeItems, TopologyContext context, boolean sendRegular) {
+    public Monitor(String namespace, String name, boolean includeItems, TopologyContext context) {
         this.namespace = namespace;
         this.name = name;
         this.executionTime = new IncrementalAverage();
@@ -96,27 +93,36 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
         this.key = new ComponentKey(context.getThisWorkerPort(), context.getThisTaskId());
         this.key.setThreadId(Thread.currentThread().getId());
         this.includeItems = includeItems;
-
-        Map<IObservable, Double> data = new HashMap<IObservable, Double>();
-        data.put(ResourceUsage.EXECUTORS, 1.0);
-        data.put(ResourceUsage.TASKS, 1.0); // key is per task!
-        if (sendRegular) {
-            // as this is accounted with full thread information but thrift not, this affects the results
-            data.put(TimeBehavior.LATENCY, 0.0);
-            data.put(TimeBehavior.THROUGHPUT_ITEMS, 0.0);
+    }
+    
+    /**
+     * Initializes monitoring.
+     * 
+     * @param sendRegular whether this monitor shall care for sending regular events (<code>true</code>) or 
+     *     not (<code>false</code>, for thrift-based monitoring)
+     */
+    public void init(boolean sendRegular) {
+        if (!initialized) {
+            initialized = true;
+            Map<IObservable, Double> data = new HashMap<IObservable, Double>();
+            data.put(ResourceUsage.EXECUTORS, 1.0);
+            data.put(ResourceUsage.TASKS, 1.0); // key is per task!
+            if (sendRegular) {
+                // as this is accounted with full thread information but thrift not, this affects the results
+                data.put(TimeBehavior.LATENCY, 0.0);
+                data.put(TimeBehavior.THROUGHPUT_ITEMS, 0.0);
+            }
+            // avoid blocking remainder of initialization
+            EventManager.asyncSend(new PipelineElementMultiObservationMonitoringEvent(namespace, name, key, data));
+            this.lastSend.set(System.currentTimeMillis());
+    
+            if (sendRegular) {
+                // works only in cluster mode due to event handler
+                timerHandler = new TimerEventHandler();
+                EventManager.setTimerPeriod(sendInterval + 100); // allow for tolerances
+                EventManager.register(timerHandler);
+            }
         }
-        EventManager.send(new PipelineElementMultiObservationMonitoringEvent(namespace, name, key, data));
-        this.lastSend.set(System.currentTimeMillis());
-
-        if (sendRegular) {
-            // works only in cluster mode due to event handler
-            timerHandler = new TimerEventHandler();
-            EventManager.setTimerPeriod(sendInterval + 100); // allow for tolerances
-            EventManager.register(timerHandler);
-        }
-        // TODO remove debug
-        LogManager.getLogger(Monitor.class).warn("Monitor " + System.getProperty("os.name")
-            + " " + System.getProperty("os.arch"));
     }
     
     /**

@@ -49,9 +49,8 @@ public abstract class BaseSignalSourceSpout extends BaseSignalSpout {
     }
     
     @Override
-    protected Monitor createMonitor(String namespace, String name, boolean includeItems, TopologyContext context, 
-        boolean sendRegular) {
-        SourceMonitor monitor = new SourceMonitor(namespace, name, true, context, sendRegular);
+    protected Monitor createMonitor(String namespace, String name, boolean includeItems, TopologyContext context) {
+        SourceMonitor monitor = new SourceMonitor(namespace, name, true, context);
         configure(monitor);
         return monitor;
     }

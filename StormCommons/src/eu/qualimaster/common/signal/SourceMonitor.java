@@ -50,12 +50,9 @@ public class SourceMonitor extends Monitor {
      * @param name the element name
      * @param includeItems whether the send items shall also be included
      * @param context the topology context for creating the component id
-     * @param sendRegular whether this monitor shall care for sending regular events (<code>true</code>) or 
-     *     not (<code>false</code>, for thrift-based monitoring)
      */
-    public SourceMonitor(String namespace, String name, boolean includeItems, TopologyContext context,
-        boolean sendRegular) {
-        super(namespace, name, includeItems, context, sendRegular);
+    public SourceMonitor(String namespace, String name, boolean includeItems, TopologyContext context) {
+        super(namespace, name, includeItems, context);
         this.aggregationInterval = 6000;
     }
     

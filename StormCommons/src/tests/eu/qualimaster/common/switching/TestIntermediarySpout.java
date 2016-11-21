@@ -28,7 +28,6 @@ import eu.qualimaster.common.switching.IState.SwitchState;
 public class TestIntermediarySpout extends BaseSwitchSpout {
     protected static final int PORT = 8999;
     private static final Logger LOGGER = Logger.getLogger(TestIntermediarySpout.class);
-    @SuppressWarnings("unused")
     private SpoutOutputCollector collector;
     private String streamId;
     private AbstractSwitchMechanism mechanism;
