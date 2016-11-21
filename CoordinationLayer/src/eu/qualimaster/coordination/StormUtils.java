@@ -20,7 +20,6 @@ import org.apache.log4j.Logger;
 import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.thrift7.TException;
 
-import eu.qualimaster.Configuration;
 import eu.qualimaster.base.algorithm.IMainTopologyCreate;
 import eu.qualimaster.base.algorithm.TopologyOutput;
 import eu.qualimaster.common.signal.Constants;
@@ -318,21 +317,32 @@ public class StormUtils {
     }
 
     /**
-     * Does common configuration steps for local cluster and distributed cluster startup.
+     * Does common configuration steps for local cluster and distributed cluster startup. [public for testing]
+     * 
+     * @param options the startup pipeline options
+     */
+    public static void doCommonConfiguration(StormPipelineOptionsSetter options) {
+        CoordinationConfiguration.transferConfigurationTo(options);
+        options.optionsToConf();
+        if (CoordinationConfiguration.getPipelineStartSourceAutoconnect()) {
+            options.setOption(Constants.CONFIG_KEY_SOURCE_AUTOCONNECT, "true");
+        }
+        options.setOption(Constants.CONFIG_KEY_INIT_MODE, CoordinationConfiguration.getInitializationMode().name());
+    }
+
+    /**
+     * Does common configuration steps for local cluster and distributed cluster startup. Sets <code>stormConf</code>
+     * on <code>options</code>.
      * 
      * @param stormConf the storm configuration map
      * @param options the startup pipeline options
      */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    private static void doCommonConfiguration(Map stormConf, PipelineOptions options) {
-        Configuration.transferConfigurationTo(stormConf);
-        stormConf = options.toConf(stormConf);
-        if (CoordinationConfiguration.getPipelineStartSourceAutoconnect()) {
-            stormConf.put(Constants.CONFIG_KEY_SOURCE_AUTOCONNECT, "true");
-        }
-        stormConf.put(Constants.CONFIG_KEY_INIT_MODE, CoordinationConfiguration.getInitializationMode().name());
+    @SuppressWarnings({ "rawtypes" })
+    private static void doCommonConfiguration(Map stormConf, StormPipelineOptionsSetter options) {
+        options.setConfig(stormConf);
+        doCommonConfiguration(options);
     }
-
+    
     /**
      * Submits a Storm topology.
      * 
@@ -353,6 +363,7 @@ public class StormUtils {
     public static void submitTopology(String host, INameMapping mapping,
             String jarPath, PipelineOptions options) throws IOException {
         String topologyName = mapping.getPipelineName();
+        StormPipelineOptionsSetter optSetter = new StormPipelineOptionsSetter(options);
         if (null != localCluster) {
             LOGGER.info("Submitting in local cluster mode " + jarPath + " " + options);
             StormTopology topology = null;
@@ -371,9 +382,9 @@ public class StormUtils {
             if (null == topology) {
                 throw new IOException("topology '" + topologyName + "' not found");
             }
-            doCommonConfiguration(stormConf, options);
+            doCommonConfiguration(stormConf, optSetter);
             try {
-                localCluster.submitTopology(topologyName, stormConf, topology);
+                localCluster.submitTopology(topologyName, optSetter.getConfig(), topology);
             } catch (InvalidTopologyException e) {
                 throw new IOException("Invalid topology " + e.getMessage());
             } catch (AlreadyAliveException e) {
@@ -383,7 +394,7 @@ public class StormUtils {
         } else {
             Map stormConf = Utils.readStormConfig();
             stormConf.put(Config.NIMBUS_HOST, host);
-            doCommonConfiguration(stormConf, options);
+            doCommonConfiguration(stormConf, optSetter);
             try {
                 // upload topology jar to Cluster using StormSubmitter
                 clearSubmitter();

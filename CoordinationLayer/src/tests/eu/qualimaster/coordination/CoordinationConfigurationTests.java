@@ -1,12 +1,21 @@
 package tests.eu.qualimaster.coordination;
 
+import java.util.Map;
 import java.util.Properties;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import backtype.storm.Config;
+import backtype.storm.utils.Utils;
+import eu.qualimaster.Configuration;
+import eu.qualimaster.common.signal.Constants;
 import eu.qualimaster.coordination.CoordinationConfiguration;
+import eu.qualimaster.coordination.InitializationMode;
+import eu.qualimaster.coordination.StormPipelineOptionsSetter;
+import eu.qualimaster.coordination.StormUtils;
+import eu.qualimaster.infrastructure.PipelineOptions;
 import tests.eu.qualimaster.dataManagement.DataManagementConfigurationTests;
 
 /**
@@ -82,4 +91,61 @@ public class CoordinationConfigurationTests extends DataManagementConfigurationT
         super.configurationTest();
     }
     
+    /**
+     * Tests the pipeline options.
+     */
+    @Test
+    public void pipelineOptionsTest() {
+        PipelineOptions opts = new PipelineOptions();
+        opts.setNumberOfWorkers(5);
+        Properties prop = new Properties();
+        prop.put(CoordinationConfiguration.PIPELINE_START_SOURCE_AUTOCONNECT, "true");
+        prop.put(CoordinationConfiguration.INIT_MODE, InitializationMode.DYNAMIC.name());
+        prop.put(Configuration.HOST_EVENT, "local");
+        prop.put(Configuration.PORT_EVENT, 1234);
+        prop.put(Configuration.EVENT_DISABLE_LOGGING, "aaa,bbb");
+        prop.put(Configuration.PIPELINE_INTERCONN_PORTS, "10-20");
+        CoordinationConfiguration.configure(prop, false);
+        System.out.println("Configured " + prop);
+        
+        // during submission
+        @SuppressWarnings("rawtypes")
+        Map stormConf = Utils.readStormConfig();
+        StormPipelineOptionsSetter optSetter = new StormPipelineOptionsSetter(stormConf, opts);
+        StormUtils.doCommonConfiguration(optSetter);
+        System.out.println("Conf " + stormConf);
+        System.out.println("OPTS " + opts);
+        String[] args = opts.toArgs("pip");
+        System.out.println("ARGS " + java.util.Arrays.toString(args));
+        
+        // in topology
+        PipelineOptions options = new PipelineOptions(args);
+        Config config = new Config();
+        config.setMessageTimeoutSecs(100);
+        config.setDebug(false);
+        config.put("windowSize", 1 * 30);  // Window size (in secs)
+        config.put("windowAdvance", 1);  // Advance of the window (in secs)
+        config.put("SUBPIPELINE.NAME", "pip"); //sub-pipeline namespace
+        //The settings to optimize the storm performance.
+        config.put(Config.TOPOLOGY_RECEIVER_BUFFER_SIZE, 8);
+        config.put(Config.TOPOLOGY_TRANSFER_BUFFER_SIZE, 32);
+        config.put(Config.TOPOLOGY_EXECUTOR_RECEIVE_BUFFER_SIZE, 16384);
+        config.put(Config.TOPOLOGY_EXECUTOR_SEND_BUFFER_SIZE, 16384);
+        config.put(Configuration.HOST_EVENT, Configuration.getEventHost());
+        config.put(Configuration.PORT_EVENT, Configuration.getEventPort());
+        config.put(Configuration.EVENT_DISABLE_LOGGING, Configuration.getEventDisableLogging());
+        config.put(Configuration.PIPELINE_INTERCONN_PORTS, Configuration.getPipelinePorts());
+        options.toConf(config);
+        System.out.println("Pip Config " + config);
+        
+        Assert.assertEquals("true", config.get(Constants.CONFIG_KEY_SOURCE_AUTOCONNECT));
+        Assert.assertEquals(InitializationMode.DYNAMIC.name(), config.get(Constants.CONFIG_KEY_INIT_MODE));
+        Assert.assertEquals("local", config.get(Configuration.HOST_EVENT));
+        Assert.assertEquals("1234", config.get(Configuration.PORT_EVENT));
+        Assert.assertEquals("aaa,bbb", config.get(Configuration.EVENT_DISABLE_LOGGING));
+        Assert.assertEquals("10-20", config.get(Configuration.PIPELINE_INTERCONN_PORTS));
+        
+        CoordinationConfiguration.clear();
+    }
+
 }

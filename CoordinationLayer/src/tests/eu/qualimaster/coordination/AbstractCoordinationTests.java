@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.storm.curator.utils.DebugUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -393,6 +394,7 @@ public class AbstractCoordinationTests {
      */
     @Before
     public void setUp() {
+        System.setProperty(DebugUtils.PROPERTY_DONT_LOG_CONNECTION_ISSUES, "true");
         SignalMechanism.setTestMode(true);
         Naming.clearLogs();        
         configure();
