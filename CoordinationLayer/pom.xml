@@ -150,7 +150,7 @@
          <groupId>eu.qualimaster</groupId>
          <artifactId>DataManagementLayer</artifactId>
          <type>test-jar</type>
-         <scope>provided</scope>
+         <scope>test</scope>
        </dependency>
        <!-- although transitive needed for ANT compiling on Jenkins -->
        <dependency>
