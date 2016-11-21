@@ -387,7 +387,7 @@ public class StormUtils {
             try {
                 // upload topology jar to Cluster using StormSubmitter
                 clearSubmitter();
-                LOGGER.info("Submitting " + jarPath);
+                LOGGER.info("Submitting " + jarPath + " with config " + stormConf);
                 String uploadedJarLocation = StormSubmitter.submitJar(stormConf, jarPath);
                 System.setProperty("storm.jar", uploadedJarLocation);
                 File file = new File(jarPath);
