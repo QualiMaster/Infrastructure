@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent;
+import eu.qualimaster.coordination.events.PipelineResourceUnpackingPluginRegistrationEvent;
 import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
@@ -56,6 +57,8 @@ public class AlgorithmProfilePredictionManager {
      * Called upon startup of the infrastructure.
      */
     public static void start() {
+        // register the unpacking plugin
+        EventManager.send(new PipelineResourceUnpackingPluginRegistrationEvent(new PipelineProfileUnpackingPlugin()));
     }
     
     /**
