@@ -268,7 +268,7 @@ public class EventManager {
      */
     public void doSend(IEvent event) {
         if (null != event) {
-            if (!isRunning && !initializing.get()) {
+            if (!isRunning) {
                 doStart(isLocalhost(Configuration.getEventHost()), false);
             }
             doHandle(event);
@@ -595,8 +595,8 @@ public class EventManager {
      * @param server start as server (with remote receiver thread)
      */
     public void doStart(boolean localMode, boolean server) {
-        initializing.set(true);
-        if (!isRunning) {
+        boolean inInit = initializing.getAndSet(true);
+        if (!isRunning && !inInit) {
             if (server) {
                 executor = Executors.newCachedThreadPool();
                 if (!localMode) {
