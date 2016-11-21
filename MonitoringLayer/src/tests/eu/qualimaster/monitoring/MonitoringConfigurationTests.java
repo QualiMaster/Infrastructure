@@ -43,6 +43,8 @@ public class MonitoringConfigurationTests extends CoordinationConfigurationTests
             MonitoringConfiguration.getAnalysisMinDeviationDifference());
         Assert.assertEquals(MonitoringConfiguration.DEFAULT_PARALLEL_EXECUTOR_STARTUP, 
             MonitoringConfiguration.getStormExecutorStartupParallel());
+        Assert.assertEquals(MonitoringConfiguration.DEFAULT_PROFILE_APPROXIMATE, 
+            MonitoringConfiguration.enableProfileApproximate());
     }
 
     @Override

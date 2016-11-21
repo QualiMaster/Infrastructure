@@ -127,6 +127,16 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
      * The default value for {@link #FREQUENCY_MONITORING_PIPELINE} in milliseconds.
      */
     public static final int DEFAULT_FREQUENCY_MONITORING_PIPELINE = 1000;
+    
+    /**
+     * Denotes whether profiling shall perform approximation of unknown data points.
+     */
+    public static final String PROFILE_APPROXIMATE = "profiling.approximation";
+
+    /**
+     * The default value for {@link #PROFILE_APPROXIMATE} ({@value}).
+     */
+    public static final boolean DEFAULT_PROFILE_APPROXIMATE = true;
 
     /**
      * Denotes the maximum time that we wait for accepting that an existing executor has been created and is 
@@ -197,6 +207,8 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
         = createBooleanOption(THRIFT_MONITORING_DEBUG, DEFAULT_THRIFT_MONITORING_DEBUG);
     private static ConfigurationOption<String> volumeModelLocation 
         = createStringOption(VOLUME_MODEL_LOCATION, DEFAULT_VOLUME_MODEL_LOCATION);
+    private static ConfigurationOption<Boolean> profileApproximate
+        = createBooleanOption(PROFILE_APPROXIMATE, DEFAULT_PROFILE_APPROXIMATE);
     
     /**
      * Reads the configuration settings from the file.
@@ -419,6 +431,15 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
      */
     public static int getAnalysisMinDeviationDifference() {
         return monitoringAnalysisMinDevDifference.getValue();
+    }
+    
+    /**
+     * Returns whether profile prediction shall enable approximation of unknown data points.
+     * 
+     * @return <code>true</code> for approximation, <code>false</code> else
+     */
+    public static boolean enableProfileApproximate() {
+        return profileApproximate.getValue();
     }
 
 }

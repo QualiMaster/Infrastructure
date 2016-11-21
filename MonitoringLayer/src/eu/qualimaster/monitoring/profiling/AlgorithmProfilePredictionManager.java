@@ -59,6 +59,7 @@ public class AlgorithmProfilePredictionManager {
     public static void start() {
         // register the unpacking plugin
         EventManager.send(new PipelineResourceUnpackingPluginRegistrationEvent(new PipelineProfileUnpackingPlugin()));
+        enableApproximation(MonitoringConfiguration.enableProfileApproximate());
     }
     
     /**
