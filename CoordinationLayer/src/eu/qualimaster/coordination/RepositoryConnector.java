@@ -477,6 +477,7 @@ public class RepositoryConnector {
                         getLogger().info("no settings folder in model (" + settingsFolderF.getAbsolutePath() + ")");
                     }
                 }
+                executeUnpackingPlugins(modelPathF);
             } catch (IOException e) {
                 getLogger().error("Extracting Infrastructure Model: " + e.getMessage());
             } catch (ModelManagementException e) {
@@ -488,6 +489,30 @@ public class RepositoryConnector {
         }
         return result;
     }
+    
+    /**
+     * Executes unpacking plugins.
+     * 
+     * @param modelPathF the path to the model
+     */
+    private static void executeUnpackingPlugins(File modelPathF) {
+        File[] contained = modelPathF.listFiles();
+        if (null != contained) {
+            for (File f : contained) {
+                IPipelineResourceUnpackingPlugin plugin 
+                    = PluginRegistry.getPipelineResourceUnpackingPlugin(f.getName());
+                if (null != plugin) {
+                    try {
+                        plugin.unpack(f);
+                    } catch (IOException e) {
+                        getLogger().error("While unpacking resource " + f.getName() + " with " + plugin.getName() 
+                            + ": " + e.getMessage());
+                    }
+                }
+            }
+        }
+    }
+
     
     /**
      * Unpacks the specific pipeline settings from their specific artifact.

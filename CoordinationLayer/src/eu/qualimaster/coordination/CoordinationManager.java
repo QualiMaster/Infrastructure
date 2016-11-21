@@ -15,6 +15,7 @@ import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand;
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent;
 import eu.qualimaster.coordination.events.CoordinationCommandExecutionEvent;
+import eu.qualimaster.coordination.events.PipelineResourceUnpackingPluginRegistrationEvent;
 import eu.qualimaster.dataManagement.events.ShutdownEvent;
 import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
@@ -59,7 +60,29 @@ public class CoordinationManager {
         }
         
     }
-    
+
+    /**
+     * The handler for pipeline resource unpacking plugin events.
+     * 
+     * @author Holger Eichelberger
+     */
+    private static class PipelineResourceUnpackingPluginRegistrationEventHandler 
+        extends EventHandler<PipelineResourceUnpackingPluginRegistrationEvent> {
+
+        /**
+         * Creates a resource unpacking event handler.
+         */
+        protected PipelineResourceUnpackingPluginRegistrationEventHandler() {
+            super(PipelineResourceUnpackingPluginRegistrationEvent.class);
+        }
+
+        @Override
+        protected void handle(PipelineResourceUnpackingPluginRegistrationEvent command) {
+            PluginRegistry.registerPipelineResourceUnpackingPlugin(command.getPlugin());
+        }
+        
+    }
+
     /**
      * The handler for pipeline lifecycle events, in particular to send {@link CoordinationCommandExecutionEvent 
      * execution events} on completed lifecycle phase.
@@ -242,6 +265,7 @@ public class CoordinationManager {
         EventManager.register(new EndOfDataEventHandler());
         EventManager.register(new EnactmentEventHandler());
         EventManager.register(new ShutdownEventHandler());
+        EventManager.register(new PipelineResourceUnpackingPluginRegistrationEventHandler());
     }
     
     /**
