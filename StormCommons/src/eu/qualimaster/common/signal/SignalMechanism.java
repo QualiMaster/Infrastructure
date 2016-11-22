@@ -333,16 +333,16 @@ public class SignalMechanism {
         CuratorFramework result = FRAMEWORKS.get(namespace);
         if (null == result) {
             String connectString = getConnectString(namespace);
-            getLogger().info("Creating a curator framwork for " + namespace + "using" + connectString);
+            getLogger().info("Creating a curator framework for " + namespace + " using " + connectString);
             result = CuratorFrameworkFactory.builder().namespace(namespace)
                 .connectString(connectString)
                 //.retryPolicy(new RetryOneTime(500)).build();
                 .retryPolicy(new RetryNTimes(Configuration.getZookeeperRetryTimes(), 
                     Configuration.getZookeeperRetryInterval())).build();
-            getLogger().info("Created a curator framwork: " + result);
+            getLogger().info("Created a curator framework: " + result);
             FRAMEWORKS.put(namespace, result);
             result.start();
-            getLogger().info("Started the curator framwork...");
+            getLogger().info("Started the curator framework...");
         }
         return result;
     }
@@ -486,7 +486,7 @@ public class SignalMechanism {
         if (Configuration.getPipelineSignalsCurator()) {
             if (null == mechanism) {
                 try {
-                    getLogger().info("Obtaining the framwork...");
+                    getLogger().info("Obtaining the framework...");
                     mechanism = obtainFramework(space.getName());
                 } catch (IOException e) {
                     throw new SignalException(e);
