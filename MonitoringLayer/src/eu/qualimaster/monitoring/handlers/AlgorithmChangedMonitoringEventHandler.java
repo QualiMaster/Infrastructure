@@ -44,7 +44,20 @@ public class AlgorithmChangedMonitoringEventHandler extends MonitoringEventHandl
 
     @Override
     protected void handle(AlgorithmChangedMonitoringEvent event, SystemState state) {
-        SystemPart target = determineAggregationPart(event, state);
+        handle(event, state, true);
+        handle(event, state, false);
+    }
+
+    /**
+     * Handles an event of the supported event type.
+     * 
+     * @param event the event to be handled
+     * @param state the actual system state to be modified
+     * @param forMainPipeline handle for main pipeline (<code>true</code>) or try handling for a 
+     *   sub-pipeline (<code>false</code>)
+     */
+    private void handle(AlgorithmChangedMonitoringEvent event, SystemState state, boolean forMainPipeline) {
+        SystemPart target = determineAggregationPart(event, state, forMainPipeline);
         if (target instanceof PipelineNodeSystemPart) {
             INameMapping mapping = getNameMapping(event.getPipeline());
             String algName = event.getAlgorithm();
@@ -60,7 +73,9 @@ public class AlgorithmChangedMonitoringEventHandler extends MonitoringEventHandl
                 getLogger().info("cannot find/map back algorithm '" + event.getAlgorithm() + "': ignoring " + event);
             }
         }
-        AlgorithmProfilePredictionManager.notifyAlgorithmChanged(event);
+        if (null != target) {
+            AlgorithmProfilePredictionManager.notifyAlgorithmChanged(event);
+        }
     }
 
 }

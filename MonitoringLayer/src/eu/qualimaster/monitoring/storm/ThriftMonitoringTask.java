@@ -2,7 +2,6 @@ package eu.qualimaster.monitoring.storm;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -106,12 +105,13 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
                         }
                     }
                 }
-                Collection<PipelineSystemPart> pipelines = getState().getPipelines();
+                // not handled by further state correctly... just ignore for now
+                /*Collection<PipelineSystemPart> pipelines = getState().getPipelines();
                 for (PipelineSystemPart pipeline : pipelines) {
                     if (!modified.contains(pipeline) && pipeline.getStatus().wasStarted()) {
                         pipeline.changeStatus(PipelineLifecycleEvent.Status.DISAPPEARED, true);
                     }
-                }
+                }*/
             } catch (TException e) {
                 LOGGER.error("Cannot obtain thrift data " + e.getMessage(), e);
             }  catch (IllegalStateException e) {
@@ -302,12 +302,37 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
                 }
             } 
             if (!createdChanged && allInitialized && PipelineLifecycleEvent.Status.CREATED == part.getStatus()) {
-                part.changeStatus(PipelineLifecycleEvent.Status.INITIALIZED, true);
+                if (areSubpipelinesUp(part.getName())) {
+                    part.changeStatus(PipelineLifecycleEvent.Status.INITIALIZED, true);
+                }
             }
         } else {
             LOGGER.error("no mapping for " + topology.get_name());
         }
         return part;
+    }
+    
+    /**
+     * Returns whether all sub-pipelines on the cluster (not all configured ones) are up.
+     * 
+     * @param pipelineName the name of the pipeline to check the sub-pipelines for
+     * @return <code>true</code> if all are up or no sub-pipelines are defined, <code>false</code> if at least one 
+     *    sub-pipeline is not up
+     */
+    private boolean areSubpipelinesUp(String pipelineName) {
+        PipelineInfo info = MonitoringManager.getPipelineInfo(pipelineName);
+        boolean allConnected = true;
+        if (null != info) {
+            for (PipelineInfo subInfo : info.getSubPipelines()) {
+                if (!(PipelineLifecycleEvent.Status.INITIALIZED == subInfo.getStatus() 
+                    || PipelineLifecycleEvent.Status.STARTED == subInfo.getStatus())) {
+                    allConnected = false;
+                }
+            }
+        } else {
+            allConnected = true;
+        }
+        return allConnected;
     }
     
     /**

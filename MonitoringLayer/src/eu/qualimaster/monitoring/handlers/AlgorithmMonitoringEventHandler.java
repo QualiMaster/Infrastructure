@@ -44,8 +44,28 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
 
     @Override
     protected void handle(AlgorithmMonitoringEvent event, SystemState state) {
-        int cause = 0;
         String pipelineName = event.getPipeline();
+        int cause = doHandle(event, state, pipelineName);
+        String subPipeline = findSubPipeline(pipelineName, event.getAlgorithmId());
+        if (null != subPipeline) {
+            doHandle(event, state, subPipeline);
+        }
+        if (cause <= 0) {
+            getLogger().error("Cannot handle " + cause + " " + event + " " 
+                + MonitoringManager.getNameMapping(pipelineName));
+        }
+    }
+
+    /**
+     * Handles the given <code>event</code>.
+     * 
+     * @param event the event
+     * @param state the system state
+     * @param pipelineName the pipeline name (may be a sub-pipeline name)
+     * @return the internal cause code in case that the event cannot be handled, negative or null in case error
+     */
+    private int doHandle(AlgorithmMonitoringEvent event, SystemState state, String pipelineName) {
+        int cause = 0;
         INameMapping mapping = null;
         if (null != pipelineName) { // just to be on the safe side
             mapping = MonitoringManager.getNameMapping(pipelineName);
@@ -60,9 +80,7 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
         } else {
             cause = -4;
         }
-        if (cause <= 0) {
-            getLogger().error("Cannot handle " + cause + " " + event + " " + mapping);
-        }
+        return cause;
     }
     
     /**

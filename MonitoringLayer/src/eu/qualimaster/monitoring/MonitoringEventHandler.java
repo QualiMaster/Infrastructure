@@ -20,6 +20,7 @@ import org.apache.log4j.Logger;
 
 import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.events.IEvent;
+import eu.qualimaster.monitoring.MonitoringManager.PipelineInfo;
 import eu.qualimaster.monitoring.events.AbstractPipelineElementMonitoringEvent;
 import eu.qualimaster.monitoring.events.MonitoringEvent;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
@@ -78,30 +79,40 @@ public abstract class MonitoringEventHandler <E extends MonitoringEvent> {
      * 
      * @param event the monitoring event
      * @param state the system state to be modified
+     * @param forMainPipeline determine the aggregation part for the main pipeline or apply 
+     *   {@link #findSubPipeline(String, String)} whether a containing sub-pipeline exists
      * @return the system part (platform by default, may be <b>null</b> if it should be a pipeline/element in 
-     *   a dead pipeline)
+     *   a dead pipeline or a non-existing sub-pipeline)
      */
     protected static SystemPart determineAggregationPart(AbstractPipelineElementMonitoringEvent event, 
-        SystemState state) {
+        SystemState state, boolean forMainPipeline) {
         String pipelineName = event.getPipeline();
-        SystemPart target = state.getPlatform();
-        PipelineSystemPart pPart = null;
+        SystemPart target;
+        if (!forMainPipeline) {
+            pipelineName = findSubPipeline(pipelineName, event.getPipelineElement());
+        }
         if (null != pipelineName) {
-            target = null;
-            pPart = getActivePipeline(state, pipelineName);
-            if (null != pPart) {
-                target = pPart;
-                String nodeName = event.getPipelineElement();
-                PipelineNodeSystemPart nPart = null;
-                if (null != nodeName) {
-                    INameMapping mapping = MonitoringManager.getNameMapping(pipelineName);
-                    nPart = SystemState.getNodePart(mapping, pPart, nodeName);
-                }
-                if (null != nPart) {
-                    target = nPart;
+            target = state.getPlatform();
+            PipelineSystemPart pPart = null;
+            if (null != pipelineName) {
+                target = null;
+                pPart = getActivePipeline(state, pipelineName);
+                if (null != pPart) {
+                    target = pPart;
+                    String nodeName = event.getPipelineElement();
+                    PipelineNodeSystemPart nPart = null;
+                    if (null != nodeName) {
+                        INameMapping mapping = MonitoringManager.getNameMapping(pipelineName);
+                        nPart = SystemState.getNodePart(mapping, pPart, nodeName);
+                    }
+                    if (null != nPart) {
+                        target = nPart;
+                    }
                 }
             }
-        } 
+        } else {
+            target = null; // indicate no pipeline
+        }
         return target;
     }
 
@@ -137,6 +148,28 @@ public abstract class MonitoringEventHandler <E extends MonitoringEvent> {
      */
     protected static INameMapping getNameMapping(String pipelineName) {
         return MonitoringManager.getNameMapping(pipelineName);
+    }
+    
+    /**
+     * Finds a sub-pipeline of <code>pipelineName</code> (also) containing the given <code>pipelineElement</code>.
+     * 
+     * @param pipelineName the name of the pipeline
+     * @param pipelineElement the name of the pipeline element
+     * @return the name of the sub-pipeline if such an element exists, <b>null</b> else
+     */
+    protected static String findSubPipeline(String pipelineName, String pipelineElement) {
+        String result = null;
+        PipelineInfo info = MonitoringManager.getPipelineInfo(pipelineName);
+        if (null != info && info.hasSubPipelines()) {
+            for (PipelineInfo subInfo : info.getSubPipelines()) {
+                INameMapping mapping = MonitoringManager.getNameMapping(subInfo.getName());
+                if (null != mapping.getPipelineNodeByImplName(pipelineElement) 
+                    || null != mapping.getPipelineNodeComponent(pipelineElement)) {
+                    result = subInfo.getName();
+                }
+            }
+        }
+        return result;
     }
 
 }

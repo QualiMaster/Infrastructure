@@ -393,7 +393,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
         PipelineTopology topology = provider.getTopology();
         if (null != topology) {
             Processor proc = topology.getProcessor(getName());
-            if (null != pipeline && null != current && current.getNodeCount() > 1) {
+            if (null != pipeline && null != current && current.getNodeCount() > 1 && null != proc) {
                 List<Processor> start = new ArrayList<Processor>();
                 List<Processor> end = new ArrayList<Processor>();
                 Map<Stream, Processor> next = new HashMap<Stream, Processor>();

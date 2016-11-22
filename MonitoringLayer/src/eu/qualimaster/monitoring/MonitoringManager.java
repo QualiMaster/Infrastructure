@@ -165,6 +165,7 @@ public class MonitoringManager {
          * @param status the new status
          */
         private void setStatus(Status status) {
+            this.status = status;
             if (Status.STOPPED == status) {
                 pipelines.remove(this);
                 PipelineInfo parent = getMainPipelineInfo();
@@ -230,6 +231,15 @@ public class MonitoringManager {
          */
         public PipelineOptions getOptions() {
             return options;
+        }
+        
+        /**
+         * Returns whether this pipeline has sub-pipelines.
+         * 
+         * @return <code>true</code> for sub-pipelines, <code>false</code> else
+         */
+        public boolean hasSubPipelines() {
+            return !subPipelines.isEmpty();
         }
         
         /**
@@ -539,6 +549,7 @@ public class MonitoringManager {
             if (null == timer) {
                 LOGGER.error("Monitoring Manager not started properly! Call start before!"); 
             } else {
+                PipelineSystemPart pipeline;
                 String pipelineName = event.getPipeline();
                 Status status = event.getStatus();
                 switch (status) {
@@ -553,16 +564,16 @@ public class MonitoringManager {
                 case STARTED:
                     // fallthrough
                 case STOPPED:
-                    if (!isSubPipeline(pipelineName)) {
-                        PipelineSystemPart pipeline = state.obtainPipeline(pipelineName);
-                        pipeline.changeStatus(status, false, null);
-                    }
+                    pipeline = state.obtainPipeline(pipelineName);
+                    pipeline.changeStatus(status, false, null);
                     break;
                 case INITIALIZED:
                     PipelineInfo info = pipelines.get(pipelineName);
-                    if (null != info && info.isSubPipeline()) {
-                        PipelineSystemPart pipeline = state.getPipeline(info.getMainPipeline());
-                        pipeline.setTopology(null); // reset, force re-creation
+                    if (null != info /*&& info.isSubPipeline()*/) {
+                        pipeline = state.getPipeline(info.getMainPipeline());
+                        if (null != pipeline) {
+                            pipeline.setTopology(null); // reset, force re-creation
+                        }
                     }
                     break;
                 default:
@@ -601,7 +612,7 @@ public class MonitoringManager {
      * @param pipelineName the name of the pipeline
      * @return <b>true</b> for sub-pipeline, <code>false</code> else
      */
-    private static boolean isSubPipeline(String pipelineName) {
+    static boolean isSubPipeline(String pipelineName) {
         boolean result = false;
         PipelineInfo info = pipelines.get(pipelineName);
         if (null != info) {

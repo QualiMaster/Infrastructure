@@ -44,7 +44,21 @@ public class PipelineElementMultiObservationMonitoringEventHandler
 
     @Override
     protected void handle(PipelineElementMultiObservationMonitoringEvent event, SystemState state) {
-        SystemPart target = determineAggregationPart(event, state);
+        handle(event, state, true);
+        handle(event, state, false);
+    }
+
+    /**
+     * Handles an event of the supported event type.
+     * 
+     * @param event the event to be handled
+     * @param state the actual system state to be modified
+     * @param forMainPipeline handle for main pipeline (<code>true</code>) or try handling for a 
+     *   sub-pipeline (<code>false</code>)
+     */
+    private void handle(PipelineElementMultiObservationMonitoringEvent event, SystemState state, 
+        boolean forMainPipeline) {
+        SystemPart target = determineAggregationPart(event, state, forMainPipeline);
         if (null != target) {
             Object key = event.getKey();
             boolean updateCapacity = false;
@@ -61,5 +75,5 @@ public class PipelineElementMultiObservationMonitoringEventHandler
             StateUtils.checkTaskAndExecutors(target, key);
         }
     }
-
+    
 }
