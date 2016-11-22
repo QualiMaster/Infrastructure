@@ -40,6 +40,7 @@ import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent.Status;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.infrastructure.PipelineOptions;
+import eu.qualimaster.infrastructure.PipelineStatusTracker;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.MonitoringManager;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
@@ -365,7 +366,7 @@ public class StormTest extends AbstractCoordinationTests {
         //opt.setExecutorParallelism(Naming.NODE_PROCESS, 3);
         RecordingTopologyBuilder builder = new RecordingTopologyBuilder(opt);
         TestTopology.createTopology(builder);
-        builder.close(Naming.PIPELINE_NAME, topoCfg);
+        builder.close(TestTopology.PIP_NAME, topoCfg);
         StormTopology topology = builder.createTopology();
         
         Map<String, TopologyTestInfo> topologies = new HashMap<String, TopologyTestInfo>();
@@ -376,7 +377,8 @@ public class StormTest extends AbstractCoordinationTests {
         new ProfileAlgorithmCommand(Naming.NODE_PROCESS, Naming.NODE_PROCESS_ALG1).execute();
         
         // wait for shutdown through profiling
-        getPipelineStatusTracker().waitFor(Naming.PIPELINE_NAME, Status.STOPPED, 30000);
+        PipelineStatusTracker tracker = new PipelineStatusTracker(false);
+        tracker.waitFor(TestTopology.PIP_NAME, Status.STOPPED, 30000);
         sleep(2000); // allow profile to send end event and to react on it
         
         env.shutdown();
