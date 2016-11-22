@@ -16,12 +16,15 @@
 package tests.eu.qualimaster.monitoring;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import eu.qualimaster.adaptation.events.AdaptationEvent;
+import eu.qualimaster.common.signal.SignalMechanism;
 import eu.qualimaster.coordination.CoordinationManager;
+import eu.qualimaster.coordination.RepositoryConnector;
 import eu.qualimaster.coordination.RepositoryConnector.Phase;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
@@ -58,6 +61,7 @@ public class ReasoningTaskTests {
      */
     @Before
     public void setUp() {
+        SignalMechanism.setTestMode(true);
         Utils.setModelProvider(Utils.INFRASTRUCTURE_TEST_MODEL_PROVIDER);
         Utils.configure();
         EventManager.start();
@@ -73,6 +77,14 @@ public class ReasoningTaskTests {
         CoordinationManager.stop();
         EventManager.stop();
         Utils.dispose();
+    }
+    
+    /**
+     * Shuts down the {@link RepositoryConnector} after all tests, to facilitate similar tests.
+     */
+    @AfterClass
+    public static void tearDownAfterClass() {
+        RepositoryConnector.shutdown();
     }
     
     /**
