@@ -59,12 +59,22 @@ public class AlgorithmMonitoringEventTest {
         AlgorithmMonitoringEvent evt = new AlgorithmMonitoringEvent("RandomPip", 
             "eu.qualimaster.RandomPip.topology.PipelineVar_1_Sink0Sink", ResourceUsage.USED_MEMORY, 432.0);
         AlgorithmMonitoringEventHandler.INSTANCE.doHandle(evt, state);
+
+        evt = new AlgorithmMonitoringEvent("RandomPip", 
+            "eu.qualimaster.RandomSubPipeline1.topology.SubPipelineVar_11_FamilyElement0FamilyElement", 
+            ResourceUsage.USED_MEMORY, 521.0);
+        AlgorithmMonitoringEventHandler.INSTANCE.doHandle(evt, state);
+
         CoordinationManager.unregisterNameMapping(mapping);
 
         // knowledge from mapping
         PipelineNodeSystemPart node = pip.getPipelineNode("snk");
         Assert.assertNotNull(node);
         Assert.assertEquals(432, node.getObservedValue(ResourceUsage.USED_MEMORY), 0.05);
+        
+        node = pip.getPipelineNode("SubPipelineVar_11_FamilyElement0");
+        Assert.assertNotNull(node);
+        Assert.assertEquals(521, node.getObservedValue(ResourceUsage.USED_MEMORY), 0.05);
     }
     
 }
