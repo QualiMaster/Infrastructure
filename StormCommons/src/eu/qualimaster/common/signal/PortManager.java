@@ -1059,10 +1059,34 @@ public class PortManager {
         try {
             if (client.checkExists().forPath(path) != null) {
                 if (null != transaction) {
-                    checkCommit(transaction.delete().forPath(path).and(), commit);
+                    deleteRecursively(path, transaction);
                 } else {
-                    client.delete().deletingChildrenIfNeeded().forPath(path);
+                    SignalMechanism.deleteRecursively(client, path);
                 }
+            }
+        } catch (Exception e) {
+            throw new SignalException(e);
+        }
+    }
+
+    /**
+     * Deletes a path recursively within <code>transaction</code>.
+     * 
+     * @param path the path to be deleted
+     * @param transaction the curator transaction
+     * @throws SignalException if problems occur during deletion
+     */
+    private void deleteRecursively(String path, CuratorTransaction transaction) 
+        throws SignalException {
+        try {
+            if (client.checkExists().forPath(path) != null) {
+                List<String> children = client.getChildren().forPath(path);
+                if (null != children && children.size() > 0) {
+                    for (String c : children) {
+                        deleteRecursively(path + PATH_SEPARATOR + c, transaction);
+                    }
+                }
+                checkCommit(transaction.delete().forPath(path).and(), true);
             }
         } catch (Exception e) {
             throw new SignalException(e);

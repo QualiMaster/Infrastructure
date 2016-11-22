@@ -18,6 +18,7 @@ package eu.qualimaster.common.signal;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -404,6 +405,29 @@ public class SignalMechanism {
             clearPipeline(framework, namespace);
         } catch (IOException e) {
             getLogger().warn("While clearing pipeline " + namespace + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Deletes a ZKnode and its children.
+     * 
+     * @param client the client
+     * @param path the path of the node
+     * @throws SignalException if deleting fails
+     */
+    static void deleteRecursively(CuratorFramework client, String path) throws SignalException {
+        try {
+            if (client.checkExists().forPath(path) != null) {
+                List<String> children = client.getChildren().forPath(path);
+                if (null != children && children.size() > 0) {
+                    for (String c : children) {
+                        deleteRecursively(client, path + PATH_SEPARATOR + c);
+                    }
+                }
+                client.delete().forPath(path);
+            }
+        } catch (Exception e) {
+            throw new SignalException(e);
         }
     }
     
