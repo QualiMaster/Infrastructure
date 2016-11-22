@@ -246,7 +246,7 @@ public class StormTest extends AbstractCoordinationTests {
     /**
      * Tests a topology emulating a manual sub-topology.
      */
-    @Test
+    @Test(timeout = 2 * 60 * 1000)
     public void testManTopology() {
         testTopology(new ManTopology());
     }
@@ -272,7 +272,7 @@ public class StormTest extends AbstractCoordinationTests {
     /**
      * Tests a topology emulating a generated hardware sub-topology (with sink).
      */
-    @Test
+    @Test(timeout = 2 * 60 * 1000)
     public void testSwitchTopologySink() {
         testTopology(new SwitchTopology(true));
     }
