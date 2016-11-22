@@ -670,6 +670,7 @@ public class PortManager {
                     }
                     delete(pipPath, transaction, true);
                 }
+                delete(pipPath, null, true); // just to be sure
             }
         } catch (Exception e) {
             throw new SignalException(e.getMessage());

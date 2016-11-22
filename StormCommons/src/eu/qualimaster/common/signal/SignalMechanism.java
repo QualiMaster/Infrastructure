@@ -82,6 +82,7 @@ public class SignalMechanism {
          * 
          * @return the name of the namespace
          */
+        @SuppressWarnings("unused")
         private String getName() {
             return GLOBAL_NAMESPACE; // map back from virtual to global namespace
         }
@@ -318,7 +319,7 @@ public class SignalMechanism {
      */
     public static void prepareMechanism(String namespace) throws IOException {
         if (Configuration.getPipelineSignalsCurator()) {
-            obtainFramework(namespace);
+            obtainFramework(GLOBAL_NAMESPACE);
         }
     }
     
@@ -397,14 +398,14 @@ public class SignalMechanism {
     /**
      * Clears a pipeline structure.
      * 
-     * @param namespace the pipeline / namespace name
+     * @param pipeline the pipeline name
      */
-    public static void clearPipeline(String namespace) {
+    public static void clearPipeline(String pipeline) {
         try {
-            CuratorFramework framework = obtainFramework(namespace);
-            clearPipeline(framework, namespace);
+            CuratorFramework framework = obtainFramework(GLOBAL_NAMESPACE);
+            clearPipeline(framework, pipeline);
         } catch (IOException e) {
-            getLogger().warn("While clearing pipeline " + namespace + ": " + e.getMessage());
+            getLogger().warn("While clearing pipeline " + pipeline + ": " + e.getMessage());
         }
     }
 
@@ -441,7 +442,7 @@ public class SignalMechanism {
         try {
             String path = PIPELINES_PREFIX + namespace;
             if (null != framework.checkExists().forPath(path)) {
-                framework.delete().deletingChildrenIfNeeded().forPath(PIPELINES_PREFIX + namespace);
+                deleteRecursively(framework, path);
             }
             getPortManager().clearPortAssignments(namespace);
         } catch (Exception e) {
@@ -487,7 +488,7 @@ public class SignalMechanism {
             if (null == mechanism) {
                 try {
                     getLogger().info("Obtaining the framework...");
-                    mechanism = obtainFramework(space.getName());
+                    mechanism = obtainFramework(GLOBAL_NAMESPACE);
                 } catch (IOException e) {
                     throw new SignalException(e);
                 }
