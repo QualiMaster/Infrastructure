@@ -283,4 +283,26 @@ public class GroupingTest {
         expected.clear();
     }
 
+    /**
+     * Does a test about command sequences and sets.
+     */
+    @Test
+    public void groupingTest2() {
+        CommandSequence seq = new CommandSequence();
+        seq.add(record(new AlgorithmChangeCommand("SwitchPip", "snk", "Random Sink")));
+        seq.add(record(new AlgorithmChangeCommand("SwitchPip", "Replay Sink", "Random Sink"), true));
+        CommandSet set = new CommandSet();
+        set.add(record(new ParameterChangeCommand<Integer>("SwitchPip", "processor", "aggregationFactor", 0)));
+        set.add(record(new ParameterChangeCommand<Integer>("SwitchPip", "processor", "delay", 0)));
+        set.add(record(new ParameterChangeCommand<Integer>("SwitchPip", "processor", "windowSize", 10)));
+        seq.add(set);
+        seq.add(record(new AlgorithmChangeCommand("SwitchPip", "src", "Random Source")));
+        
+        ExecutionVisitor vis = new ExecutionVisitor(null);
+        CoordinationExecutionResult res = seq.accept(vis);
+        Assert.assertNotNull(res);
+        Assert.assertTrue(expected.isEmpty());
+    }
+
+    
 }
