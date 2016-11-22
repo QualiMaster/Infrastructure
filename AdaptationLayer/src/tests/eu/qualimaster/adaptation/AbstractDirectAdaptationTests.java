@@ -135,13 +135,13 @@ public abstract class AbstractDirectAdaptationTests {
      */
     @Before
     public void setUp() throws ModelManagementException, ModelQueryException {
-        RepositoryConnector.initialize();
-
         Properties prop = new Properties();
         prop.put(CoordinationConfiguration.INIT_MODE, getInitMode().name());
         // avoid accidentally loading an already unpacked model
         prop.put(CoordinationConfiguration.LOCAL_ARTIFACT_LOCATION, "");
         AdaptationConfiguration.configure(prop);
+
+        RepositoryConnector.initialize();
         
         // model is not loaded as configuration is not set and we want to use the model in this package
         ModelInitializer.registerLoader(ProgressObserver.NO_OBSERVER);
