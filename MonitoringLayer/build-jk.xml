@@ -68,7 +68,7 @@
                 <formatter type="xml" />
             </test>
             <jvmarg value="-Dqm.base.dir=${libs.qualimaster.monitoringLayer.dir}"/>
-            <env key="STORM_TEST_TIMEOUT_MS" value="20000"/>
+            <env key="STORM_TEST_TIMEOUT_MS" value="25000"/>
         </junit>
       </jacoco:coverage>
     </target>
