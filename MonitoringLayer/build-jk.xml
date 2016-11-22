@@ -58,7 +58,7 @@
 	<!-- Tests -->
     <target name="test" depends="compile">
       <jacoco:coverage output="file" destfile="jacoco.exec" excludes="backtype.*:org.apache.thrift7.*">
-        <junit printsummary="withOutAndErr" dir="${build.base.dir}" fork="true" timeout="2000000">
+        <junit printsummary="withOutAndErr" dir="${build.base.dir}" fork="true" timeout="2500000">
             <classpath>
                 <path refid="maven.compile.classpath" />
                 <path refid="includes" />
@@ -68,7 +68,7 @@
                 <formatter type="xml" />
             </test>
             <jvmarg value="-Dqm.base.dir=${libs.qualimaster.monitoringLayer.dir}"/>
-            <env key="STORM_TEST_TIMEOUT_MS" value="20000"/>
+            <env key="STORM_TEST_TIMEOUT_MS" value="25000"/>
         </junit>
       </jacoco:coverage>
     </target>
