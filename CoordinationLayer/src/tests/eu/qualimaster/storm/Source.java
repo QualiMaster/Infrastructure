@@ -89,7 +89,7 @@ public class Source<S extends ISrc> extends BaseSignalSourceSpout {
     public void nextTuple() {
         startMonitoring();
         Integer value = source.getData();
-        if (null != value) {
+        if (null != value && isEnabled(value)) {
             Values values = new Values(value);
             this.collector.emit(values);
             endMonitoring();

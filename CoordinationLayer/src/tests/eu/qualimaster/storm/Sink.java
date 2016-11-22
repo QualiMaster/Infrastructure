@@ -55,7 +55,7 @@ public class Sink extends BaseSignalBolt {
     }
 
     @Override
-    public void execute(Tuple input) {
+    public void doExecute(Tuple input) {
         startMonitoring();
         Integer data = input.getInteger(0);
         sink.emit(data);

@@ -147,7 +147,7 @@ public class Process extends BaseSignalBolt {
     }
 
     @Override
-    public void execute(Tuple input) {
+    public void doExecute(Tuple input) {
         startMonitoring();
         this.input.init(input);
         this.output.init();

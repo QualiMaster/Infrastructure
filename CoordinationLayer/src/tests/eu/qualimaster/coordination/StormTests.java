@@ -23,6 +23,8 @@ import tests.eu.qualimaster.storm.TestTopology;
 import tests.eu.qualimaster.storm.SignalCollector.SignalEntry;
 import tests.eu.qualimaster.storm.Topology;
 import eu.qualimaster.base.pipeline.RecordingTopologyBuilder;
+import eu.qualimaster.common.shedding.DefaultLoadShedders;
+import eu.qualimaster.common.shedding.DefaultLoadSheddingParameter;
 import eu.qualimaster.coordination.CoordinationConfiguration;
 import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.coordination.ParallelismChangeRequest;
@@ -31,6 +33,7 @@ import eu.qualimaster.coordination.StormUtils.TopologyTestInfo;
 import eu.qualimaster.coordination.ZkUtils;
 import eu.qualimaster.coordination.commands.AlgorithmChangeCommand;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
+import eu.qualimaster.coordination.commands.LoadSheddingCommand;
 import eu.qualimaster.coordination.commands.ParameterChangeCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand;
 import eu.qualimaster.coordination.commands.ProfileAlgorithmCommand;
@@ -73,24 +76,25 @@ public class StormTests extends AbstractCoordinationTests {
     }
     
     /**
-     * The level of parallelism change to test.
+     * Test execution modes for reusing test cases.
      * 
      * @author Holger Eichelberger
      */
-    private enum ParallelismChangeLevel {
-        NONE(false),
-        WORKER(true),
-        EXECUTOR(true);
+    private enum TestExecutionMode {
+        DEFAULT_EXECUTION(false),
+        WORKER_PARALLELISM(true),
+        EXECUTOR_PARALLELISM(true),
+        LOAD_SHEDDING(false);
 
-        private boolean changes;
+        private boolean changesParallelism;
         
         /**
          * Creates a new "constant".
          * 
-         * @param changes whether parallelism shanges shall happen
+         * @param changesParallelism whether parallelism changes shall happen
          */
-        private ParallelismChangeLevel(boolean changes) {
-            this.changes = changes;
+        private TestExecutionMode(boolean changesParallelism) {
+            this.changesParallelism = changesParallelism;
         }
         
         /**
@@ -98,8 +102,8 @@ public class StormTests extends AbstractCoordinationTests {
          * 
          * @return <code>true</code> in case of a change, <code>false</code> else
          */
-        public boolean changes() {
-            return changes;
+        public boolean changesParallelism() {
+            return changesParallelism;
         }
     }
         
@@ -108,10 +112,10 @@ public class StormTests extends AbstractCoordinationTests {
     /**
      * Performs the pipeline commands test.
      * 
-     * @param parallelism the intended parallelism change
+     * @param mode the intended execution mode
      * @throws IOException shall not occur
      */
-    private void testPipelineCommands(ParallelismChangeLevel parallelism) throws IOException {
+    private void testPipelineCommands(TestExecutionMode mode) throws IOException {
         // System.setProperty("storm.conf.file", "test.yaml"); -> QMstormVersion
         LocalStormEnvironment env = new LocalStormEnvironment();
         // build the test topology
@@ -145,11 +149,11 @@ public class StormTests extends AbstractCoordinationTests {
         Assert.assertEquals(0, getFailedHandler().getFailedCount());
         clear();
 
-        handleParallelism(parallelism, 1);
+        handleMode(mode, 1);
         
         sleep(4000); // let Storm run for a while // 600000
         
-        handleParallelism(parallelism, 2);
+        handleMode(mode, 2);
 
         cmd = new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.DISCONNECT);
         cmd.execute();
@@ -275,21 +279,20 @@ public class StormTests extends AbstractCoordinationTests {
     }
 
     /**
-     * Does the parallelism specific changes.
+     * Does the mode specific changes.
      * 
-     * @param parallelism the desired parallelism change
+     * @param mode the desired execution mode
      * @param callCount how often is this method called during the test
      * @throws IOException in case of problems
      */
-    private void handleParallelism(ParallelismChangeLevel parallelism, int callCount) throws IOException {
-        if (parallelism.changes()) {
+    private void handleMode(TestExecutionMode mode, int callCount) throws IOException {
+        if (mode.changesParallelism()) {
             if (1 == callCount) {
                 sleep(1000); // let Storm run for a while
-                // TODO -> event
                 Map<String, ParallelismChangeRequest> taskChanges = new HashMap<String, ParallelismChangeRequest>();
-                if (ParallelismChangeLevel.EXECUTOR == parallelism) {
+                if (TestExecutionMode.EXECUTOR_PARALLELISM == mode) {
                     taskChanges.put(Naming.NODE_PROCESS, new ParallelismChangeRequest(1));
-                } else if (ParallelismChangeLevel.WORKER == parallelism) {
+                } else if (TestExecutionMode.WORKER_PARALLELISM == mode) {
                     String host = InetAddress.getLocalHost().getCanonicalHostName();
                     // same host (local cluster), but second supervisor
                     // test with StormUtils.ParallelismChangeRequest(1, host, 1)
@@ -299,9 +302,9 @@ public class StormTests extends AbstractCoordinationTests {
                 sleep(8000); // let Storm run for a while
             } else { // revert the changes
                 Map<String, ParallelismChangeRequest> taskChanges = new HashMap<String, ParallelismChangeRequest>();
-                if (ParallelismChangeLevel.EXECUTOR == parallelism) {
+                if (TestExecutionMode.EXECUTOR_PARALLELISM == mode) {
                     taskChanges.put(Naming.NODE_PROCESS, new ParallelismChangeRequest(-1));
-                } else if (ParallelismChangeLevel.WORKER == parallelism) {
+                } else if (TestExecutionMode.WORKER_PARALLELISM == mode) {
                     sleep(10000);
                     String host = InetAddress.getLocalHost().getCanonicalHostName();
                     taskChanges.put(Naming.NODE_PROCESS, new ParallelismChangeRequest(0, host, true));
@@ -309,7 +312,20 @@ public class StormTests extends AbstractCoordinationTests {
                 StormUtils.changeParallelism(Naming.PIPELINE_NAME, taskChanges);
                 sleep(10000); // let Storm run for a while
             }
-        } 
+        } else if (TestExecutionMode.LOAD_SHEDDING == mode) {
+            LoadSheddingCommand cmd = new LoadSheddingCommand(Naming.PIPELINE_NAME, Naming.NODE_SOURCE, 
+                DefaultLoadShedders.NTH_ITEM);
+            cmd.setIntParameter(DefaultLoadSheddingParameter.NTH_TUPLE, 2);
+            cmd.execute();
+
+            waitForExecution(1, 0, 1000);
+            Assert.assertTrue(getTracer().contains(cmd));
+            Assert.assertEquals(1, getTracer().getLogEntryCount());
+            Assert.assertEquals(0, getFailedHandler().getFailedCount());
+            clear();
+
+            sleep(5000);
+        }
     }
 
     // checkstyle: resume exception type check
@@ -322,7 +338,7 @@ public class StormTests extends AbstractCoordinationTests {
     @Test
     public void testPipelineCommand() throws IOException {
         if (!isJenkins()) {
-            testPipelineCommands(ParallelismChangeLevel.NONE);
+            testPipelineCommands(TestExecutionMode.DEFAULT_EXECUTION);
         }
     }
 
@@ -387,7 +403,7 @@ public class StormTests extends AbstractCoordinationTests {
     @Test
     public void testPipelineParallelismExecutor() throws IOException {
         if (ZkUtils.isQmStormVersion()) { // only supported by the patched version
-            testPipelineCommands(ParallelismChangeLevel.EXECUTOR);
+            testPipelineCommands(TestExecutionMode.EXECUTOR_PARALLELISM);
         }
     }
 
@@ -399,7 +415,7 @@ public class StormTests extends AbstractCoordinationTests {
     @Test
     public void testPipelineParallelismWorker() throws IOException {
         if (ZkUtils.isQmStormVersion()) { // only supported by the patched version
-            testPipelineCommands(ParallelismChangeLevel.WORKER);
+            testPipelineCommands(TestExecutionMode.WORKER_PARALLELISM);
         }
     }
 
@@ -605,6 +621,16 @@ public class StormTests extends AbstractCoordinationTests {
         }
         Assert.assertTrue("signal entry for (" + algorithm + " " + parameterName + " " + parameterValue + ") not found",
             found);
+    }
+    
+    /**
+     * Tests the load shedding command.
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test
+    public void testLoadShedding() throws IOException {
+        testPipelineCommands(TestExecutionMode.LOAD_SHEDDING);        
     }
     
 }
