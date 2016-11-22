@@ -109,6 +109,10 @@ public class GroupingTest {
                 ParameterChangeCommand<?> pCmd = (ParameterChangeCommand<?>) cmd;
                 if (pCmd.getPipeline().equals(pipeline) && pCmd.getPipelineElement().equals(pipelineElement)) {
                     if (pCmd.getParameter().equals(change.getName()) && pCmd.getValue().equals(change.getValue())) {
+                        if (DEBUG) {
+                            System.out.println("SUCCESS: ParamChange " + pipeline + " " + pipelineElement + " " 
+                                + change.getName() + " " + change.getValue());
+                        }
                         iter.remove();
                     }
                 }
@@ -303,6 +307,5 @@ public class GroupingTest {
         Assert.assertNotNull(res);
         Assert.assertTrue(expected.isEmpty());
     }
-
     
 }
