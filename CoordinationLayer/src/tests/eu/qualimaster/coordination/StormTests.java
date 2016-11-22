@@ -84,7 +84,8 @@ public class StormTests extends AbstractCoordinationTests {
         DEFAULT_EXECUTION(false),
         WORKER_PARALLELISM(true),
         EXECUTOR_PARALLELISM(true),
-        LOAD_SHEDDING(false);
+        LOAD_SHEDDING_SOURCE(false),
+        LOAD_SHEDDING_PROCESSOR(false);
 
         private boolean changesParallelism;
         
@@ -312,20 +313,30 @@ public class StormTests extends AbstractCoordinationTests {
                 StormUtils.changeParallelism(Naming.PIPELINE_NAME, taskChanges);
                 sleep(10000); // let Storm run for a while
             }
-        } else if (TestExecutionMode.LOAD_SHEDDING == mode) {
-            LoadSheddingCommand cmd = new LoadSheddingCommand(Naming.PIPELINE_NAME, Naming.NODE_SOURCE, 
-                DefaultLoadShedders.NTH_ITEM);
-            cmd.setIntParameter(DefaultLoadSheddingParameter.NTH_TUPLE, 2);
-            cmd.execute();
-
-            waitForExecution(1, 0, 1000);
-            Assert.assertTrue(getTracer().contains(cmd));
-            Assert.assertEquals(1, getTracer().getLogEntryCount());
-            Assert.assertEquals(0, getFailedHandler().getFailedCount());
-            clear();
-
-            sleep(5000);
+        } else if (TestExecutionMode.LOAD_SHEDDING_SOURCE == mode) {
+            sendLoadSheddingCommand(Naming.NODE_SOURCE);
+        } else if (TestExecutionMode.LOAD_SHEDDING_PROCESSOR == mode) {
+            sendLoadSheddingCommand(Naming.NODE_PROCESS);
         }
+    }
+    
+    /**
+     * Sends a load shedding command to the test pipeline.
+     * 
+     * @param node the node to send the command to
+     */
+    private void sendLoadSheddingCommand(String node) {
+        LoadSheddingCommand cmd = new LoadSheddingCommand(Naming.PIPELINE_NAME, node, DefaultLoadShedders.NTH_ITEM);
+        cmd.setIntParameter(DefaultLoadSheddingParameter.NTH_TUPLE, 2);
+        cmd.execute();
+
+        waitForExecution(1, 0, 1000);
+        Assert.assertTrue(getTracer().contains(cmd));
+        Assert.assertEquals(1, getTracer().getLogEntryCount());
+        Assert.assertEquals(0, getFailedHandler().getFailedCount());
+        clear();
+
+        sleep(5000);
     }
 
     // checkstyle: resume exception type check
@@ -624,13 +635,23 @@ public class StormTests extends AbstractCoordinationTests {
     }
     
     /**
-     * Tests the load shedding command.
+     * Tests the load shedding command on a pipeline source.
      * 
      * @throws IOException shall not occur
      */
     @Test
-    public void testLoadShedding() throws IOException {
-        testPipelineCommands(TestExecutionMode.LOAD_SHEDDING);        
+    public void testLoadSheddingSource() throws IOException {
+        testPipelineCommands(TestExecutionMode.LOAD_SHEDDING_SOURCE);        
     }
-    
+
+    /**
+     * Tests the load shedding command on a pipeline source.
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test
+    public void testLoadSheddingProcessor() throws IOException {
+        testPipelineCommands(TestExecutionMode.LOAD_SHEDDING_PROCESSOR);        
+    }
+
 }
