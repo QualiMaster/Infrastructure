@@ -49,6 +49,8 @@ public class Utils {
                 }
                 ArtifactRegistry.defineArtifact(MODEL_ARTIFACTSPEC, tmpUrl);
                 properties.put(CoordinationConfiguration.CONFIG_MODEL_ARTIFACT_SPEC, MODEL_ARTIFACTSPEC);
+                // avoid accidentally loading an already unpacked model
+                properties.put(CoordinationConfiguration.LOCAL_ARTIFACT_LOCATION, "");
             } catch (IOException e) {
                 System.err.println("disabling test model artifact due to: " + e.getMessage());
             }
