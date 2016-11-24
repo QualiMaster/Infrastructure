@@ -289,7 +289,9 @@ public class RepositoryConnector {
          */
         public void reloadVil() {
             BuildModel.INSTANCE.outdateAll();
+            instantiationScript = BuildModel.INSTANCE.reload(instantiationScript, true);
             TemplateModel.INSTANCE.outdateAll();
+            // TODO SE: Check if template model must also be reloaded (should not be the case)
         }
        
     }
