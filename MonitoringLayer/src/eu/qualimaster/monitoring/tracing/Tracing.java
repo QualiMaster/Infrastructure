@@ -384,17 +384,17 @@ public class Tracing {
         List<PipelineNodeSystemPart> result = null;
         PipelineSystemPart pipeline = part.getPipeline();
         PipelineTopology topology = pipeline.getTopology();
-        Processor topoProcessor = topology.getProcessor(part.getName());
-        if (null != topoProcessor) {
-            for (int i = 0; i < topoProcessor.getInputCount(); i++) {
-                Processor predecessor = topoProcessor.getInput(i).getOrigin();
-                if (null != predecessor) {
-                    PipelineNodeSystemPart predecessorNode = pipeline.obtainPipelineNode(predecessor.getName());
-                    if (null != predecessorNode) {
-                        if (null == result) {
-                            result = new ArrayList<PipelineNodeSystemPart>();
+        if (null != topology) {
+            Processor topoProcessor = topology.getProcessor(part.getName());
+            if (null != topoProcessor) {
+                for (int i = 0; i < topoProcessor.getInputCount(); i++) {
+                    Processor predecessor = topoProcessor.getInput(i).getOrigin();
+                    if (null != predecessor) {
+                        PipelineNodeSystemPart predecessorNode = pipeline.obtainPipelineNode(predecessor.getName());
+                        if (null != predecessorNode) {
+                            result = null == result ? new ArrayList<PipelineNodeSystemPart>() : result;
+                            result.add(predecessorNode);
                         }
-                        result.add(predecessorNode);
                     }
                 }
             }
