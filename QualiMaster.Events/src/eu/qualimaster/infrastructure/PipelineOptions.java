@@ -138,28 +138,49 @@ public class PipelineOptions implements Serializable, IOptionSetter {
      * Returns the value of an option. Using the more specific setters shall be preferred except for free/unknown 
      * options.
      * 
-     * @param key the key to return the option for
+     * @param key the key to return the option for. Although free keys are allowed, the key
+     *   shall be taken from {@link eu.qualimaster.Configuration} or subclasses. Please note that {@link #PREFIX_FREE} 
+     *   will be added.
      * @return the value or <b>null</b> if there is no value for <code>key</code> or <code>key == <b>null</b></code>
+     * 
+     * @see {@link #getOptionKey(String)}
      */
     public Serializable getOption(String key) {
         Serializable result;
         if (null != key) {
-            result = options.get(PREFIX_FREE + key);
+            result = options.get(getOptionKey(key));
         } else {
             result = null;
         }
         return result;
     }
+    
+    /**
+     * Returns the key for a free option based on a configuration option key defined 
+     * in {@link eu.qualimaster.Configuration} or subclasses.
+     * 
+     * @param key the key. Although free keys are allowed, the key
+     *   shall be taken from {@link eu.qualimaster.Configuration} or subclasses. Please note that {@link #PREFIX_FREE} 
+     *   will be added.
+     * @return the option
+     */
+    public static String getOptionKey(String key) {
+        return PREFIX_FREE + key;
+    }
 
     /**
      * Explicitly sets an option. Using the more specific setters shall be preferred except for free/unknown options.
      * 
-     * @param key the key to set the value for (<b>null</b> is ignored)
+     * @param key the key to set the value for (<b>null</b> is ignored). Although free keys are allowed, the key
+     *   shall be taken from {@link eu.qualimaster.Configuration} or subclasses. Please note that {@link #PREFIX_FREE} 
+     *   will be added.
      * @param value the value
+     * 
+     * @see {@link #getOptionKey(String)}
      */
     public void setOption(String key, Serializable value) {
         if (null != key) {
-            options.put(PREFIX_FREE + key, value);
+            options.put(getOptionKey(key), value);
         }
     }
     

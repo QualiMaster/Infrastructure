@@ -21,6 +21,7 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
+import eu.qualimaster.Configuration;
 import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.infrastructure.PipelineOptions;
 
@@ -104,6 +105,15 @@ public class PipelineOptionsTest {
         n.merge(options);
         assertThroughArgs(n);
         Assert.assertEquals(options, n);
+    }
+    
+    /**
+     * Tests the option key method.
+     */
+    @Test
+    public void testOptionKey() {
+        final String key = Configuration.EVENT_DISABLE_LOGGING;
+        Assert.assertEquals(PipelineOptions.PREFIX_FREE + key, PipelineOptions.getOptionKey(key));
     }
     
     /**

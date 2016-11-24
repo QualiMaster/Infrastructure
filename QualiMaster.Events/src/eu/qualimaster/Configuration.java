@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 
 import backtype.storm.Config;
 import backtype.storm.utils.Utils;
+import eu.qualimaster.infrastructure.InitializationMode;
 
 /**
  * Some infrastructure configuration information. Configuration options are declared as property key and default value 
@@ -169,7 +170,36 @@ public class Configuration {
      */
     public static final int DEFAULT_TIME_SHUTDOWN_EVENTS = 300;
     
+    /**
+     * The initialization mode for the configuration model.
+     */
+    public static final String INIT_MODE = "confModel.initMode";
+
+    /**
+     * The default value for {@link #INIT_MODE}.
+     */
+    public static final InitializationMode DEFAULT_INIT_MODE = InitializationMode.ADAPTIVE;
+    
+    public static final PropertyReader<InitializationMode> INIT_MODE_READER = new PropertyReader<InitializationMode>() {
+
+        @Override
+        public InitializationMode read(Properties properties, String key, InitializationMode deflt) {
+            InitializationMode result = deflt;
+            String tmp = properties.getProperty(key, deflt.name());
+            if (null != tmp) {
+                try {
+                    result = InitializationMode.valueOf(tmp.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    // use deflt
+                }
+            }
+            return result;
+        }
+        
+    };
+
     private static final Logger LOGGER = Logger.getLogger(Configuration.class);
+    
     /**
      * Implements a configuration option.
      * 
@@ -302,6 +332,8 @@ public class Configuration {
         = createIntegerOption(TIME_SHUTDOWN_EVENTS, DEFAULT_TIME_SHUTDOWN_EVENTS);
     private static ConfigurationOption<String> pipelinePorts
         = createStringOption(PIPELINE_INTERCONN_PORTS, DEFAULT_PIPELINE_INTERCONN_PORTS);
+    private static ConfigurationOption<InitializationMode> initMode 
+        = new ConfigurationOption<InitializationMode>(INIT_MODE, DEFAULT_INIT_MODE, INIT_MODE_READER);
     
     /**
      * Prevents external creation / static class.
@@ -758,6 +790,16 @@ public class Configuration {
     public static String getPipelinePorts() {
         LOGGER.info("The configured pipeline ports: " + pipelinePorts.getValue());        
         return pipelinePorts.getValue();
+    }
+
+    
+    /**
+     * Returns the initialization mode for the configuration model.
+     * 
+     * @return the initialization mode
+     */
+    public static InitializationMode getInitializationMode() {
+        return initMode.getValue();
     }
 
 }
