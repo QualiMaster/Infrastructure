@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import eu.qualimaster.common.QMInternal;
+import eu.qualimaster.infrastructure.PipelineOptions;
 import eu.qualimaster.pipeline.AlgorithmChangeParameter;
 
 /**
@@ -19,6 +20,7 @@ public class AlgorithmChangeCommand extends AbstractPipelineElementCommand {
     private static final long serialVersionUID = 79134352686021725L;
     private String algorithm;
     private Map<String, Serializable> parameters = new HashMap<String, Serializable>();
+    private PipelineOptions options;
     
     /**
      * Crates an algorithm change command.
@@ -110,6 +112,24 @@ public class AlgorithmChangeCommand extends AbstractPipelineElementCommand {
     @Override
     public CoordinationExecutionResult accept(ICoordinationCommandVisitor visitor) {
         return visitor.visitAlgorithmChangeCommand(this);
+    }
+    
+    /**
+     * Defines the (additional) pipeline options for the new (sub-pipeline) algorithm.
+     * 
+     * @param options the pipeline options (may be <b>null</b>
+     */
+    public void setOptions(PipelineOptions options) {
+        this.options = options;
+    }
+    
+    /**
+     * Returns (additional) pipeline options to be used for the new (sub-pipeline) algorithm.
+     * 
+     * @return the pipeline options (may be <b>null</b>)
+     */
+    public PipelineOptions getOptions() {
+        return options;
     }
 
 }
