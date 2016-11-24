@@ -323,9 +323,11 @@ public abstract class AbstractDirectAdaptationTests {
                 }
             }
             if (single) {
-                Assert.assertTrue("No change command found", 1 == found);
+                Assert.assertTrue("No change command found for " + pipeline + " " + element + " " + algorithm, 
+                    1 == found);
             } else {
-                Assert.assertTrue("No change commands found", found > 0);
+                Assert.assertTrue("No change commands foundfor " + pipeline + " " + element + " " + algorithm, 
+                    found > 0);
             }
         }
 
