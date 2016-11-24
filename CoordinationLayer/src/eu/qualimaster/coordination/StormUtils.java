@@ -22,7 +22,6 @@ import org.apache.thrift7.TException;
 
 import eu.qualimaster.base.algorithm.IMainTopologyCreate;
 import eu.qualimaster.base.algorithm.TopologyOutput;
-import eu.qualimaster.common.signal.Constants;
 import eu.qualimaster.common.signal.ThriftConnection;
 import eu.qualimaster.easy.extension.internal.AlgorithmProfileHelper.ProfileData;
 import eu.qualimaster.infrastructure.PipelineOptions;
@@ -325,9 +324,10 @@ public class StormUtils {
         CoordinationConfiguration.transferConfigurationTo(options);
         options.optionsToConf();
         if (CoordinationConfiguration.getPipelineStartSourceAutoconnect()) {
-            options.setOption(Constants.CONFIG_KEY_SOURCE_AUTOCONNECT, "true");
+            options.setOption(CoordinationConfiguration.PIPELINE_START_SOURCE_AUTOCONNECT, "true");
         }
-        options.setOption(Constants.CONFIG_KEY_INIT_MODE, CoordinationConfiguration.getInitializationMode().name());
+        options.setOption(CoordinationConfiguration.INIT_MODE, 
+            CoordinationConfiguration.getInitializationMode().name());
     }
 
     /**

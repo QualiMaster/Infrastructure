@@ -12,9 +12,9 @@ import backtype.storm.utils.Utils;
 import eu.qualimaster.Configuration;
 import eu.qualimaster.common.signal.Constants;
 import eu.qualimaster.coordination.CoordinationConfiguration;
-import eu.qualimaster.coordination.InitializationMode;
 import eu.qualimaster.coordination.StormPipelineOptionsSetter;
 import eu.qualimaster.coordination.StormUtils;
+import eu.qualimaster.infrastructure.InitializationMode;
 import eu.qualimaster.infrastructure.PipelineOptions;
 import tests.eu.qualimaster.dataManagement.DataManagementConfigurationTests;
 

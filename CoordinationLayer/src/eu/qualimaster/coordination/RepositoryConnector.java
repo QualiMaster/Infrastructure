@@ -18,6 +18,7 @@ import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.common.logging.QmLogging;
 import eu.qualimaster.dataManagement.storage.hdfs.HdfsUtils;
 import eu.qualimaster.easy.extension.internal.ConfigurationInitializer;
+import eu.qualimaster.infrastructure.InitializationMode;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
 import net.ssehub.easy.basics.modelManagement.IModel;
 import net.ssehub.easy.basics.modelManagement.ModelInitializer;
