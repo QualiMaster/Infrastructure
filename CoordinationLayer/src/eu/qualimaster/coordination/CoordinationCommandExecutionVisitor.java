@@ -149,7 +149,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
             CoordinationManager.deferCommand(subPip.getName(), PipelineLifecycleEvent.Status.STARTED, 
                 new AlgorithmChangeAction(command, parameters, getTracer()));
             PipelineCommand cmd = new PipelineCommand(subPip.getName(), PipelineCommand.Status.START, 
-                getSubPipelineOptions(pipelineName));
+                getSubPipelineOptions(pipelineName, command.getOptions()));
             result = handlePipelineStart(cmd);
         } else {
             result = handleAlgorithmChangeImpl(command, parameters);
@@ -160,15 +160,19 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
     /**
      * Returns the sub pipeline options.
      * 
-     * @param mainPipeline th4e main pipeline
+     * @param mainPipeline the main pipeline
+     * @param commandOptions the options introduced by the command
      * @return the options for the sub-pipeline marked as sub-pipeline
      */
-    private PipelineOptions getSubPipelineOptions(String mainPipeline) {
+    private PipelineOptions getSubPipelineOptions(String mainPipeline, PipelineOptions commandOptions) {
         PipelineOptions opts = CoordinationManager.getPipelineOptions(mainPipeline);
         if (null == opts) {
             opts = new PipelineOptions(); // shall not occur
         } else {
             opts = new PipelineOptions(opts); // clone
+        }
+        if (null != commandOptions) { // take into account decisions done by the adaptation for algorithm change
+            opts.merge(commandOptions);
         }
         opts.markAsSubPipeline(mainPipeline);
         return opts;
