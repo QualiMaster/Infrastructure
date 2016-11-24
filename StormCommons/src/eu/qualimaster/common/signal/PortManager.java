@@ -540,7 +540,7 @@ public class PortManager {
      */
     public void clearAllPortAssignments() throws SignalException {
         if (isConnected()) {
-            delete(PORTS);
+            SignalMechanism.deleteRecursively(client, PORTS);
         }
     }
     
@@ -648,32 +648,30 @@ public class PortManager {
         String pipPath = NODES_PREFIX + pipeline;
         try {
             if (isConnected() && client.checkExists().forPath(pipPath) != null) { 
-                CuratorTransaction transaction = client.inTransaction();
                 List<String> children = client.getChildren().forPath(pipPath);
                 if (null != children) {
                     for (String child : children) {
                         String childPath = pipPath + PATH_SEPARATOR + child;
                         PortsTable table = loadSafe(childPath, PortsTable.class);
-                        delete(child);
-                        Map<String, List<PortAssignment>> assng = table.assigmentsByHost();
-                        for (Map.Entry<String, List<PortAssignment>> ent : assng.entrySet()) {
-                            String hostPath = getHostPath(ent.getKey());
-                            HostTable hosts = loadSafe(hostPath, HostTable.class);
-                            if (null != hosts) {
-                                for (PortAssignment a : ent.getValue()) {
-                                    hosts.removeAssignment(a.getPort());
+                        if (null != table) {
+                            Map<String, List<PortAssignment>> assng = table.assigmentsByHost();
+                            for (Map.Entry<String, List<PortAssignment>> ent : assng.entrySet()) {
+                                String hostPath = getHostPath(ent.getKey());
+                                HostTable hosts = loadSafe(hostPath, HostTable.class);
+                                if (null != hosts) {
+                                    for (PortAssignment a : ent.getValue()) {
+                                        hosts.removeAssignment(a.getPort());
+                                    }
                                 }
+                                store(hostPath, hosts, null, false);
                             }
-                            store(hostPath, hosts, transaction, false);
                         }
-                        delete(childPath, transaction, false);
                     }
-                    delete(pipPath, transaction, true);
                 }
                 delete(pipPath, null, true); // just to be sure
             }
         } catch (Exception e) {
-            throw new SignalException(e.getMessage());
+            throw new SignalException(e);
         }
     }
     
@@ -916,36 +914,60 @@ public class PortManager {
      * @param path the path to check/create
      * @param transaction use the transaction and add to it, may be <b>null</b> for no transaction
      * @param commit commit the transaction, ignored if no transaction 
-     * @throws SignalException in case of I/O problems or if the object in <code>path</code>
+     * @throws SignalException in case of I/O problems
      */
     private void assertExists(String path, CuratorTransaction transaction, boolean commit) throws SignalException {
         try {
             if (client.checkExists().forPath(path) == null) {
-                if (null != transaction) {
-                    int pos = path.indexOf(PATH_SEPARATOR);
-                    CuratorTransactionFinal fin = null;
-                    while (pos > 0) {
-                        int next = path.indexOf(PATH_SEPARATOR, pos + 1);
-                        String sub = path.substring(0, pos);
-                        if (null == client.checkExists().forPath(sub)) {
-                            if (null == fin) {
-                                fin = transaction.create().forPath(sub, null).and();    
-                            } else {
-                                fin = fin.create().forPath(sub, null).and();
-                            }
-                            if (next < 0) {
-                                checkCommit(fin, commit);
-                            }
-                        }
-                        pos = next;
+                int pos = path.indexOf(PATH_SEPARATOR);
+                if (0 == pos) {
+                    pos = path.indexOf(PATH_SEPARATOR, 1);
+                }
+                CuratorTransactionFinal fin = null;
+                while (pos > 0) {
+                    int next = path.indexOf(PATH_SEPARATOR, pos + 1);
+                    String sub = path.substring(0, pos);
+                    if (null == client.checkExists().forPath(sub)) {
+                        fin = createPath(transaction, fin, sub);
                     }
-                } else {
-                    client.create().creatingParentsIfNeeded().forPath(path, null);
+                    pos = next;
+                }
+                fin = createPath(transaction, fin, path);
+                if (null != transaction) {
+                    checkCommit(fin, commit);
                 }
             }
         } catch (Exception e) {
             throw new SignalException(e);
         }
+    }
+
+    /**
+     * Creates a path.
+     * 
+     * @param transaction use the transaction and add to it, may be <b>null</b> for no transaction
+     * @param fin append to this transaction if not <b>null</b> (start of transaction)
+     * @param path the path to create
+     * @return the created transaction (may be <b>null</b> if <code>transaction</code> is <b>null</b>)
+     * @throws SignalException in case of I/O problems
+     */
+    private CuratorTransactionFinal createPath(CuratorTransaction transaction, CuratorTransactionFinal fin, String path)
+        throws SignalException {
+        CuratorTransactionFinal result = null;
+        try {
+            if (null != transaction) {
+                if (null == fin) {
+                    result = transaction.create().forPath(path, null).and();    
+                } else {
+                    result = fin.create().forPath(path, null).and();
+                }
+            } else {
+                client.create().forPath(path, null);
+            }
+        } catch (Exception e) {
+            throw new SignalException(e);
+        }
+        return result;
     }
 
     /**
@@ -1042,16 +1064,6 @@ public class PortManager {
      * Deletes a path.
      * 
      * @param path the path to be deleted
-     * @throws SignalException in case of communication problems
-     */
-    private void delete(String path) throws SignalException {
-        delete(path, null, false);
-    }
-
-    /**
-     * Deletes a path.
-     * 
-     * @param path the path to be deleted
      * @param transaction use the transaction and add to it, may be <b>null</b> for no transaction
      * @param commit commit the transaction, ignored if no transaction 
      * @throws SignalException in case of communication problems
@@ -1060,7 +1072,7 @@ public class PortManager {
         try {
             if (client.checkExists().forPath(path) != null) {
                 if (null != transaction) {
-                    deleteRecursively(path, transaction);
+                    deleteRecursively(path, transaction, commit);
                 } else {
                     SignalMechanism.deleteRecursively(client, path);
                 }
@@ -1075,19 +1087,20 @@ public class PortManager {
      * 
      * @param path the path to be deleted
      * @param transaction the curator transaction
+     * @param commit commit the transaction or leave it open
      * @throws SignalException if problems occur during deletion
      */
-    private void deleteRecursively(String path, CuratorTransaction transaction) 
+    private void deleteRecursively(String path, CuratorTransaction transaction, boolean commit) 
         throws SignalException {
         try {
             if (client.checkExists().forPath(path) != null) {
                 List<String> children = client.getChildren().forPath(path);
                 if (null != children && children.size() > 0) {
                     for (String c : children) {
-                        deleteRecursively(path + PATH_SEPARATOR + c, transaction);
+                        deleteRecursively(path + PATH_SEPARATOR + c, transaction, false);
                     }
                 }
-                checkCommit(transaction.delete().forPath(path).and(), true);
+                checkCommit(transaction.delete().forPath(path).and(), commit);
             }
         } catch (Exception e) {
             throw new SignalException(e);

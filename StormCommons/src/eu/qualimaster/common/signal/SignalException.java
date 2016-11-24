@@ -34,6 +34,16 @@ public class SignalException extends Exception {
     }
     
     /**
+     * Creates a new exception based on a given message.
+     * 
+     * @param message the message text
+     * @param th the throwable representing the cause
+     */
+    public SignalException(String message, Throwable th) {
+        super(message, th);
+    }
+    
+    /**
      * Creates a new exception from a given throwable.
      * 
      * @param th the throwable to take the message from

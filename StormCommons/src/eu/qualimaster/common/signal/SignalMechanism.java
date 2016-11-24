@@ -419,7 +419,6 @@ public class SignalMechanism {
      */
     static void deleteRecursively(CuratorFramework client, String path) throws SignalException {
         try {
-            getLogger().info("DEL-ZK checking " + path + " " + client.getNamespace());            
             if (client.checkExists().forPath(path) != null) {
                 List<String> children = client.getChildren().forPath(path);
                 if (null != children && children.size() > 0) {
@@ -427,11 +426,9 @@ public class SignalMechanism {
                         deleteRecursively(client, path + PATH_SEPARATOR + c);
                     }
                 }
-                getLogger().info("DEL-ZK deleting " + path + " " + client.getNamespace());            
                 client.delete().forPath(path);
             }
         } catch (Exception e) {
-            getLogger().info("DEL-ZK exception " + e.getMessage());            
             throw new SignalException(e);
         }
     }
@@ -450,7 +447,8 @@ public class SignalMechanism {
             }
             getPortManager().clearPortAssignments(namespace);
         } catch (Exception e) {
-            getLogger().warn("While clearing pipeline " + namespace + ": " + e.getMessage());
+            getLogger().warn("While clearing pipeline " + namespace + ": " + e.getClass().getName()
+                + " " + e.getMessage(), e);
         }
     }
     

@@ -202,6 +202,54 @@ public class PortManagerTest {
     }
 
     /**
+     * Tests the port manager with multiple assignments / requests.
+     */
+    @Test
+    public void testPortManagerMulti() {
+        SignalException fail = null;
+        Set<File> tmpFiles = TestHelper.trackTemp(null, false);
+        LocalCluster cluster = new LocalCluster();
+
+        String connectString = "localhost:" + TestHelper.LOCAL_ZOOKEEPER_PORT;
+        CuratorFramework client = CuratorFrameworkFactory.builder().namespace(SignalMechanism.GLOBAL_NAMESPACE).
+            connectString(connectString).retryPolicy(new RetryNTimes(5, 100)).build();
+        client.start();
+
+        PortManager mgr = new PortManager(client);
+        try {
+            mgr.clearAllPortAssignments();
+            PortRange range = new PortRange(1000, 1100);
+            for (int i = 0; i < 50; i++) {
+                PortAssignmentRequest req = new PortAssignmentRequest("pip", "element_" + i, 5, "localhost", "id");
+                assertPortAssignment(mgr, req, range, 1000 + i);
+                System.out.print(".");
+            }
+            System.out.println();
+            
+            listPorts(mgr, "After all assignments");
+
+            // clear all assignments for pipeline
+            mgr.clearPortAssignments("pip");
+            Assert.assertNull(mgr.getPortAssignment("pip", "element", 5, "id"));
+            listPorts(mgr, "After pipeline clear");
+
+            mgr.close();
+        } catch (SignalException e) {
+            e.printStackTrace();
+            fail = e;
+        }
+        
+        client.close();
+        cluster.shutdown();
+        TestHelper.trackTemp(tmpFiles, true);
+        fail = testClosed(client);
+        if (null != fail) {
+            Assert.fail(fail.getMessage());
+        }
+    }
+
+    
+    /**
      * Lists the ports in the given port manager.
      * 
      * @param mgr the manager
