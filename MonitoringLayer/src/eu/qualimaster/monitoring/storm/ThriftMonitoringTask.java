@@ -19,8 +19,8 @@ import eu.qualimaster.coordination.TaskAssignment;
 import eu.qualimaster.coordination.ZkUtils;
 import eu.qualimaster.coordination.INameMapping.Component;
 import eu.qualimaster.coordination.INameMapping.Component.Type;
-import eu.qualimaster.coordination.InitializationMode;
 import eu.qualimaster.dataManagement.DataManager;
+import eu.qualimaster.infrastructure.InitializationMode;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.monitoring.AbstractContainerMonitoringTask;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
@@ -370,7 +370,7 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
     /**
      * Aggregates an executor.
      * 
-     * @param executor the excutor
+     * @param executor the executor
      * @param nodePart the target node part
      * @param isInternal whether it is considered as an internal Storm node
      */
