@@ -16,6 +16,8 @@
 package eu.qualimaster.common.signal;
 
 import eu.qualimaster.Configuration;
+import eu.qualimaster.dataManagement.DataManagementConfiguration;
+import eu.qualimaster.infrastructure.PipelineOptions;
 
 /**
  * Some common constants.
@@ -35,11 +37,12 @@ public class Constants {
     /**
      * Configuration key set by the infrastructure into the storm pipeline conf if data sources shall do autoconnects.
      */
-    public static final String CONFIG_KEY_SOURCE_AUTOCONNECT = "qm.source.autoconnect";
+    public static final String CONFIG_KEY_SOURCE_AUTOCONNECT = PipelineOptions.getOptionKey(
+        DataManagementConfiguration.PIPELINE_START_SOURCE_AUTOCONNECT);
     
     /**
      * Configuration key set by the infrastructure passing the actual initialization mode.
      */    
-    public static final String CONFIG_KEY_INIT_MODE = "qm.ivml.initMode";
+    public static final String CONFIG_KEY_INIT_MODE = PipelineOptions.getOptionKey(Configuration.INIT_MODE);
     
 }

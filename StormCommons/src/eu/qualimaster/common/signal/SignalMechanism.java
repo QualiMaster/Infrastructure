@@ -219,31 +219,32 @@ public class SignalMechanism {
      * Clears the internal state of this class.
      */
     public static void clear() {
-        PortManager mgr = null;
-        try {
-            mgr = getPortManager();
-        } catch (SignalException e) {
-            getLogger().error(e.getMessage());
-        }
-        for (Map.Entry<String, CuratorFramework> entry: FRAMEWORKS.entrySet()) {
-            String namespace = entry.getKey();
-            CuratorFramework framework = entry.getValue();
-            if (CuratorFrameworkState.STARTED == framework.getState()) {
+        if (FRAMEWORKS.size() > 0) {
+            try {
                 if (!testMode) {
-                    clearPipeline(framework, namespace);
+                    PortManager mgr = getPortManager();
+                    if (null != mgr) {
+                        try {
+                            mgr.clearAllPortAssignments();
+                        } catch (SignalException e) {
+                            getLogger().error(e.getMessage());
+                        }
+                    }
                 }
-                framework.close();
+            } catch (SignalException e) {
+                getLogger().error(e.getMessage());
+            }
+            for (String namespace : NAMESPACES.keySet()) {
+                changeSignalNamespaceState(namespace, NamespaceState.CLEAR);
+            }
+            for (CuratorFramework framework: FRAMEWORKS.values()) {
+                if (CuratorFrameworkState.STARTED == framework.getState()) {
+                    framework.close();
+                }
             }
         }
         FRAMEWORKS.clear();
         NAMESPACES.clear();
-        if (null != mgr && !testMode) {
-            try {
-                mgr.clearAllPortAssignments();
-            } catch (SignalException e) {
-                getLogger().error(e.getMessage());
-            }
-        }
     }
     
     /**
@@ -418,6 +419,7 @@ public class SignalMechanism {
      */
     static void deleteRecursively(CuratorFramework client, String path) throws SignalException {
         try {
+            getLogger().info("DEL-ZK checking " + path + " " + client.getNamespace());            
             if (client.checkExists().forPath(path) != null) {
                 List<String> children = client.getChildren().forPath(path);
                 if (null != children && children.size() > 0) {
@@ -425,9 +427,11 @@ public class SignalMechanism {
                         deleteRecursively(client, path + PATH_SEPARATOR + c);
                     }
                 }
+                getLogger().info("DEL-ZK deleting " + path + " " + client.getNamespace());            
                 client.delete().forPath(path);
             }
         } catch (Exception e) {
+            getLogger().info("DEL-ZK exception " + e.getMessage());            
             throw new SignalException(e);
         }
     }
@@ -624,6 +628,9 @@ public class SignalMechanism {
                     space.setState(state);
                 }
                 NAMESPACES.remove(namespace);
+                if (!testMode) {
+                    clearPipeline(namespace);
+                }
                 break;
             default:
                 break;
