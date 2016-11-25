@@ -217,21 +217,41 @@ public class PortManagerTest {
 
         PortManager mgr = new PortManager(client);
         try {
+            // this is not really black-box - we assume that there are no gaps and ports are assigned linearly! 
             mgr.clearAllPortAssignments();
             PortRange range = new PortRange(1000, 1100);
-            for (int i = 0; i < 50; i++) {
+            final int allocationCount = 15;
+            System.out.println("Allocating for pip (" + allocationCount + "):");
+            for (int i = 0; i < allocationCount; i++) {
+                PortAssignmentRequest req = new PortAssignmentRequest("pip", "element_" + i, 5, "localhost", "id");
+                assertPortAssignment(mgr, req, range, 1000 + i);
+                System.out.print(".");
+            }
+            System.out.println("\nAllocating for pip1 (" + allocationCount + "):");
+            for (int i = 0; i < allocationCount; i++) {
+                PortAssignmentRequest req = new PortAssignmentRequest("pip1", "element_" + i, 5, "localhost", "id");
+                assertPortAssignment(mgr, req, range, 1000 + allocationCount + i);
+                System.out.print(".");
+            }
+            listPorts(mgr, "After assignments for pip and pip1");
+            System.out.println("Clearing pip:");
+            mgr.clearPortAssignments("pip");
+            Assert.assertNull(mgr.getPortAssignment("pip", "element", 5, "id"));
+            System.out.println("Re-allocating for pip (" + allocationCount + "):");
+            for (int i = 0; i < allocationCount; i++) {
                 PortAssignmentRequest req = new PortAssignmentRequest("pip", "element_" + i, 5, "localhost", "id");
                 assertPortAssignment(mgr, req, range, 1000 + i);
                 System.out.print(".");
             }
             System.out.println();
-            
             listPorts(mgr, "After all assignments");
 
             // clear all assignments for pipeline
             mgr.clearPortAssignments("pip");
-            Assert.assertNull(mgr.getPortAssignment("pip", "element", 5, "id"));
-            listPorts(mgr, "After pipeline clear");
+            mgr.clearPortAssignments("pip1");
+            Assert.assertNull(mgr.getPortAssignment("pip", "element_1", 5, "id"));
+            Assert.assertNull(mgr.getPortAssignment("pip1", "element_" + allocationCount, 5, "id"));
+            listPorts(mgr, "After pip and pip1 clear");
 
             mgr.close();
         } catch (SignalException e) {
