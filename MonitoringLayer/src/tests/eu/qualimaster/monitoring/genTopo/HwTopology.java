@@ -20,6 +20,7 @@ import org.junit.Assert;
 import backtype.storm.Config;
 import eu.qualimaster.base.pipeline.RecordingTopologyBuilder;
 import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
@@ -38,7 +39,7 @@ public class HwTopology extends AbstractTopology {
     private static final boolean SEND_EVENTS = true;
     
     @Override
-    public void createTopology(Config config, RecordingTopologyBuilder builder) {
+    public SubTopologyMonitoringEvent createTopology(Config config, RecordingTopologyBuilder builder) {
         // Source - HW Bolt ... HW Spout
         builder.setSpout(getTestSourceName(), 
             new TestSourceSource(getTestSourceName(), PIP, SEND_EVENTS), 1)
@@ -56,7 +57,7 @@ public class HwTopology extends AbstractTopology {
             new ReceivingSpout(getTestHwReceivingSpoutName(), PIP, SEND_EVENTS, true, 9990), 1)
             .setNumTasks(1);
 
-        builder.close(PIP, config);
+        return builder.createClosingEvent(PIP, config);
     }
     
     /**

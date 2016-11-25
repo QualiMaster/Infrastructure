@@ -1,6 +1,7 @@
 package tests.eu.qualimaster.monitoring.genTopo;
 
 import eu.qualimaster.base.pipeline.RecordingTopologyBuilder;
+import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 import backtype.storm.Config;
 
 /**
@@ -20,7 +21,7 @@ public class ManTopology extends AbstractHyTopology {
      * @param builder the topology builder
      */
     @Override
-    public void createTopology(Config config, RecordingTopologyBuilder builder) {
+    public SubTopologyMonitoringEvent createTopology(Config config, RecordingTopologyBuilder builder) {
         builder.setSpout(getTestSourceName(), 
             new TestSourceSource(getTestSourceName(), PIP, SEND_EVENTS), 1)
             .setNumTasks(1);
@@ -31,7 +32,7 @@ public class ManTopology extends AbstractHyTopology {
         TopoSoftwareCorrelationFinancial corr = new TopoSoftwareCorrelationFinancial(PIP);
         corr.createSubTopology(builder, config, "swCorrFin", getTestFamilyName(), AbstractProcessor.STREAM_NAME);
         builder.endRecording();
-        builder.close(PIP, config);
+        return builder.createClosingEvent(PIP, config);
     }
     
     @Override

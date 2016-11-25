@@ -27,11 +27,13 @@ import eu.qualimaster.coordination.StormUtils.TopologyTestInfo;
 import eu.qualimaster.coordination.commands.AlgorithmChangeCommand;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineOptions;
+import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
 import eu.qualimaster.observables.TimeBehavior;
 import tests.eu.qualimaster.coordination.AbstractCoordinationTests;
+import tests.eu.qualimaster.coordination.Utils;
 import tests.eu.qualimaster.storm.ReceivingSpout;
 import tests.eu.qualimaster.storm.SendingBolt;
 
@@ -109,7 +111,7 @@ public class SubTopology extends AbstractTopology {
     }
 
     @Override
-    public void createTopology(Config config, RecordingTopologyBuilder builder) {
+    public SubTopologyMonitoringEvent createTopology(Config config, RecordingTopologyBuilder builder) {
         builder.setSpout(getSourceName(), 
             new TestSourceSource(getSourceName(), PIP, SEND_EVENTS), 1)
             .setNumTasks(1);
@@ -120,7 +122,7 @@ public class SubTopology extends AbstractTopology {
         builder.setSpout(getSinkName(), 
             new ReceivingSpout(getSinkName(), PIP, SEND_EVENTS, true, 9890), 1)
             .setNumTasks(1);
-        builder.close(PIP, config);
+        return builder.createClosingEvent(PIP, config);
     }
 
     @Override
@@ -159,8 +161,12 @@ public class SubTopology extends AbstractTopology {
         builder.setBolt(getSubSenderName(), new SendingBolt(getSubSenderName(), subTopoName, 
             true, true, 9890), 1).setNumTasks(1).shuffleGrouping(getSubProcessorName());
         
-        info.put("RandomSubPipeline1", new TopologyTestInfo(builder.createTopology(), 
-            new File(""), AbstractCoordinationTests.createTopologyConfiguration()));
+        File mappingFile = new File(Utils.getTestdataDir(), "randomSubTopo/subMapping.xml");    
+        
+        TopologyTestInfo ti = new TopologyTestInfo(builder.createTopology(), mappingFile, 
+            AbstractCoordinationTests.createTopologyConfiguration());
+        info.put("RandomSubPipeline1", ti);
+        builder.close("RandomSubPipeline1", opt.toMap());
     }
 
     /**

@@ -1,6 +1,7 @@
 package tests.eu.qualimaster.monitoring.genTopo;
 
 import eu.qualimaster.base.pipeline.RecordingTopologyBuilder;
+import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 import backtype.storm.Config;
 
 /**
@@ -20,7 +21,7 @@ public class GenTopology extends AbstractHyTopology {
      * @param builder the topology builder
      */
     @Override
-    public void createTopology(Config config, RecordingTopologyBuilder builder) {
+    public SubTopologyMonitoringEvent createTopology(Config config, RecordingTopologyBuilder builder) {
         builder.setSpout(getTestSourceName(), 
             new TestSourceSource(getTestSourceName(), PIP, SEND_EVENTS), 1)
             .setNumTasks(1);
@@ -33,7 +34,7 @@ public class GenTopology extends AbstractHyTopology {
         builder.setBolt(getHyProcessorName(), 
              new SubTopologyFamilyElement1FamilyElement(getHyProcessorName(), PIP, SEND_EVENTS, false), 1)
             .setNumTasks(3).shuffleGrouping(getHyMapperName());
-        builder.close(PIP, config);
+        return builder.createClosingEvent(PIP, config);
     }
     
     // checkstyle: stop exception type check

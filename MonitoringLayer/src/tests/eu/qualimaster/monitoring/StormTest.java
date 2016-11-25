@@ -9,7 +9,6 @@ import org.junit.Assert;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import tests.eu.qualimaster.coordination.AbstractCoordinationTests;
@@ -44,6 +43,7 @@ import eu.qualimaster.infrastructure.PipelineStatusTracker;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.MonitoringManager;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
+import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 import eu.qualimaster.monitoring.parts.PartType;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
 import eu.qualimaster.monitoring.systemState.SystemPart;
@@ -242,16 +242,19 @@ public class StormTest extends AbstractCoordinationTests {
      */
     @Test
     public void testGenTopology() {
-        testTopology(new GenTopology());
+        if (!isJenkins()) {
+            testTopology(new GenTopology());
+        }
     }
     
     /**
      * Tests a topology emulating a manual sub-topology.
      */
-    @Ignore("unstable")
     @Test(timeout = 2 * 60 * 1000)
     public void testManTopology() {
-        testTopology(new ManTopology());
+        if (!isJenkins()) {
+            testTopology(new ManTopology());
+        }
     }
 
     /**
@@ -259,7 +262,9 @@ public class StormTest extends AbstractCoordinationTests {
      */
     @Test
     public void testHwTopology() {
-        testTopology(new HwTopology());
+        if (!isJenkins()) {
+            testTopology(new HwTopology());
+        }
     }
     
     /**
@@ -277,7 +282,9 @@ public class StormTest extends AbstractCoordinationTests {
      */
     @Test(timeout = 2 * 60 * 1000)
     public void testSwitchTopologySink() {
-        testTopology(new SwitchTopology(true));
+        if (!isJenkins()) {
+            testTopology(new SwitchTopology(true));
+        }
     }
     
     /**
@@ -304,13 +311,13 @@ public class StormTest extends AbstractCoordinationTests {
         PipelineOptions opt = new PipelineOptions();
         RecordingTopologyBuilder builder = new RecordingTopologyBuilder(opt);
         
-        topo.createTopology(topoCfg, builder);
+        SubTopologyMonitoringEvent evt = topo.createTopology(topoCfg, builder);
         StormTopology topology = builder.createTopology();
         
         Map<String, TopologyTestInfo> topologies = new HashMap<String, TopologyTestInfo>();
-        topo.registerSubTopologies(topologies);
-        topologies.put(topo.getName(), new TopologyTestInfo(topology, 
-            new File(Utils.getTestdataDir(), mappingFile), topoCfg));
+        TopologyTestInfo ti = new TopologyTestInfo(topology, new File(Utils.getTestdataDir(), mappingFile), topoCfg);
+        ti.setSubTopologyEvent(evt);
+        topologies.put(topo.getName(), ti);
         env.setTopologies(topologies);
         new PipelineCommand(topo.getName(), PipelineCommand.Status.START).execute();
         sleep(500);

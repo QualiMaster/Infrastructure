@@ -20,6 +20,7 @@ import org.junit.Assert;
 import backtype.storm.Config;
 import eu.qualimaster.base.pipeline.RecordingTopologyBuilder;
 import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
@@ -49,7 +50,7 @@ public class SwitchTopology extends AbstractTopology {
     }
     
     @Override
-    public void createTopology(Config config, RecordingTopologyBuilder builder) {
+    public SubTopologyMonitoringEvent createTopology(Config config, RecordingTopologyBuilder builder) {
         // Source - Family = Intermediary - Mapper - Processor - Intermediary = Receiver
         
         builder.setSpout(getTestSourceName(), 
@@ -86,7 +87,7 @@ public class SwitchTopology extends AbstractTopology {
                 .setNumTasks(1).shuffleGrouping(getOutReceiverName());
         }
         
-        builder.close(PIP, config);
+        return builder.createClosingEvent(PIP, config);
     }
     
     /**

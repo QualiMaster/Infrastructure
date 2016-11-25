@@ -20,6 +20,7 @@ import org.junit.Assert;
 import backtype.storm.Config;
 import eu.qualimaster.base.pipeline.RecordingTopologyBuilder;
 import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
@@ -48,7 +49,7 @@ public class HwTopologyInt extends AbstractTopology {
     }
 
     @Override
-    public void createTopology(Config config, RecordingTopologyBuilder builder) {
+    public SubTopologyMonitoringEvent createTopology(Config config, RecordingTopologyBuilder builder) {
         // Source - HW Bolt ... HW Spout
         builder.setSpout(getTestSourceName(), 
             new TestSourceSource(getTestSourceName(), PIP, SEND_EVENTS), 1)
@@ -58,6 +59,7 @@ public class HwTopologyInt extends AbstractTopology {
             new TestFamilyHwIntFamilyElement(getTestFamilyName(), PIP, SEND_EVENTS, getAlgorithmName(), true, 9993), 1)
            .setNumTasks(1).shuffleGrouping(getTestSourceName());
 
+        builder.startRecording("GenTopoHardwareCorrelationFinancial");
         builder.setSpout(getTestIntermediaryBoltName(), 
             new ReceivingSpout(getTestIntermediaryBoltName(), PIP, SEND_EVENTS, true, 9993), 1)
             .setNumTasks(1);
@@ -77,6 +79,7 @@ public class HwTopologyInt extends AbstractTopology {
         builder.setSpout(getOutReceiverName(), 
             new ReceivingSpout(getOutReceiverName(), PIP, SEND_EVENTS, true, 9991), 1)
             .setNumTasks(1);
+        builder.endRecording();
         
         if (withSink) {
             builder.setBolt(getSinkName(), 
@@ -84,7 +87,7 @@ public class HwTopologyInt extends AbstractTopology {
                 .setNumTasks(1).shuffleGrouping(getOutReceiverName());
         }
         
-        builder.close(PIP, config);
+        return builder.createClosingEvent(PIP, config);
     }
     
     /**

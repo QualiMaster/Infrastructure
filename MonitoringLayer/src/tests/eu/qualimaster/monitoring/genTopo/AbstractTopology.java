@@ -27,6 +27,7 @@ import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.INameMapping.Algorithm;
 import eu.qualimaster.coordination.StormUtils.TopologyTestInfo;
 import eu.qualimaster.infrastructure.PipelineOptions;
+import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
@@ -46,8 +47,10 @@ public abstract class AbstractTopology {
      * 
      * @param config the pipeline configuration
      * @param builder the topology builder
+     * @return the monitoring event to be executed when the topology name mapping is registered, may be <b>null</b>
      */
-    public void createTopology(@SuppressWarnings("rawtypes") Map config, RecordingTopologyBuilder builder) {
+    public SubTopologyMonitoringEvent createTopology(@SuppressWarnings("rawtypes") Map config, 
+        RecordingTopologyBuilder builder) {
         Config cfg = new Config();
         for (Object o : config.entrySet()) {
             if (o instanceof Map.Entry) {
@@ -56,7 +59,7 @@ public abstract class AbstractTopology {
                 cfg.put(ent.getKey().toString(), ent.getValue());
             }
         }
-        createTopology(cfg, builder);
+        return createTopology(cfg, builder);
     }
     
     /**
@@ -64,8 +67,9 @@ public abstract class AbstractTopology {
      * 
      * @param config the pipeline configuration
      * @param builder the topology builder
+     * @return the monitoring event to be executed when the topology name mapping is registered, may be <b>null</b>
      */
-    public abstract void createTopology(Config config, RecordingTopologyBuilder builder);
+    public abstract SubTopologyMonitoringEvent createTopology(Config config, RecordingTopologyBuilder builder);
 
     /**
      * Returns the name of the topology / pipeline.

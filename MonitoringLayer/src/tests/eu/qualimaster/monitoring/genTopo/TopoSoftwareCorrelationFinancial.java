@@ -20,6 +20,7 @@ import backtype.storm.topology.TopologyBuilder;
 import eu.qualimaster.base.algorithm.ITopologyCreate;
 import eu.qualimaster.base.algorithm.SubTopologyOutput;
 import eu.qualimaster.base.pipeline.RecordingTopologyBuilder;
+import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 
 /**
  * Implements a test subtopology.
@@ -53,7 +54,8 @@ public class TopoSoftwareCorrelationFinancial extends AbstractHyTopology impleme
     }
 
     @Override
-    public void createTopology(Config config, RecordingTopologyBuilder builder) {
+    public SubTopologyMonitoringEvent createTopology(Config config, RecordingTopologyBuilder builder) {
+        return null;
     }
 
     @Override

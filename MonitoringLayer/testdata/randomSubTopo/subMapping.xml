@@ -1,0 +1,16 @@
+<mapping>
+  <pipeline name="RandomSubPipeline1" class="eu.qualimaster.RandomSubPipeline1.topology.Topology">
+     <node name="dataProcessor" type="family">
+          <component name="SubPipelineVar_11_FamilyElement0" container="RandomSubPipeline1" class="eu.qualimaster.RandomSubPipeline1.topology.SubPipelineVar_11_FamilyElement0FamilyElement" receiver="true" thrift="false" tasks="1"/>
+     </node>
+     <node name="RandomSubPipeline1Intermediary" type="source">
+          <component name="RandomSubPipeline1Intermediary" container="RandomSubPipeline1" class="eu.qualimaster.RandomSubPipeline1.topology.RandomSubPipeline1Intermediary" receiver="true" thrift="false" tasks="1"/>
+     </node>
+     <node name="RandomSubPipeline1EndBolt" type="sink">
+        <component name="RandomSubPipeline1EndBolt" container="RandomSubPipeline1" class="eu.qualimaster.RandomSubPipeline1.topology.RandomSubPipeline1EndBolt" receiver="true" thrift="false" tasks="1"/>
+     </node>
+     <algorithm name="SwitchProcessor1" implName="SwitchProcessor1" class="eu.qualimaster.algorithms.SwitchProcessor1"/>
+     <algorithm name="SwitchProcessor2" implName="SwitchProcessor2" class="eu.qualimaster.algorithms.SwitchProcessor2"/>
+  </pipeline>
+
+</mapping>
