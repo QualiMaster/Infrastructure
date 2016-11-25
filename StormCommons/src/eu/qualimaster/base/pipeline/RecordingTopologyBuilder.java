@@ -225,12 +225,30 @@ public class RecordingTopologyBuilder extends TopologyBuilder {
      * 
      * @param pipelineName the name of the currently built pipeline
      * @param config the topology configuration
+     * @see #createClosingEvent(String, Map)
      */
     public void close(String pipelineName, @SuppressWarnings("rawtypes") Map config) {
+        SubTopologyMonitoringEvent event = createClosingEvent(pipelineName, config);
+        if (null != event) {
+            EventManager.send(event);
+        }
+    }
+
+    /**
+     * Creates the closing pipeline event but does not send it. [public for testing]
+     * 
+     * @param pipelineName the name of the currently built pipeline
+     * @param config the topology configuration
+     * @return the event, <b>null</b> if no event was created as nothing was recorded
+     */
+    public SubTopologyMonitoringEvent createClosingEvent(String pipelineName, 
+        @SuppressWarnings("rawtypes") Map config) {
+        SubTopologyMonitoringEvent result = null;
         if (!recording.isEmpty()) {
             StormSignalConnection.configureEventBus(config);
-            EventManager.send(new SubTopologyMonitoringEvent(pipelineName, recording, scalingDescriptors));
+            result = new SubTopologyMonitoringEvent(pipelineName, recording, scalingDescriptors);
         }
+        return result;
     }
 
     /**
