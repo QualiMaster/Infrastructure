@@ -10,6 +10,7 @@ import eu.qualimaster.coordination.INameMapping.Component;
 import eu.qualimaster.coordination.RepositoryConnector.Models;
 import eu.qualimaster.coordination.RepositoryConnector.Phase;
 import eu.qualimaster.coordination.StormUtils.TopologyTestInfo;
+import eu.qualimaster.events.EventManager;
 import net.ssehub.easy.varModel.confModel.Configuration;
 
 /**
@@ -112,6 +113,10 @@ public class CoordinationUtils {
         }
         INameMapping mapping = CoordinationUtils.createMapping(pipelineName, topologyJar);
         CoordinationManager.registerNameMapping(mapping);
+        TopologyTestInfo info = StormUtils.getLocalInfo(pipelineName);
+        if (null != info && null != info.getSubTopologyEvent()) {
+            EventManager.send(info.getSubTopologyEvent());
+        }
         return absPath;
     }
     

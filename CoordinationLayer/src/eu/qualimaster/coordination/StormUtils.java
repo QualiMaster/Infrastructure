@@ -25,6 +25,7 @@ import eu.qualimaster.base.algorithm.TopologyOutput;
 import eu.qualimaster.common.signal.ThriftConnection;
 import eu.qualimaster.easy.extension.internal.AlgorithmProfileHelper.ProfileData;
 import eu.qualimaster.infrastructure.PipelineOptions;
+import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 import backtype.storm.Config;
 import backtype.storm.ILocalCluster;
 import backtype.storm.StormSubmitter;
@@ -90,6 +91,7 @@ public class StormUtils {
         @SuppressWarnings("rawtypes")
         private Map topologyConfig;
         private ProfileData profileData;
+        private SubTopologyMonitoringEvent subTopoEvent;
 
         /**
          * Creates a new topology information.
@@ -178,6 +180,24 @@ public class StormUtils {
             } catch (IOException e) {
                 LogManager.getLogger(getClass()).error("while closing class loader: " + e.getMessage(), e);
             }
+        }
+        
+        /**
+         * Defines the sub-topology event to be sent to the infrastructure after registering the name mapping.
+         * 
+         * @param subTopoEvent the sub-topology event (may be <b>null</b> for no event)
+         */
+        public void setSubTopologyEvent(SubTopologyMonitoringEvent subTopoEvent) {
+            this.subTopoEvent = subTopoEvent;
+        }
+
+        /**
+         * Returns the sub-topology event to be sent to the infrastructure after registering the name mapping.
+         * 
+         * @return the sub-topology event (may be <b>null</b> for no event)
+         */
+        public SubTopologyMonitoringEvent getSubTopologyEvent() {
+            return subTopoEvent;
         }
 
         /**

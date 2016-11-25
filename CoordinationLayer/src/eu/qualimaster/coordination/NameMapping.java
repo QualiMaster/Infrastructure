@@ -162,7 +162,8 @@ public class NameMapping implements INameMapping {
         
         @Override
         public String toString() {
-            return "Comp: " + container + " " + name + " " + className + " " + isReceiver + " " + type;
+            return "Comp: cont " + container + " name " + name + " cls " + className + " recv " + isReceiver 
+                + " type " + type + " thrift " + useThrift;
         }
         
         @Override
@@ -833,17 +834,30 @@ public class NameMapping implements INameMapping {
                             if (null != tmp && 2 == tmp.length) {
                                 String name = tmp[0];
                                 String className = tmp[1];
-                                ComponentImpl comp = new ComponentImpl(alg.getName(), name, className, Type.UNKNOWN);
-                                configure(comp);
-                                alg.addComponent(comp);
-                                componentClasses.put(comp.getClassName(), comp);
-                                componentImpl.put(comp.getName(), comp);
+                                createSubStructureComponent(alg, name, className);
                             }
                         }
                         alg.setScalingDescriptor(desc);
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Creates a sub structure component but only if not already information for that component exists.
+     * 
+     * @param alg the algorithm to attach the component to
+     * @param name the name of the component
+     * @param className the implementation class name
+     */
+    private void createSubStructureComponent(AlgorithmImpl alg, String name, String className) {
+        if (!componentImpl.containsKey(name)) { // don't override with potentially less information
+            ComponentImpl comp = new ComponentImpl(alg.getName(), name, className, Type.UNKNOWN);
+            configure(comp);
+            alg.addComponent(comp);
+            componentClasses.put(comp.getClassName(), comp);
+            componentImpl.put(comp.getName(), comp);
         }
     }
 
