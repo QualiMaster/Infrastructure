@@ -17,7 +17,7 @@ import tests.eu.qualimaster.monitoring.profiling.ProfilingTests;
 @Suite.SuiteClasses({
     SimpleMonitoringTests.class,
     ChangeMonitoringTests.class, 
-    StormTest.class,
+    //StormTest.class,
     HwMonitoringTest.class,
     SystemStateTest.class,
     LogTest.class,
