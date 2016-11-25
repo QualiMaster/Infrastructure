@@ -16,6 +16,7 @@
 package eu.qualimaster.common.signal;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -234,10 +235,14 @@ public class SignalMechanism {
             } catch (SignalException e) {
                 getLogger().error(e.getMessage());
             }
-            for (String namespace : NAMESPACES.keySet()) {
+            List<String> tmpNamespaces = new ArrayList<String>();
+            tmpNamespaces.addAll(NAMESPACES.keySet());
+            for (String namespace : tmpNamespaces) {
                 changeSignalNamespaceState(namespace, NamespaceState.CLEAR);
             }
-            for (CuratorFramework framework: FRAMEWORKS.values()) {
+            List<CuratorFramework> tmpFrameworks = new ArrayList<CuratorFramework>();
+            tmpFrameworks.addAll(FRAMEWORKS.values());
+            for (CuratorFramework framework: tmpFrameworks) {
                 if (CuratorFrameworkState.STARTED == framework.getState()) {
                     framework.close();
                 }
