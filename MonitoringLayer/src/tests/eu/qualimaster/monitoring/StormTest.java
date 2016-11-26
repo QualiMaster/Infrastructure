@@ -315,6 +315,7 @@ public class StormTest extends AbstractCoordinationTests {
         StormTopology topology = builder.createTopology();
         
         Map<String, TopologyTestInfo> topologies = new HashMap<String, TopologyTestInfo>();
+        topo.registerSubTopologies(topologies);
         TopologyTestInfo ti = new TopologyTestInfo(topology, new File(Utils.getTestdataDir(), mappingFile), topoCfg);
         ti.setSubTopologyEvent(evt);
         topologies.put(topo.getName(), ti);
@@ -323,10 +324,11 @@ public class StormTest extends AbstractCoordinationTests {
         sleep(500);
         EventManager.send(new PipelineLifecycleEvent(topo.getName(), 
             PipelineLifecycleEvent.Status.CHECKED, null)); // fake as we have no adaptation layer started
-        getPipelineStatusTracker().waitFor(topo.getName(), Status.STARTED, 30000);
-        long pipRunTime = System.currentTimeMillis();
+        getPipelineStatusTracker().waitFor(topo.getName(), Status.CREATED, 30000);
+        sleep(1000);
         // mapped to the created family
         topo.started();
+        long pipRunTime = System.currentTimeMillis();
         //Tracing.handleEvent(new AlgorithmProfilingEvent(topo.getName(), "TestFamily", "CorrelationSW", 
         //    AlgorithmProfilingEvent.Status.START));
         sleep(topo.plannedExecutionTime());

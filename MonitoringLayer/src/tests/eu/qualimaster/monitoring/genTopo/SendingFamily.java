@@ -48,6 +48,11 @@ public class SendingFamily extends SendingBolt {
         super(name, namespace, sendMonitoringEvents, sendRegular, port);
     }
     
+    @Override
+    protected boolean sendChangedEvent() {
+        return false; // defer until set
+    }
+    
     @SuppressWarnings("rawtypes")
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {

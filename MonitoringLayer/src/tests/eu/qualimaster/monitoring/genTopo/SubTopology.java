@@ -21,12 +21,15 @@ import java.util.Map;
 import org.junit.Assert;
 
 import backtype.storm.Config;
+import backtype.storm.task.OutputCollector;
+import backtype.storm.task.TopologyContext;
 import eu.qualimaster.base.pipeline.RecordingTopologyBuilder;
 import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.StormUtils.TopologyTestInfo;
 import eu.qualimaster.coordination.commands.AlgorithmChangeCommand;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineOptions;
+import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
@@ -161,7 +164,7 @@ public class SubTopology extends AbstractTopology {
         builder.setBolt(getSubSenderName(), new SendingBolt(getSubSenderName(), subTopoName, 
             true, true, 9890), 1).setNumTasks(1).shuffleGrouping(getSubProcessorName());
         
-        File mappingFile = new File(Utils.getTestdataDir(), "randomSubTopo/subMapping.xml");    
+        File mappingFile = new File(Utils.getTestdataDir(), "randomSubTopo/subMapping.xml");
         
         TopologyTestInfo ti = new TopologyTestInfo(builder.createTopology(), mappingFile, 
             AbstractCoordinationTests.createTopologyConfiguration());
@@ -188,6 +191,13 @@ public class SubTopology extends AbstractTopology {
          */
         public SubProcessor(String name, String namespace, boolean sendMonitoringEvents, boolean sendRegular) {
             super(name, namespace, sendMonitoringEvents, sendRegular);
+        }
+        
+        @SuppressWarnings("rawtypes")
+        @Override
+        public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
+            super.prepare(stormConf, context, collector);
+            EventManager.send(new AlgorithmChangedMonitoringEvent(getPipeline(), getName(), getName()));
         }
         
     }

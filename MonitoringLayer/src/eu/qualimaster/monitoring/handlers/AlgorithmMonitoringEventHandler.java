@@ -46,15 +46,16 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
     protected void handle(AlgorithmMonitoringEvent event, SystemState state) {
         String pipelineName = event.getPipeline();
         int cause = doHandle(event, state, pipelineName);
+        int subCause = 0;
         String subPipeline = findSubPipeline(pipelineName, event.getAlgorithmId());
         if (null != subPipeline) {
-            int subCause = doHandle(event, state, subPipeline);
+            subCause = doHandle(event, state, subPipeline);
             if (1 == subCause) { // it's ok if it has been handled once...
                 cause = 2;
             }
         }
         if (cause <= 0) {
-            getLogger().error("Cannot handle " + cause + " " + event + " " 
+            getLogger().error("Cannot handle " + cause + " " + subCause + " " + event + " " 
                 + MonitoringManager.getNameMapping(pipelineName));
         }
     }

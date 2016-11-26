@@ -53,7 +53,7 @@ public class ObservationTests {
         
         Assert.assertEquals((500 + 1000) / 3, obs.getAverageValue(), 1);
         Assert.assertEquals(0, obs.getMinimumValue(), 1);
-        Assert.assertEquals(1000, obs.getMaximumValue(), 1);
+        Assert.assertEquals(1000, obs.getMaximumValue(), 5);
     }
 
     /**

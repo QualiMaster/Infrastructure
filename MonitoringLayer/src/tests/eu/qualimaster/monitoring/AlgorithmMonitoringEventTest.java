@@ -76,5 +76,49 @@ public class AlgorithmMonitoringEventTest {
         Assert.assertNotNull(node);
         Assert.assertEquals(521, node.getObservedValue(ResourceUsage.USED_MEMORY), 0.05);
     }
-    
+
+    /**
+     * Tests an algorithm monitoring event.
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test
+    public void testEvent1() throws IOException {
+        File f = new File(Utils.getTestdataDir(), "randomSubTopo/mapping.xml");
+        FileInputStream fis = new FileInputStream(f);
+        NameMapping mapping = new NameMapping("RandomPip", fis);
+        fis.close();
+        CoordinationManager.registerTestMapping(mapping);
+        f = new File(Utils.getTestdataDir(), "randomSubTopo/subMapping.xml");
+        fis = new FileInputStream(f);
+        NameMapping subMapping = new NameMapping("RandomSubPipeline1", fis);
+        fis.close();
+        CoordinationManager.registerTestMapping(subMapping);
+        
+        
+        SystemState state = new SystemState();
+        PipelineSystemPart pip = state.obtainPipeline("RandomPip");
+        pip.changeStatus(PipelineLifecycleEvent.Status.CREATED, false);
+        AlgorithmMonitoringEvent evt = new AlgorithmMonitoringEvent("RandomPip", 
+            "eu.qualimaster.RandomPip.topology.PipelineVar_1_Sink0Sink", ResourceUsage.USED_MEMORY, 432.0);
+        AlgorithmMonitoringEventHandler.INSTANCE.doHandle(evt, state);
+
+        evt = new AlgorithmMonitoringEvent("RandomPip", 
+            "eu.qualimaster.RandomSubPipeline1.topology.SubPipelineVar_11_FamilyElement0FamilyElement", 
+            ResourceUsage.USED_MEMORY, 521.0);
+        AlgorithmMonitoringEventHandler.INSTANCE.doHandle(evt, state);
+
+        CoordinationManager.unregisterNameMapping(mapping);
+        CoordinationManager.unregisterNameMapping(subMapping);
+
+        // knowledge from mapping
+        PipelineNodeSystemPart node = pip.getPipelineNode("snk");
+        Assert.assertNotNull(node);
+        Assert.assertEquals(432, node.getObservedValue(ResourceUsage.USED_MEMORY), 0.05);
+        
+        node = pip.getPipelineNode("SubPipelineVar_11_FamilyElement0");
+        Assert.assertNotNull(node);
+        Assert.assertEquals(521, node.getObservedValue(ResourceUsage.USED_MEMORY), 0.05);
+    }
+
 }

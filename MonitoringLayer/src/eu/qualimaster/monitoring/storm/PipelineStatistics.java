@@ -38,7 +38,7 @@ public class PipelineStatistics {
     //private long topologyThroughputItems = 0;
     //private double topologyLatency = 0;
     private double topologyCapacity = 0;
-    private int needInitalization = 0;
+    private int needInitialization = 0;
     private int initialized = 0;
     
     /**
@@ -66,13 +66,13 @@ public class PipelineStatistics {
      */
     public boolean commit() {
         // needInitialization > 0 may exclude simple pipelines
-        boolean allInitialized = isStarted() || (needInitalization > 0 && needInitalization == initialized);
+        boolean allInitialized = isStarted() || (needInitialization > 0 && needInitialization == initialized);
         //setPartPositiveValue(part, TimeBehavior.THROUGHPUT_ITEMS, topologyThroughputItems);
         //setPartPositiveValue(part, Scalability.ITEMS, topologyThroughputItems);
         ////setPartPositiveValue(part, TimeBehavior.THROUGHPUT_VOLUME, topologyThroughputVolume);
         //setPartPositiveValue(part, TimeBehavior.LATENCY, topologyLatency);
         setPartPositiveValue(part, ResourceUsage.CAPACITY, 
-            needInitalization > 0 ? topologyCapacity / needInitalization : 0);
+            needInitialization > 0 ? topologyCapacity / needInitialization : 0);
         // do not summarize the executors, they are set implicitly
         if (!allInitialized && !MonitoringManager.hasAdaptationModel()) { // enable DML connect if no model
             allInitialized = true;
@@ -100,7 +100,7 @@ public class PipelineStatistics {
      * @param nodePart the node part
      */
     public void collect(PipelineNodeSystemPart nodePart) {
-        needInitalization++;
+        needInitialization++;
         //topologyThroughputItems += nodePart.getObservedValue(TimeBehavior.THROUGHPUT_ITEMS);
         ////topologyThroughputVolume += executorThroughputVolume;
         //topologyLatency += nodePart.getObservedValue(TimeBehavior.LATENCY);

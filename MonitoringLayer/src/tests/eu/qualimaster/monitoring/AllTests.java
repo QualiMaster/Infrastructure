@@ -6,7 +6,7 @@ import org.junit.runners.Suite;
 import tests.eu.qualimaster.monitoring.profiling.ProfilingTests;
 
 /**
- * The test suite for the Data Management Layer. Do not rename this class.<br/>
+ * The test suite for the Monitoring Layer. Do not rename this class.<br/>
  * Set environment variable 
  * "STORM_TEST_TIMEOUT_MS" to a value greater than 15.000 (ms).
  * 
