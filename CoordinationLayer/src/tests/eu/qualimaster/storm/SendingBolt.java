@@ -33,6 +33,8 @@ import eu.qualimaster.common.signal.AbstractMonitor;
 import eu.qualimaster.common.signal.BaseSignalBolt;
 import eu.qualimaster.common.signal.ShutdownSignal;
 import eu.qualimaster.common.signal.SignalException;
+import eu.qualimaster.events.EventManager;
+import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 
 /**
  * A hardware simulating bolt (sender).
@@ -73,7 +75,19 @@ public class SendingBolt extends BaseSignalBolt {
         super.prepare(stormConf, context, collector);
         this.collector = collector;
         this.toSend = new LinkedBlockingQueue<Integer>();
+        if (sendChangedEvent()) {
+            EventManager.send(new AlgorithmChangedMonitoringEvent(getPipeline(), getName(), getName()));
+        }
         connect();
+    }
+
+    /**
+     * Whether the initial changed event shall be sent.
+     * 
+     * @return <code>true</code> for send, <code>false</code> else
+     */
+    protected boolean sendChangedEvent() {
+        return true;
     }
     
     /**

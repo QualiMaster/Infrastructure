@@ -30,6 +30,8 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import eu.qualimaster.common.signal.BaseSignalSpout;
 import eu.qualimaster.common.signal.ShutdownSignal;
+import eu.qualimaster.events.EventManager;
+import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 
 /**
  * A hardware receiving spout.
@@ -69,6 +71,7 @@ public class ReceivingSpout extends BaseSignalSpout {
     public void open(Map stormConf, TopologyContext context, SpoutOutputCollector collector) {
         super.open(stormConf, context, collector);
         this.collector = collector;
+        EventManager.send(new AlgorithmChangedMonitoringEvent(getPipeline(), getName(), getName()));
         open();
     }
 

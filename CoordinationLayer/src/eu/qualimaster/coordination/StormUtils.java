@@ -385,7 +385,7 @@ public class StormUtils {
         String topologyName = mapping.getPipelineName();
         StormPipelineOptionsSetter optSetter = new StormPipelineOptionsSetter(options);
         if (null != localCluster) {
-            LOGGER.info("Submitting in local cluster mode " + jarPath + " " + options);
+            LOGGER.info("Submitting in local cluster mode " + mapping.getPipelineName() + jarPath + " " + options);
             StormTopology topology = null;
             Map stormConf = null;
             if (null != testTopologies) {
