@@ -98,6 +98,7 @@ public class EventHandlerTests {
     @Test(timeout = 3000)
     public void testEventManagerNotStarted() throws InterruptedException {
         Configuration.configureLocal();
+        EventManager.initLegacy();
         // nothing shall happen as manager is not started
         EventManager.handle(new PipelineLifecycleEvent("test", Status.STOPPED, null));
         handleAndCheck(new PipelineLifecycleEvent("test", Status.STOPPED, null), null, all);

@@ -63,7 +63,7 @@ public class EventManager {
     private AtomicInteger unprocessed = new AtomicInteger();
     private boolean isRunning;
     private ServerSocket serverSocket;
-    private BlockingQueue<IEvent> toSend;
+    private BlockingQueue<IEvent> toSend = new LinkedBlockingQueue<IEvent>();
     private Map<String, ClientConnection> clients = new HashMap<String, ClientConnection>();
     private Map<String, EventHandler<? extends IEvent>> clientHandlers 
         = new HashMap<String, EventHandler<? extends IEvent>>();
@@ -195,7 +195,7 @@ public class EventManager {
 
             @Override
             public void run() {
-                send(event);
+                doSend(event);
             }
             
         });
@@ -468,11 +468,21 @@ public class EventManager {
     public int getUnprocessed() {
         return unprocessed.get();
     }
+    
+    /**
+     * Initializes the legacy local mode. Works only if not already started.
+     */
+    public static void initLegacy() {
+        if (!INSTANCE.isRunning) {
+            INSTANCE.toSend = null; // legacy
+        }
+    }
 
     /**
      * Starts the event manager.
      */
     public static void start() {
+        initLegacy();
         start(true, false); // legacy, keep in local mode
     }
 
@@ -598,6 +608,7 @@ public class EventManager {
         boolean inInit = initializing.getAndSet(true);
         if (!isRunning && !inInit) {
             if (server) {
+                toSend = null;
                 executor = Executors.newCachedThreadPool();
                 if (!localMode) {
                     try {
@@ -617,7 +628,9 @@ public class EventManager {
                 String conn = Configuration.getEventHost() + "/" + Configuration.getEventPort();
                 try {
                     Socket s = createClientSocket();
-                    toSend = new LinkedBlockingQueue<IEvent>();
+                    if (null == toSend) {
+                        toSend = new LinkedBlockingQueue<IEvent>();
+                    }
                     // store for forwarding, will be removed if forwarding is enabled
                     clients.put(managerId, new ClientConnection(managerId, s)); 
                     WritingWorker worker = new WritingWorker(s);
@@ -635,10 +648,10 @@ public class EventManager {
                     }
                 }
             }
+            disableLoggingFor(TimerEvent.class); // don't show internal regular events which can be consumed locally
+            disableLoggingFor(Configuration.getEventDisableLogging());
+            initializing.set(false);
         }
-        disableLoggingFor(TimerEvent.class); // don't show internal regular events which can be consumed locally
-        disableLoggingFor(Configuration.getEventDisableLogging());
-        initializing.set(false);
     }
 
     /**
@@ -895,7 +908,6 @@ public class EventManager {
                         if (isLoggingEnabled(event)) {
                             LOGGER.info("sending " + event);
                         }
-                        toSend.poll();
                     }
                     Thread.sleep(WRITE_WAIT);
                 } catch (SocketException e) {
@@ -1087,6 +1099,15 @@ public class EventManager {
             result = !disableLogging.contains(event.getClass());
         }
         return result;
+    }
+    
+    /**
+     * Returns the event manager instance.
+     * 
+     * @return the instance
+     */
+    public static EventManager getInstance() {
+        return INSTANCE;
     }
     
 }
