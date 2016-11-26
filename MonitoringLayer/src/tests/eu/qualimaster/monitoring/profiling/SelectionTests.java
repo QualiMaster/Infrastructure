@@ -15,6 +15,7 @@
  */
 package tests.eu.qualimaster.monitoring.profiling;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -27,9 +28,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
@@ -52,7 +53,8 @@ import eu.qualimaster.observables.TimeBehavior;
 import tests.eu.qualimaster.monitoring.genTopo.TestProcessor;
 
 /**
- * Tests the profiling for the selection of algorithms with tradeoffs.
+ * Tests the profiling for the selection of algorithms with tradeoffs. This test uses a different configuration model
+ * and shall run after all other model-based tests.
  * 
  * @author Holger Eichelberger
  */
@@ -61,7 +63,6 @@ public class SelectionTests {
     private static final String PIP_NAME = "pip";
     private static final String SOURCE_ELT = "Src";
     private static final String FAM_ELT = "Fam";
-    private static final Map<String, AlgorithmDescriptor> ALGORITHMS = new HashMap<String, AlgorithmDescriptor>(); 
     private static final String HW_ALG = "HW";
     private static final String SW_ALG = "SW";
     private static final String SW_OSC_ALG = "SW-osc";
@@ -79,20 +80,8 @@ public class SelectionTests {
     private static final IObservable[] RELEVANT = new IObservable[] {
         TimeBehavior.THROUGHPUT_ITEMS, TimeBehavior.LATENCY, ResourceUsage.CAPACITY, Scalability.ITEMS};
 
-    static {
-        AlgorithmDescriptor desc;
-        desc = registerDescriptor(HW_ALG, "01.10.2016 10:00:00");
-        desc.addTrace(TimeBehavior.THROUGHPUT_ITEMS, new ConvergingTrace(INPUT_RATE * 1.5, 4)); // 4: force crossover
-        desc.addTrace(TimeBehavior.LATENCY, new ConstrantTrace(100));
-        
-        desc = registerDescriptor(SW_ALG, "01.10.2016 15:00:00");
-        desc.addTrace(TimeBehavior.THROUGHPUT_ITEMS, new ConvergingTrace(INPUT_RATE));
-        desc.addTrace(TimeBehavior.LATENCY, new ConstrantTrace(150));
-        
-        desc = registerDescriptor(SW_OSC_ALG, "02.10.2016 9:00:00");
-        desc.addTrace(TimeBehavior.THROUGHPUT_ITEMS, new ConvergingOsciallatingTrace(INPUT_RATE, 0, 0.02));
-        desc.addTrace(TimeBehavior.LATENCY, new ConstrantTrace(150));
-    }
+    private File testDataFolder;
+    private Map<String, AlgorithmDescriptor> algorithms = new HashMap<String, AlgorithmDescriptor>(); 
     
     /**
      * Registers an algorithm descriptor.
@@ -101,9 +90,9 @@ public class SelectionTests {
      * @param profilingTime the date/time when profiling took place
      * @return the created/registered descriptor
      */
-    private static AlgorithmDescriptor registerDescriptor(String name, String profilingTime) {
+    private AlgorithmDescriptor registerDescriptor(String name, String profilingTime) {
         AlgorithmDescriptor result = new AlgorithmDescriptor(name, profilingTime); 
-        ALGORITHMS.put(name, result);
+        algorithms.put(name, result);
         return result;
     }
     
@@ -627,16 +616,16 @@ public class SelectionTests {
      */
     void printLogs(PrintStream out) {
         int max = 0;
-        for (AlgorithmDescriptor alg : ALGORITHMS.values()) {
+        for (AlgorithmDescriptor alg : algorithms.values()) {
             List<Entry> log = alg.getLog();
             max = Math.max(max, log.size());
         }
-        for (AlgorithmDescriptor alg : ALGORITHMS.values()) {
+        for (AlgorithmDescriptor alg : algorithms.values()) {
             out.print(logHeader(alg.getName()));
         }
         out.println();
         for (int e = 0; e < max; e++) {
-            for (AlgorithmDescriptor alg : ALGORITHMS.values()) {
+            for (AlgorithmDescriptor alg : algorithms.values()) {
                 List<Entry> log = alg.getLog();
                 out.print(log.get(e));
             }
@@ -647,12 +636,31 @@ public class SelectionTests {
     /**
      * Executed before all tests.
      */
-    @BeforeClass
-    public static void startup() {
-        AlgorithmProfilePredictionManager.useTestData(FileUtils.getTempDirectoryPath());
+    @Before
+    public void startup() {
+        algorithms.clear();
+        testDataFolder = new File(FileUtils.getTempDirectoryPath(), "profileSelectionTests");
+        AlgorithmProfilePredictionManager.clear();
+        FileUtils.deleteQuietly(testDataFolder);
+        testDataFolder.mkdirs();
+        AlgorithmProfilePredictionManager.useTestData(testDataFolder.getAbsolutePath());
         AlgorithmProfilePredictionManager.notifyPipelineLifecycleChange(new PipelineLifecycleEvent(PIP_NAME, 
             PipelineLifecycleEvent.Status.STARTING, null));
-        for (AlgorithmDescriptor alg : ALGORITHMS.values()) {
+
+        AlgorithmDescriptor desc;
+        desc = registerDescriptor(HW_ALG, "01.10.2016 10:00:00");
+        desc.addTrace(TimeBehavior.THROUGHPUT_ITEMS, new ConvergingTrace(INPUT_RATE * 1.5, 4)); // 4: force crossover
+        desc.addTrace(TimeBehavior.LATENCY, new ConstrantTrace(100));
+        
+        desc = registerDescriptor(SW_ALG, "01.10.2016 15:00:00");
+        desc.addTrace(TimeBehavior.THROUGHPUT_ITEMS, new ConvergingTrace(INPUT_RATE));
+        desc.addTrace(TimeBehavior.LATENCY, new ConstrantTrace(150));
+        
+        desc = registerDescriptor(SW_OSC_ALG, "02.10.2016 9:00:00");
+        desc.addTrace(TimeBehavior.THROUGHPUT_ITEMS, new ConvergingOsciallatingTrace(INPUT_RATE, 0, 0.02));
+        desc.addTrace(TimeBehavior.LATENCY, new ConstrantTrace(150));
+        
+        for (AlgorithmDescriptor alg : algorithms.values()) {
             simulateProfile(alg, LAST_TIME, INPUT_RATE);
         }
     }
@@ -660,11 +668,14 @@ public class SelectionTests {
     /**
      * Executed after all tests.
      */
-    @AfterClass
-    public static void shutdown() {
+    @After
+    public void shutdown() {
         AlgorithmProfilePredictionManager.notifyPipelineLifecycleChange(new PipelineLifecycleEvent(PIP_NAME, 
             PipelineLifecycleEvent.Status.STOPPED, null));
         AlgorithmProfilePredictionManager.useTestData(null);
+        FileUtils.deleteQuietly(testDataFolder);
+        AlgorithmProfilePredictionManager.clear();
+        algorithms.clear();
     }
 
     /**
@@ -672,7 +683,7 @@ public class SelectionTests {
      */
     @Test
     public void testPrediction() {
-        for (AlgorithmDescriptor alg : ALGORITHMS.values()) {
+        for (AlgorithmDescriptor alg : algorithms.values()) {
             for (IObservable obs : MEASURED) { // CAPACITY / ITEMS does not work, also as validated
                 int origSteps = ProfilingRegistry.getPredictionSteps(obs);
                 for (int i = 0; i < 5; i++) { // prediction steps ahead
@@ -705,9 +716,9 @@ public class SelectionTests {
             weighting.put(obs, 1.0);
         }
         Map<String, Map<IObservable, Double>> result = AlgorithmProfilePredictionManager.predict(PIP_NAME, FAM_ELT, 
-            ALGORITHMS.keySet(), observables, null);
+            algorithms.keySet(), observables, null);
         Assert.assertNotNull(result);
-        for (AlgorithmDescriptor alg : ALGORITHMS.values()) {
+        for (AlgorithmDescriptor alg : algorithms.values()) {
             Map<IObservable, Double> prediction = result.get(alg.getName());
             Assert.assertNotNull(prediction);
             long time = LAST_TIME * TIME_STEP;

@@ -72,6 +72,7 @@ public class ManagerTest {
      */
     @Before
     public void before() {
+        AlgorithmProfilePredictionManager.clear();
         FileUtils.deleteQuietly(testFolder);
         defaultPredictionSteps();
         testFolder.mkdirs();
@@ -86,6 +87,7 @@ public class ManagerTest {
         AlgorithmProfilePredictionManager.useTestData(null);
         defaultPredictionSteps();
         FileUtils.deleteQuietly(testFolder);
+        AlgorithmProfilePredictionManager.clear();
     }
     
     /**

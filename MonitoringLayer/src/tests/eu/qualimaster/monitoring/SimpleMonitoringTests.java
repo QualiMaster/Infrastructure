@@ -53,6 +53,7 @@ public class SimpleMonitoringTests {
         CoordinationManager.start();
         CoordinationManager.registerTestMapping(TestNameMapping.INSTANCE);
         MonitoringManager.start(false);
+        MonitoringManager.getSystemState().clear();
     }
     
     /**

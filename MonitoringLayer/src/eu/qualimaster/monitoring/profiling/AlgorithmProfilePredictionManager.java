@@ -469,5 +469,12 @@ public class AlgorithmProfilePredictionManager {
     public static void setTestPrediction(Double prediction) {
         testPrediction = prediction;
     }
+    
+    /**
+     * Clears this prediction manager.
+     */
+    public static void clear() {
+        Pipelines.releaseAllPipelines();
+    }
 
 }

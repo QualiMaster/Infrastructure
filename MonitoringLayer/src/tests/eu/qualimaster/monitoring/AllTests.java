@@ -23,10 +23,10 @@ import tests.eu.qualimaster.monitoring.profiling.ProfilingTests;
     LogTest.class,
     TopologyTests.class,
     ReasoningTaskTests.class, 
-    ValueBindingTest.class,
     StormClusterMonitoringTest.class,
     ObservationTests.class, 
     CloudEnvironmentTests.class,
+    ValueBindingTest.class,
     ProfilingTests.class,
     // must be last
     MonitoringConfigurationTests.class})

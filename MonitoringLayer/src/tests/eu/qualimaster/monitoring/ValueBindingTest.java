@@ -18,7 +18,6 @@ package tests.eu.qualimaster.monitoring;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import eu.qualimaster.adaptation.events.AdaptationEvent;
@@ -65,10 +64,11 @@ public class ValueBindingTest {
         SignalMechanism.setTestMode(true);
         Utils.setModelProvider(new Utils.ModelProvider("BindingTestModel/"));
         Utils.configure();
-        RepositoryConnector.initialize();
+        RepositoryConnector.clearModels(true);
         EventManager.start();
         CoordinationManager.start();
         CoordinationManager.registerTestMapping(TestNameMapping.INSTANCE);
+        MonitoringManager.getSystemState().clear();
     }
     
     /**
@@ -76,6 +76,7 @@ public class ValueBindingTest {
      */
     @After
     public void tearDown() {
+        MonitoringManager.getSystemState().clear();
         CoordinationManager.stop();
         EventManager.stop();
         Utils.dispose();
@@ -84,7 +85,6 @@ public class ValueBindingTest {
     /**
      * Tests user constraints.
      */
-    @Ignore("Does not work in test suite")
     @Test
     public void testUserConstraint() {
         // setup test 
