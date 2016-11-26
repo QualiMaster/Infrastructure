@@ -630,6 +630,8 @@ public class EventManager {
                     Socket s = createClientSocket();
                     if (null == toSend) {
                         toSend = new LinkedBlockingQueue<IEvent>();
+                    } else {
+                        toSend.clear();
                     }
                     // store for forwarding, will be removed if forwarding is enabled
                     clients.put(managerId, new ClientConnection(managerId, s)); 
@@ -710,6 +712,9 @@ public class EventManager {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
                 }
+            }
+            if (null != toSend) {
+                toSend.clear();
             }
         }
     }
