@@ -132,6 +132,7 @@ public class RepositoryConnector {
     private static Properties modelProperties = new Properties();
     private static ListLoader loader;
     private static Map<IPhase, Models> models = new HashMap<IPhase, Models>();
+    private static File modelsLocation;
     private static int updateCount = 0;
     
     /**
@@ -429,6 +430,27 @@ public class RepositoryConnector {
         }
         return RepositoryHelper.createLocalArtifactPath(pathName, null);
     }
+    
+    /**
+     * Clears the models and rereads them if requested.
+     * 
+     * @param rereadModels reread the models or just clear
+     */
+    public static void clearModels(boolean rereadModels) {
+        if (null != modelsLocation) {
+            try {
+                ModelInitializer.removeLocation(modelsLocation, ProgressObserver.NO_OBSERVER);
+            } catch (ModelManagementException e) {
+                getLogger().error("Clearing models: " + e.getMessage());
+            }
+            FileUtils.deleteQuietly(modelsLocation);
+            modelsLocation = null;
+        }
+        models.clear();
+        if (rereadModels) {
+            readModels();
+        }
+    }
 
     /**
      * Reads the models.
@@ -452,6 +474,7 @@ public class RepositoryConnector {
                 } 
                 readModelProperties(propLocation);
 
+                modelsLocation = location;
                 ModelInitializer.registerLoader(ProgressObserver.NO_OBSERVER);
                 for (Phase phase : Phase.values()) {
                     getLogger().info("loading models for " + phase);
@@ -545,6 +568,7 @@ public class RepositoryConnector {
      */
     public static void shutdown() {
         if (null != loader) {
+            clearModels(false);
             loader.shutdown();
             loader = null;
         }
