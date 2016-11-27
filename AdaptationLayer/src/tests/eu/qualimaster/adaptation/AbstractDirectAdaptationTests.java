@@ -44,6 +44,7 @@ import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.easy.extension.internal.ConfigurationInitializer;
 import eu.qualimaster.easy.extension.internal.CoordinationHelper;
 import eu.qualimaster.easy.extension.internal.VariableHelper;
+import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.InitializationMode;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.MonitoringManager;
@@ -75,7 +76,8 @@ import tests.eu.qualimaster.adaptation.TimeMeasurementTracerFactory.Measure;
 
 /**
  * A simple framework for performing adaptation tests which directly use
- * the QM layers, i.e., bypass Storm and the event bus. On the one side,
+ * the QM layers, i.e., bypass Storm. The event bus is available and configured 
+ * for local event processing. On the one side,
  * this is faster and less resource consuming, but, on the other side, requires
  * manual setup of the involved layers. The core idea is to provide a framework
  * which does this setup and to specify the tests as well as intermediary asserts
@@ -104,6 +106,7 @@ public abstract class AbstractDirectAdaptationTests {
     private Script adaptRtVilModel;
     private File tmp;
     private boolean debug = false;
+    private List<INameMapping> mappings;
     
     static {
         JENKINS.add("jenkins.sse.uni-hildesheim.de");
@@ -165,7 +168,8 @@ public abstract class AbstractDirectAdaptationTests {
         tmp = RepositoryConnector.createTmpFolder();
         new Models(Phase.ADAPTATION, adaptConfig, adaptRtVilModel, null, null);  // overrides
         ModelInitializer.removeLocation(getModelLocation(), ProgressObserver.NO_OBSERVER);
-        
+
+        EventManager.start();
         CoordinationHelper.setInTesting(true);
         VolumePredictionManager.start(scheduler);
         AlgorithmProfilePredictionManager.start();
@@ -182,6 +186,7 @@ public abstract class AbstractDirectAdaptationTests {
         VolumePredictionManager.stop();
         tmp.delete();
         ModelInitializer.unregisterLoader(ProgressObserver.NO_OBSERVER);
+        EventManager.stop();
     }
     
     /**
@@ -542,12 +547,13 @@ public abstract class AbstractDirectAdaptationTests {
     }
     
     /**
-     * Performs a single adaptation cycle in simulation mode.
+     * Executed before the test specification.
      * 
-     * @param testSpec the test specification for initializing / asserting
-     * @throws IOException shall not occur
+     * @param testSpec the test specification
+     * @throws IOException in case of I/O problems
+     * @see #performAdaptation(TestSpec)
      */
-    protected void performAdaptation(TestSpec testSpec) throws IOException {
+    private void beforeTestSpec(TestSpec testSpec) throws IOException {
         if (!debug) {
             Properties prop = new Properties();
             prop.put(AdaptationConfiguration.ADAPTATION_RTVIL_TRACERFACTORY, 
@@ -555,7 +561,7 @@ public abstract class AbstractDirectAdaptationTests {
             AdaptationConfiguration.configure(prop);
         }
         
-        List<INameMapping> mappings = new ArrayList<INameMapping>();
+        mappings = new ArrayList<INameMapping>();
         // startup
         for (String pipeline : testSpec.getPipelineNames()) {
             File file = testSpec.obtainMappingFile(pipeline);
@@ -567,6 +573,18 @@ public abstract class AbstractDirectAdaptationTests {
         }
 
         MonitoringManager.clearState();
+    }
+    
+    /**
+     * Performs a single adaptation cycle in simulation mode.
+     * 
+     * @param testSpec the test specification for initializing / asserting
+     * @throws IOException shall not occur
+     * @see #beforeTestSpec(TestSpec)
+     * @see #afterTestSpec(TestSpec)
+     */
+    protected void performAdaptation(TestSpec testSpec) throws IOException {
+        beforeTestSpec(testSpec);
         IReasoningModelProvider provider = new SimpleReasoningModelProvider(monConfig, monRtVilModel, monCopyMapping);
         ReasoningTask rTask = new ReasoningTask(provider);
         rTask.setReasoningListener(testSpec);
@@ -611,13 +629,25 @@ public abstract class AbstractDirectAdaptationTests {
         }
 
         testSpec.end();
+        afterTestSpec(testSpec);
+    }
+
+    /**
+     * Executed after the test specification.
+     * 
+     * @param testSpec the test specification
+     * @throws IOException in case of I/O problems
+     * @see #performAdaptation(TestSpec)
+     */
+    private void afterTestSpec(TestSpec testSpec) throws IOException {
         MonitoringManager.getSystemState().clear();
         
         for (INameMapping mapping : mappings) {
             CoordinationManager.unregisterNameMapping(mapping);
         }
+        mappings = null;
     }
-    
+
     /**
      * Enables the debug mode for adaptation.
      */
