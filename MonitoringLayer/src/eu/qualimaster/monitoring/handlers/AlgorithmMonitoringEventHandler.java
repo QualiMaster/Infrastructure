@@ -34,6 +34,15 @@ import eu.qualimaster.observables.IObservable;
 public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<AlgorithmMonitoringEvent> {
 
     public static final AlgorithmMonitoringEventHandler INSTANCE = new AlgorithmMonitoringEventHandler();
+    private static final int CAUSE_NONE = 1;
+    private static final int CAUSE_NONE_SUBPIPELINE = 2;
+    private static final int CAUSE_UNKNOWN = 0;
+    private static final int CAUSE_NO_PIPELINE_NAME = -1;
+    private static final int CAUSE_NO_MAPPING = -2;
+    private static final int CAUSE_NO_ACTIVE_PIPELINE_COMPONENT = -3;
+    private static final int CAUSE_NO_ACTIVE_PIPELINE_ALGORITHM = -4;
+    private static final int CAUSE_NO_ALGORITHM = -5;
+    private static final int CAUSE_NO_PART = -6;
     
     /**
      * Creates an instance.
@@ -46,15 +55,15 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
     protected void handle(AlgorithmMonitoringEvent event, SystemState state) {
         String pipelineName = event.getPipeline();
         int cause = doHandle(event, state, pipelineName);
-        int subCause = 0;
+        int subCause = CAUSE_UNKNOWN;
         String subPipeline = findSubPipeline(pipelineName, event.getAlgorithmId());
         if (null != subPipeline) {
             subCause = doHandle(event, state, subPipeline);
-            if (1 == subCause) { // it's ok if it has been handled once...
-                cause = 2;
+            if (CAUSE_NONE == subCause) { // it's ok if it has been handled once...
+                cause = CAUSE_NONE_SUBPIPELINE;
             }
         }
-        if (cause <= 0) {
+        if (CAUSE_UNKNOWN == cause || cause <= CAUSE_NO_ALGORITHM) { // only the most problematic ones... 
             getLogger().error("Cannot handle " + cause + " " + subCause + " " + event + " " 
                 + MonitoringManager.getNameMapping(pipelineName));
         }
@@ -69,7 +78,7 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
      * @return the internal cause code in case that the event cannot be handled, negative or null in case error
      */
     private int doHandle(AlgorithmMonitoringEvent event, SystemState state, String pipelineName) {
-        int cause = 0;
+        int cause = CAUSE_UNKNOWN;
         INameMapping mapping = null;
         if (null != pipelineName) { // just to be on the safe side
             mapping = MonitoringManager.getNameMapping(pipelineName);
@@ -79,10 +88,10 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
                     cause = handle(mapping, event, state, obs);
                 }                
             } else {
-                cause = -1;
+                cause = CAUSE_NO_MAPPING;
             }
         } else {
-            cause = -4;
+            cause = CAUSE_NO_PIPELINE_NAME;
         }
         return cause;
     }
@@ -98,7 +107,7 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
      */
     private int handle(INameMapping mapping, AlgorithmMonitoringEvent event, SystemState state, 
         IObservable obs) {
-        int cause = 0;
+        int cause = CAUSE_UNKNOWN;
         String algId = event.getAlgorithmId();
         Component component = mapping.getComponentByClassName(algId);
         SystemPart part = null;
@@ -107,7 +116,7 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
             if (null != pip) {
                 part = pip.obtainPipelineNode(mapName(mapping, component.getName()));
             } else {
-                cause = -1;
+                cause = CAUSE_NO_ACTIVE_PIPELINE_COMPONENT;
             }
         } else {
             // fallback
@@ -117,15 +126,17 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
                 if (null != pip) {
                     part = pip.getAlgorithm(mapName(mapping, algorithm.getName()));
                 } else {
-                    cause = -2;
+                    cause = CAUSE_NO_ACTIVE_PIPELINE_ALGORITHM;
                 }
             } else {
-                cause = -3;
+                cause = CAUSE_NO_ALGORITHM;
             }
         }
         if (null != part) {
             part.setValue(obs, event.getValue(), event.getComponentKey());
-            cause = 1;
+            cause = CAUSE_NONE;
+        } else {
+            cause = CAUSE_NO_PART;
         }
         return cause;
     }
