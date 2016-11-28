@@ -510,7 +510,7 @@ public abstract class AbstractDirectAdaptationTests {
          * Returns the mapping file for <code>pipeline</code>.
          * 
          * @param pipeline the pipeline name
-         * @return the mapping file
+         * @return the mapping file (may be <b>null</b> if the mapping is registered by the test spec itself)
          * @throws IOException in case of I/O problems
          */
         protected abstract File obtainMappingFile(String pipeline) throws IOException;
@@ -565,11 +565,13 @@ public abstract class AbstractDirectAdaptationTests {
         // startup
         for (String pipeline : testSpec.getPipelineNames()) {
             File file = testSpec.obtainMappingFile(pipeline);
-            FileInputStream fis = new FileInputStream(file);
-            INameMapping mapping = new NameMapping(pipeline, fis);
-            fis.close();
-            CoordinationManager.registerTestMapping(mapping);
-            mappings.add(mapping);
+            if (null != file) {
+                FileInputStream fis = new FileInputStream(file);
+                INameMapping mapping = new NameMapping(pipeline, fis);
+                fis.close();
+                CoordinationManager.registerTestMapping(mapping);
+                mappings.add(mapping);
+            }
         }
 
         MonitoringManager.clearState();
