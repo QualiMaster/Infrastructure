@@ -135,7 +135,7 @@ public class AlgorithmMonitoringEventHandler extends MonitoringEventHandler<Algo
         if (null != part) {
             part.setValue(obs, event.getValue(), event.getComponentKey());
             cause = CAUSE_NONE;
-        } else {
+        } else if (CAUSE_UNKNOWN == cause) { // don't override previous cause
             cause = CAUSE_NO_PART;
         }
         return cause;
