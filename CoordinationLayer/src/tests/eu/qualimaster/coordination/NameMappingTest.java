@@ -498,4 +498,26 @@ public class NameMappingTest {
         a.addAll(actual);
         Assert.assertEquals(e, a);
     }
+    
+    /**
+     * Asserts the random pip sub-topology information.
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test
+    public void testRandomPipMapping() throws IOException {
+        NameMapping mapping = readNameMapping("randomPipMapping.xml", "RandomPip");
+        Map<String, IScalingDescriptor> descriptors = new HashMap<String, IScalingDescriptor>();
+        //descriptors.put("RandomProcessor1", new MyScalingDescriptor());
+        Map<String, List<String>> structure = new HashMap<String, List<String>>();
+        List<String> sub = new ArrayList<String>();
+        sub.add("RandomProcessor1processor1;eu.qualimaster.algorithms.Process1Bolt");
+        structure.put("RandomProcessor1", sub);
+        SubTopologyMonitoringEvent evt = new SubTopologyMonitoringEvent("RandomPip", structure, descriptors);
+        mapping.considerSubStructures(evt);
+        
+        Assert.assertNotNull(mapping.getAlgorithm("RandomProcessor1"));
+        Assert.assertNotNull(mapping.getAlgorithmByImplName("RandomProcessor1"));
+    }
+    
 }
