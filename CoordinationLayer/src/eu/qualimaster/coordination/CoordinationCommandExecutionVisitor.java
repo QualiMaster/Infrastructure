@@ -627,6 +627,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
                 + "- see messages above", CoordinationExecutionCode.CHANGING_PARALLELISM);
         } else {
             models.startUsing();
+            //models.reloadIvml();
             models.reloadVil();
             net.ssehub.easy.varModel.confModel.Configuration cfg = models.getConfiguration();
             File tmp = null;

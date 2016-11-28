@@ -296,7 +296,29 @@ public class RepositoryConnector {
             TemplateModel.INSTANCE.outdateAll();
             // TODO SE: Check if template model must also be reloaded (should not be the case)
         }
-       
+        
+        /**
+         * Forces that IVML-related models are reloaded. Call {@link #startUsing()} before.
+         */
+        public void reloadIvml() {
+            VarModel.INSTANCE.outdateAll();
+            if (null != configuration) {
+                Project oldProject = configuration.getProject();
+                Project newProject = VarModel.INSTANCE.reload(oldProject, true);
+                
+                if (oldProject == newProject) {
+                    LogManager.getLogger(RepositoryConnector.class).error("IVML model " + oldProject.getName()
+                        + " was not reloaded.");
+                }
+                
+                configuration = createConfiguration(newProject, phase);
+                try {
+                    variableMapping = ConfigurationInitializer.createVariableMapping(configuration);
+                } catch (ModelQueryException e) {
+                    LogManager.getLogger(RepositoryConnector.class).error(e.getMessage(), e);
+                }
+            }
+        }
     }
     
     static {
