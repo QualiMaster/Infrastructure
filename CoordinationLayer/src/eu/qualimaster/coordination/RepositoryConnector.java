@@ -303,14 +303,19 @@ public class RepositoryConnector {
         public void reloadIvml() {
             VarModel.INSTANCE.outdateAll();
             if (null != configuration) {
-                Project project = configuration.getProject();
-                project = VarModel.INSTANCE.reload(project, true);
+                Project oldProject = configuration.getProject();
+                Project newProject = VarModel.INSTANCE.reload(oldProject, true);
                 
-                configuration = createConfiguration(project, phase);
+                if (oldProject == newProject) {
+                    LogManager.getLogger(RepositoryConnector.class).error("IVML model " + oldProject.getName()
+                        + " was not reloaded.");
+                }
+                
+                configuration = createConfiguration(newProject, phase);
                 try {
                     variableMapping = ConfigurationInitializer.createVariableMapping(configuration);
                 } catch (ModelQueryException e) {
-                    LogManager.getLogger(getClass()).error(e.getMessage(), e);
+                    LogManager.getLogger(RepositoryConnector.class).error(e.getMessage(), e);
                 }
             }
         }
