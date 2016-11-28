@@ -94,7 +94,10 @@ public class DelegatingTimeFramedObservation extends AbstractDelegatingObservati
             firstUpdate = now;
         } else {
             double curValue = super.getValue();
-            result = curValue / (now - firstUpdate) * timeFrame; 
+            result = curValue / (now - firstUpdate) * timeFrame;
+            if (Double.isNaN(result)) {
+                result = 0;
+            }
         }
     }
 

@@ -1,0 +1,11 @@
+<mapping>
+  <pipeline name="pip" class="eu.qualimaster.topologies.pip.Topology">
+      <node name="Src">
+          <component name="src" container="pip" class="eu.qualimaster.topologies.Src" receiver="true"/>
+      </node>
+      <node name="Fam">
+          <component name="fam" container="pip" class="eu.qualimaster.topologies.Fam" receiver="true"/>
+      </node>
+  </pipeline>
+
+</mapping>

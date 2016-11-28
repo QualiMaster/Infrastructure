@@ -16,6 +16,8 @@
 package tests.eu.qualimaster.monitoring.profiling;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -33,8 +35,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import eu.qualimaster.coordination.CoordinationManager;
+import eu.qualimaster.coordination.NameMapping;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
+import eu.qualimaster.monitoring.observations.ObservationFactory;
+import eu.qualimaster.monitoring.observations.ObservationFactory.IObservationCreator;
 import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictionManager;
 import eu.qualimaster.monitoring.profiling.Constants;
 import eu.qualimaster.monitoring.profiling.ProfilingRegistry;
@@ -50,6 +56,7 @@ import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.ResourceUsage;
 import eu.qualimaster.observables.Scalability;
 import eu.qualimaster.observables.TimeBehavior;
+import tests.eu.qualimaster.coordination.Utils;
 import tests.eu.qualimaster.monitoring.genTopo.TestProcessor;
 
 /**
@@ -545,8 +552,19 @@ public class SelectionTests {
      * @param algorithm the algorithm to profile
      * @param maxTime the maximum time, positive
      * @param inputRate the input rate to profile at
+     * @throws IOException in case that the mapping file cannot be read
      */
-    private static void simulateProfile(AlgorithmDescriptor algorithm, int maxTime, double inputRate) {
+    private static void simulateProfile(AlgorithmDescriptor algorithm, int maxTime, double inputRate) 
+        throws IOException {
+        File f = new File(Utils.getTestdataDir(), "selectionPip.xml");
+        FileInputStream fis = new FileInputStream(f);
+        NameMapping mapping = new NameMapping(PIP_NAME, fis);
+        fis.close();
+        CoordinationManager.registerTestMapping(mapping);
+        // tweak the observations to have the "right" value <-> items/s
+        IObservationCreator creator = ObservationFactory.getCreator(Scalability.ITEMS, null);
+        ObservationFactory.registerCreator(Scalability.ITEMS, null, ObservationFactory.CREATOR_SINGLE);
+
         SystemState state = new SystemState();
         PipelineSystemPart pip = state.obtainPipeline(PIP_NAME);
         PipelineNodeSystemPart src = pip.obtainPipelineNode(SOURCE_ELT);
@@ -588,7 +606,10 @@ public class SelectionTests {
             update(algorithm, timestamp, pip, fam);
             timestamp = timestamp + TIME_STEP; // simulated seconds
         }
+        
         state.clear();
+        ObservationFactory.registerCreator(Scalability.ITEMS, null, creator);
+        CoordinationManager.unregisterNameMapping(mapping);
     }
     
     /**
@@ -635,9 +656,11 @@ public class SelectionTests {
 
     /**
      * Executed before all tests.
+     * 
+     * @throws IOException shall not occur
      */
     @Before
-    public void startup() {
+    public void startup() throws IOException {
         algorithms.clear();
         testDataFolder = new File(FileUtils.getTempDirectoryPath(), "profileSelectionTests");
         AlgorithmProfilePredictionManager.clear();
