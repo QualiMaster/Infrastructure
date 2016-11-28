@@ -30,6 +30,9 @@ import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.storm.curator.framework.api.transaction.CuratorTransaction;
 import org.apache.storm.curator.framework.api.transaction.CuratorTransactionFinal;
 import org.apache.storm.curator.framework.imps.CuratorFrameworkState;
+import org.apache.storm.zookeeper.WatchedEvent;
+import org.apache.storm.zookeeper.Watcher;
+import org.apache.storm.zookeeper.Watcher.Event.EventType;
 
 import backtype.storm.utils.Utils;
 import eu.qualimaster.Configuration;
@@ -158,6 +161,23 @@ public class PortManager {
             return host + "@" + port + " " + taskId + " " + assignmentId;
         }
 
+    }
+    
+    /**
+     * Allows to watch a certain port assignment.
+     * 
+     * @author Holger Eichelberger
+     */
+    public interface IPortAssignmentWatcher {
+
+        /**
+         * Notifies about a done port assignment.
+         * 
+         * @param request the port assignment request
+         * @param assignment the actual port assignment
+         */
+        public void notifyPortAssigned(PortAssignmentRequest request, PortAssignment assignment);
+        
     }
     
     /**
@@ -572,6 +592,16 @@ public class PortManager {
     }
     
     /**
+     * Returns the zookeeper path for a node represented by a request.
+     * 
+     * @param request the assignment request
+     * @return the path
+     */
+    private String getNodePath(PortAssignmentRequest request) {
+        return getNodePath(request.getPipeline(), request.getElement(), request.getTaskId());
+    }
+    
+    /**
      * Returns the zookeeper path for a node.
      * 
      * @param pipeline the pipeline name
@@ -581,6 +611,28 @@ public class PortManager {
      */
     private String getNodePath(String pipeline, String element, int taskId) {
         return NODES_PREFIX + pipeline + PATH_SEPARATOR + element; // TODO decide about taskId
+    }
+
+    /**
+     * Returns the zookeeper path for a watcher node represented by a request.
+     * 
+     * @param request the assignment request
+     * @return the path
+     */
+    private String getWatcherPath(PortAssignmentRequest request) {
+        return getWatcherPath(request.getPipeline(), request.getElement(), request.getTaskId());
+    }
+    
+    /**
+     * Returns the zookeeper path for a request watcher node.
+     * 
+     * @param pipeline the pipeline name
+     * @param element the pipeline element
+     * @param taskId the task id of <code>element</code>
+     * @return the path
+     */
+    private String getWatcherPath(String pipeline, String element, int taskId) {
+        return NODES_PREFIX + pipeline + PATH_SEPARATOR + element + PATH_SEPARATOR + taskId; // TODO decide about taskId
     }
 
     /**
@@ -680,8 +732,9 @@ public class PortManager {
      * 
      * @author Holger Eichelberger
      */
-    public static class PortAssignmentRequest {
+    public static class PortAssignmentRequest implements Serializable {
         
+        private static final long serialVersionUID = -1192936660033952587L;
         private String pipeline;
         private String element;
         private int taskId;
@@ -787,6 +840,61 @@ public class PortManager {
         }
         
     }
+    
+    /**
+     * Stores a combination of request and assignment to inform the watcher.
+     * 
+     * @author Holger Eichelberger
+     */
+    public static class WatcherInfo implements Serializable {
+        
+        private static final long serialVersionUID = 6895673208849791252L;
+        private PortAssignmentRequest request;
+        private PortAssignment assignment;
+
+        /**
+         * Creates a watcher information object.
+         */
+        public WatcherInfo() {
+        }
+
+        /**
+         * Sets the request.
+         * 
+         * @param request the request
+         */
+        private void setRequest(PortAssignmentRequest request) {
+            this.request = request;
+        }
+
+        /**
+         * Sets the assignment.
+         * 
+         * @param assignment the assignment
+         */
+        private void setAssignment(PortAssignment assignment) {
+            this.assignment = assignment;
+        }
+        
+        /**
+         * Returns the assignment.
+         * 
+         * @return the assignment (may be <b>null</b> if not set)
+         */
+        public PortAssignment getAssignment() {
+            return assignment;
+        }
+        
+        /**
+         * Returns the request.
+         * 
+         * @return the request (may be <b>null</b> if not set)
+         */
+        public PortAssignmentRequest getRequest() {
+            return request;
+        }
+        
+    }
 
     /**
      * Registers a port assignment using the default range registered in the constructor. 
@@ -821,14 +929,20 @@ public class PortManager {
         }
         PortAssignment result = null;
         if (isConnected()) {
-            String nodePath = getNodePath(request.getPipeline(), request.getElement(), request.getTaskId());
+            String nodePath = getNodePath(request);
+            String watcherPath = getWatcherPath(request);
             String hostPath = getHostPath(request.getHost());
             try {
                 assertExists(nodePath, null, false);
                 assertExists(hostPath, null, false);
+                assertExists(watcherPath, null, false);
                 CuratorTransaction transaction = client.inTransaction();
                 PortsTable portsTable = loadWithInit(nodePath, PortsTable.class, transaction, false);
                 HostTable hostTable = loadWithInit(hostPath, HostTable.class, transaction, false);
+                WatcherInfo watcherInfo = loadWithInit(watcherPath, WatcherInfo.class, transaction, false);
+                if (null == watcherInfo.getRequest()) {
+                    watcherInfo.setRequest(request);
+                }
                 int candidate = portRange.getLowPort();
                 boolean check = request.doCheck();
                 while (null == result && candidate <= portRange.getHighPort()) {
@@ -845,12 +959,94 @@ public class PortManager {
                     }
                 }
                 store(nodePath, portsTable, transaction, false);
-                store(hostPath, hostTable, transaction, true);
+                store(hostPath, hostTable, transaction, false);
+                watcherInfo.setAssignment(result);
+                store(watcherPath, watcherInfo, transaction, true);
             } catch (Exception e) {
                 throw new SignalException(e);
             }
         }
         return result;
+    }
+    
+    /**
+     * An internal curator watcher instance for informing an external watcher.
+     * 
+     * @author Holger Eichelberger
+     */
+    private class PortAssignmentWatcher implements Watcher {
+
+        private IPortAssignmentWatcher watcher;
+
+        /**
+         * Creates the instance.
+         * 
+         * @param watcher the external watcher
+         */
+        private PortAssignmentWatcher(IPortAssignmentWatcher watcher) {
+            this.watcher = watcher;
+        }
+        
+        @Override
+        public void process(WatchedEvent event) {
+            if (EventType.NodeDataChanged == event.getType()) {
+                try {
+                    WatcherInfo info = load(event.getPath(), WatcherInfo.class);
+                    if (null != info) {
+                        watcher.notifyPortAssigned(info.getRequest(), info.getAssignment());
+                    }
+                } catch (SignalException e) {
+                    LogManager.getLogger(PortManager.class).error("Processing watcher: " + e.getMessage(), e);
+                }
+            }
+        }
+        
+    }
+    
+    /**
+     * Tries notifying a watcher.
+     * 
+     * @param path the path of the zkNode to watch
+     * @param watcher the watcher
+     * @return <code>true</code> if the notification has been done, <code>false</code> else
+     * @throws SignalException in case that loading data failed
+     */
+    private boolean tryNotifyWatcher(String path, IPortAssignmentWatcher watcher) throws SignalException {
+        boolean done = false;
+        WatcherInfo info = load(path, WatcherInfo.class);
+        if (null != info && null != info.getAssignment()) {
+            watcher.notifyPortAssigned(info.getRequest(), info.getAssignment());
+            done = true;
+        }
+        return done;
+    }
+    
+    /**
+     * Sets a one-time watcher for a certain port assignment, i.e., the watcher is informed if the port 
+     * assignment request is fulfilled. This may happen immediately if the port already has been assigned or may
+     * take a while until the port is requested.
+     * 
+     * @param pipeline the pipeline name
+     * @param element the pipeline element
+     * @param taskId the task id of <code>element</code>
+     * @param assignmentId the assignmentId to look for (may be <b>null</b>)
+     * @param watcher the watcher
+     * @throws SignalException in case that creating the watcher or requesting data fails
+     */
+    public void setPortAssigmentWatcher(String pipeline, String element, int taskId, String assignmentId, 
+        IPortAssignmentWatcher watcher) throws SignalException  {
+        // assignmentId is ignored for now
+        if (null != watcher) {
+            String watcherPath = getWatcherPath(pipeline, element, taskId);
+            assertExists(watcherPath, null, false);
+            if (!tryNotifyWatcher(watcherPath, watcher)) {
+                try {
+                    client.checkExists().usingWatcher(new PortAssignmentWatcher(watcher)).forPath(watcherPath);
+                } catch (Exception e) {
+                    throw new SignalException(e);
+                }
+            }
+        }
     }
     
     // from here we assume that we are connected!!!
@@ -1033,7 +1229,7 @@ public class PortManager {
      * @throws SignalException in case of I/O problems
      */
     @SuppressWarnings("unused")
-    private void store(String path, Object obj) throws SignalException {
+    private void store(String path, Serializable obj) throws SignalException {
         store(path, obj, null, false);
     }
 
@@ -1046,7 +1242,8 @@ public class PortManager {
      * @param commit commit the transaction, ignored if no transaction 
      * @throws SignalException in case of I/O problems
      */
-    private void store(String path, Object obj, CuratorTransaction transaction, boolean commit) throws SignalException {
+    private void store(String path, Serializable obj, CuratorTransaction transaction, boolean commit) 
+        throws SignalException {
         try {
             byte[] data = Utils.serialize(obj);
             assertExists(path, transaction, commit);

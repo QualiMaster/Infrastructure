@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import backtype.storm.LocalCluster;
 import eu.qualimaster.common.signal.PortManager;
+import eu.qualimaster.common.signal.PortManager.IPortAssignmentWatcher;
 import eu.qualimaster.common.signal.PortManager.PortAssignment;
 import eu.qualimaster.common.signal.PortManager.PortAssignmentRequest;
 import eu.qualimaster.common.signal.PortManager.PortRange;
@@ -330,6 +331,101 @@ public class PortManagerTest {
         Assert.assertEquals(req.getAssignmentId(), assng.getAssignmentId());
         Assert.assertEquals(req.getHost(), assng.getHost());
         return assng;
+    }
+    
+    /**
+     * Implements a test and assertion port assignment watcher.
+     * 
+     * @author Holger Eichelberger
+     */
+    private static class PortAssignmentWatcher implements IPortAssignmentWatcher {
+
+        private PortAssignmentRequest request;
+        private PortAssignment assignment;
+        
+        @Override
+        public void notifyPortAssigned(PortAssignmentRequest request, PortAssignment assignment) {
+            this.request = request;
+            this.assignment = assignment;
+        }
+        
+        /**
+         * Asserts a received assignment.
+         * 
+         * @param request the expected request
+         * @param assignment the expected assignment
+         */
+        private void assertAssignment(PortAssignmentRequest request, PortAssignment assignment) {
+            // no equals defined, no identity due to serialization
+            if (null != request) {
+                Assert.assertNotNull(this.request);
+                Assert.assertEquals(request.getPipeline(), this.request.getPipeline());
+                Assert.assertEquals(request.getElement(), this.request.getElement());
+                Assert.assertEquals(request.getHost(), this.request.getHost());
+                Assert.assertEquals(request.getTaskId(), this.request.getTaskId());
+            } else {
+                Assert.assertNull(this.request);
+            }
+            Assert.assertEquals(assignment, this.assignment);
+        }
+
+        /**
+         * Clears the watcher.
+         */
+        private void clear() {
+            request = null;
+            assignment = null;
+        }
+        
+    }
+    
+    /**
+     * Tests the watcher.
+     */
+    @Test
+    public void testWatcher() {
+        SignalException fail = null;
+        Set<File> tmpFiles = TestHelper.trackTemp(null, false);
+        LocalCluster cluster = new LocalCluster();
+
+        String connectString = "localhost:" + TestHelper.LOCAL_ZOOKEEPER_PORT;
+        CuratorFramework client = CuratorFrameworkFactory.builder().namespace(SignalMechanism.GLOBAL_NAMESPACE).
+            connectString(connectString).retryPolicy(new RetryNTimes(5, 100)).build();
+        client.start();
+
+        PortRange range = new PortRange(1000, 1001);
+        PortManager mgr = new PortManager(client, range);
+        try {
+            mgr.clearAllPortAssignments();
+            PortAssignmentWatcher watcher = new PortAssignmentWatcher();
+            mgr.setPortAssigmentWatcher("pip", "element", 5, "id", watcher);
+            PortAssignmentRequest req = new PortAssignmentRequest("pip", "element", 5, "localhost", "id");
+            PortAssignment pa = assertPortAssignment(mgr, req, range, 1000);
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+            }
+            watcher.assertAssignment(req, pa);
+            watcher.clear();
+            
+            req = new PortAssignmentRequest("pip", "element", 6, "localhost", "id");
+            pa = assertPortAssignment(mgr, req, range, 1001);
+            mgr.setPortAssigmentWatcher("pip", "element", 6, "id", watcher);
+            watcher.assertAssignment(req, pa);
+            
+            mgr.close();
+        } catch (SignalException e) {
+            e.printStackTrace();
+            fail = e;
+        }
+
+        client.close();
+        cluster.shutdown();
+        TestHelper.trackTemp(tmpFiles, true);
+        fail = testClosed(client);
+        if (null != fail) {
+            Assert.fail(fail.getMessage());
+        }
     }
 
 }
