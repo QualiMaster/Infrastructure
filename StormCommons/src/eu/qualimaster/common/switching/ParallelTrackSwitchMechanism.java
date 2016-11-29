@@ -9,7 +9,7 @@ import eu.qualimaster.common.signal.TopologySignal;
  *
  */
 public class ParallelTrackSwitchMechanism extends AbstractSwitchMechanism {
-    private AbstractSwitchStrategy strategy;
+    private transient AbstractSwitchStrategy strategy;
     /**
      * Creates a parallel track switch mechanism.
      * @param strategy the switch strategy
