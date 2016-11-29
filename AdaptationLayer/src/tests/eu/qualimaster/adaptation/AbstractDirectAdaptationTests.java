@@ -586,52 +586,61 @@ public abstract class AbstractDirectAdaptationTests {
      * @see #afterTestSpec(TestSpec)
      */
     protected void performAdaptation(TestSpec testSpec) throws IOException {
-        beforeTestSpec(testSpec);
-        IReasoningModelProvider provider = new SimpleReasoningModelProvider(monConfig, monRtVilModel, monCopyMapping);
-        ReasoningTask rTask = new ReasoningTask(provider);
-        rTask.setReasoningListener(testSpec);
-        testSpec.initialize(adaptConfig);
-        for (int step = 1; step <= testSpec.getStepCount(); step++) {
-            if (testSpec.start(step, monConfig)) {
-                String id = testSpec.getTimeIdentifier();
-                if (testSpec.getStepCount() > 1) {
-                    id = testSpec.getTimeIdentifier() + " step " + step;
-                }
-                TimeMeasurementTracerFactory.setCurrentIdentifier(id);
-                // monitoring
-                AdaptationEvent event = testSpec.monitor(step, MonitoringManager.getSystemState());
-                // analysis
-                if (null == event) {
-                    TimeMeasurementTracerFactory.measure(true, Measure.ANALYSIS);
-                    event = rTask.reason(false);
-                    TimeMeasurementTracerFactory.measure(false, Measure.ANALYSIS);
-                    if (!testSpec.assertAnalysis(step, event, monConfig)) {
-                        event = null; // consume silently
-                    }
-                }
-                
-                ISimulationNotifier notifier = RtVilStorage.setSimulationNotifier(testSpec);
-                // run adaptation
-                if (null != event) {
-                    if (debug) {
-                        System.out.println("Adaptation event " + event);
-                    }
-                    TimeMeasurementTracerFactory.measure(true, Measure.ADAPT);
-                    AdaptationEventQueue.adapt(event, adaptConfig, adaptRtVilModel, tmp);
-                    TimeMeasurementTracerFactory.measure(false, Measure.ADAPT);
-                }
-                RtVilStorage.setSimulationNotifier(notifier);
-                
-                testSpec.assertAdaptation(step, adaptConfig);
-                if (testSpec.stop(step, adaptConfig)) {
-                    break;
-                }
-                testSpec.commands.clear();
-            }
+        boolean doTest = true;
+        try {
+            beforeTestSpec(testSpec);
+        } catch (IOException e) {
+            doTest = false;
+            System.out.println("WARNING (Test ignored): " + e.getMessage());
         }
-
-        testSpec.end();
-        afterTestSpec(testSpec);
+        if (doTest) {
+            IReasoningModelProvider provider = new SimpleReasoningModelProvider(
+                monConfig, monRtVilModel, monCopyMapping);
+            ReasoningTask rTask = new ReasoningTask(provider);
+            rTask.setReasoningListener(testSpec);
+            testSpec.initialize(adaptConfig);
+            for (int step = 1; step <= testSpec.getStepCount(); step++) {
+                if (testSpec.start(step, monConfig)) {
+                    String id = testSpec.getTimeIdentifier();
+                    if (testSpec.getStepCount() > 1) {
+                        id = testSpec.getTimeIdentifier() + " step " + step;
+                    }
+                    TimeMeasurementTracerFactory.setCurrentIdentifier(id);
+                    // monitoring
+                    AdaptationEvent event = testSpec.monitor(step, MonitoringManager.getSystemState());
+                    // analysis
+                    if (null == event) {
+                        TimeMeasurementTracerFactory.measure(true, Measure.ANALYSIS);
+                        event = rTask.reason(false);
+                        TimeMeasurementTracerFactory.measure(false, Measure.ANALYSIS);
+                        if (!testSpec.assertAnalysis(step, event, monConfig)) {
+                            event = null; // consume silently
+                        }
+                    }
+                    
+                    ISimulationNotifier notifier = RtVilStorage.setSimulationNotifier(testSpec);
+                    // run adaptation
+                    if (null != event) {
+                        if (debug) {
+                            System.out.println("Adaptation event " + event);
+                        }
+                        TimeMeasurementTracerFactory.measure(true, Measure.ADAPT);
+                        AdaptationEventQueue.adapt(event, adaptConfig, adaptRtVilModel, tmp);
+                        TimeMeasurementTracerFactory.measure(false, Measure.ADAPT);
+                    }
+                    RtVilStorage.setSimulationNotifier(notifier);
+                    
+                    testSpec.assertAdaptation(step, adaptConfig);
+                    if (testSpec.stop(step, adaptConfig)) {
+                        break;
+                    }
+                    testSpec.commands.clear();
+                }
+            }
+    
+            testSpec.end();
+            afterTestSpec(testSpec);
+        }
     }
 
     /**
