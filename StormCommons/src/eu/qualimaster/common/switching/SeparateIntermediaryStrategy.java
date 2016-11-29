@@ -30,8 +30,8 @@ public class SeparateIntermediaryStrategy extends AbstractSwitchStrategy {
     private transient Queue<IGeneralTuple> inQueue = null; //handle incoming tuples
     private transient LinkedList<IGeneralTuple> outQueue = null; //handle outgoing tuples
     private transient Queue<IGeneralTuple> tmpQueue = null; //handle transferred tuples
-    private SynchronizedQueue<IGeneralTuple> syn = null;
-    private SynchronizedQueue<IGeneralTuple> tmpSyn = null;
+    private transient SynchronizedQueue<IGeneralTuple> syn = null;
+    private transient SynchronizedQueue<IGeneralTuple> tmpSyn = null;
     private SwitchState currentState;
     private long lastProcessedId;
     
