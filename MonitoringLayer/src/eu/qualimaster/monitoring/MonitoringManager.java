@@ -798,13 +798,16 @@ public class MonitoringManager {
     /**
      * Start the layer (public for testing).
      * 
-     * @param registerDefaultPlugins if the default monitoring plugins shall be registered
+     * @param registerDefaultPlugins if the default monitoring plugins shall be registered, if <code>false</code> they
+     *   are cleaned up
      * 
      * @see #registerDefaultPlugins()
      */
     public static void start(boolean registerDefaultPlugins) {
         if (registerDefaultPlugins) {
             registerDefaultPlugins();
+        } else {
+            plugins.clear();
         }
         loadMonitoringPlugins();
         timer = new Timer();

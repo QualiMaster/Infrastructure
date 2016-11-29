@@ -15,6 +15,9 @@
  */
 package eu.qualimaster.monitoring.storm;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent.Status;
 import eu.qualimaster.monitoring.MonitoringManager;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
@@ -38,8 +41,8 @@ public class PipelineStatistics {
     //private long topologyThroughputItems = 0;
     //private double topologyLatency = 0;
     private double topologyCapacity = 0;
-    private int needInitialization = 0;
-    private int initialized = 0;
+    private List<String> needInitialization = new ArrayList<String>();
+    private List<String> initialized = new ArrayList<String>();
     
     /**
      * Creates the pipeline statistics.
@@ -65,14 +68,15 @@ public class PipelineStatistics {
      * @return whether all pipeline elements are initialized
      */
     public boolean commit() {
+        int init = initialized.size();
+        int needInit = needInitialization.size();
         // needInitialization > 0 may exclude simple pipelines
-        boolean allInitialized = isStarted() || (needInitialization > 0 && needInitialization == initialized);
+        boolean allInitialized = isStarted() || (needInit > 0 && needInit == init);
         //setPartPositiveValue(part, TimeBehavior.THROUGHPUT_ITEMS, topologyThroughputItems);
         //setPartPositiveValue(part, Scalability.ITEMS, topologyThroughputItems);
         ////setPartPositiveValue(part, TimeBehavior.THROUGHPUT_VOLUME, topologyThroughputVolume);
         //setPartPositiveValue(part, TimeBehavior.LATENCY, topologyLatency);
-        setPartPositiveValue(part, ResourceUsage.CAPACITY, 
-            needInitialization > 0 ? topologyCapacity / needInitialization : 0);
+        setPartPositiveValue(part, ResourceUsage.CAPACITY, needInit > 0 ? topologyCapacity / needInit : 0);
         // do not summarize the executors, they are set implicitly
         if (!allInitialized && !MonitoringManager.hasAdaptationModel()) { // enable DML connect if no model
             allInitialized = true;
@@ -100,7 +104,7 @@ public class PipelineStatistics {
      * @param nodePart the node part
      */
     public void collect(PipelineNodeSystemPart nodePart) {
-        needInitialization++;
+        needInitialization.add(nodePart.getName());
         //topologyThroughputItems += nodePart.getObservedValue(TimeBehavior.THROUGHPUT_ITEMS);
         ////topologyThroughputVolume += executorThroughputVolume;
         //topologyLatency += nodePart.getObservedValue(TimeBehavior.LATENCY);
@@ -108,8 +112,44 @@ public class PipelineStatistics {
         // assuming latency is an aggregating obs
         // do not summarize the executors, they are set implicitly
         if (!isStarted() && nodePart.isInitialized()) {
-            initialized++;
+            initialized.add(nodePart.getName());
         }
     }
+
+    /**
+     * Returns the number of initialized node parts. [debug, logging]
+     * 
+     * @return the number of initialized node parts
+     */
+    public int getInitializedCount() {
+        return initialized.size();
+    }
+
+    /**
+     * Returns the names of the initialized node parts. [debug, logging]
+     * 
+     * @return the names
+     */
+    public String toStringInitialized() {
+        return initialized.toString();
+    }
+
+    /**
+     * Returns the number of node parts requiring initialization. [debug, logging]
+     * 
+     * @return the number of node parts
+     */
+    public int getNeedInitializationCount() {
+        return needInitialization.size();
+    }
     
+    /**
+     * Returns the names of the node parts requiring initialization. [debug, logging]
+     * 
+     * @return the names
+     */
+    public String toStringNeedInitialization() {
+        return needInitialization.toString();
+    }
+
 }

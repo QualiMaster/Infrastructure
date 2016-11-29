@@ -214,14 +214,14 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
                 // dynamic: we need an algorithm change before
                 up = null != nodePart.getCurrent();
                 if (MonitoringConfiguration.getStormExecutorStartupParallel()) { // enable debugging
-                    up &= nodePart.getCurrentCount() == currentTasks;
+                    up &= currentTasks >= nodePart.getCurrentCount(); // relaxed condition, happens sometime
                     // consider Utils.taskCount as required upper limit?
                 }
             } else if (InitializationMode.ADAPTIVE == initMode) {
                 // adaptive: nothing set, go to adaptive init as soon as possible but consider tasks
                 if (MonitoringConfiguration.getStormExecutorStartupParallel()) { // enable debugging
                     int neededTasks = Utils.taskCount(executor);
-                    up = neededTasks == currentTasks;
+                    up = currentTasks >= neededTasks; // relaxed condition, happens sometime
                 } else {
                     up = true;
                 }
@@ -301,8 +301,9 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
                     createdChanged = true;
                 }
             } 
-            if (!createdChanged && allInitialized && PipelineLifecycleEvent.Status.CREATED == part.getStatus()) {
-                if (areSubpipelinesUp(part.getName())) {
+            if (!createdChanged && PipelineLifecycleEvent.Status.CREATED == part.getStatus()) {
+                logElevating(part, pStat);
+                if (allInitialized && areSubpipelinesUp(part.getName())) {
                     part.changeStatus(PipelineLifecycleEvent.Status.INITIALIZED, true);
                 }
             }
@@ -312,6 +313,19 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
         return part;
     }
     
+    /**
+     * Logs the elevation situation for INITIALIZED.
+     * 
+     * @param part the pipeline system part
+     * @param pStat the pipeline statistics
+     */
+    private static void logElevating(PipelineSystemPart part, PipelineStatistics pStat) {
+        LOGGER.info("Trying to elevate '" + part.getName() + "' to INITIALIZED: "  
+            + pStat.getNeedInitializationCount() + " " + pStat.getInitializedCount() 
+            + " needed " + pStat.toStringNeedInitialization() + " init " 
+            + pStat.toStringInitialized());
+    }
+
     /**
      * Returns whether all sub-pipelines on the cluster (not all configured ones) are up.
      * 
