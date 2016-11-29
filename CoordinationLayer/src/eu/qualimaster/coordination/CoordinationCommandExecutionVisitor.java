@@ -209,7 +209,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
             if (null != alg) {
                 algorithm = alg.getName(); // the implementation name
             }
-            AlgorithmChangeSignal signal = new AlgorithmChangeSignal(getNamespace(mapping), receiver.getName(), 
+            AlgorithmChangeSignal signal = new AlgorithmChangeSignal(getTargetNamespace(mapping), receiver.getName(), 
                 algorithm, parameters, getCauseMessageId());
             signal.setParameters(command.getParameters());
             send(command, signal);
@@ -245,7 +245,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
             if (null != huckup) {
                 changes.addAll(huckup);
             }
-            ParameterChangeSignal signal = new ParameterChangeSignal(getNamespace(mapping), 
+            ParameterChangeSignal signal = new ParameterChangeSignal(getTargetNamespace(mapping), 
                 receiver.getName(), changes, getCauseMessageId());
             send(command, signal);
             PipelineCache.getCache(command).setParameters(changes, false);
@@ -254,6 +254,29 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
             getTracer().executedParameterChangeCommand(command, failing);
         }
         return writeCoordinationLog(command, failing);
+    }
+    
+    /**
+     * Returns the target namespace for a pipeline mapping. If <code>mapping</code> represents the namespace of a 
+     * sub-pipeline, the target namespace of the main pipeline is returned. By convention, loosely integrated 
+     * sub-pipelines carry the namespace of the main pipeline (as for tightly integrated sub-pipelines).
+     * 
+     * @param mapping the name mapping
+     * @return the target namespace
+     */
+    private String getTargetNamespace(INameMapping mapping) {
+        String result = getNamespace(mapping);
+        PipelineInfo info = CoordinationManager.getPipelineInfo(mapping.getPipelineName());
+        if (null != info) {
+            String mainPip = info.getMainPipeline();
+            if (null != mainPip) {
+                INameMapping mainPipMapping = CoordinationManager.getNameMapping(mainPip);
+                if (null != mainPipMapping) {
+                    result = getNamespace(mainPipMapping);
+                }
+            }
+        }
+        return result;
     }
     
     @Override

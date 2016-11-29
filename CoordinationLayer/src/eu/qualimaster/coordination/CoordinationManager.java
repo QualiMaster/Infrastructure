@@ -491,6 +491,16 @@ public class CoordinationManager {
     }
     
     /**
+     * Returns the pipeline information object for <code>pipeline</code>.
+     * 
+     * @param pipeline the name of the pipeline
+     * @return the information object, may be <b>null</b> if <code>pipeline</code> is not known
+     */
+    static PipelineInfo getPipelineInfo(String pipeline) {
+        return pipelines.get(pipeline);
+    }
+    
+    /**
      * Returns the registered pipeline options for a registered pipeline.
      * 
      * @param pipeline the pipeline name

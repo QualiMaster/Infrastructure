@@ -63,6 +63,15 @@ class PipelineInfo {
     }
     
     /**
+     * Returns the main pipeline if there is one.
+     * 
+     * @return the name of the main pipeline, <b>null</b> if there is no main pipeline
+     */
+    public String getMainPipeline() {
+        return null != options ? options.getMainPipeline() : null;
+    }
+    
+    /**
      * Changes the status and executes registered actions. Registered actions will be removed from {@link #actions}.
      * 
      * @param status the new status (ignored if <b>null</b>)
