@@ -977,6 +977,7 @@ public class PortManager {
                 throw new SignalException(e);
             }
         }
+        getLogger().info("Registered port assignment " + result + " for " + request);
         return result;
     }
     
