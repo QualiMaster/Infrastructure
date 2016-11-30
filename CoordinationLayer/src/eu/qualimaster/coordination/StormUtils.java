@@ -364,7 +364,8 @@ public class StormUtils {
     }
     
     /**
-     * Submits a Storm topology.
+     * Submits a Storm topology. In a cluster (not in local testing mode), resources packaged with the topology
+     * jare are considered for unpacking.
      * 
      * @param host
      *            The nimbus host
@@ -378,6 +379,8 @@ public class StormUtils {
      * 
      * @throws IOException
      *             in case of thrift problems or an invalid topology
+     * @see #doCommonConfiguration(StormPipelineOptionsSetter)
+     * @see PluginRegistry#executeUnpackingPlugins(File, INameMapping)
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public static void submitTopology(String host, INameMapping mapping,
@@ -393,8 +396,7 @@ public class StormUtils {
                 if (null != info) {
                     topology = info.getTopology();
                     stormConf = info.getTopologyConfig();
-                    // otherwise we run into trouble with multiple system bolts
-                    if (null != stormConf) {
+                    if (null != stormConf) { // otherwise we run into trouble with multiple system bolts
                         stormConf.put(Config.STORM_CLUSTER_MODE, "local");
                     }
                 }
@@ -407,14 +409,14 @@ public class StormUtils {
                 localCluster.submitTopology(topologyName, optSetter.getConfig(), topology);
             } catch (InvalidTopologyException e) {
                 throw new IOException("Invalid topology " + e.getMessage());
-            } catch (AlreadyAliveException e) {
-                // just ignore this
+            } catch (AlreadyAliveException e) { // just ignore this
                 LOGGER.info(e.getMessage());
             }
         } else {
             Map stormConf = Utils.readStormConfig();
             stormConf.put(Config.NIMBUS_HOST, host);
             doCommonConfiguration(stormConf, optSetter);
+            PluginRegistry.executeUnpackingPlugins(new File(jarPath), mapping);
             try {
                 // upload topology jar to Cluster using StormSubmitter
                 clearSubmitter();

@@ -20,27 +20,21 @@ import java.io.IOException;
 import java.io.Serializable;
 
 /**
- * Allows unpacking resources bundled with a pipeline. Implementation shall be completely serializable and 
- * self-contained.
+ * Allows unpacking resources bundled with a pipeline or the configuration model. Implementation shall be completely 
+ * serializable and self-contained. Implementations are expected to know the target artifact / folder for unpacking to.
  * 
  * @author Holger Eichelberger
  */
 public interface IPipelineResourceUnpackingPlugin extends Serializable {
-
-    /**
-     * Returns the top-level path this plugin reacts on.
-     * 
-     * @return the top-level path
-     */
-    public String getPath();
     
     /**
      * Unpacks the given path.
      * 
-     * @param dir the top-level directory
+     * @param path the path to the top-level directory of the configuration model or the artifact (jar)
+     * @param mapping the name mapping of the artifact (<b>null</b> for a configuration model artifact/path)
      * @throws IOException in case that unpacking fails
      */
-    public void unpack(File dir) throws IOException;
+    public void unpack(File path, INameMapping mapping) throws IOException;
     
     /**
      * Returns a descriptive name for messages.

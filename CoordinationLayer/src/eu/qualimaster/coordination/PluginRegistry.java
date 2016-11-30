@@ -15,39 +15,71 @@
  */
 package eu.qualimaster.coordination;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
+
+import org.apache.log4j.LogManager;
 
 /**
- * Stores plugins.
+ * Stores and registers plugins.
  * 
  * @author Holger Eichelberger
  */
-class PluginRegistry {
+public class PluginRegistry {
 
-    private static final Map<String, IPipelineResourceUnpackingPlugin> RESOURCE_UNPACKING 
-        = Collections.synchronizedMap(new HashMap<String, IPipelineResourceUnpackingPlugin>());
+    private static final List<IPipelineResourceUnpackingPlugin> RESOURCE_UNPACKING 
+        = Collections.synchronizedList(new ArrayList<IPipelineResourceUnpackingPlugin>());
 
     /**
      * Registers a pipeline resource unpacking plugin.
      * 
      * @param plugin the plugin (ignored if <b>null</b>)
      */
-    static void registerPipelineResourceUnpackingPlugin(IPipelineResourceUnpackingPlugin plugin) {
-        if (null != plugin) {
-            RESOURCE_UNPACKING.put(plugin.getPath(), plugin);
+    public static void registerPipelineResourceUnpackingPlugin(IPipelineResourceUnpackingPlugin plugin) {
+        if (null != plugin && !RESOURCE_UNPACKING.contains(plugin)) {
+            RESOURCE_UNPACKING.add(plugin);
         }
     }
 
     /**
-     * Returns an unpacking plugin for a certain resource path (within a JAR).
+     * Unregisters a pipeline resource unpacking plugin.
      * 
-     * @param path the path
-     * @return the plugin (may be <b>null</b> if there is none)
+     * @param plugin the plugin (ignored if <b>null</b>)
      */
-    static IPipelineResourceUnpackingPlugin getPipelineResourceUnpackingPlugin(String path) {
-        return RESOURCE_UNPACKING.get(path);
+    public static void unregisterPipelineResourceUnpackingPlugin(IPipelineResourceUnpackingPlugin plugin) {
+        if (null != plugin) {
+            RESOURCE_UNPACKING.remove(plugin);
+        }
+    }
+
+    /**
+     * Executes unpacking plugins by considering all registered plugins for <code>path</code>.
+     * 
+     * @param path the path to the perform the unpacking on
+     * @param mapping the name mapping for pipeline artifact if given, configuration model unpacking if <b>null</b>
+     */
+    public static void executeUnpackingPlugins(File path, INameMapping mapping) {
+        for (int u = 0; u < RESOURCE_UNPACKING.size(); u++) {
+            IPipelineResourceUnpackingPlugin plugin = RESOURCE_UNPACKING.get(u);
+            try {
+                plugin.unpack(path, mapping);
+            } catch (IOException e) {
+                LogManager.getLogger(PluginRegistry.class).error("While unpacking resources  with " 
+                     + plugin.getName() + ": " + e.getMessage());
+            }
+        }
+    }
+    
+    /**
+     * Access to all pipeline unpacking plugins.
+     * 
+     * @return all pipeline unpacking plugins
+     */
+    static Iterable<IPipelineResourceUnpackingPlugin> pipelineResourceUnpackingPlugins() {
+        return RESOURCE_UNPACKING;
     }
     
 }

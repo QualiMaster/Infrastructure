@@ -42,7 +42,7 @@ public class NameMappingTest {
      * @return the name mapping
      * @throws IOException in case of I/O problems
      */
-    private static NameMapping readNameMapping(String fileName, String pipelineName) throws IOException {
+    public static NameMapping readNameMapping(String fileName, String pipelineName) throws IOException {
         File file = new File(Utils.getTestdataDir(), fileName);
         FileInputStream in = new FileInputStream(file);
         NameMapping mapping = new NameMapping(pipelineName, in);

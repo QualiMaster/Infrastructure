@@ -131,6 +131,57 @@ public class JarUtil {
         }
         zip.close();
     }
+
+    /**
+     * Zips all files in <code>file</code>.
+     * 
+     * @param zos the ZIP output stream
+     * @param file the file to zip (including sub-directories)
+     * @throws IOException if I/O problems occur
+     */
+    public static void zipAll(ZipOutputStream zos, File file) throws IOException {
+        zipAll(zos, file, file.getCanonicalPath());
+    }
+    
+    /**
+     * Zips all files in <code>file</code>.
+     * 
+     * @param zos the ZIP output stream
+     * @param file the file to zip (including sub-directories)
+     * @param base the canonical base path 
+     * @throws IOException if I/O problems occur
+     */
+    private static void zipAll(ZipOutputStream zos, File file, String base) throws IOException {
+        String name = file.getCanonicalPath();
+        boolean add = true;
+        if (name.startsWith(base) && name.length() > base.length()) {
+            name = name.substring(base.length() + 1);
+            name = name.replace("\\", "/"); // ZIP convention
+        } else {
+            add = false;
+        }
+
+        if (file.isDirectory()) {
+            if (add) {
+                ZipEntry entry = new ZipEntry(name + "/");
+                zos.putNextEntry(entry);
+                zos.closeEntry();
+            }
+            File[] files = file.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    zipAll(zos, f, base);
+                }
+            }
+        } else {
+            if (add) {
+                ZipEntry entry = new ZipEntry(name);
+                zos.putNextEntry(entry);
+                putFile(zos, file);
+                zos.closeEntry();
+            }
+        }
+    }
     
     /**
      * Creates a file with fallback to coordination layer.
@@ -153,7 +204,7 @@ public class JarUtil {
      * @param source the source file
      * @throws IOException in case that putting the file into <code>jar</code> fails
      */
-    private static void putFile(ZipOutputStream jar, File source) throws IOException {
+    public static void putFile(ZipOutputStream jar, File source) throws IOException {
         InputStream in = new BufferedInputStream(new FileInputStream(source));
         putFile(jar, in);
         in.close();
