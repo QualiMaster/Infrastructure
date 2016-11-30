@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-import org.apache.log4j.LogManager;
-
 /**
  * Represents a client connection, in particular a sharable output stream.
  * 
@@ -85,8 +83,7 @@ class ClientConnection {
             try {
                 out.close();
             } catch (IOException e) {
-                LogManager.getLogger(getClass()).error("While closing client " + socket.getRemoteSocketAddress() 
-                    + " : " + e.getMessage(), e);
+                // just ignore, in particular if the socket already has been closed
             }
             out = null;
         }
