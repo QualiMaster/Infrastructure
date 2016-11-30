@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.storm.curator.framework.api.transaction.CuratorTransaction;
 import org.apache.storm.curator.framework.api.transaction.CuratorTransactionFinal;
@@ -350,6 +351,8 @@ public class PortManager {
                         break;
                     }
                 }
+                getLogger().info("Querying port assignment for " + taskId + " " + assignmentId + ": " + result 
+                    + " from " + portTable);
             }
             return result;
         }
@@ -391,14 +394,15 @@ public class PortManager {
         /**
          * Registers a port assignment. 
          * 
-         * @param taskId the task id
          * @param assignment the port assignment to register
          */
-        private void registerPortAssignment(int taskId, PortAssignment assignment) {
+        private void registerPortAssignment(PortAssignment assignment) {
+            int taskId = assignment.getTaskId();
             Map<Integer, PortAssignment> portTable = assignments.get(taskId);
             if (null == portTable) {
                 portTable = new HashMap<Integer, PortAssignment>();
                 assignments.put(taskId, portTable);
+                getLogger().info("Registered port assignment " + assignment + " to " + portTable);
             }
             portTable.put(assignment.getPort(), assignment);
         }
@@ -419,6 +423,7 @@ public class PortManager {
                     if (0 == portTable.size()) {
                         assignments.remove(assignment.getTaskId());
                     }
+                    getLogger().info("Unregistered port assignment " + assignment + " from " + portTable);
                     done = true;
                 }
             }
@@ -547,7 +552,7 @@ public class PortManager {
         try {
             result = new PortRange(rng);
         } catch (IllegalArgumentException e) {
-            LogManager.getLogger(PortManager.class).warn("Parsing port range: " + rng + " " + e.getMessage());
+            getLogger().warn("Parsing port range: " + rng + " " + e.getMessage());
             result = null;
         }
         return result;
@@ -950,7 +955,7 @@ public class PortManager {
                         if (!check || (check && isPortFree(request.getHost(), candidate))) {
                             result = new PortAssignment(request.getHost(), candidate, request.getTaskId(), 
                                 request.getAssignmentId());
-                            portsTable.registerPortAssignment(request.getTaskId(), result);
+                            portsTable.registerPortAssignment(result);
                             hostTable.addAssignment(candidate, request.getPipeline());
                         }
                     }
@@ -996,7 +1001,7 @@ public class PortManager {
                         watcher.notifyPortAssigned(info.getRequest(), info.getAssignment());
                     }
                 } catch (SignalException e) {
-                    LogManager.getLogger(PortManager.class).error("Processing watcher: " + e.getMessage(), e);
+                    getLogger().error("Processing watcher: " + e.getMessage(), e);
                 }
             }
         }
@@ -1367,5 +1372,14 @@ public class PortManager {
     }
 
     // checkstyle: resume exception type check
+    
+    /**
+     * Returns the logger.
+     * 
+     * @return the logger
+     */
+    private static Logger getLogger() {
+        return LogManager.getLogger(PortManager.class);
+    }
 
 }
