@@ -15,6 +15,7 @@
  */
 package eu.qualimaster.monitoring.profiling;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
@@ -73,5 +74,28 @@ public interface IAlgorithmProfileCreator {
      * @return the storage strategy
      */
     public IStorageStrategy getStorageStrategy();
+    
+    /**
+     * Returns the path including the predictor folder.
+     *
+     * @param pipeline the pipeline name
+     * @param element the pipeline element name
+     * @param algorithm the algorithm name
+     * @param path the base path
+     * @param observable the observable to be predicted (may be <b>null</b> then the path stops there)
+     * @return the path to the predictor folder
+     */
+    public File getPredictorPath(String pipeline, String element, String algorithm, String path, 
+        IObservable observable);
+    
+    /**
+     * Returns the (profiling) path including the predictor folder.
+     *
+     * @param algorithm the algorithm name
+     * @param path the base path
+     * @param observable the observable to be predicted (may be <b>null</b> then the path stops there)
+     * @return the path to the predictor folder
+     */
+    public File getPredictorPath(String algorithm, String path, IObservable observable);
     
 }

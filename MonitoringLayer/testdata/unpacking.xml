@@ -1,0 +1,16 @@
+<mapping>
+  <pipeline name="myPip" class="eu.qualimaster.PriorityPip.topology.Topology">
+      <node name="FinancialDataSource" type="source">
+          <component name="PriorityPip_Source0" container="myPip" class="eu.qualimaster.PriorityPip.topology.PriorityPip_Source0Source" receiver="true" thrift="false" tasks="1"/>
+      </node>
+      <node name="myElt" type="family">
+          <component name="PriorityPip_FamilyElement0" container="myPip" class="eu.qualimaster.PriorityPip.topology.PriorityPip_FamilyElement0FamilyElement" receiver="true" thrift="false" tasks="1" alternative0 = "myAlg"/>
+      </node>
+      <node name="Preprocessor" type="family">
+          <component name="PriorityPip_FamilyElement1" container="myPip" class="eu.qualimaster.PriorityPip.topology.PriorityPip_FamilyElement1FamilyElement" receiver="false" thrift="false" tasks="1" alternative0 = "Preprocessor"/>
+      </node>
+      <algorithm name="myAlg" implName="MyAlg" class="eu.qualimaster.algorithms.imp.correlation.MyAlg"/>
+      <algorithm name="Preprocessor" implName="Preprocessor" class="eu.qualimaster.algorithms.imp.correlation.Preprocessor"/>
+  </pipeline>
+
+</mapping>

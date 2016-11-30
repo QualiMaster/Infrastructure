@@ -18,9 +18,11 @@ package eu.qualimaster.monitoring.profiling;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.io.FileUtils;
-
+import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.coordination.INameMapping.Component;
+import eu.qualimaster.coordination.UnpackingUtils.IFolderAccess;
 import eu.qualimaster.coordination.IPipelineResourceUnpackingPlugin;
+import eu.qualimaster.coordination.UnpackingUtils;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 
 /**
@@ -28,58 +30,63 @@ import eu.qualimaster.monitoring.MonitoringConfiguration;
  * 
  * @author Holger Eichelberger
  */
-class PipelineProfileUnpackingPlugin implements IPipelineResourceUnpackingPlugin {
+public class PipelineProfileUnpackingPlugin implements IPipelineResourceUnpackingPlugin {
 
+    public static final String PROFILES = "profiles";
     private static final long serialVersionUID = 902273717787064665L;
 
     @Override
-    public String getPath() {
-        return "profiles";
-    }
-
-    @Override
-    public void unpack(File dir) throws IOException {
+    public void unpack(File path, INameMapping mapping) throws IOException {
         String baseFolder = MonitoringConfiguration.getProfileLocation();
-        if (!MonitoringConfiguration.isEmpty(baseFolder) && dir.exists()) {
-            File[] files = dir.listFiles();
-            if (null != files) {
-                File base = new File(baseFolder);
-                if (!base.exists()) {
-                    base.mkdirs();
-                    Utils.setDefaultPermissions(base);
-                }
-                for (File f : files) {
-                    copyIfNotExists(f, base);
-                }
-            }
+        IFolderAccess access;
+        if (path.isFile() && path.getName().endsWith(".jar")) {
+            access = new UnpackingUtils.JarFileAccess(path);
+        } else if (path.isDirectory()) {
+            access = new UnpackingUtils.FolderAccess(path);
+        } else {
+            access = null;
         }
-    }
-
-    /**
-     * Copies files and folders if they do not exist in <code>target</code>.
-     * 
-     * @param source the source file
-     * @param target the target file
-     * @throws IOException in case of I/O read/write problems
-     */
-    private static void copyIfNotExists(File source, File target) throws IOException {
-        File tgt = new File(target, source.getName());
-        if (!tgt.exists()) {
-            if (source.isDirectory()) {
-                tgt.mkdirs();
-                File[] files = source.listFiles();
-                if (null != files) {
-                    for (File f : files) {
-                        copyIfNotExists(f, target);
+        // just do artifact unpacking
+        if (null != mapping && null != access && !MonitoringConfiguration.isEmpty(baseFolder) ) {
+            if (access.hasFolder(PROFILES)) {
+                for (String pipelineName : mapping.getPipelineNames()) {
+                    for (String nodeName : mapping.getPipelineNodeNames()) {
+                        Component comp = mapping.getPipelineNodeComponent(nodeName);
+                        if (comp.getContainer().equals(pipelineName)) {
+                            unpackComponent(access, pipelineName, nodeName, comp, baseFolder);
+                        }
                     }
                 }
-            } else {
-                FileUtils.copyFile(source, tgt);
             }
-            Utils.setDefaultPermissions(tgt);
+        }
+        access.release();
+    }
+    
+    /**
+     * Unpacks the given component <code>comp</code>.
+     * 
+     * @param access the source folder access
+     * @param pipelineName the pipeline name
+     * @param element the pipeline element name
+     * @param comp the component to unpack
+     * @param baseFolder the base folder to unpack to
+     * @throws IOException in case of an unpacking problem
+     */
+    private void unpackComponent(IFolderAccess access, String pipelineName, String element, Component comp, 
+        String baseFolder) throws IOException {
+        IAlgorithmProfileCreator creator = AlgorithmProfilePredictionManager.getCreator();
+        for (String alg : comp.getAlternatives()) {            
+            File folder = creator.getPredictorPath(pipelineName, element, alg, baseFolder, null);
+            if (!folder.exists()) {
+                File algFolder = creator.getPredictorPath(alg, "", null);
+                String algFolderName = algFolder.getName();
+                if (access.hasFolder(PROFILES, algFolderName)) {
+                    access.unpack(folder, PROFILES, algFolderName);
+                }
+            }
         }
     }
-
+ 
     @Override
     public String getName() {
         return "Profile Unpacker";

@@ -476,5 +476,14 @@ public class AlgorithmProfilePredictionManager {
     public static void clear() {
         Pipelines.releaseAllPipelines();
     }
+    
+    /**
+     * Returns the profile creator.
+     * 
+     * @return the profile creator
+     */
+    public static IAlgorithmProfileCreator getCreator() {
+        return creator;
+    }
 
 }

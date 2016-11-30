@@ -30,7 +30,7 @@ import eu.qualimaster.observables.IObservable;
  * 
  * @author Holger Eichelberger
  */
-public class KalmanProfileCreator implements IAlgorithmProfileCreator {
+public class KalmanProfileCreator extends AbstractAlgorithmProfileCreator {
 
     @Override
     public IAlgorithmProfilePredictor createPredictor() {

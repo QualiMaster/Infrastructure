@@ -17,6 +17,7 @@ package eu.qualimaster.monitoring.profiling;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -43,15 +44,29 @@ class DefaultStorageStrategy implements IStorageStrategy {
     public File getPredictorPath(PipelineElement element, String path, Map<Object, Serializable> key, 
         IObservable observable) {
         String identifier = generateKey(element, key, observable, false);
+        return getPredictorPath(identifier, path, element.getProfileCreator());
+    }
+
+    /**
+     * Returns the path including the predictor folder.
+     * 
+     * @param identifier the internal profile identifier
+     * @param path the base path
+     * @param creator the creator carrying the predictor storage sub folder (ignored if <b>null</b>)
+     * @return the path to the predictor folder
+     */
+    private File getPredictorPath(String identifier, String path, IAlgorithmProfileCreator creator) {
         File folder = new File(path);
         // Get subfolder from nesting information 
         String[] nesting = identifier.split(":");
         for (String string : nesting) {
             folder = new File(folder, string);
         }
-        // set kind of the predictor as subfolder
-        String subfolder = element.getProfileCreator().getStorageSubFolder();
-        return new File(folder, subfolder);
+        File result = folder;
+        if (null != creator) {
+            result = new File(result, creator.getStorageSubFolder());
+        }
+        return result;
     }
 
     @Override
@@ -66,25 +81,42 @@ class DefaultStorageStrategy implements IStorageStrategy {
         return new File(folder, "approximators");
     }
 
-    /**
-     * Generates a string key (identifier).
-     * 
-     * @param element the holding pipeline element
-     * @param key the profile key (may be <b>null</b> if the algorithm part/following parameters are not needed)
-     * @param observable the observable to be predicted (may be <b>null</b> if the observable/following parameters
-     *    are not needed)
-     * @param includeParameters include the parameters into the key
-     * 
-     * @return The key representing this {@link SeparateObservableAlgorithmProfile} instance in its 
-     *     current configuration.
-     */
     @Override
     public String generateKey(PipelineElement element, Map<Object, Serializable> key, IObservable observable, 
         boolean includeParameters) {
         boolean profiling = element.isInProfilingMode();
         String pipelineName = element.getPipeline().getName();
         String elementName = element.getName();
+        return generateKey(pipelineName, elementName, key, observable, profiling, includeParameters);
+    }
 
+    @Override
+    public File getPredictorPath(String pipeline, String element, String algorithm, String path, IObservable observable,
+        IAlgorithmProfileCreator creator) {
+        Map<Object, Serializable> key = new HashMap<Object, Serializable>();
+        key.put(Constants.KEY_ALGORITHM, algorithm);
+        String identifier = generateKey(pipeline, element, key, observable, null == pipeline || null == element, false);
+        return getPredictorPath(identifier, path, null == observable ? null : creator);
+    }
+
+    // checkstyle: stop parameter number check
+
+    /**
+     * Generates a string key (identifier).
+     * 
+     * @param pipelineName the pipeline name 
+     * @param elementName the pipeline element name
+     * @param key the profile key (may be <b>null</b> if the algorithm part/following parameters are not needed)
+     * @param observable the observable to be predicted (may be <b>null</b> if the observable/following parameters
+     *    are not needed)
+     * @param profiling are we in profile mode
+     * @param includeParameters include the parameters into the key
+     * 
+     * @return The key representing this {@link SeparateObservableAlgorithmProfile} instance in its 
+     *     current configuration.
+     */
+    private String generateKey(String pipelineName, String elementName, Map<Object, Serializable> key, 
+        IObservable observable, boolean profiling, boolean includeParameters) {
         String result;
         if (profiling) {
             result = "";
@@ -110,6 +142,8 @@ class DefaultStorageStrategy implements IStorageStrategy {
         }
         return result;
     }
+
+    // checkstyle: resume parameter number check
 
     /**
      * Turns a key part into a string.

@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Map;
 
+import eu.qualimaster.monitoring.profiling.IAlgorithmProfileCreator;
 import eu.qualimaster.monitoring.profiling.PipelineElement;
 import eu.qualimaster.observables.IObservable;
 
@@ -34,13 +35,31 @@ public interface IStorageStrategy {
      * 
      * @param element the holding pipeline element
      * @param path the base path
-     * @param key the profile key
+     * @param key the profile key (may be <b>null</b>
      * @param observable the observable to be predicted
      * @return the path to the predictor folder
      */
     public File getPredictorPath(PipelineElement element, String path, Map<Object, Serializable> key, 
         IObservable observable);
     
+    // checkstyle: stop parameter number check
+    
+    /**
+     * Returns the path including the predictor folder.
+     *
+     * @param pipeline the pipeline name (profiling mode if <b>null</b>)
+     * @param element the pipeline element name (profiling mode if <b>null</b>)
+     * @param algorithm the algorithm name
+     * @param path the base path
+     * @param observable the observable to be predicted
+     * @param creator the profile creator instance
+     * @return the path to the predictor folder
+     */
+    public File getPredictorPath(String pipeline, String element, String algorithm, String path, IObservable observable,
+        IAlgorithmProfileCreator creator);
+    
+    // checkstyle: resume parameter number check
+
     /**
      * Returns the path for the approximators.
      * 
