@@ -225,14 +225,16 @@ public class PortManagerTest {
             System.out.println("Allocating for pip (" + allocationCount + "):");
             for (int i = 0; i < allocationCount; i++) {
                 PortAssignmentRequest req = new PortAssignmentRequest("pip", "element_" + i, 5, "localhost", "id");
-                assertPortAssignment(mgr, req, range, 1000 + i);
-                System.out.print(".");
+                PortAssignment p1 = assertPortAssignment(mgr, req, range, 1000 + i);
+                PortAssignment p2 = mgr.getPortAssignment("pip", "element_" + i, 5, "id");
+                Assert.assertEquals(p1, p2);
             }
-            System.out.println("\nAllocating for pip1 (" + allocationCount + "):");
+            System.out.println("Allocating for pip1 (" + allocationCount + "):");
             for (int i = 0; i < allocationCount; i++) {
-                PortAssignmentRequest req = new PortAssignmentRequest("pip1", "element_" + i, 5, "localhost", "id");
-                assertPortAssignment(mgr, req, range, 1000 + allocationCount + i);
-                System.out.print(".");
+                PortAssignmentRequest req = new PortAssignmentRequest("pip1", "element_" + i, i, "localhost", "id");
+                PortAssignment p1 = assertPortAssignment(mgr, req, range, 1000 + allocationCount + i);
+                PortAssignment p2 = mgr.getPortAssignment("pip1", "element_" + i, i, "id");
+                Assert.assertEquals(p1, p2);
             }
             listPorts(mgr, "After assignments for pip and pip1");
             System.out.println("Clearing pip:");
@@ -241,10 +243,10 @@ public class PortManagerTest {
             System.out.println("Re-allocating for pip (" + allocationCount + "):");
             for (int i = 0; i < allocationCount; i++) {
                 PortAssignmentRequest req = new PortAssignmentRequest("pip", "element_" + i, 5, "localhost", "id");
-                assertPortAssignment(mgr, req, range, 1000 + i);
-                System.out.print(".");
+                PortAssignment p1 = assertPortAssignment(mgr, req, range, 1000 + i);
+                PortAssignment p2 = mgr.getPortAssignment("pip", "element_" + i, 5, "id");
+                Assert.assertEquals(p1, p2);
             }
-            System.out.println();
             listPorts(mgr, "After all assignments");
 
             // clear all assignments for pipeline
@@ -419,6 +421,44 @@ public class PortManagerTest {
             fail = e;
         }
 
+        client.close();
+        cluster.shutdown();
+        TestHelper.trackTemp(tmpFiles, true);
+        fail = testClosed(client);
+        if (null != fail) {
+            Assert.fail(fail.getMessage());
+        }
+    }
+    
+    /**
+     * Tests a problem case from a pipeline.
+     */
+    @Test
+    public void testPip() {
+        SignalException fail = null;
+        Set<File> tmpFiles = TestHelper.trackTemp(null, false);
+        LocalCluster cluster = new LocalCluster();
+
+        String connectString = "localhost:" + TestHelper.LOCAL_ZOOKEEPER_PORT;
+        CuratorFramework client = CuratorFrameworkFactory.builder().namespace(SignalMechanism.GLOBAL_NAMESPACE).
+            connectString(connectString).retryPolicy(new RetryNTimes(5, 100)).build();
+        client.start();
+
+        PortManager mgr = new PortManager(client);
+        try {
+            // this is not really black-box - we assume that there are no gaps and ports are assigned linearly! 
+            mgr.clearAllPortAssignments();
+            PortRange range = new PortRange(1000, 1100);
+            PortAssignmentRequest req = new PortAssignmentRequest("pip", "element", 0, "localhost", null);
+            PortAssignment p1 = assertPortAssignment(mgr, req, range, 1000);
+            PortAssignment p2 = mgr.getPortAssignment("pip", "element", 0, null);
+            Assert.assertEquals(p1, p2);
+            mgr.close();
+        } catch (SignalException e) {
+            e.printStackTrace();
+            fail = e;
+        }
+        
         client.close();
         cluster.shutdown();
         TestHelper.trackTemp(tmpFiles, true);

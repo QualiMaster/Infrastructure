@@ -402,9 +402,9 @@ public class PortManager {
             if (null == portTable) {
                 portTable = new HashMap<Integer, PortAssignment>();
                 assignments.put(taskId, portTable);
-                getLogger().info("Registered port assignment " + assignment + " to " + portTable);
             }
             portTable.put(assignment.getPort(), assignment);
+            getLogger().info("Registered port assignment " + assignment + " to " + portTable);
         }
 
         /**
@@ -663,12 +663,18 @@ public class PortManager {
     public PortAssignment getPortAssignment(String pipeline, String element, int taskId, String assignmentId) 
         throws SignalException {
         PortAssignment result = null;
+
         if (isConnected()) {
             String path = getNodePath(pipeline, element, taskId);
             PortsTable table = loadSafe(path, PortsTable.class);
             if (null != table) {
                 result = table.getPortAssignment(taskId, assignmentId);
             }
+            getLogger().info("Querying port assignment for " + pipeline + " " + element + " " + taskId + " " 
+                + assignmentId + ": " + result + " from " + table);
+        } else {
+            getLogger().info("Querying port assignment for " + pipeline + " " + element + " " + taskId + " " 
+                + assignmentId + ": not connected");
         }
         return result;
     }
