@@ -245,7 +245,7 @@ public class EventManagerTests {
         client.doCleanup();
         if (client != server) {
             server.doCleanup();
-            sleep(500);
+            sleep(1000);
         }
         
         /*for (int w = 0; w < WORKER_COUNT; w++) {
