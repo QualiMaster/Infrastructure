@@ -55,6 +55,7 @@ public class ResourceUnpackingTests {
     @Test
     public void testResourceUnpacking() throws IOException {
         // initialize
+        AlgorithmProfilePredictionManager.clear();
         IPipelineResourceUnpackingPlugin plugin = new PipelineProfileUnpackingPlugin();
         PluginRegistry.registerPipelineResourceUnpackingPlugin(plugin);
         IAlgorithmProfileCreator creator = AlgorithmProfilePredictionManager.getCreator();
