@@ -446,7 +446,11 @@ public class MonitoringManager {
                     tasks.put(plugin, pluginTasks);
                 } 
                 pluginTasks.put(pipelineName, task);
-                timer.schedule(task, 0, Math.max(MINIMUM_MONITORING_FREQUENCY, task.getFrequency())); 
+                try {
+                    timer.schedule(task, 0, Math.max(MINIMUM_MONITORING_FREQUENCY, task.getFrequency()));
+                } catch (IllegalStateException e) {
+                    LOGGER.error("While scheduling monitoring task for '" + pipelineName + "': " + e.getMessage());
+                }
             } // else no task created, ignore
         }
     }
