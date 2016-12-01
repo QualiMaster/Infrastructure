@@ -97,16 +97,44 @@ public class Utils {
     
     /**
      * Creates the directory named by this abstract pathname, including any necessary but nonexistent parent 
-     * directories. Sets {@link #setDefaultPermissions(File) the default file permissions}. Note that if this
-     * operation fails it may have succeeded in creating some of the necessary parent directories.
+     * directories. Sets {@link #setDefaultPermissions(File) the default file permissions} to all created folders. 
+     * Note that if this operation fails it may have succeeded in creating some of the necessary parent directories.
      *
      * @param dir the directory/directories to be created
      * @return <code>true</code> if and only if the directory was created,
      *     along with all necessary parent directories; <code>false</code> otherwise
      */
     public static boolean mkdirs(File dir) {
-        boolean result = dir.mkdirs();
-        setDefaultPermissions(dir);
+        boolean result = false;
+        if (!dir.exists()) {
+            try {
+                result = recMkdirNoTopPermissions(dir.getCanonicalFile());
+            } catch (IOException e) {
+                // not possible
+            }
+        } else {
+            setDefaultPermissions(dir);
+        }
+        return result;
+    }
+    
+    /**
+     * Creates folders recursively and sets the permissions on all created folders except for the topmost existing one.
+     *  
+     * @param dir the folder to create
+     * @return <code>true</code> if and only if the directory was created,
+     *     along with all necessary parent directories; <code>false</code> otherwise
+     */
+    private static boolean recMkdirNoTopPermissions(File dir) {
+        boolean result = false;
+        if (!dir.exists()) {
+            File par = dir.getParentFile();
+            if (null != par) {
+                result = recMkdirNoTopPermissions(par);
+            }
+            result |= dir.mkdir();
+            setDefaultPermissions(dir);
+        }
         return result;
     }
     
@@ -196,6 +224,16 @@ public class Utils {
         FileOutputStreamWithDefaultPermissions.setDefaultPermissions(file);
     }
     
+    /**
+     * Returns whether the given file has the default file permissions (as far as available).
+     * 
+     * @param file the file to test
+     * @return <code>true</code> whether the default permissions are given, <code>false</code> else
+     */
+    public static boolean hasDefaultPermissions(File file) {
+        return FileOutputStreamWithDefaultPermissions.hasDefaultPermissions(file);
+    }
+   
     /**
      * Returns whether we can delete <code>file</code>, i.e., a single file or an entire directory with 
      * all contained files.

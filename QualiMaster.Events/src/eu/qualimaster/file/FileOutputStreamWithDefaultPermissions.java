@@ -106,6 +106,18 @@ public class FileOutputStreamWithDefaultPermissions extends FileOutputStream {
     public static void setDefaultPermissions(File file) {
         file.setWritable(true); // for TSI installation
         file.setReadable(true); // for TSI installation
+        // see hasDefaultPermissions
+    }
+    
+    /**
+     * Returns whether the given file has the default file permissions (as far as available).
+     * 
+     * @param file the file to test
+     * @return <code>true</code> whether the default permissions are given, <code>false</code> else
+     */
+    public static boolean hasDefaultPermissions(File file) {
+        return file.canWrite() && file.canRead();
+        // see setDefaultPermissions
     }
 
 }
