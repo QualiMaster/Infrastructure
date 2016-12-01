@@ -123,11 +123,13 @@ public class EventManager {
      * Starts and registers a thread for a runnable.
      * 
      * @param runnable the thread runnable
+     * @return the created thread
      */
-    private void startThread(Runnable runnable) {
+    private Thread startThread(Runnable runnable) {
         Thread thread = new Thread(runnable);
         thread.start();
         threads.add(thread);
+        return thread;
     }
 
     /**
@@ -746,13 +748,19 @@ public class EventManager {
         @Override
         public void run() {
             while (isRunning) {
+                ReadingWorker worker = null;
+                Thread thread = null;
+                Socket s = null;
                 try {
-                    Socket s = serverSocket.accept();
+                    s = serverSocket.accept();
                     LOGGER.info("accepted event connection from " + s.getRemoteSocketAddress());
-                    ReadingWorker worker = new ReadingWorker(s, false);
-                    startThread(worker);
+                    worker = new ReadingWorker(s, false);
+                    thread = startThread(worker);
                 } catch (SocketTimeoutException e) {
                     // this is ok due to non-blocking mode
+                } catch (EOFException e) {
+                    LOGGER.error("End of file exception: " + (null == s ? "unknown" : s.getRemoteSocketAddress()));
+                    closeReadingWorker(thread, worker);
                 } catch (IOException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
@@ -767,6 +775,21 @@ public class EventManager {
                 LOGGER.error(e.getMessage(), e);
             }
             notifyThreadEnd();
+        }
+    }
+    
+    /**
+     * Closes a reading worker and it's thread.
+     * 
+     * @param thread the thread (may be <b>null</b>)
+     * @param worker the worker (may be <b>null</b>)
+     */
+    private void closeReadingWorker(Thread thread, ReadingWorker worker) {
+        if (null != worker) {
+            worker.stop();
+        }
+        if (null != thread) {
+            notifyThreadEnd(thread);
         }
     }
     
@@ -798,7 +821,7 @@ public class EventManager {
         
         @Override
         public void run() {
-            while (!handleLocal && isRunning && null == clientId) {
+            while (!handleLocal && isRunning && null == clientId && isReading) {
                 try {
                     if (in.available() > 0) {
                         clientId = in.readUTF();
@@ -843,6 +866,13 @@ public class EventManager {
                 LOGGER.error(e.getMessage(), e);
             }
             notifyThreadEnd();
+        }
+        
+        /**
+         * Allows stopping the worker immediately.
+         */
+        private void stop() {
+            isReading = false;
         }
         
     }
