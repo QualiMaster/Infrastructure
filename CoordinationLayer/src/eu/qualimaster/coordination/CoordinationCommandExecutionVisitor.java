@@ -1,5 +1,7 @@
 package eu.qualimaster.coordination;
 
+import static eu.qualimaster.coordination.CoordinationUtils.getNamespace;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,6 +30,7 @@ import eu.qualimaster.coordination.INameMapping.Component;
 import eu.qualimaster.coordination.INameMapping.ISubPipeline;
 import eu.qualimaster.coordination.PipelineCache.PipelineElementCache;
 import eu.qualimaster.coordination.RepositoryConnector.Models;
+import eu.qualimaster.coordination.RepositoryConnector.Phase;
 import eu.qualimaster.coordination.StormUtils.TopologyTestInfo;
 import eu.qualimaster.coordination.commands.AlgorithmChangeCommand;
 import eu.qualimaster.coordination.commands.CommandSequence;
@@ -40,12 +43,12 @@ import eu.qualimaster.coordination.commands.ParallelismChangeCommand;
 import eu.qualimaster.coordination.commands.ParameterChangeCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand.Status;
-import eu.qualimaster.coordination.events.CoordinationCommandExecutionEvent;
 import eu.qualimaster.coordination.commands.ProfileAlgorithmCommand;
 import eu.qualimaster.coordination.commands.ReplayCommand;
 import eu.qualimaster.coordination.commands.ScheduleWavefrontAdaptationCommand;
 import eu.qualimaster.coordination.commands.ShutdownCommand;
 import eu.qualimaster.coordination.commands.UpdateCommand;
+import eu.qualimaster.coordination.events.CoordinationCommandExecutionEvent;
 import eu.qualimaster.coordination.shutdown.Shutdown;
 import eu.qualimaster.dataManagement.DataManager;
 import eu.qualimaster.easy.extension.internal.AlgorithmProfileHelper;
@@ -59,8 +62,9 @@ import net.ssehub.easy.basics.modelManagement.ModelInitializer;
 import net.ssehub.easy.basics.modelManagement.ModelManagementException;
 import net.ssehub.easy.basics.progress.ProgressObserver;
 import net.ssehub.easy.instantiation.core.model.common.VilException;
-
-import static eu.qualimaster.coordination.CoordinationUtils.getNamespace;
+import net.ssehub.easy.varModel.confModel.Configuration;
+import net.ssehub.easy.varModel.management.VarModel;
+import net.ssehub.easy.varModel.model.Project;
 
 /**
  * Visits the commands for execution. Please note that when starting the execution of a single command,
@@ -640,6 +644,77 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
         return LogManager.getLogger(CoordinationCommandExecutionVisitor.class);
     }
 
+//    @Override
+//    public CoordinationExecutionResult visitProfileAlgorithmCommand(ProfileAlgorithmCommand command) {
+//        CoordinationExecutionResult failing = null;
+//        startingCommand(command);
+//        Models models = RepositoryConnector.getModels(RepositoryConnector.getPhaseWithVil());
+//        if (null == models) {
+//            failing = new CoordinationExecutionResult(command, "Configuration model is not available "
+//                + "- see messages above", CoordinationExecutionCode.CHANGING_PARALLELISM);
+//        } else {
+//            models.startUsing();
+//            //models.reloadIvml();
+//            models.reloadVil();
+//            File tmp = null;
+//            try {
+//                String pipelineName;
+//                tmp = new File(FileUtils.getTempDirectory(), "qmDebugProfile");
+//                org.apache.commons.io.FileUtils.deleteDirectory(tmp);
+//                tmp.mkdirs();
+//                if (StormUtils.inTesting()) {
+//                    Set<String> testing = StormUtils.getTestingTopologyNames();
+//                    Object[] testingTmp = testing.toArray();
+//                    if (testingTmp.length > 0) {
+//                        pipelineName = testingTmp[0].toString();
+//                        TopologyTestInfo info = StormUtils.getTestInfo(pipelineName);
+//                        FileUtils.copyDirectory(info.getBaseFolder(), tmp);
+//                    } else {
+//                        pipelineName = "TestPip"; // fallback - fails as no VIL present
+//                    }
+//                } else {
+//                    pipelineName = "TestPip" + System.currentTimeMillis(); 
+//                    FileUtils.copyDirectory(RepositoryConnector.getCurrentModelPath().toFile(), tmp);
+//                }
+//                ModelInitializer.addLocation(tmp, ProgressObserver.NO_OBSERVER);
+//                net.ssehub.easy.varModel.confModel.Configuration cfg = models.getConfiguration();
+//                ProfileData data;
+//                try {
+//                    QmProjectDescriptor source = new QmProjectDescriptor(tmp);
+//                    data = AlgorithmProfileHelper.createProfilePipeline(cfg, pipelineName, command.getFamily(), 
+//                        command.getAlgorithm(), source);
+//                } catch (ModelManagementException e) {
+//                    data = null;
+//                    if (StormUtils.inTesting()) {
+//                        TopologyTestInfo tInfo = StormUtils.getTestInfo();
+//                        data = null != tInfo ? tInfo.getProfileData() : null;
+//                    } 
+//                    if (null == data) {
+//                        throw e;
+//                    }
+//                }
+//                ProfileControl control = new ProfileControl(cfg, command, data);
+//                control.startNext();
+//            } catch (ModelManagementException | VilException | IOException e) {
+//                failing = new CoordinationExecutionResult(command, e.getMessage(),
+//                    CoordinationExecutionCode.PROFILING);
+//            }
+//            if (null != tmp) {
+//                try {
+//                    ModelInitializer.removeLocation(tmp, ProgressObserver.NO_OBSERVER);
+//                    if (CoordinationConfiguration.deleteProfilingPipelines()) {
+//                        FileUtils.deleteQuietly(tmp);
+//                    }
+//                } catch (ModelManagementException e) {
+//                    getLogger().error("While clearning up profiling creation folders: " + e.getMessage());
+//                }
+//            }
+//            models.reloadVil();
+//            models.endUsing();
+//        }
+//        return writeCoordinationLog(command, failing);
+//    }
+    
     @Override
     public CoordinationExecutionResult visitProfileAlgorithmCommand(ProfileAlgorithmCommand command) {
         CoordinationExecutionResult failing = null;
@@ -650,9 +725,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
                 + "- see messages above", CoordinationExecutionCode.CHANGING_PARALLELISM);
         } else {
             models.startUsing();
-            //models.reloadIvml();
             models.reloadVil();
-            net.ssehub.easy.varModel.confModel.Configuration cfg = models.getConfiguration();
             File tmp = null;
             try {
                 String pipelineName;
@@ -673,7 +746,11 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
                     pipelineName = "TestPip" + System.currentTimeMillis(); 
                     FileUtils.copyDirectory(RepositoryConnector.getCurrentModelPath().toFile(), tmp);
                 }
+                getLogger().debug("visitProfileAlgorithmCommand: add location = " + tmp.getAbsolutePath());
                 ModelInitializer.addLocation(tmp, ProgressObserver.NO_OBSERVER);
+                Project project = RepositoryConnector.obtainModel(VarModel.INSTANCE, "QM", null);
+                Configuration cfg = RepositoryConnector.createConfiguration(project, Phase.MONITORING);
+                getLogger().debug("visitProfileAlgorithmCommand: cfg = " + cfg);
                 ProfileData data;
                 try {
                     QmProjectDescriptor source = new QmProjectDescriptor(tmp);
@@ -705,7 +782,6 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
                     getLogger().error("While clearning up profiling creation folders: " + e.getMessage());
                 }
             }
-            models.reloadVil();
             models.endUsing();
         }
         return writeCoordinationLog(command, failing);
