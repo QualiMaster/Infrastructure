@@ -27,6 +27,8 @@ import java.util.jar.JarFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.LogManager;
 
+import eu.qualimaster.file.Utils;
+
 /**
  * Resource unpacking utilities.
  * 
