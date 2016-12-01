@@ -51,7 +51,7 @@ class MonitorClient {
             out = new PrintWriter(sock.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
         } catch (SecurityException | IllegalArgumentException | SocketTimeoutException e) {
-            if (!e.getMessage().equals("connect timed out")) {
+            if (!"connect timed out".equals(e.getMessage())) {
                 throw new IOException(e.getMessage(), e);
             }
             close();
