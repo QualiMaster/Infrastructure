@@ -29,7 +29,7 @@ import eu.qualimaster.observables.IObservable;
  * 
  * @author Holger Eichelberger
  */
-public class PolynomialApacheMathApproximator extends AbstractApacheMathApproximator {
+public class PolynomialApacheMathApproximator extends AbstractApacheMathCurveFitterApproximator {
 
     /**
      * An approximator creator for polynoms of dregree 3.

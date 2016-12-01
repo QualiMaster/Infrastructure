@@ -19,8 +19,8 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import eu.qualimaster.monitoring.profiling.approximation.HarmonicApacheMathApproximator;
 import eu.qualimaster.monitoring.profiling.approximation.IApproximatorCreator;
+import eu.qualimaster.monitoring.profiling.approximation.SplineInterpolationLinearExtrapolationApproximator;
 import eu.qualimaster.monitoring.profiling.quantizers.DoubleIntegerQuantizer;
 import eu.qualimaster.monitoring.profiling.quantizers.IdentityIntegerQuantizer;
 import eu.qualimaster.monitoring.profiling.quantizers.Quantizer;
@@ -51,20 +51,24 @@ public class ProfilingRegistry {
         // observable quantizers
         registerQuantizer(TimeBehavior.LATENCY, ScalingDoubleQuantizer.INSTANCE, true); // ms
         registerValidator(TimeBehavior.LATENCY, MinValidator.MIN_0_VALIDATOR);
-        registerApproximationCreator(TimeBehavior.LATENCY, HarmonicApacheMathApproximator.INSTANCE_10);
+        registerApproximationCreator(TimeBehavior.LATENCY, 
+             SplineInterpolationLinearExtrapolationApproximator.INSTANCE);
         registerQuantizer(TimeBehavior.THROUGHPUT_ITEMS, ScalingDoubleQuantizer.INSTANCE, true);
         registerValidator(TimeBehavior.THROUGHPUT_ITEMS, MinValidator.MIN_0_VALIDATOR);
-        registerApproximationCreator(TimeBehavior.THROUGHPUT_ITEMS, HarmonicApacheMathApproximator.INSTANCE_10);
+        registerApproximationCreator(TimeBehavior.THROUGHPUT_ITEMS, 
+             SplineInterpolationLinearExtrapolationApproximator.INSTANCE);
         registerQuantizer(Scalability.ITEMS, ScalingDoubleQuantizer.INSTANCE, true);
         registerValidator(Scalability.ITEMS, MinValidator.MIN_0_VALIDATOR);
-        registerApproximationCreator(Scalability.ITEMS, HarmonicApacheMathApproximator.INSTANCE_10);
+        registerApproximationCreator(Scalability.ITEMS, 
+            SplineInterpolationLinearExtrapolationApproximator.INSTANCE);
         registerQuantizer(ResourceUsage.EXECUTORS, DoubleIntegerQuantizer.INSTANCE, true);
         registerValidator(ResourceUsage.EXECUTORS, MinValidator.MIN_0_VALIDATOR);
         registerQuantizer(ResourceUsage.TASKS, DoubleIntegerQuantizer.INSTANCE, true);
         registerValidator(ResourceUsage.TASKS, MinValidator.MIN_0_VALIDATOR);
         registerQuantizer(ResourceUsage.CAPACITY, ScalingDoubleQuantizer.INSTANCE, false);
         registerValidator(ResourceUsage.CAPACITY, MinMaxValidator.MIN_0_MAX_1_VALIDATOR);
-        registerApproximationCreator(ResourceUsage.CAPACITY, HarmonicApacheMathApproximator.INSTANCE_10);
+        registerApproximationCreator(ResourceUsage.CAPACITY, 
+            SplineInterpolationLinearExtrapolationApproximator.INSTANCE);
         
         // type quantizers for parameters
         registerQuantizer(IdentityIntegerQuantizer.INSTANCE, true);

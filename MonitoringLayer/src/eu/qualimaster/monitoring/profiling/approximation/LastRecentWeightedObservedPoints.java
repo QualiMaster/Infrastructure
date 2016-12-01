@@ -106,6 +106,28 @@ public class LastRecentWeightedObservedPoints {
     }
     
     /**
+     * Returns a snapshot of observed points.
+     * 
+     * @return x in the first array, y in the second array, length of both arrays is {@link #size()}.
+     */
+    protected double[][] getPointArrays() {
+        double[][] result = new double[2][];
+        int count = observations.size();
+        double[] x = new double[count];
+        double[] y = new double[count];
+        result[0] = x;
+        result[1] = y;
+        
+        count = 0;
+        for (WeightedObservedPoint p : observations.values()) {
+            x[count] = p.getX(); 
+            y[count] = p.getY(); 
+            count++;
+        }
+        return result;
+    }
+    
+    /**
      * Removes all observations from this container.
      */
     public void clear() {
@@ -137,6 +159,15 @@ public class LastRecentWeightedObservedPoints {
             }
         }
         return equals;
+    }
+    
+    /**
+     * Returns the number of data points.
+     * 
+     * @return the number of data points
+     */
+    public int size() {
+        return observations.size();
     }
     
 }

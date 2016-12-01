@@ -31,6 +31,7 @@ import org.junit.runners.Suite;
     QualityTest.class,
     QuantizerTest.class,
     ManagerTest.class, 
-    SelectionTests.class})
+    SelectionTests.class, 
+    ApproximatorTest.class})
 public class ProfilingTests {
 }

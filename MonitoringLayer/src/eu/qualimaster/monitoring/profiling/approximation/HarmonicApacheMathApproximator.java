@@ -29,7 +29,7 @@ import eu.qualimaster.observables.IObservable;
  * 
  * @author Holger Eichelberger
  */
-public class HarmonicApacheMathApproximator extends AbstractApacheMathApproximator {
+public class HarmonicApacheMathApproximator extends AbstractApacheMathCurveFitterApproximator {
 
     /**
      * An approximator creator for at maximum 10 fitting iterations.
@@ -45,7 +45,7 @@ public class HarmonicApacheMathApproximator extends AbstractApacheMathApproximat
     private int maxIterations;
     
     /**
-     * Creates a polynomial approximator.
+     * Creates a harmonic approximator.
      * 
      * @param path the path to load a persisted version from
      * @param parameterName the parameter name

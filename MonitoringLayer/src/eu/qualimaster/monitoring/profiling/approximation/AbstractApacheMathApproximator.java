@@ -22,8 +22,6 @@ import java.io.LineNumberReader;
 import java.io.PrintWriter;
 import java.util.List;
 
-import org.apache.commons.math3.analysis.ParametricUnivariateFunction;
-import org.apache.commons.math3.fitting.AbstractCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoint;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -41,8 +39,6 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
 
     private static final String SEPARATOR = "\t";
     private LastRecentWeightedObservedPoints obs;
-    private AbstractCurveFitter fitter = createFitter();
-    private ParametricUnivariateFunction function = createFunction();
 
     /**
      * Creates an abstract approximator.
@@ -63,21 +59,8 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
     @Override
     public void update(int paramValue, double value, boolean measured) {
         obs.add(paramValue, value);
+        updated();
     }
-    
-    /**
-     * Returns the fitter.
-     * 
-     * @return the fitter
-     */
-    protected abstract AbstractCurveFitter createFitter();
-    
-    /**
-     * Returns the univariate function matching {@link #createFitter()}.
-     * 
-     * @return the function
-     */
-    protected abstract ParametricUnivariateFunction createFunction();
     
     /**
      * Returns the min sample size.
@@ -85,25 +68,6 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
      * @return the min sampe size
      */
     protected abstract int getMinSampleSize(); 
-
-    // checkstyle: stop exception type check
-    
-    @Override
-    public double approximate(int paramValue) {
-        double result = Constants.NO_APPROXIMATION;
-        List<WeightedObservedPoint> points = obs.toList();
-        if (points.size() > getMinSampleSize()) {
-            try {
-                double[] coeff = fitter.fit(obs.toList());
-                result = function.value(paramValue, coeff);
-            } catch (Throwable t) {
-                LogManager.getLogger(getClass()).warn("During approximation: " + t.getMessage());
-            }
-        }
-        return result;
-    }
-
-    // checkstyle: resume exception type check
 
     @Override
     public File store(File folder) {
@@ -124,7 +88,7 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
     }
 
     @Override
-    protected void load(File folder) {
+    protected void doLoad(File folder) {
         File file = getFile(folder);
         if (file.exists()) {
             try (LineNumberReader in = new LineNumberReader(new FileReader(file))) {
@@ -167,6 +131,33 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
         }
         return result;
     }
+
+    /**
+     * Returns the suffix for storing the data.
+     * 
+     * @return the suffix
+     */
+    protected String getSuffix() {
+        return ".approx"; // as long as the format remains the same, the approximator may be interchangeable
+    }
+    
+    /**
+     * Returns the points as list.
+     * 
+     * @return the points
+     */
+    protected List<WeightedObservedPoint> getPoints() {
+        return obs.toList();
+    }
+    
+    /**
+     * Returns the data as point arrays.
+     * 
+     * @return x in the first array, y in the second array, length of both arrays is {@link #size()}.
+     */
+    protected double[][] getPointArrays() {
+        return obs.getPointArrays();
+    }
     
     /**
      * Returns the file name for this approximator.
@@ -175,7 +166,7 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
      * @return the file name
      */
     private File getFile(File folder) {
-        String name = getParameterName() + "-" + getObservable().name() + ".approx";
+        String name = getParameterName() + "-" + getObservable().name() + getSuffix();
         name = Constants.toFileName(name);
         return new File(folder, name);
     }
@@ -197,6 +188,15 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
             result = obs.containsSameData(a.obs);
         }
         return result;
+    }
+    
+    /**
+     * The number of data points.
+     * 
+     * @return the number of data points
+     */
+    public int size() {
+        return obs.size();
     }
     
 }

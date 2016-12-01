@@ -28,6 +28,7 @@ import eu.qualimaster.monitoring.profiling.approximation.HarmonicApacheMathAppro
 import eu.qualimaster.monitoring.profiling.approximation.IApproximator;
 import eu.qualimaster.monitoring.profiling.approximation.IApproximatorCreator;
 import eu.qualimaster.monitoring.profiling.approximation.PolynomialApacheMathApproximator;
+import eu.qualimaster.monitoring.profiling.approximation.SplineInterpolationLinearExtrapolationApproximator;
 import eu.qualimaster.observables.TimeBehavior;
 
 /**
@@ -82,6 +83,52 @@ public class ApproximatorTest {
     }
 
     /**
+     * Describes a parameter value and an expected approximation range.
+     * 
+     * @author Holger Eichelberger
+     */
+    private static class ExpectedApproximation {
+        private double minExpected;
+        private int param;
+        private double maxExpected;
+
+        /**
+         * Creates a parameter value without expected range.
+         * 
+         * @param param the parameter value
+         */
+        private ExpectedApproximation(int param) {
+            this(Double.MIN_VALUE, param, Double.MAX_VALUE);
+        }
+
+        /**
+         * Creates a parameter value with given expected range.
+         * 
+         * @param minExpected the minimum expected value
+         * @param param the parameter value
+         * @param maxExpected the maximum expected value
+         */
+        private ExpectedApproximation(double minExpected, int param, double maxExpected) {
+            this.minExpected = Math.min(minExpected, maxExpected);
+            this.param = param;
+            this.maxExpected = Math.max(minExpected, maxExpected);
+        }
+        
+        /**
+         * Asserts an approximation for the parameter value and the expected range given by this instance.
+         * 
+         * @param approx the approximator
+         * @return the approximated value
+         */
+        private double assertApproximation(IApproximator approx) {
+            double a = approx.approximate(param);
+            Assert.assertTrue("Not " + minExpected + "<=" + a + "<=" + maxExpected + " for " + param, 
+                 minExpected <= a && a <= maxExpected);
+            return a;
+        }
+    }
+
+    /**
      * Adds (param,value) to points as non-measured information.
      * 
      * @param points the points to be modified
@@ -105,23 +152,63 @@ public class ApproximatorTest {
     }
 
     /**
+     * Creates a linear dataset.
+     * 
+     * @return the linear dataset
+     */
+    private static List<Point> createLinearDataset() {
+        List<Point> data = new ArrayList<Point>();
+        add(data, 1, 100);
+        add(data, 5, 200);
+        add(data, 10, 300);
+        add(data, 15, 400);
+        return data;
+    }
+    
+    /**
+     * Creates a converging dataset.
+     * 
+     * @return a converging dataset
+     */
+    private static List<Point> createConvergingDataset() {
+        List<Point> data = new ArrayList<Point>();
+        add(data, 1, 400);
+        add(data, 5, 700);
+        add(data, 10, 900);
+        add(data, 15, 1000);
+        add(data, 20, 1050);
+        add(data, 25, 1060);
+        add(data, 30, 1062);
+        return data;
+    }
+
+    /**
+     * Creates an increasing and decreasing dataset.
+     * 
+     * @return the dataset
+     */
+    private static List<Point> createIncreasingDecreasingDataset() {
+        List<Point> data = new ArrayList<Point>();
+        add(data, 1, 400);
+        add(data, 5, 700);
+        add(data, 10, 900);
+        add(data, 15, 1000);
+        add(data, 20, 900);
+        add(data, 25, 700);
+        add(data, 30, 500);
+        return data;
+    }
+
+    
+    /**
      * Tests the Math 3 harmonic approximator.
      * 
      * @throws IOException shall not occur
      */
     @Test
     public void testHarmonicApproximator() throws IOException {
-        List<Point> data = new ArrayList<Point>();
-        add(data, 1, 100);
-        add(data, 5, 200);
-        add(data, 10, 300);
-        add(data, 15, 400);
-        add(data, 20, 300);
-        add(data, 25, 200);
-        add(data, 30, 100);
-        
-        Double res = test(HarmonicApacheMathApproximator.INSTANCE_10, data, 13);
-        System.out.println("Harmonic " + res);
+        List<Point> data = createConvergingDataset();
+        test(HarmonicApacheMathApproximator.INSTANCE_10, data, null);
     }
     
     /**
@@ -131,26 +218,56 @@ public class ApproximatorTest {
      */
     @Test
     public void testPolynomialApproximator() {
-        List<Point> data = new ArrayList<Point>();
-        add(data, 1, 100);
-        add(data, 5, 200);
-        add(data, 10, 300);
-        add(data, 15, 400);
-        
-        Double res = test(PolynomialApacheMathApproximator.INSTANCE_3, data, 3);
-        System.out.println("Polynomial " + res);
+        List<Point> data = createLinearDataset();
+        test(PolynomialApacheMathApproximator.INSTANCE_3, data, null);
     }
-    
+
+    /**
+     * Tests the Math 3 Spline approximator.
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test
+    public void testSplineApproximator() {
+        List<Point> data = createConvergingDataset();
+        List<ExpectedApproximation> exp = new ArrayList<ExpectedApproximation>();
+        // inside
+        exp.add(new ExpectedApproximation(400, 3, 700));
+        exp.add(new ExpectedApproximation(1000, 17, 1050));
+        // outside
+        exp.add(new ExpectedApproximation(0, 0, 400));
+        exp.add(new ExpectedApproximation(1062, 40, 1066));
+        test(SplineInterpolationLinearExtrapolationApproximator.INSTANCE, data, exp);
+
+        data = createLinearDataset();
+        exp.clear();
+        // inside
+        exp.add(new ExpectedApproximation(100, 3, 200));
+        exp.add(new ExpectedApproximation(300, 11, 400));
+        // outside
+        exp.add(new ExpectedApproximation(0, 0, 100));
+        exp.add(new ExpectedApproximation(400, 17, 500));
+        test(SplineInterpolationLinearExtrapolationApproximator.INSTANCE, data, exp);
+        
+        data = createIncreasingDecreasingDataset();
+        exp.clear();
+        // inside
+        exp.add(new ExpectedApproximation(400, 3, 700));
+        exp.add(new ExpectedApproximation(700, 23, 900));
+        // outside
+        exp.add(new ExpectedApproximation(0, 0, 400));
+        exp.add(new ExpectedApproximation(0, 35, 500));
+        test(SplineInterpolationLinearExtrapolationApproximator.INSTANCE, data, exp);
+    }
+
     /**
      * Tests writing, reading, updating and querying an approximator.
      * 
      * @param creator the approximator creator
      * @param data the data used for updating
-     * @param param the param used for querying (may be <b>null</b> for no querying)
-     * @return the apporoximated value (<b>null</b> if <code>param</code> was <b>null</b>)
+     * @param expectations the expected values for given input values (may be <b>null</b> for no expectations)
      */
-    private Double test(IApproximatorCreator creator, List<Point> data, Integer param) {
-        Double result = null;
+    private void test(IApproximatorCreator creator, List<Point> data, List<ExpectedApproximation> expectations) {
         File tmp = new File(FileUtils.getTempDirectory(), "approx");
         tmp.mkdirs();
         
@@ -167,15 +284,15 @@ public class ApproximatorTest {
         Assert.assertNotNull(approx2);
         Assert.assertTrue(approx2.containsSameData(approx1));
 
-        if (null != param) {
-            double v1 = approx1.approximate(param);
-            double v2 = approx2.approximate(param);
-            Assert.assertEquals(v1, v2, 0.05);
-            result = v1;
+        if (null != expectations) {
+            for (ExpectedApproximation a : expectations) {
+                double v1 = a.assertApproximation(approx1);
+                double v2 = a.assertApproximation(approx2);
+                Assert.assertEquals(v1, v2, 0.05);
+            }
         }
         
         FileUtils.deleteQuietly(tmp);
-        return result;
     }
 
 }

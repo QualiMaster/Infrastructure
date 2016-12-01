@@ -17,6 +17,7 @@ package eu.qualimaster.monitoring.profiling.approximation;
 
 import java.io.File;
 
+import eu.qualimaster.monitoring.profiling.Constants;
 import eu.qualimaster.observables.IObservable;
 
 /**
@@ -28,6 +29,7 @@ public abstract class AbstractApproximator implements IApproximator {
     
     private IObservable observable;
     private Object parameterName;
+    private boolean updated = false;
 
     /**
      * Creates an abstract approximator.
@@ -61,11 +63,62 @@ public abstract class AbstractApproximator implements IApproximator {
         return parameterName;
     }
 
+    @Override
+    public double approximate(int paramValue) {
+        double result = Constants.NO_APPROXIMATION;
+        if (wasUpdated()) {
+            updateApproximator();
+            clearUpdated();
+        }
+        return result;
+    }
+
     /**
      * Loads the approximator.
      * 
-     * @param path the path to load a persisted version from
+     * @param folder the path to load a persisted version from
+     * @see #doLoad(File)
      */
-    protected abstract void load(File path);
+    protected final void load(File folder) {
+        doLoad(folder);
+        updated();
+        updateApproximator();
+        clearUpdated();
+    }
+    
+    /**
+     * Performs the loading.
+     * 
+     * @param folder the path to load a persisted version from
+     */
+    protected abstract void doLoad(File folder);
+
+    /**
+     * Updates the approximator.
+     */
+    protected abstract void updateApproximator();
+    
+    /**
+     * Notifies that an update happened and internal approximation information must be updated as well.
+     */
+    protected void updated() {
+        updated = true;
+    }
+    
+    /**
+     * Returns whether an {@link #update(int, double, boolean)} happened in the mean time.
+     * 
+     * @return <code>true</code> if updated, <code>false</code> else
+     */
+    protected boolean wasUpdated() {
+        return updated;
+    }
+    
+    /**
+     * Clears the updated flag.
+     */
+    protected void clearUpdated() {
+        updated = false;
+    }
 
 }
