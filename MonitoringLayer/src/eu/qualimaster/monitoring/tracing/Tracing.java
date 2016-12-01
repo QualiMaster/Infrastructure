@@ -39,6 +39,7 @@ import eu.qualimaster.coordination.INameMapping.Algorithm;
 import eu.qualimaster.coordination.INameMapping.Component;
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent;
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent.DetailMode;
+import eu.qualimaster.file.Utils;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
 import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictionManager;
@@ -232,7 +233,7 @@ public class Tracing {
         if (!MonitoringConfiguration.isEmpty(logLocation)) {
             File logFile = new File(logLocation, getLogTag(prefix) + TRACE_FILE_SUFFIX);
             try {
-                FileOutputStream out = new FileOutputStream(logFile);
+                FileOutputStream out = Utils.createFileOutputStream(logFile);
                 result = new FileTrace(logFile.getAbsolutePath(), new PrintStream(out));
             } catch (IOException e) {
                 getLogger().error("cannot open output stream for trace " 
@@ -241,7 +242,7 @@ public class Tracing {
             if (createReflectionTrace) {
                 File rLogFile = new File(logLocation, getLogTag(prefix) + REFLECTION_TRACE_FILE_SUFFIX);
                 try {
-                    FileOutputStream out = new FileOutputStream(rLogFile);
+                    FileOutputStream out = Utils.createFileOutputStream(rLogFile);
                     ITrace rResult = new ReflectiveFileTrace(logFile.getAbsolutePath(), new PrintStream(out));
                     result = new DelegatingTrace(result, rResult);
                 } catch (IOException e) {
@@ -364,7 +365,7 @@ public class Tracing {
                 if (null != topology) {
                     prop.put("full.topology", topology.toString()); // debugging only
                 }
-                try (FileOutputStream fos = new FileOutputStream(file)) {
+                try (FileOutputStream fos = Utils.createFileOutputStream(file)) {
                     prop.store(fos, "pipeline state for '" + pipeline + "' saved by QM Monitoring Layer");
                     fos.close();
                 } catch (IOException e) {

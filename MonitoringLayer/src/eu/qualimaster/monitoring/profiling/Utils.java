@@ -72,7 +72,7 @@ public class Utils {
     public static void store(File file, Properties data, String comment) throws IOException {
         FileWriter fw = null;
         try {
-            fw = new FileWriter(file);
+            fw = eu.qualimaster.file.Utils.createFileWriter(file);
             data.store(fw, comment);
         } finally {
             if (null != fw) {
@@ -139,15 +139,6 @@ public class Utils {
         } catch (NumberFormatException e) {
         }
         return result;
-    }
-
-    /**
-     * Sets the default permissions for unpacked files. Just delegates to the coordination layer.
-     * 
-     * @param file the file to set the permissions for
-     */
-    public static void setDefaultPermissions(File file) {
-        eu.qualimaster.coordination.Utils.setDefaultPermissions(file);
     }
 
 }

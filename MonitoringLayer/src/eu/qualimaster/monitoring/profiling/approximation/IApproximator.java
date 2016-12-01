@@ -62,7 +62,16 @@ public interface IApproximator {
      * Stores an approximator into a given folder.
      * 
      * @param folder the folder to store into
+     * @return the file it stored into
      */
-    public void store(File folder);
-    
+    public File store(File folder);
+
+    /**
+     * Returns whether this and the given approximator contain the same data. [testing]
+     * 
+     * @param approx the approximator to compare
+     * @return <code>true</code> for the same data, <code>false</code> else
+     */
+    public boolean containsSameData(IApproximator approx);
+
 }

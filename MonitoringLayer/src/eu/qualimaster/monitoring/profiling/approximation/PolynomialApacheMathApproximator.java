@@ -52,7 +52,7 @@ public class PolynomialApacheMathApproximator extends AbstractApacheMathApproxim
      * @param observable the observable this approximator is handling
      * @param degree the degree of the polynom to fit
      */
-    protected PolynomialApacheMathApproximator(File path, Object parameterName, IObservable observable, int degree) {
+    public PolynomialApacheMathApproximator(File path, Object parameterName, IObservable observable, int degree) {
         super(path, parameterName, observable);
         this.degree = Math.max(1, degree);
     }

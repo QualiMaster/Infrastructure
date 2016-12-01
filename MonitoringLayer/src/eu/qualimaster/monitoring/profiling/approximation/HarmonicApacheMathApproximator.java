@@ -52,7 +52,7 @@ public class HarmonicApacheMathApproximator extends AbstractApacheMathApproximat
      * @param observable the observable this approximator is handling
      * @param maxIterations the maximum number of iterations for the optimization of the curve fitting
      */
-    protected HarmonicApacheMathApproximator(File path, Object parameterName, IObservable observable, 
+    public HarmonicApacheMathApproximator(File path, Object parameterName, IObservable observable, 
         int maxIterations) {
         super(path, parameterName, observable);
         this.maxIterations = Math.max(1, maxIterations);

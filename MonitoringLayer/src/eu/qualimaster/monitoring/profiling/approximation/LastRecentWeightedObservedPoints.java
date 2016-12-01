@@ -16,6 +16,8 @@
 package eu.qualimaster.monitoring.profiling.approximation;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -110,4 +112,31 @@ public class LastRecentWeightedObservedPoints {
         observations.clear();
     }
 
+    /**
+     * Returns whether this and the given data set contains the same data.
+     * 
+     * @param approx the approximator to compare with
+     * @return <code>true</code> for the same data, <code>false</code> else
+     */
+    public boolean containsSameData(LastRecentWeightedObservedPoints approx) {
+        boolean equals = false;
+        if (null != approx) {
+            Collection<WeightedObservedPoint> o1 = observations.values();
+            Collection<WeightedObservedPoint> o2 = approx.observations.values();
+            if (o1.size() == o2.size()) {
+                Iterator<WeightedObservedPoint> i1 = o1.iterator();
+                Iterator<WeightedObservedPoint> i2 = o2.iterator();
+                equals = true;
+                while (equals && i1.hasNext()) { // o1.size() == o2.size()
+                    WeightedObservedPoint p1 = i1.next();
+                    WeightedObservedPoint p2 = i2.next();
+                    equals = Math.abs(p1.getX() - p2.getX()) < 0.005;
+                    equals = Math.abs(p1.getY() - p2.getY()) < 0.005;
+                    equals = Math.abs(p1.getWeight() - p2.getWeight()) < 0.005;
+                }
+            }
+        }
+        return equals;
+    }
+    
 }

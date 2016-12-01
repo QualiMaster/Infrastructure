@@ -28,12 +28,12 @@ import org.junit.Test;
 import eu.qualimaster.coordination.IPipelineResourceUnpackingPlugin;
 import eu.qualimaster.coordination.NameMapping;
 import eu.qualimaster.coordination.PluginRegistry;
+import eu.qualimaster.file.Utils;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictionManager;
 import eu.qualimaster.monitoring.profiling.IAlgorithmProfileCreator;
 import eu.qualimaster.monitoring.profiling.PipelineProfileUnpackingPlugin;
 import eu.qualimaster.observables.TimeBehavior;
-import tests.eu.qualimaster.coordination.JarUtil;
 import tests.eu.qualimaster.coordination.NameMappingTest;
 
 /**
@@ -83,7 +83,7 @@ public class ResourceUnpackingTests {
         FileUtils.touch(new File(classes, "Test.class"));
         
         JarOutputStream jos = new JarOutputStream(new FileOutputStream(artifact));
-        JarUtil.zipAll(jos, folder);
+        Utils.zipAll(jos, folder);
         jos.close();
 
         // unpack test artifacts

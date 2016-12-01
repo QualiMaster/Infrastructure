@@ -17,7 +17,6 @@ package eu.qualimaster.monitoring.profiling.approximation;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.PrintWriter;
@@ -29,6 +28,7 @@ import org.apache.commons.math3.fitting.WeightedObservedPoint;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import eu.qualimaster.file.Utils;
 import eu.qualimaster.monitoring.profiling.Constants;
 import eu.qualimaster.observables.IObservable;
 
@@ -97,7 +97,7 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
                 double[] coeff = fitter.fit(obs.toList());
                 result = function.value(paramValue, coeff);
             } catch (Throwable t) {
-                getLogger().warn("During approximation: " + t.getMessage());
+                LogManager.getLogger(getClass()).warn("During approximation: " + t.getMessage());
             }
         }
         return result;
@@ -106,10 +106,10 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
     // checkstyle: resume exception type check
 
     @Override
-    public void store(File folder) {
+    public File store(File folder) {
         File file = getFile(folder);
-        file.getParentFile().mkdirs();
-        try (PrintWriter out = new PrintWriter(new FileWriter(file))) {
+        Utils.mkdirs(file.getParentFile());
+        try (PrintWriter out = new PrintWriter(Utils.createFileWriter(file))) {
             List<WeightedObservedPoint> points = obs.toList();
             int size = points.size();
             for (int i = 0; i < size; i++) {
@@ -120,6 +120,7 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
         } catch (IOException e) {
             getLogger().warn("While storing approximator: " + e.getMessage());
         }
+        return file;
     }
 
     @Override
@@ -156,8 +157,8 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
         String[] parts = line.split(SEPARATOR);
         try {
             if (null != parts && 3 == parts.length) {
-                result = new WeightedObservedPoint(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]), 
-                    Double.parseDouble(parts[2]));
+                result = new WeightedObservedPoint(Double.parseDouble(parts[2]), Double.parseDouble(parts[0]), 
+                    Double.parseDouble(parts[1]));
             } else {
                 throw new NumberFormatException("Format does not match in line " + line);
             }
@@ -187,5 +188,15 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
     private static Logger getLogger() {
         return LogManager.getLogger(AbstractApacheMathApproximator.class);
     }
-
+    
+    @Override
+    public boolean containsSameData(IApproximator approx) {
+        boolean result = false;
+        if (approx instanceof AbstractApacheMathApproximator) {
+            AbstractApacheMathApproximator a = (AbstractApacheMathApproximator) approx;
+            result = obs.containsSameData(a.obs);
+        }
+        return result;
+    }
+    
 }

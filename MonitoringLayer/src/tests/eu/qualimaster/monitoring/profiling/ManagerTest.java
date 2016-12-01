@@ -86,7 +86,7 @@ public class ManagerTest {
     public void after() {
         AlgorithmProfilePredictionManager.useTestData(null);
         defaultPredictionSteps();
-        FileUtils.deleteQuietly(testFolder);
+//FileUtils.deleteQuietly(testFolder);
         AlgorithmProfilePredictionManager.clear();
     }
     
