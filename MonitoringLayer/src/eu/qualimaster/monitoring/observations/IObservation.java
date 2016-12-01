@@ -134,7 +134,7 @@ public interface IObservation extends Serializable {
     /**
      * Returns the actually used component keys.
      * 
-     * @return the actually used component keys
+     * @return the actually used component keys (always a copy, an unmodifiable set or <b>null</b>)
      */
     public Set<Object> getComponentKeys();
 

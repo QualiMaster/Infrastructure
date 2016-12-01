@@ -524,8 +524,7 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
         Double result = null;
         boolean found = false;
         ComponentKey removeKey = null;
-        Set<Object> keys = new HashSet<Object>(); // concurrent...
-        keys.addAll(getComponentKeys(observable));
+        Set<Object> keys = getComponentKeys(observable);
         for (Object k : keys) {
             if (k instanceof ComponentKey) {
                 ComponentKey exKey = (ComponentKey) k;

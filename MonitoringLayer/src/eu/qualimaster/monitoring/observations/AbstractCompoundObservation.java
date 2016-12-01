@@ -311,7 +311,8 @@ public abstract class AbstractCompoundObservation implements IObservation {
     public Set<Object> getComponentKeys() {
         Set<Object> result;
         if (null == links) {
-            result = components.keySet();
+            result = new HashSet<Object>();
+            result.addAll(components.keySet());
         } else {
             result = new HashSet<Object>();
             result.addAll(components.keySet());
