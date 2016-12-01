@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 
+import eu.qualimaster.file.Utils;
+
 /**
  * Provide a data logger for writing logs into a file.
  * @author Cui Qin
@@ -20,7 +22,7 @@ public class DataLogger {
         PrintWriter writer = null;
         FileOutputStream fileOut = null;
         try {
-            fileOut = new FileOutputStream(new File(filePath), false);
+            fileOut = Utils.createFileOutputStream(new File(filePath), false);
             writer = new PrintWriter(fileOut);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -44,7 +46,7 @@ public class DataLogger {
                 file = new File(userhome);
             }
             File logFile = new File(file, fileName);
-            fileOut = new FileOutputStream(logFile, false);
+            fileOut = Utils.createFileOutputStream(logFile, false);
             writer = new PrintWriter(fileOut);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
