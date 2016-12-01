@@ -23,6 +23,7 @@ import java.io.PrintStream;
 import org.apache.log4j.LogManager;
 
 import eu.qualimaster.adaptation.AdaptationConfiguration;
+import eu.qualimaster.file.Utils;
 import net.ssehub.easy.instantiation.core.model.buildlangModel.ITracer;
 
 /**
@@ -44,7 +45,7 @@ public class AdaptationLoggerFactory {
         File f = getAdaptationLogFile();
         if (null != f) {
             try {
-                FileOutputStream fos = new FileOutputStream(f);
+                FileOutputStream fos = Utils.createFileOutputStream(f);
                 logger = new AdaptationLoggerFile(new PrintStream(fos));
             } catch (IOException e) {
                 LogManager.getLogger(AdaptationLoggerFactory.class).error("While creating adaptation logger " 
