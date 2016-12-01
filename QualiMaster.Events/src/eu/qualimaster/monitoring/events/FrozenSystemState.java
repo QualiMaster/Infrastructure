@@ -27,6 +27,7 @@ import java.util.Properties;
 import eu.qualimaster.common.QMGenerics;
 import eu.qualimaster.common.QMInternal;
 import eu.qualimaster.common.QMSupport;
+import eu.qualimaster.file.Utils;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.ResourceUsage;
 
@@ -441,7 +442,7 @@ public class FrozenSystemState implements Serializable {
     @QMInternal
     public void store(File file) throws IOException {
         Properties prop = toProperties();
-        FileWriter out = new FileWriter(file);
+        FileWriter out = Utils.createFileWriter(file);
         prop.store(out, "");
         out.close();
     }
