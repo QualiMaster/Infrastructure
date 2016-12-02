@@ -210,6 +210,10 @@ public class TestTracerFactory extends TracerFactory {
         public void visitScriptBody(Script arg0, RuntimeEnvironment arg1) {
         }
         
+        @Override
+        public void enable(boolean enable) {
+        }
+        
     }
 
 }
