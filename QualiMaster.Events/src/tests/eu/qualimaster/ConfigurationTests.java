@@ -72,6 +72,8 @@ public class ConfigurationTests {
         Assert.assertEquals(Configuration.DEFAULT_RETRY_INTERVAL_ZOOKEEPER, Configuration.getZookeeperRetryInterval());
         Assert.assertEquals(Configuration.DEFAULT_RETRY_TIMES_ZOOKEEPER, Configuration.getZookeeperRetryTimes());
         Assert.assertEquals(Configuration.DEFAULT_INIT_MODE, Configuration.getInitializationMode());
+        Assert.assertEquals(Configuration.DEFAULT_MONITORING_VOLUME_ENABLED, 
+            Configuration.enableVolumeMonitoring());
     }
 
     /**

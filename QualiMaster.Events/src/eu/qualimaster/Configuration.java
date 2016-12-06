@@ -30,8 +30,8 @@ import eu.qualimaster.infrastructure.InitializationMode;
  */
 public class Configuration {
     
-    // TODO let's see whether we can unify this transparently with the Storm configuration if possible somehow 
-    //      (may run on another machine!)
+    // let's see whether we can unify this transparently with the Storm configuration if possible somehow 
+    // (may run on another machine!)
     
     /**
      * An empty return value.
@@ -83,10 +83,6 @@ public class Configuration {
      */
     public static final String DEFAULT_EVENT_DISABLE_LOGGING = EMPTY_VALUE;
 
-    // ----------------------------------------------
-    
-    
-    
     /**
      * Denotes the nimbus host setting (String).
      */
@@ -169,7 +165,9 @@ public class Configuration {
      * The default value for {@link #TIME_SHUTDOWN_EVENTS} in seconds (Value {@value}).
      */
     public static final int DEFAULT_TIME_SHUTDOWN_EVENTS = 300;
-    
+
+    // worker settings
+
     /**
      * The initialization mode for the configuration model.
      */
@@ -179,6 +177,18 @@ public class Configuration {
      * The default value for {@link #INIT_MODE}.
      */
     public static final InitializationMode DEFAULT_INIT_MODE = InitializationMode.ADAPTIVE;
+    
+    /**
+     * Denotes whether (data item transfer) volume monitoring shall be monitored on workers. 
+     * Helps performing experiments.
+     */
+    public static final String MONITORING_VOLUME_ENABLED = "monitoring.volume.enabled";
+
+    /**
+     * The default value for {@link #VOLUME_MONITORING_ENABLED} ({@value}}).
+     */
+    public static final boolean DEFAULT_MONITORING_VOLUME_ENABLED = true;
+
     
     public static final PropertyReader<InitializationMode> INIT_MODE_READER = new PropertyReader<InitializationMode>() {
 
@@ -334,6 +344,8 @@ public class Configuration {
         = createStringOption(PIPELINE_INTERCONN_PORTS, DEFAULT_PIPELINE_INTERCONN_PORTS);
     private static ConfigurationOption<InitializationMode> initMode 
         = new ConfigurationOption<InitializationMode>(INIT_MODE, DEFAULT_INIT_MODE, INIT_MODE_READER);
+    private static ConfigurationOption<Boolean> enableVolumeMonitoring
+        = createBooleanOption(MONITORING_VOLUME_ENABLED, DEFAULT_MONITORING_VOLUME_ENABLED);
     
     /**
      * Prevents external creation / static class.
@@ -717,6 +729,7 @@ public class Configuration {
         options.setOption(Configuration.PORT_EVENT, getEventPort());
         options.setOption(Configuration.EVENT_DISABLE_LOGGING, getEventDisableLogging());
         options.setOption(Configuration.PIPELINE_INTERCONN_PORTS, getPipelinePorts());
+        options.setOption(Configuration.MONITORING_VOLUME_ENABLED, enableVolumeMonitoring());
     }
 
     /**
@@ -767,9 +780,31 @@ public class Configuration {
         if (null != conf.get(PIPELINE_INTERCONN_PORTS)) {
             prop.put(PIPELINE_INTERCONN_PORTS, conf.get(PIPELINE_INTERCONN_PORTS));
         }
+        // TODO use transfer above
+        transfer(conf, prop, MONITORING_VOLUME_ENABLED, false);
         if (prop.size() > 0) {
             System.out.println("Reconfiguring infrastructure settings: " + prop + " from " + conf);
             configure(prop, false);
+        }
+    }
+    
+    /**
+     * Transfers the setting <code>key</code> from <code>conf</code> to <code>prop</code>. Applies <code>toString</code>
+     * if requested.
+     * 
+     * @param conf the storm configuration as map
+     * @param prop the property object
+     * @param key the configuration key
+     * @param toString apply <code>toString</code> to the value stored in <code>conf</code>
+     */
+    @SuppressWarnings({ "rawtypes" })
+    private static void transfer(Map conf, Properties prop, String key, boolean toString) {
+        if (null != conf.get(key)) {
+            Object val = conf.get(key);
+            if (toString) {
+                val = val.toString();
+            }
+            prop.put(key, val);
         }
     }
     
@@ -800,6 +835,16 @@ public class Configuration {
      */
     public static InitializationMode getInitializationMode() {
         return initMode.getValue();
+    }
+
+
+    /**
+     * Returns whether (data item transfer) volume shall be monitored on workers. Intended to enable experiments.
+     * 
+     * @return <code>true</code> for enabled, <code>false</code> else
+     */
+    public static boolean enableVolumeMonitoring() {
+        return enableVolumeMonitoring.getValue();
     }
 
 }
