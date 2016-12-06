@@ -95,7 +95,9 @@ public class StormSignalConnection extends AbstractSignalConnection {
 
     /**
      * Configures the QM event bus from the Storm configuration if possible and
-     * installs the QM specific logging ({@link QmLogging#install()}).
+     * installs the QM specific logging ({@link QmLogging#install()}). Call before 
+     * {@link Monitor#Monitor(String, String, boolean, backtype.storm.task.TopologyContext)} so that 
+     * {@link Configuration#enableVolumeMonitoring()} receives the correct value from <code>conf</code>.
      * 
      * @param conf the storm configuration
      */

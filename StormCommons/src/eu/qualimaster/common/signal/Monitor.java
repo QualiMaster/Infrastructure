@@ -29,6 +29,7 @@ import backtype.storm.hooks.info.SpoutFailInfo;
 import backtype.storm.task.TopologyContext;
 import de.uni_hildesheim.sse.system.GathererFactory;
 import de.uni_hildesheim.sse.system.IMemoryDataGatherer;
+import eu.qualimaster.Configuration;
 import eu.qualimaster.base.algorithm.IncrementalAverage;
 import eu.qualimaster.common.monitoring.MonitoringPluginRegistry;
 import eu.qualimaster.events.AbstractTimerEventHandler;
@@ -71,12 +72,13 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     private AtomicLong itemsVolume = new AtomicLong(-1);
     private boolean includeItems;
     private TimerEventHandler timerHandler;
-    private boolean collectVolume = true; //false; // TODO activate by default?
+    private boolean collectVolume = Configuration.enableVolumeMonitoring();
     private boolean initialized = false;
     
     /**
      * Creates a monitor and sends once the executors resource usage event. Call {@link #start(boolean)} as soon as the 
-     * underlying node is ready for processing.
+     * underlying node is ready for processing. {@link StormSignalConnection#configureEventBus(Map)} shall be called 
+     * before so that {@link Configuration#enableVolumeMonitoring()} has been set for this JVM.
      * 
      * @param namespace the namespace (pipeline name)
      * @param name the element name
