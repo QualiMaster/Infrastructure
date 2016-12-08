@@ -44,6 +44,7 @@ public class ReplayMechanism implements IDataSource {
     private long offsetInMillis; // Offset in milliseconds between first timestamp and now
     private long prevTimeStampNow;
     private boolean shallConnect;
+    private boolean selfConnect = true; // legacy setting
 
     // Throughput measurement
     private long monitoringTimestamp;
@@ -110,10 +111,17 @@ public class ReplayMechanism implements IDataSource {
     public void setSource(IReplaySource source) {
         if (null != source) {
             this.source = source;
-            if (shallConnect) {
+            if (shallConnect && selfConnect) {
                 connect();
             }
         }
+    }
+
+    /**
+     * Forces the replay to not try connecting itself. Required for profiling in DML autoconnect mode.
+     */
+    public void forceAutoconnect() {
+        this.selfConnect = false;
     }
     
     /**
