@@ -111,7 +111,9 @@ public class ReplayMechanism implements IDataSource {
     public void setSource(IReplaySource source) {
         if (null != source) {
             this.source = source;
+            logger.info("Defined source " + source.getClass());
             if (shallConnect && selfConnect) {
+                logger.info("Self-connect from set source");
                 connect();
             }
         }
@@ -231,7 +233,10 @@ public class ReplayMechanism implements IDataSource {
                 monitorMe();
                 return newline;
             } else {
-                endOfData = true;
+                if (selfConnect || null != brForData) {
+                    // self connect and no data *or* not auto-connect and connected but no data
+                    endOfData = true;
+                }
             }
         } catch (IOException e) {
             logger.error("Simulator Error : " + e.getMessage());
@@ -296,13 +301,16 @@ public class ReplayMechanism implements IDataSource {
                 logger.error("Simulator Error : " + e.getMessage());
                 throw new DefaultModeException("Simulator Error : " + e.getMessage());
             }
+            logger.info("Connected.");
         } else {
             shallConnect = true;
+            logger.info("Switching to shall connect " + shallConnect);
         }
     }
 
     @Override
     public void disconnect() {
+        logger.info("Trying to disconnect " + brForData);
         if (null != brForData) {
             try {
                 brForData.close();
@@ -312,6 +320,7 @@ public class ReplayMechanism implements IDataSource {
         }
         brForData = null;
         shallConnect = false;
+        logger.info("Disconnected");
     }
 
     @Override
