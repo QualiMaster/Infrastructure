@@ -21,6 +21,7 @@ import java.util.Arrays;
  * Creates a fair shedding pattern by distributing the items to shed over a pattern array of given size. Calculation
  * effort is only needed during configuring the shedder while shedding itself is just a lookup into the pattern.
  * 
+ * @author Claudia Niederee
  * @author Holger Eichelberger
  */
 public abstract class AbstractFairPatternShedder extends LoadShedder<Object> {
