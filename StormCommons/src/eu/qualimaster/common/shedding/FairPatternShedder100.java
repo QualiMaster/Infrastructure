@@ -15,30 +15,20 @@
  */
 package eu.qualimaster.common.shedding;
 
-import eu.qualimaster.common.QMSupport;
-
 /**
- * The default schedders implemented in this package.
+ * A fair pattern shedder of pattern size 100.
  * 
  * @author Holger Eichelberger
  */
-@QMSupport
-public enum DefaultLoadShedders implements ILoadShedderDescriptor {
+public class FairPatternShedder100 extends AbstractFairPatternShedder {
 
-    NO_SHEDDING,
-    NTH_ITEM,
-    PROBABILISTIC,
-    FAIR_PATTERN;
-    
+    private static final long serialVersionUID = 620505219855363596L;
+
     /**
-     * Creates a load schedder constant.
+     * Creates the shedder.
      */
-    private DefaultLoadShedders() {
+    public FairPatternShedder100() {
+        super(100);
     }
 
-    @Override
-    public String getIdentifier() {
-        return getClass().getName() + "." + name();
-    }
-    
 }

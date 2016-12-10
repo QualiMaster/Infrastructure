@@ -32,7 +32,9 @@ public class LoadShedderFactory {
     
     static {
         // don't register the no shedder as it is default anyway
-        register(DefaultLoadShedders.NTH_ITEM, NthItemSchedder.class);
+        register(DefaultLoadShedders.NTH_ITEM, NthItemShedder.class);
+        register(DefaultLoadShedders.PROBABILISTIC, ProbabilisticShedder.class);
+        register(DefaultLoadShedders.FAIR_PATTERN, FairPatternShedder100.class);
     }
     
     /**

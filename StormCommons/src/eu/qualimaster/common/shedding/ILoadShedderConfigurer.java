@@ -43,6 +43,24 @@ public interface ILoadShedderConfigurer {
     public int getIntParameter(ILoadSheddingParameter param, int dflt);
 
     /**
+     * Returns the value of a double parameter.
+     * 
+     * @param name the name of the parameter
+     * @param dflt the default value to be returned if the parameter is not specified / cannot be read
+     * @return the value
+     */
+    public double getDoubleParameter(String name, double dflt);
+
+    /**
+     * Returns the value of a double parameter.
+     * 
+     * @param param the parameter identifier
+     * @param dflt the default value to be returned if the parameter is not specified / cannot be read
+     * @return the value
+     */
+    public double getDoubleParameter(ILoadSheddingParameter param, double dflt);
+
+    /**
      * Returns the value of a parameter.
      * 
      * @param param the identifier of the parameter

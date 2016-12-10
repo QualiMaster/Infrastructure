@@ -16,34 +16,28 @@
 package eu.qualimaster.common.shedding;
 
 /**
- * Creates a static shedder for the n-th item passing. Starts with deactivated.
+ * Creates a static shedder for random shedding if the random number is less than a given percentage / proability. 
+ * Starts deactivated.
  * 
  * @author Holger Eichelberger
  */
-public class NthItemSchedder extends LoadShedder<Object> {
+public class ProbabilisticShedder extends LoadShedder<Object> {
 
-    private static final long serialVersionUID = -3550347502932196122L;
-    private int counter;
-    private int limit;
+    private static final long serialVersionUID = -8297254413874028411L;
+    private double percentage;
 
     /**
      * Creates a shedder instance.
      */
-    public NthItemSchedder() {
-        super(DefaultLoadShedders.NTH_ITEM, Object.class, DefaultLoadSheddingParameter.NTH_TUPLE);
+    public ProbabilisticShedder() {
+        super(DefaultLoadShedders.PROBABILISTIC, Object.class, DefaultLoadSheddingParameter.PROBABILITY);
     }
 
     @Override
     protected boolean isEnabledImpl(Object tuple) {
         boolean result;
-        if (limit >= 0) {
-            counter++;
-            if (counter != limit) {
-                result = true;
-            } else {
-                result = false;
-                counter = 0;
-            }
+        if (percentage > 0) {
+            result = Math.random() >= percentage;
         } else { // illegal limit, let all pass
             result = true;
         }
@@ -52,7 +46,7 @@ public class NthItemSchedder extends LoadShedder<Object> {
     
     @Override
     public void configure(ILoadShedderConfigurer configurer) {
-        limit = configurer.getIntParameter(DefaultLoadSheddingParameter.NTH_TUPLE, 0);
+        percentage = configurer.getDoubleParameter(DefaultLoadSheddingParameter.PROBABILITY, 0);
     }
 
 }

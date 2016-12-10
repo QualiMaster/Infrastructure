@@ -85,6 +85,26 @@ public class LoadSheddingSignal extends AbstractTopologyExecutorSignal implement
     }
 
     @Override
+    public double getDoubleParameter(String name, double dflt) {
+        double result = dflt;
+        Serializable tmp = parameter.get(name);
+        if (tmp instanceof Double) {
+            result = (Double) tmp;
+        } else if (null != tmp) {
+            try {
+                result = Double.parseDouble(tmp.toString().trim());
+            } catch (NumberFormatException e) {
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public double getDoubleParameter(ILoadSheddingParameter param, double dflt) {
+        return getDoubleParameter(param.name(), dflt);
+    }
+    
+    @Override
     public Serializable getParameter(ILoadSheddingParameter param) {
         return getParameter(param.name());
     }
