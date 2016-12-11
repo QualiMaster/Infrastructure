@@ -129,7 +129,40 @@ public class TupleSenderAndReceiverTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
-      
+        
+        testSwitchTupleReceiver(swiSer);
+    }
+    
+    /**
+     * Test sending only switch tuple {@link ISwitchTuple}.
+     * @param swiSer the {@link ISwitchTuple} serializer
+     */
+    public void testSwitchTupleReceiver(ISwitchTupleSerializer swiSer) {
+        int port = 8998;
+        //send only ISwitchTuple
+        TupleReceiverHandler swiHandler = new TupleReceiverHandler(swiSer, syn);        
+        TupleReceiverServer swiServer = new TupleReceiverServer(swiHandler, port);
+        swiServer.start();
+        System.out.println("Switch Server is started...");
+        
+        TupleSender client = new TupleSender("localhost", port);
+        
+        sendSwitchTuple(client, swiSer, 10);
+        
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e1) {
+            e1.printStackTrace();
+        }
+        
+        client.stop();
+        
+        try {
+            swiHandler.stop();
+            //swiServer.stop();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     /**
      * Sends general tuples based on the given amount.
