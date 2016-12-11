@@ -28,6 +28,16 @@ public enum DefaultLoadSheddingParameter implements ILoadSheddingParameter {
     /**
      * Shed the n-th tuple (Integer, disables if 0 or negative).
      */
-    NTH_TUPLE;
+    NTH_TUPLE,
+    
+    /**
+     * Shed with the given probability of tuples (Double, disables if 0 or negative). Shedding value range (0;1);
+     */
+    PROBABILITY,
+
+    /**
+     * Shed with the given ratio of tuples (Double, disables if 0 or negative). Shedding value range (0;1);
+     */
+    RATIO;
     
 }
