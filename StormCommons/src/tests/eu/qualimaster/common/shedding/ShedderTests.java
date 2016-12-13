@@ -24,11 +24,14 @@ import org.junit.Test;
 
 import eu.qualimaster.common.shedding.DefaultLoadShedders;
 import eu.qualimaster.common.shedding.DefaultLoadSheddingParameter;
+import eu.qualimaster.common.shedding.FairPatternShedder100;
 import eu.qualimaster.common.shedding.ILoadShedderConfigurer;
 import eu.qualimaster.common.shedding.ILoadShedderDescriptor;
 import eu.qualimaster.common.shedding.ILoadSheddingParameter;
 import eu.qualimaster.common.shedding.LoadShedder;
 import eu.qualimaster.common.shedding.LoadShedderFactory;
+import eu.qualimaster.common.shedding.NthItemShedder;
+import eu.qualimaster.common.shedding.ProbabilisticShedder;
 import eu.qualimaster.common.signal.LoadSheddingSignal;
 
 /**
@@ -98,6 +101,19 @@ public class ShedderTests {
     }
 
     /**
+     * Tests the event-based creation of the fair pattern shedder.
+     */
+    @Test
+    public void testNthItemShedderCreation() {
+        assertShedderCreation(DefaultLoadShedders.NTH_ITEM.name(), 
+            DefaultLoadSheddingParameter.NTH_TUPLE.name(), 3, NthItemShedder.class);
+        assertShedderCreation(DefaultLoadShedders.NTH_ITEM.getIdentifier(), 
+            DefaultLoadSheddingParameter.NTH_TUPLE.name(), 4, NthItemShedder.class);
+        assertShedderCreation(NthItemShedder.class.getName(), 
+            DefaultLoadSheddingParameter.NTH_TUPLE.name(), 5, NthItemShedder.class);
+    }
+
+    /**
      * Tests the probabilistic shedder.
      */
     @Test
@@ -132,6 +148,18 @@ public class ShedderTests {
         }
     }
 
+    /**
+     * Tests the event-based creation of the fair pattern shedder.
+     */
+    @Test
+    public void testProbabilisticShedderCreation() {
+        assertShedderCreation(DefaultLoadShedders.PROBABILISTIC.name(), 
+             DefaultLoadSheddingParameter.PROBABILITY.name(), 0.3, ProbabilisticShedder.class);
+        assertShedderCreation(DefaultLoadShedders.PROBABILISTIC.getIdentifier(), 
+             DefaultLoadSheddingParameter.PROBABILITY.name(), 0.4, ProbabilisticShedder.class);
+        assertShedderCreation(ProbabilisticShedder.class.getName(), 
+             DefaultLoadSheddingParameter.PROBABILITY.name(), 0.5, ProbabilisticShedder.class);
+    }
     
     /**
      * Tests the fair pattern shedder.
@@ -179,6 +207,41 @@ public class ShedderTests {
             int expected = (int) Math.abs((count - enabled) - (count * probability));
             Assert.assertTrue("enabled " + enabled + " count " + count + " expected " + expected, expected <= 2);
         }
+    }
+    
+    /**
+     * Tests the event-based creation of the fair pattern shedder.
+     */
+    @Test
+    public void testFairPatternShedder100Creation() {
+        assertShedderCreation(DefaultLoadShedders.FAIR_PATTERN.name(), 
+            DefaultLoadSheddingParameter.RATIO.name(), 0.3, FairPatternShedder100.class);
+        assertShedderCreation(DefaultLoadShedders.FAIR_PATTERN.getIdentifier(), 
+            DefaultLoadSheddingParameter.RATIO.name(), 0.4, FairPatternShedder100.class);
+        assertShedderCreation(FairPatternShedder100.class.getName(), 
+            DefaultLoadSheddingParameter.RATIO.name(), 0.5, FairPatternShedder100.class);
+    }
+    
+    /**
+     * Asserts a shedder creation. Intentionally use strings.
+     * 
+     * @param shedder the shedder name
+     * @param parameter the shedder parameter
+     * @param paramValue the parameter value
+     * @param cls the expected class
+     */
+    private void assertShedderCreation(String shedder, String parameter, Serializable paramValue, 
+        Class<? extends LoadShedder<?>> cls) {
+        // intentionally use strings, "go" the way over signal as in the infrastructure
+        Map<String, Serializable> param = new HashMap<String, Serializable>();
+        param.put(parameter, paramValue);
+        LoadSheddingSignal signal = new LoadSheddingSignal("", "", shedder, param, null);
+        System.out.println(signal);
+
+        LoadShedder<?> shedderInst = LoadShedderFactory.createShedder(signal.getShedder());
+        Assert.assertTrue("wrong instance " + shedderInst.getClass().getName(), cls.isInstance(shedderInst));
+        shedderInst.configure(signal);
+        Assert.assertEquals(param, shedderInst.getStringConfiguration());
     }
 
 }

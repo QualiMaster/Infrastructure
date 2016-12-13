@@ -40,5 +40,10 @@ public enum DefaultLoadShedders implements ILoadShedderDescriptor {
     public String getIdentifier() {
         return getClass().getName() + "." + name();
     }
+
+    @Override
+    public String getShortName() {
+        return name();
+    }
     
 }

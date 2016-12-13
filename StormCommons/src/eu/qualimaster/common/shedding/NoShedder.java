@@ -15,6 +15,10 @@
  */
 package eu.qualimaster.common.shedding;
 
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * A dummy shedder that does no shadding.
  * 
@@ -39,6 +43,11 @@ public class NoShedder extends LoadShedder<Object> {
 
     @Override
     public void configure(ILoadShedderConfigurer configurer) {
+    }
+
+    @Override
+    public Map<ILoadSheddingParameter, Serializable> getConfiguration() {
+        return new HashMap<ILoadSheddingParameter, Serializable>();
     }
 
 }

@@ -16,7 +16,9 @@
 package eu.qualimaster.common.shedding;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -51,6 +53,11 @@ public abstract class LoadShedder<T> implements Serializable {
             @Override
             public String getIdentifier() {
                 return identifier;
+            }
+
+            @Override
+            public String getShortName() {
+                return null;
             }
         }, tupleType);
     }
@@ -127,5 +134,39 @@ public abstract class LoadShedder<T> implements Serializable {
      * @param configurer the configurer containing configuration information
      */
     public abstract void configure(ILoadShedderConfigurer configurer);
+    
+    /**
+     * Returns the actual configuration of this shedder.
+     * 
+     * @return the configuration in terms of parameters 
+     */
+    public abstract Map<ILoadSheddingParameter, Serializable> getConfiguration();
+
+    /**
+     * Convenience method to create a configuration map for one parameter.
+     * 
+     * @param parameter the parameter
+     * @param value the value
+     * @return the configuration map
+     */
+    protected static Map<ILoadSheddingParameter, Serializable> getConfiguration(ILoadSheddingParameter parameter, 
+        Serializable value) {
+        Map<ILoadSheddingParameter, Serializable> result = new HashMap<ILoadSheddingParameter, Serializable>();
+        result.put(parameter, value);
+        return result;
+    }
+    
+    /**
+     * Returns the actual configuration of this shedder in terms of the names of the parameters (strings).
+     * 
+     * @return the converted configuration
+     */
+    public final Map<String, Serializable> getStringConfiguration() {
+        Map<String, Serializable> result = new HashMap<String, Serializable>();
+        for (Map.Entry<ILoadSheddingParameter, Serializable> e : getConfiguration().entrySet()) {
+            result.put(e.getKey().name(), e.getValue());
+        }
+        return result;
+    }
     
 }
