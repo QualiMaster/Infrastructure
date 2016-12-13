@@ -58,6 +58,18 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
         this.syn = syn;
     } 
     
+    /**
+     * Create a handler receiving the tuples only in {@link ISwitchTuple} type and storing received tuples 
+     * in the given queue.
+     * @param swiSer the serializer for the general tuple {@link ISwitchTuple}
+     * @param syn the queue for storing tuples
+     */
+    public TupleReceiverHandler(ISwitchTupleSerializer swiSer, SynchronizedQueue<IGeneralTuple> syn) {
+        this.swiSer = swiSer;
+        this.syn = syn;
+        isGeneralTuple = false;
+    }
+    
     @Override
     public void run() {
         while (cont && kryoInput != null) {

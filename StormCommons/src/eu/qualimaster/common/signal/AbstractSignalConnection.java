@@ -103,16 +103,14 @@ public abstract class AbstractSignalConnection implements Watcher {
             } catch (Exception ex) {
                 LOGGER.error("Error renewing watch." + ex.getMessage());
             }
-    
+            String wePath = we.getPath();            
             switch (we.getType()) {
             case NodeCreated:
-                LOGGER.info("Node created.");
+                LOGGER.info("Node created." + wePath);
                 break;
             case NodeDataChanged:
-                LOGGER.info("Received signal.");
+                LOGGER.info("Received signal." + wePath);
                 try {
-                    String wePath = we.getPath();
-                    LOGGER.info("The path is " + wePath);
                     byte[] payload = client.getData().forPath(wePath);
                     this.listener.onSignal(payload);
                 } catch (Exception e) {
@@ -120,7 +118,7 @@ public abstract class AbstractSignalConnection implements Watcher {
                 }
                 break;
             case NodeDeleted:
-                LOGGER.info("NodeDeleted");
+                LOGGER.info("NodeDeleted: " + wePath);
                 break;
             case None:
                 break;
@@ -160,6 +158,7 @@ public abstract class AbstractSignalConnection implements Watcher {
      * Closes the connection.
      */
     public void close() {
+        LOGGER.info("Closing client " + getWatchedPath());
         if (Configuration.getPipelineSignalsCurator()) {
             client.clearWatcherReferences(this);
             client.close();

@@ -22,7 +22,10 @@ public class DataLogger {
         PrintWriter writer = null;
         FileOutputStream fileOut = null;
         try {
-            fileOut = Utils.createFileOutputStream(new File(filePath), false);
+            File file = new File(filePath);
+            file.setReadable(true, false);
+            file.setWritable(true, false);
+            fileOut = Utils.createFileOutputStream(file, false);
             writer = new PrintWriter(fileOut);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -46,6 +49,8 @@ public class DataLogger {
                 file = new File(userhome);
             }
             File logFile = new File(file, fileName);
+            logFile.setReadable(true, false);
+            logFile.setExecutable(true, false);
             fileOut = Utils.createFileOutputStream(logFile, false);
             writer = new PrintWriter(fileOut);
         } catch (FileNotFoundException e) {
