@@ -34,6 +34,7 @@ import eu.qualimaster.coordination.RepositoryConnector.Models;
 import eu.qualimaster.coordination.RepositoryConnector.Phase;
 import eu.qualimaster.easy.extension.QmConstants;
 import eu.qualimaster.easy.extension.internal.PipelineHelper;
+import eu.qualimaster.easy.extension.internal.VariableHelper;
 import eu.qualimaster.monitoring.topology.PipelineTopology;
 import eu.qualimaster.monitoring.topology.PipelineTopology.Processor;
 import eu.qualimaster.monitoring.topology.PipelineTopology.Stream;
@@ -53,7 +54,15 @@ import backtype.storm.generated.StormTopology;
 import backtype.storm.generated.TopologyInfo;
 
 /**
- * Utility functions, in particular for building up a pipeline topology.
+ * Utility functions, in particular for building up a pipeline topology. Basic topology information is provided by 
+ * Storm (topology builder), but also the mapping and the pipeline configuration are needed to cover four cases. Basic
+ * situation in the configuration is <code>fam - next</code>.
+ * <ol>
+ *   <li>Simple Java algorithm: Covered by Storm topology</li>
+ *   <li>Hardware integration sub-topology: <code>fam - sender = receiver - next</code></li>
+ *   <li>Tight sub-topology integration: <code>fam = S1 - S2 = next</code></li>
+ *   <li>Loose sub-topology integration: <code>fam = receiver - S1 - S2 - sender = next</code></li>
+ * </ol>
  * 
  * @author Holger Eichelberger
  */
@@ -179,28 +188,72 @@ public class Utils {
         return end - start + 1;
     }
     
+    // checkstyle: stop parameter number check
+    
     /**
      * Creates the streams for <code>common</code>.
      * 
      * @param procs already known processors
      * @param originName the name of the origin processor
      * @param common the common instance to create streams for
+     * @param cfg configuration
+     * @param hwAlgType the hardware algorithm type
      * @param mapping the name mapping
      */
     private static void createStreams(Map<String, StormProcessor> procs, String originName, 
-        ComponentCommon common, INameMapping mapping) {
+        ComponentCommon common, Configuration cfg, IDatatype hwAlgType, INameMapping mapping) {
         StormProcessor target = getProcessor(procs, originName);
         if (null != target) {
             for (Map.Entry<GlobalStreamId, Grouping> grouping : common.get_inputs().entrySet()) {
                 GlobalStreamId id = grouping.getKey();
                 StormProcessor origin = getProcessor(procs, mapName(mapping, id.get_componentId()));
                 if (null != origin) {
-                    Stream stream = new Stream(id.get_streamId(), origin, target);
-                    origin.addOutput(stream);
-                    target.addInput(stream);
+                    if (!leaveOutConnection(mapping, origin, cfg, hwAlgType)) {
+                        Stream stream = new Stream(id.get_streamId(), origin, target);
+                        origin.addOutput(stream);
+                        target.addInput(stream);
+                    }
                 }
             }
         }
+    }
+    
+    // checkstyle: resume parameter number check
+    
+    /**
+     * Returns whether a connection from <code>origin</code> should be left out, e.g., due to sub-topology cases 2-4.
+     * Don't leave out connections in case of simple java algorithms.
+     * 
+     * @param mapping the mapping
+     * @param origin the origin node
+     * @param cfg the configuraiton
+     * @param hwAlgType the hardware algorithm type
+     * @return <code>true</code> to leave out the connection, <code>false</code> else
+     */
+    private static boolean leaveOutConnection(INameMapping mapping, StormProcessor origin, Configuration cfg, 
+        IDatatype hwAlgType) {
+        boolean leaveOutConnection = false;
+        Component mComponent = mapping.getPipelineNodeComponent(origin.getName());
+        if (null != mComponent) {
+            // don't leave out connection if we have a simple Java algorithm - an algorithm without components 
+            Collection<String> alts = mComponent.getAlternatives();
+            if (null != alts && alts.size() > 0) {
+                //int countSubTopos = 0;
+                leaveOutConnection = true; // case 1-4
+                for (String alt : alts) {
+                    Algorithm alg = mapping.getAlgorithm(alt);
+                    if (null != alg) {
+                        if (alg.getComponents().isEmpty()) { // case 1 (plain java)
+                            leaveOutConnection = false;
+                        } else { // case 2 (HW-alg)
+                            IDecisionVariable algVar = PipelineHelper.obtainAlgorithmByName(cfg, alg.getName());
+                            leaveOutConnection = !isAssignable(hwAlgType, algVar);
+                        }
+                    }
+                }
+            }
+        }
+        return leaveOutConnection;
     }
     
     /**
@@ -262,14 +315,16 @@ public class Utils {
      * @param <T> the entry type of <code>entries</code>
      * @param mapping the name mapping
      * @param entries the entries to process
+     * @param cfg configuration
+     * @param hwAlgType the hardware algorithm type
      * @param procs the processors to modify as a side effect
      */
     private static <T> void createStreams(INameMapping mapping, Set<Map.Entry<String, T>> entries, 
-        Map<String, StormProcessor> procs) {
+        Configuration cfg, IDatatype hwAlgType, Map<String, StormProcessor> procs) {
         for (Map.Entry<String, T> entry : entries) {
             ComponentCommon common = getComponentCommon(entry.getValue());
             if (null != common) {
-                createStreams(procs, mapName(mapping, entry), common, mapping);
+                createStreams(procs, mapName(mapping, entry), common, cfg, hwAlgType, mapping);
             }
         }
     }
@@ -320,18 +375,40 @@ public class Utils {
             executors.putAll(collectExecutors(topoInfo));
         }
         
+        boolean done = false;
+        Configuration cfg = null;
+        IDatatype hwAlgType = null;
+        Models models = RepositoryConnector.getModels(Phase.MONITORING);
+        if (null != models) {
+            cfg = models.getConfiguration();
+            if (null != cfg) {
+                try {
+                    hwAlgType = ModelQuery.findType(cfg.getProject(), QmConstants.TYPE_HARDWARE_ALGORITHM, null);
+                } catch (ModelQueryException e) {
+                    // hwAlgType = null;
+                }
+                done = true;
+            }
+        }
+        if (!done) {
+            getLogger().error("Cannot complete topology as configuration model was not (completely) loaded."); 
+        }
+        
         Map<String, StormProcessor> procs = new HashMap<String, StormProcessor>();
         for (StormTopology topo: topologies.keySet()) {
             // create the processors first, SpoutSpec and Bolt do not have a common interface to access ComponentCommon
             createProcessors(mapping, executors, topo.get_spouts().entrySet(), procs, true);
             createProcessors(mapping, executors, topo.get_bolts().entrySet(), procs, false);
             // create then the flows, assuming that the Storm topology is consistent
-            createStreams(mapping, topo.get_spouts().entrySet(), procs);
-            createStreams(mapping, topo.get_bolts().entrySet(), procs);
+            createStreams(mapping, topo.get_spouts().entrySet(), cfg, hwAlgType, procs);
+            createStreams(mapping, topo.get_bolts().entrySet(), cfg, hwAlgType, procs);
         }
-        // connect algorithms
-        for (StormProcessor c : procs.values()) {
-            createInvisibleStreams(mapping, procs, c);
+
+        if (null != cfg) {
+            // connect algorithms
+            for (StormProcessor c : procs.values()) {
+                createInvisibleStreams(mapping, procs, cfg, hwAlgType, c);
+            }
         }
         return new PipelineTopology(procs.values());
     }
@@ -353,32 +430,6 @@ public class Utils {
         }
         return result;
     }
-    
-    /**
-     * Creates invisible streams between pipeline elements and algorithm processors, including a pseudo-stream "for" the
-     * hardware in hardware integration. This method may create more
-     * connections than actual needed, in particular if a sub-algorithm defines own spouts without connections to
-     * the main topology, but this shall not disturb the monitoring data aggregation.
-     * 
-     * @param mapping the name mapping
-     * @param procs already known processors
-     * @param processor the component to search for potential invisible components
-     */
-    private static void createInvisibleStreams(INameMapping mapping, Map<String, StormProcessor> procs, 
-        StormProcessor processor) {
-        boolean done = false;
-        Models models = RepositoryConnector.getModels(Phase.MONITORING);
-        if (null != models) {
-            Configuration cfg = models.getConfiguration();
-            if (null != cfg) {
-                createInvisibleStreams(mapping, procs, cfg, processor);
-                done = true;
-            }
-        } 
-        if (!done) {
-            getLogger().error("Cannot complete topology as configuration model was not (completely) loaded."); 
-        }
-    }
 
     /**
      * Creates invisible streams between pipeline elements and algorithm processors, including a pseudo-stream "for" the
@@ -389,46 +440,75 @@ public class Utils {
      * @param mapping the name mapping
      * @param procs already known processors
      * @param cfg the actual variability configuration (not <b>null</b>)
+     * @param hwAlgType the hardware algorithm type
      * @param processor the component to search for potential invisible components
      */
     private static void createInvisibleStreams(INameMapping mapping, Map<String, StormProcessor> procs, 
-        Configuration cfg, StormProcessor processor) {
-        IDatatype hwAlgType;
-        try {
-            hwAlgType = ModelQuery.findType(cfg.getProject(), QmConstants.TYPE_HARDWARE_ALGORITHM, null);
-        } catch (ModelQueryException e) {
-            hwAlgType = null;
-        }
+        Configuration cfg, IDatatype hwAlgType, StormProcessor processor) {
         Component mComponent = mapping.getPipelineNodeComponent(processor.getName()); // already mapped
         if (null != mComponent) {
             Collection<String> alts = mComponent.getAlternatives();
-            if (null != alts) {
+            if (null != alts && !alts.isEmpty()) {
+                Set<StormProcessor> next = getNextFromCfg(cfg, mapping, processor, procs);
                 // all alts need at least one input-output stream
                 for (String alt : alts) {
                     Algorithm alg = mapping.getAlgorithm(alt);
                     if (null != alg) {
-                        IDecisionVariable algVar = PipelineHelper.obtainAlgorithmByName(cfg, alg.getName());
                         List<Component> algComponents = alg.getComponents();
+                        IDecisionVariable algVar = PipelineHelper.obtainAlgorithmByName(cfg, alg.getName());
                         boolean isHwAlg = isAssignable(hwAlgType, algVar);
                         if (isHwAlg) {
                             // ensure internal connectivity
-                            createInvisibleStreamForHwAlgorithm(algComponents, procs);
+                            createInvisibleStreamForHwAlgorithm(algComponents, next, procs);
                         }
                         // ensure external connectivity
-                        createInvisibleBoundaryStreams(processor, algComponents, procs);
+                        createInvisibleBoundaryStreams(processor, algComponents, next, procs);
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Derives the next processors for <code>processor</code> from the configuration of the main pipeline.
+     * 
+     * @param cfg the configuration
+     * @param mapping the name mapping carrying the name of the main topology
+     * @param processor the processor to determine the next processors for
+     * @param procs already known processors
+     * @return the next processors, may be empty if unknown/inconsistent/legacy testing
+     */
+    private static Set<StormProcessor> getNextFromCfg(Configuration cfg, INameMapping mapping, StormProcessor processor,
+        Map<String, StormProcessor> procs) {
+        Set<StormProcessor> next = new HashSet<StormProcessor>();
+        IDecisionVariable pip = PipelineHelper.obtainPipelineByName(cfg, mapping.getPipelineName());
+        IDecisionVariable procNode = PipelineHelper.obtainPipelineElementByName(pip, null, processor.getName());
+        if (null != procNode) {
+            IDecisionVariable out = procNode.getNestedElement(QmConstants.SLOT_FAMILY_OUTPUT); // also valid for src
+            if (null != out) {
+                for (int o = 0; o < out.getNestedElementsCount(); o++) {
+                    IDecisionVariable dest = Configuration.dereference(
+                        Configuration.dereference(out.getNestedElement(o)).getNestedElement(
+                            QmConstants.SLOT_FLOW_DESTINATION));
+                    StormProcessor destP = procs.get(VariableHelper.getName(dest));
+                    if (null != destP) {
+                        next.add(destP);
+                    }
+                }
+            }
+        }
+        return next;
     }
     
     /**
      * Creates an invisible stream for the hardware integration bolt/spout.
      * 
      * @param algComponents the algorithm components
+     * @param next the next components to connect to in the main pipeline (may be empty if unknown/inconsistent/legacy 
+     *   testing, but then resulting topology is probably wrong)
      * @param procs already known processors
      */
-    private static void createInvisibleStreamForHwAlgorithm(List<Component> algComponents, 
+    private static void createInvisibleStreamForHwAlgorithm(List<Component> algComponents, Set<StormProcessor> next,
         Map<String, StormProcessor> procs) {
         StormProcessor receiver = null;
         StormProcessor sender = null;
@@ -447,7 +527,7 @@ public class Utils {
         }
         if (null != receiver && null != sender) {
             // o->|->b s->|->o, here: b == sender, s = receiver
-            Stream stream = new Stream("", sender, receiver);
+            Stream stream = new Stream("<hw>", sender, receiver);
             sender.addOutput(stream);
             receiver.addInput(stream);
         }
@@ -459,10 +539,12 @@ public class Utils {
      * 
      * @param algorithm the processor representing the algorithm (family)
      * @param algComponents the algorithm components
+     * @param next the next components to connect to in the main pipeline (may be empty if unknown/inconsistent/legacy 
+     *   testing, but then resulting topology is probably wrong)
      * @param procs already known processors
      */
     private static void createInvisibleBoundaryStreams(StormProcessor algorithm, List<Component> algComponents, 
-        Map<String, StormProcessor> procs) {
+        Set<StormProcessor> next, Map<String, StormProcessor> procs) {
         List<StormProcessor> algSources = new ArrayList<StormProcessor>();
         List<StormProcessor> algSinks = new ArrayList<StormProcessor>();
         List<StormProcessor> algIntermediary = new ArrayList<StormProcessor>();
@@ -489,11 +571,15 @@ public class Utils {
                 alg.add(algComponent);
             }
         }
-        findDisconnectedSources(procs.values(), alg, algSinks);
-
+        if (next.isEmpty()) {
+            // works only once!!
+            findDisconnectedSources(procs.values(), alg, algSinks);
+        } else {
+            algSinks.addAll(next);
+        }
         // create algorithm-source streams
         for (StormProcessor source : algSources) {
-            Stream s = new Stream("", algorithm, source);
+            Stream s = new Stream("<b1>", algorithm, source);
             if (!algorithm.hasOutputTo(source)) {
                 algorithm.addOutput(s); // internal connection
             }
@@ -505,7 +591,7 @@ public class Utils {
         // create intermediary-sink streams
         for (StormProcessor intermediary : algIntermediary) {
             for (StormProcessor sink : algSinks) {
-                Stream s = new Stream("", intermediary, sink);
+                Stream s = new Stream("<b2>", intermediary, sink);
                 if (!sink.hasInputFrom(intermediary)) {
                     sink.addInput(s);
                 }

@@ -137,7 +137,8 @@ public class DelegatingTopologySinkAggregatorObservation extends AbstractTopolog
         double result = value;
         PipelineNodeSystemPart nodePart = getProvider().getNode(processor.getName());
         if (null != nodePart) {
-            result = aggregator.calculate(result, nodePart.getObservedValue(getObservable()));
+            result = aggregator.calculate(result, nodePart.getObservedValue(getObservable(), 
+                nodePart == getProvider())); // last - self-cycle control
         }
         return result;
     }
