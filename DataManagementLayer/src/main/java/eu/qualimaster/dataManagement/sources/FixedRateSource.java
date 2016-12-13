@@ -46,7 +46,8 @@ public abstract class FixedRateSource <T> extends TimerTask implements IDataSour
         // 40 / sec -> 100, 4
         // 100 / sec -> 10, 1
         // 1000 / sec -> 1, 1
-        // 10000 / sec -> 1, 10            
+        // 10000 / sec -> 1, 10
+    System.out.println("FixedRateSource - " + rate + " items/s.");
 	this.beginDelay = beginDelay;
         timerDelay = 1000; // max timer delay = 1 sec
         int tmp = rate;
