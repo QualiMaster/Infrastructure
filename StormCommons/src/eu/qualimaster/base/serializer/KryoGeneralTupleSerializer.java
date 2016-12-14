@@ -44,8 +44,13 @@ public class KryoGeneralTupleSerializer implements IGeneralTupleSerializer {
 
     @Override
     public IGeneralTuple deserialize(byte[] ser) {
-        kryoIn.setBuffer(ser);
-        IGeneralTuple tuple = new GeneralTuple(valuesDeser.deserializeFrom(kryoIn));
+        IGeneralTuple tuple;
+        if (null != ser && ser.length > 0) {
+            kryoIn.setBuffer(ser);
+            tuple = new GeneralTuple(valuesDeser.deserializeFrom(kryoIn));
+        } else {
+            tuple = null;
+        }
         return tuple;
     }
 

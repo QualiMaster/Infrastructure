@@ -48,8 +48,13 @@ public class KryoSwitchTupleSerializer implements ISwitchTupleSerializer {
 
     @Override
     public ISwitchTuple deserialize(byte[] ser) {
-        kryoIn.setBuffer(ser);
-        ISwitchTuple tuple = new SwitchTuple(kryoIn.readLong(), valuesDeser.deserializeFrom(kryoIn));
+        ISwitchTuple tuple;
+        if (null != ser && ser.length > 0) {
+            kryoIn.setBuffer(ser);
+            tuple = new SwitchTuple(kryoIn.readLong(), valuesDeser.deserializeFrom(kryoIn));
+        } else {
+            tuple = null;
+        }
         return tuple;
     }
 
