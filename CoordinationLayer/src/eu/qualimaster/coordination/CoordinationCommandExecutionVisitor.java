@@ -17,6 +17,7 @@ import org.apache.log4j.Logger;
 
 import eu.qualimaster.common.signal.AbstractTopologyExecutorSignal;
 import eu.qualimaster.common.signal.AlgorithmChangeSignal;
+import eu.qualimaster.common.signal.Constants;
 import eu.qualimaster.common.signal.LoadSheddingSignal;
 import eu.qualimaster.common.signal.MonitoringChangeSignal;
 import eu.qualimaster.common.signal.ParameterChange;
@@ -154,7 +155,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
             CoordinationManager.deferCommand(subPip.getName(), PipelineLifecycleEvent.Status.STARTED, 
                 new AlgorithmChangeAction(command, parameters, getTracer()));
             PipelineCommand cmd = new PipelineCommand(subPip.getName(), PipelineCommand.Status.START, 
-                getSubPipelineOptions(pipelineName, command.getOptions()));
+                getSubPipelineOptions(pipelineName, command.getPipelineElement(), command.getOptions()));
             result = handlePipelineStart(cmd);
         } else {
             result = handleAlgorithmChangeImpl(command, parameters);
@@ -166,10 +167,12 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
      * Returns the sub pipeline options.
      * 
      * @param mainPipeline the main pipeline
+     * @param mainPipelineElement the element in the main pipeline to start the sub-pipeline for
      * @param commandOptions the options introduced by the command
      * @return the options for the sub-pipeline marked as sub-pipeline
      */
-    private PipelineOptions getSubPipelineOptions(String mainPipeline, PipelineOptions commandOptions) {
+    private PipelineOptions getSubPipelineOptions(String mainPipeline, String mainPipelineElement, 
+        PipelineOptions commandOptions) {
         PipelineOptions opts = CoordinationManager.getPipelineOptions(mainPipeline);
         if (null == opts) {
             opts = new PipelineOptions(); // shall not occur
@@ -180,6 +183,9 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
             opts.merge(commandOptions);
         }
         opts.markAsSubPipeline(mainPipeline);
+        PipelineInfo info = CoordinationManager.getPipelineInfo(mainPipeline);
+        String algorithm = null != info ? info.getEnactedAlgorithm(mainPipelineElement) : null;
+        opts.setOption(Constants.CONFIG_KEY_INITIAL_SUBPIPELINE, Boolean.toString(null == algorithm));
         return opts;
     }
 
