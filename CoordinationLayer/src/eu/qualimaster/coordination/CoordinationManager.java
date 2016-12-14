@@ -22,6 +22,7 @@ import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.EndOfDataEvent;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
+import eu.qualimaster.infrastructure.PipelineLifecycleEvent.Status;
 import eu.qualimaster.infrastructure.PipelineOptions;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 import eu.qualimaster.monitoring.events.IEnactmentCompletedMonitoringEvent;
@@ -551,10 +552,18 @@ public class CoordinationManager {
      * Clears cached information about a pipeline. Handle with care!
      * 
      * @param pipeline the pipeline to be cleared
+     * @param exclude exclude the state when not to clear
      */
-    static void clearPipeline(String pipeline) {
-        pipelines.remove(pipeline);
-        pendingStartups.remove(pipeline);
+    static void clearPipeline(String pipeline, Status exclude) {
+        boolean clear = true;
+        PipelineInfo info = getPipelineInfo(pipeline);
+        if (null != info && exclude == info.getStatus()) {
+            clear = false;
+        }
+        if (clear) {
+            pipelines.remove(pipeline);
+            pendingStartups.remove(pipeline);
+        }
     }
     
 }
