@@ -637,6 +637,7 @@ public abstract class AbstractDirectAdaptationTests {
                     testSpec.commands.clear();
                 }
             }
+            rTask.dispose();
     
             testSpec.end();
             afterTestSpec(testSpec);

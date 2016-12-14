@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -114,6 +115,17 @@ public class AdaptationEventQueue {
      */
     static void notifyStopping(String pipelineName) {
         adaptationFilters.remove(pipelineName);
+        startupAlgorithmChangedEvents.remove(pipelineName);
+        Iterator<AdaptationEvent> iter = adaptationEventQueue.iterator();
+        while (iter.hasNext()) {
+            AdaptationEvent evt = iter.next();
+            if (evt instanceof IPipelineAdaptationEvent) {
+                IPipelineAdaptationEvent pEvt = (IPipelineAdaptationEvent) evt;
+                if (pipelineName.equals(pEvt.getPipeline())) {
+                    iter.remove(); // blocking queue shall not throw ConcurrentModificationExceptions
+                }
+            }
+        }
     }
     
     /**

@@ -110,6 +110,13 @@ public class AdaptationManager {
         @Override
         protected void handle(PipelineLifecycleEvent event) {
             switch (event.getStatus()) {
+            case STARTING:
+                // clean up left-over
+                synchronized (activePipelines) {
+                    activePipelines.remove(event.getPipeline());
+                }
+                AdaptationEventQueue.notifyStopping(event.getPipeline());
+                break;
             case CHECKING:
                 handleEvent(new CheckBeforeStartupAdaptationEvent(event));
                 break;
