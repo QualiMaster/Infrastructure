@@ -43,5 +43,10 @@ public class Constants {
      * Configuration key set by the infrastructure passing the actual initialization mode.
      */    
     public static final String CONFIG_KEY_INIT_MODE = Configuration.INIT_MODE;
+
+    /**
+     * Whether the starting pipeline is the initial algorithm or a subsequent one (boolean value). 
+     */
+    public static final String CONFIG_KEY_INITIAL_SUBPIPELINE = "SUBPIPELINE.INITIAL";
     
 }
