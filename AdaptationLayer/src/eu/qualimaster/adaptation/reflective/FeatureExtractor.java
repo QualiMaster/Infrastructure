@@ -3,6 +3,7 @@ package eu.qualimaster.adaptation.reflective;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import eu.qualimaster.adaptation.internal.AdaptationUnit;
@@ -75,7 +76,7 @@ public class FeatureExtractor {
         ArrayList<Pattern> patterns = new ArrayList<>();
         
         // start from the first unit having enough previous units to compute aggregate features
-        for(int i = windowSize; i < units.size(); i++){
+        for(int i = windowSize; i <= units.size(); i++){
             patterns.add(extractFeatures(units.subList(i - windowSize, i)));
         }
         
@@ -153,12 +154,12 @@ public class FeatureExtractor {
             unitFeatures.addAll(extractFeatures(pipelineOfInterest));
             
             // check if the desired pipeline was made of the desired nodes
-            ArrayList<Double> nodesFeatures = extractFeatures(pipelineOfInterest.getNodes());
-            if(nodesFeatures == null){
+            ArrayList<Node> nodesOfInterest = getNodesOfInterest(pipelineOfInterest.getNodes());
+            if(nodesOfInterest == null || nodesOfInterest.isEmpty()){
                 System.out.println("ERROR: pipeline " + this.pipeline + " is not made of the desired nodes");
                 return null;
             }
-            else unitFeatures.addAll(nodesFeatures);
+            else unitFeatures.addAll(extractFeatures(nodesOfInterest));
         }
 
         return unitFeatures;
@@ -171,8 +172,7 @@ public class FeatureExtractor {
      */
     private ArrayList<Double> extractFeatures(ArrayList<Node> nodes){
         ArrayList<Double> nodesFeatures = new ArrayList<>();
-        
-        // for the moment they are ignored
+        for(Node node : nodes) nodesFeatures.addAll(extractFeatures(node));
         return nodesFeatures;
     }
     
@@ -194,6 +194,15 @@ public class FeatureExtractor {
         return pipeline.getMeasures();
     }
     
+    /**
+     * Extracts features from a node.
+     * @param node the node from which the features are extracted.
+     * @return the list of features of the node.
+     */
+    private ArrayList<Double> extractFeatures(Node node){
+        return node.getMeasures();
+    }
+    
     private ArrayList<Double> extractAggregateFeatures(List<MonitoringUnit> units){
         ArrayList<Double> aggregateFeatures = new ArrayList<>();
         
@@ -206,32 +215,61 @@ public class FeatureExtractor {
             aggregateFeatures.addAll(extractAggregateFeatures(featureMeasurements));
         }
         
-        // aggregate pipeline features (from the pipeline of interest)
-        Pipeline pipelineOfInterest = getPipelineOfInterest(units.get(0).getPlatform().getPipelines());
-        if(pipelineOfInterest == null){
-            System.out.println("ERROR: pipeline " + this.pipeline + " is not present in the monitoring log");
-            return null;
+        // get the pipeline of interest in each unit
+        HashMap<Long, Pipeline> pipelinesOfInterest = new HashMap<>();
+        for(MonitoringUnit unit : units){
+            Pipeline pipelineOfInterest = getPipelineOfInterest(unit.getPlatform().getPipelines());
+            if(pipelineOfInterest == null){
+                System.out.println("ERROR: pipeline " + this.pipeline + " is not present in the monitoring log");
+                return null;
+            }
+            else pipelinesOfInterest.put(unit.getTimestamp(), pipelineOfInterest);
         }
-        else{
-            for(int i = 0; i < pipelineOfInterest.getMeasures().size(); i++){
+        
+        // aggregate pipeline features (from the pipeline of interest in each unit)
+        for(int i = 0; i < pipelinesOfInterest.values().iterator().next().getMeasures().size(); i++){
+            ArrayList<Double> featureMeasurements = new ArrayList<>();
+            for(MonitoringUnit unit : units){
+                Pipeline pipelineOfInterest = pipelinesOfInterest.get(unit.getTimestamp());
+                featureMeasurements.add(pipelineOfInterest.getMeasures().get(i));
+            }
+            aggregateFeatures.addAll(extractAggregateFeatures(featureMeasurements));
+        }
+        
+        // get the nodes of interest in each pipeline of interest in each unit
+        HashMap<Long, ArrayList<Node>> nodesOfInterest = new HashMap<>();
+        for(MonitoringUnit unit : units){
+            Pipeline pipelineOfInterest = pipelinesOfInterest.get(unit.getTimestamp());
+            ArrayList<Node> nodesOfInterestInUnit = getNodesOfInterest(pipelineOfInterest.getNodes());
+            if(nodesOfInterestInUnit == null){
+                System.out.println("ERROR: pipeline " + this.pipeline + " is not made of the desired nodes");
+                return null;
+            }
+            else nodesOfInterest.put(unit.getTimestamp(), nodesOfInterestInUnit);
+        }
+        
+        // aggregate nodes features
+        for(String nodeOfInterestName : this.nodes){
+            for(int i = 0; i < pipelinesOfInterest.values().iterator().next().getNodes().get(0).getMeasures().size(); i++){
                 ArrayList<Double> featureMeasurements = new ArrayList<>();
                 for(MonitoringUnit unit : units){
-                    // get the pipeline of interest
-                    pipelineOfInterest = getPipelineOfInterest(unit.getPlatform().getPipelines());
-                    if(pipelineOfInterest == null){
-                        System.out.println("ERROR: pipeline " + this.pipeline + " is not present in the monitoring log");
-                        return null;
-                    }
-                    featureMeasurements.add(pipelineOfInterest.getMeasures().get(i));
+                    ArrayList<Node> nodesOfInterestInUnit = nodesOfInterest.get(unit.getTimestamp());
+                    Node nodeOfInterestInUnit = getNodeByName(nodesOfInterestInUnit, nodeOfInterestName);
+                    featureMeasurements.add(nodeOfInterestInUnit.getMeasures().get(i));
                 }
                 aggregateFeatures.addAll(extractAggregateFeatures(featureMeasurements));
             }
         }
         
-        // aggregate nodes features
-        // TODO not supported at the moment
-        
         return aggregateFeatures;
+    }
+    
+    private Node getNodeByName(ArrayList<Node> nodes, String name){
+        for(Node node : nodes){
+            if(node.getName().compareTo(name) == 0)
+                return node;
+        }
+        return null;
     }
     
     private ArrayList<Double> extractAggregateFeatures(ArrayList<Double> measures){
@@ -255,6 +293,20 @@ public class FeatureExtractor {
             }
         }
         return null;
+    }
+    
+    private ArrayList<Node> getNodesOfInterest(ArrayList<Node> nodes){
+        ArrayList<Node> nodesOfInterest = new ArrayList<>();
+        for(String nodeOfInterest : this.nodes){
+            for(Node node : nodes){
+                if(node.getName().compareTo(nodeOfInterest) == 0){
+                    nodesOfInterest.add(node);
+                    break;
+                }
+            }
+        }
+        if(nodesOfInterest.size() != this.nodes.size()) return null;
+        else return nodesOfInterest;
     }
     
     private double computeLinearVariation(ArrayList<Double> measures){
@@ -291,6 +343,7 @@ public class FeatureExtractor {
                 writer.write(patternToString(p));
                 writer.newLine();
             }
+            writer.close();
         }
         catch(Exception e){
             e.printStackTrace();
@@ -306,10 +359,10 @@ public class FeatureExtractor {
         
         header += "ID" + ",";
         for(int i = 0; i < f.getLastMonitoring().size(); i++){
-            header += "LAST_MONITORING_" + "i" + ",";
+            header += "LAST_MONITORING_" + i + ",";
         }
         for(int i = 0; i < f.getAggregateMonitoring().size(); i++){
-            header += "AGGREGATE_MONITORING_" + "i" + ",";
+            header += "AGGREGATE_MONITORING_" + i + ",";
         }
         header = header.substring(0, header.length() - 1);
         
