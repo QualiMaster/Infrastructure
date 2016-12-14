@@ -105,12 +105,7 @@ public class CoordinationManager {
             String pipelineName = event.getPipeline();
             PipelineInfo info = pipelines.get(pipelineName);
             switch (event.getStatus()) {
-            case STARTING:
-                // clean up unintentionally left over items from previous starts
-                pipelines.remove(pipelineName);
-                pendingStartups.remove(pipelineName);
-                //keep pendingProfiling!!!
-                break;
+            // case STARTING: do this when handling the pipeline start command 
             case CHECKED:
                 // do not remove here! otherwise endless pending cycle
                 PipelineCommand cmd = pendingStartups.get(pipelineName);
@@ -550,6 +545,16 @@ public class CoordinationManager {
      */
     static void registerPipelineOptions(String pipeline, PipelineOptions options) {
         obtainPipelineInfo(pipeline).setOptions(options);
+    }
+    
+    /**
+     * Clears cached information about a pipeline. Handle with care!
+     * 
+     * @param pipeline the pipeline to be cleared
+     */
+    static void clearPipeline(String pipeline) {
+        pipelines.remove(pipeline);
+        pendingStartups.remove(pipeline);
     }
     
 }
