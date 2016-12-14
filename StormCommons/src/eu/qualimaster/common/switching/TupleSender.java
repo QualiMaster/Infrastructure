@@ -6,6 +6,7 @@ import java.net.UnknownHostException;
 
 import org.apache.log4j.Logger;
 
+import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.Output;
 
 /**
@@ -54,9 +55,13 @@ public class TupleSender {
      */
     public void send(byte[] bytes) {
         if (connect()) {
-            output.writeInt(bytes.length);
-            output.writeBytes(bytes);
-            output.flush();
+            try {
+                output.writeInt(bytes.length);
+                output.writeBytes(bytes);
+                output.flush();
+            } catch (KryoException e) {
+                stop();
+            }
         }
     }
     
