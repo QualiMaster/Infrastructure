@@ -14,15 +14,31 @@ public class TupleReceiverServer implements Runnable {
     private static final Logger LOGGER = Logger.getLogger(TupleReceiverServer.class);
     private ServerSocket serverSocket;
     private ITupleReceiverHandler handler;
+    private ITupleReceiveCreator creator;
     private boolean cont = true;
     private int port;
     /**
      * Creates a socket server for receiving tuples.
      * @param handler the handler for receiving tuples.
-     * @param port the port to create the scoket server
+     * @param port the port to create the socket server
      */
+    @Deprecated
     public TupleReceiverServer(ITupleReceiverHandler handler, int port) {
         this.handler = handler;
+        this.port = port;
+        try {
+            serverSocket = new ServerSocket(port);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    /**
+     * Creates a socket server for receiving tuples.
+     * @param creator the tuple receive creator
+     * @param port the port to create the socket server
+     */
+    public TupleReceiverServer(ITupleReceiveCreator creator, int port) {
+        this.creator = creator;
         this.port = port;
         try {
             serverSocket = new ServerSocket(port);
@@ -47,7 +63,7 @@ public class TupleReceiverServer implements Runnable {
                 Socket socket = serverSocket.accept();
                 LOGGER.info("Socket connection accepted " + port);
                 handler.setSocket(socket);
-                new Thread(handler).start();
+                new Thread(creator.create()).start();
             } catch (IOException e) {
                 e.printStackTrace();
             } 
