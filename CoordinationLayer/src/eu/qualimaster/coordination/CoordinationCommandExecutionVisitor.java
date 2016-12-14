@@ -390,7 +390,8 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
     private CoordinationExecutionResult handlePipelineStart(PipelineCommand command) {
         CoordinationExecutionResult failing = null;
         String pipelineName = command.getPipeline();
-        CoordinationManager.clearPipeline(pipelineName);
+        // clear but not if the pipeline was just created, then we have the right information object
+        CoordinationManager.clearPipeline(pipelineName, null);
         CoordinationManager.registerPipelineOptions(pipelineName, command.getOptions());
         INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
         getLogger().info("Processing pipeline start command for " + pipelineName + " with options " 
