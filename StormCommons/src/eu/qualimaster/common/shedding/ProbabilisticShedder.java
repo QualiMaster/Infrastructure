@@ -15,6 +15,9 @@
  */
 package eu.qualimaster.common.shedding;
 
+import java.io.Serializable;
+import java.util.Map;
+
 /**
  * Creates a static shedder for random shedding if the random number is less than a given percentage / proability. 
  * Starts deactivated.
@@ -46,7 +49,13 @@ public class ProbabilisticShedder extends LoadShedder<Object> {
     
     @Override
     public void configure(ILoadShedderConfigurer configurer) {
-        percentage = configurer.getDoubleParameter(DefaultLoadSheddingParameter.PROBABILITY, 0);
+        percentage = Math.min(1, Math.max(0, 
+             configurer.getDoubleParameter(DefaultLoadSheddingParameter.PROBABILITY, 0)));
+    }
+
+    @Override
+    public Map<ILoadSheddingParameter, Serializable> getConfiguration() {
+        return getConfiguration(DefaultLoadSheddingParameter.PROBABILITY, percentage);
     }
 
 }

@@ -28,10 +28,17 @@ import eu.qualimaster.common.QMSupport;
 public interface ILoadShedderDescriptor extends Serializable {
 
     /**
-     * Returns a load schedder identifier.
+     * Returns a (unique) load shedder identifier.
      * 
-     * @return the identifier
+     * @return the identifier (unique per infrastructure)
      */
     public String getIdentifier();
+    
+    /**
+     * An optional short name that must not be unique. Here the last registered shedder counts.
+     * 
+     * @return the short name or <b>null</b>.
+     */
+    public String getShortName();
     
 }

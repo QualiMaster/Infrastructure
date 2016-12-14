@@ -15,7 +15,9 @@
  */
 package eu.qualimaster.common.shedding;
 
+import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Map;
 
 /**
  * Creates a fair shedding pattern by distributing the items to shed over a pattern array of given size. Calculation
@@ -99,6 +101,11 @@ public abstract class AbstractFairPatternShedder extends LoadShedder<Object> {
         
         // start with new pattern
         counter = 0;
+    }
+
+    @Override
+    public Map<ILoadSheddingParameter, Serializable> getConfiguration() {
+        return getConfiguration(DefaultLoadSheddingParameter.RATIO, shedRatio);
     }
 
 }

@@ -59,6 +59,9 @@ public class LoadShedderFactory {
     public static void register(ILoadShedderDescriptor descriptor, Class<? extends LoadShedder<?>> cls) {
         if (null != descriptor) {
             register(descriptor.getIdentifier(), cls);
+            if (null != descriptor.getShortName() && null != cls) {
+                INSTANCES.put(descriptor.getShortName(), cls);
+            }
         }
     }
 

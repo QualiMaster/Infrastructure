@@ -1,5 +1,7 @@
 package eu.qualimaster.adaptation.reflective;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,6 +90,7 @@ public class FeatureExtractor {
      */
     public Pattern extractFeatures(List<MonitoringUnit> units){
         Pattern pattern = new Pattern();
+        pattern.setId(String.valueOf(units.get(units.size() - 1).getTimestamp()));
         
         // extract features from the recent (last) unit
         ArrayList<Double> lastFeatures = extractFeatures(units.get(units.size() - 1));
@@ -269,6 +272,64 @@ public class FeatureExtractor {
             variations.add(measures.get(i) - measures.get(i - 1));
         }
         return variations;
+    }
+    
+    /**
+     * Saves a list of features as csv file.
+     * @param patterns The list of patterns (only features, no labels) to be stored.
+     * @param filePath The path to the output file.
+     */
+    public void storeFeatures(ArrayList<Pattern> patterns, String filePath){
+        BufferedWriter writer = null;
+        
+        try{
+            writer = new BufferedWriter(new FileWriter(filePath));
+            writer.write(makeHeader(patterns.get(0)));
+            writer.newLine();
+            
+            for(Pattern p : patterns){
+                writer.write(patternToString(p));
+                writer.newLine();
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+    
+    private String makeHeader(Pattern example){
+        
+        // TODO add more explanatory names of features by hand
+        
+        String header = "";
+        Features f = example.getFeatures();
+        
+        header += "ID" + ",";
+        for(int i = 0; i < f.getLastMonitoring().size(); i++){
+            header += "LAST_MONITORING_" + "i" + ",";
+        }
+        for(int i = 0; i < f.getAggregateMonitoring().size(); i++){
+            header += "AGGREGATE_MONITORING_" + "i" + ",";
+        }
+        header = header.substring(0, header.length() - 1);
+        
+        return header;
+    }
+    
+    private String patternToString(Pattern p){
+        String line = "";
+        Features f = p.getFeatures();
+        
+        line += p.getId() + ",";
+        for(Double feature : f.getLastMonitoring()){
+            line += feature + ",";
+        }
+        for(Double feature : f.getAggregateMonitoring()){
+            line += feature + ",";
+        }
+        line = line.substring(0, line.length() - 1);
+        
+        return line;
     }
 
     /**

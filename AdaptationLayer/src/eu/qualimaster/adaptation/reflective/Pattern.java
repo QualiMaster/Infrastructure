@@ -6,7 +6,10 @@ package eu.qualimaster.adaptation.reflective;
  * @author  Andrea Ceroni
  */
 public class Pattern {
-
+    
+    /** The ID of the pattern */
+    private String id;
+    
     /** The features (from both monitoring and adaptation logs */
     private Features features;
     
@@ -17,6 +20,7 @@ public class Pattern {
      * Default constructor
      */
     public Pattern(){
+        this.id = "missing";
         this.features = new Features();
         this.label = -1;
     }
@@ -26,7 +30,8 @@ public class Pattern {
      * @param features the features of the pattern.
      * @param label the label of the pattern.
      */
-    public Pattern(Features features, double label){
+    public Pattern(String id, Features features, double label){
+        this.id = id;
         this.features = features;
         this.label = label;
     }
@@ -57,5 +62,19 @@ public class Pattern {
      */
     public void setLabel(double label) {
         this.label = label;
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
     }
 }

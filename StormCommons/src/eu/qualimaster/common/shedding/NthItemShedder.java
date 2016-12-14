@@ -15,6 +15,9 @@
  */
 package eu.qualimaster.common.shedding;
 
+import java.io.Serializable;
+import java.util.Map;
+
 /**
  * Creates a static shedder for the n-th item passing. Starts deactivated.
  * 
@@ -53,6 +56,11 @@ public class NthItemShedder extends LoadShedder<Object> {
     @Override
     public void configure(ILoadShedderConfigurer configurer) {
         limit = configurer.getIntParameter(DefaultLoadSheddingParameter.NTH_TUPLE, 0);
+    }
+
+    @Override
+    public Map<ILoadSheddingParameter, Serializable> getConfiguration() {
+        return getConfiguration(DefaultLoadSheddingParameter.NTH_TUPLE, limit);
     }
 
 }
