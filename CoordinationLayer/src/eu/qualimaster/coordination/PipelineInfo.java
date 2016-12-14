@@ -33,6 +33,7 @@ class PipelineInfo {
     private PipelineLifecycleEvent.Status status;
     private Map<PipelineLifecycleEvent.Status, List<IAction>> actions = new HashMap<>();
     private PipelineOptions options;
+    private Map<String, String> enactedAlgorithms = new HashMap<>();
 
     /**
      * Returns the current status of the pipeline.
@@ -103,6 +104,27 @@ class PipelineInfo {
             }
             a.add(action);
         }
+    }
+
+    /**
+     * Stores an enacted algorithm.
+     * 
+     * @param pipelineElement the pipeline element
+     * @return the enacted algorithm, may be <b>null</b> if there was none
+     */
+    String getEnactedAlgorithm(String pipelineElement) {
+        return enactedAlgorithms.get(pipelineElement);
+    }
+    
+    /**
+     * Stores an enacted algorithm.
+     * 
+     * @param pipelineElement the pipeline element
+     * @param algorithm the algorithm
+     * @return the previously enacted algorithm, may be <b>null</b> if there was none
+     */
+    String setEnactedAlgorithm(String pipelineElement, String algorithm) {
+        return enactedAlgorithms.put(pipelineElement, algorithm);
     }
     
 }
