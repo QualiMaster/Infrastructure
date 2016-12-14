@@ -7,7 +7,7 @@
     <includeBaseDirectory>false</includeBaseDirectory>
  
     <fileSets>
-        <!-- fileSet>
+        <fileSet>
             <directory>src/main/profiling</directory>
             <outputDirectory></outputDirectory> 
             <includes>
@@ -20,7 +20,7 @@
             <includes>
                 <include>*.*</include>
             </includes>
-        </fileSet-->
+        </fileSet>
         <fileSet>
             <directory>profiling</directory>
             <outputDirectory></outputDirectory> 
@@ -34,7 +34,7 @@
             <includeSubModules>false</includeSubModules>
             <sources>
 			    <fileSets>
-			        <!-- fileSet>
+			        <fileSet>
 			            <directory>src/main/profiling</directory>
 			            <outputDirectory></outputDirectory> 
 			            <includes>
@@ -47,7 +47,7 @@
 			            <includes>
 			                <include>*.*</include>
 			            </includes>
-			        </fileSet-->
+			        </fileSet>
 			        <fileSet>
 			            <directory>profiling</directory>
 			            <outputDirectory></outputDirectory> 
