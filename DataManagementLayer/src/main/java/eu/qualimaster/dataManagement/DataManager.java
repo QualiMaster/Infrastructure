@@ -81,14 +81,17 @@ public class DataManager {
         protected void handle(PipelineLifecycleEvent event) {
             String pipelineName = event.getPipeline();
             switch (event.getStatus()) {
+            case STARTING:
+                // to be on the safe side if a previous execution left something over
+                discardAll(pipelineName);
+                break;
             case STOPPING:
                 disconnectAll(pipelineName); // see D5.2 stopping a pipeline
                 discardAll(pipelineName);
                 break;
             case INITIALIZED:
                 connectAll(pipelineName);
-                // TODO this is just a workaround and shall be removed as soon
-                // as possible
+                // waiting is a workaround
                 long additionalDelay = DataManagementConfiguration.getPipelineStartNotificationDelay();
                 if (additionalDelay > 0) {
                     try {
