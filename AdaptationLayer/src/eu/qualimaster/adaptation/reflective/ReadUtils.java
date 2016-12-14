@@ -48,8 +48,8 @@ public class ReadUtils {
      * @param filePath The path of the file (monitoring log) to be parsed.
      * @return A list of <code>MonitoringUnit</code> objects.
      */
-    public List<MonitoringUnit> readMonitoringUnits(String filePath){
-        List<MonitoringUnit> units = new ArrayList<>();
+    public ArrayList<MonitoringUnit> readMonitoringUnits(String filePath){
+        ArrayList<MonitoringUnit> units = new ArrayList<>();
         BufferedReader reader = null;
         
         try{

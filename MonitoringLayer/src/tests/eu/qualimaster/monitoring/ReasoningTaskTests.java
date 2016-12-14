@@ -159,6 +159,7 @@ public class ReasoningTaskTests {
         Assert.assertNull(event); // shall not occur multiple times
         assertAlgorithmIsValid(FALSE, frozenState, alg1);
         assertAlgorithmIsValid(TRUE, frozenState, alg2);
+        task.dispose();
     }
     
     /**
@@ -198,6 +199,8 @@ public class ReasoningTaskTests {
         Assert.assertEquals(1, cEvent.getViolatingClauseCount());
         Assert.assertEquals(ResourceUsage.CAPACITY, cEvent.getViolatingClause(0).getObservable());
         Assert.assertTrue(cEvent.getViolatingClause(0).isCleared());
+        
+        task.dispose();
     }
 
     /**

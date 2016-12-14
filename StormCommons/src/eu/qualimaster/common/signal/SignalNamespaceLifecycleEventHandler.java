@@ -20,6 +20,7 @@ import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent.Status;
+import eu.qualimaster.infrastructure.PipelineOptions;
 
 /**
  * A lifecycle handler for enabling {@link SignalManager} pipeline namespaces on worker side. Don't use in 
@@ -62,7 +63,12 @@ class SignalNamespaceLifecycleEventHandler extends EventHandler<PipelineLifecycl
     protected void handle(PipelineLifecycleEvent event) {
         // see coordination layer lifecycle handler for state
         if (Status.CREATED == event.getStatus()) {
-            SignalMechanism.changeSignalNamespaceState(event.getPipeline(), NamespaceState.ENABLE);
+            String namespace = event.getPipeline();
+            PipelineOptions opts = event.getOptions();
+            if (null != opts && opts.isSubPipeline()) {
+                namespace = opts.getMainPipeline();
+            }
+            SignalMechanism.changeSignalNamespaceState(namespace, NamespaceState.ENABLE);
         }
     }
 

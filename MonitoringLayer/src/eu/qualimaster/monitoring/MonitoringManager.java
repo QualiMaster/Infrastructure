@@ -394,6 +394,7 @@ public class MonitoringManager {
     private static void handleStarting(PipelineLifecycleEvent event) {
         String pipelineName = event.getPipeline();
         if (null != pipelineName) {
+            state.removePipeline(pipelineName); // get rid of old state in any case
             for (IMonitoringPlugin plugin : plugins) {
                 handleStarting(event, plugin);
             }

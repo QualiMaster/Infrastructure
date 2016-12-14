@@ -197,7 +197,7 @@ public class ProfileControlTests {
         assertEquals(params, 400, 1200, 500, 600, 1000);
         
         ArtifactRegistry.undefineArtifact(artifactSpec);
-        tmp.delete();
+        FileUtils.deleteQuietly(tmp);
     }
     
     /**
@@ -239,7 +239,7 @@ public class ProfileControlTests {
         assertEquals(params, 400, 500, 600, 1000);
         
         ArtifactRegistry.undefineArtifact(artifactSpec);
-        tmp.delete();
+        FileUtils.deleteQuietly(tmp);
         dataFile.delete();
     }
     
@@ -288,7 +288,7 @@ public class ProfileControlTests {
         assertEquals(params, 400, 1200, 500, 600, 1000);
         
         ArtifactRegistry.undefineArtifact(artifactSpec);
-        tmp.delete();
+        FileUtils.deleteQuietly(tmp);
     }
 
     

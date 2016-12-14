@@ -11,6 +11,7 @@ import org.apache.log4j.LogManager;
 
 import eu.qualimaster.common.signal.SignalMechanism;
 import eu.qualimaster.common.signal.SignalMechanism.NamespaceState;
+import eu.qualimaster.coordination.INameMapping.ISubPipeline;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand;
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent;
@@ -22,6 +23,7 @@ import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.EndOfDataEvent;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.infrastructure.PipelineOptions;
+import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 import eu.qualimaster.monitoring.events.IEnactmentCompletedMonitoringEvent;
 
 /**
@@ -103,6 +105,7 @@ public class CoordinationManager {
             String pipelineName = event.getPipeline();
             PipelineInfo info = pipelines.get(pipelineName);
             switch (event.getStatus()) {
+            // case STARTING: do this when handling the pipeline start command 
             case CHECKED:
                 // do not remove here! otherwise endless pending cycle
                 PipelineCommand cmd = pendingStartups.get(pipelineName);
@@ -131,11 +134,12 @@ public class CoordinationManager {
             case STOPPED:
                 handleSignalNamespace(pipelineName, NamespaceState.CLEAR);
                 EventManager.handle(new CoordinationCommandExecutionEvent(event));
-                pendingProfiling.remove(pipelineName); // throw away
+                pendingStartups.remove(pipelineName);
+                pendingProfiling.remove(pipelineName);
                 pipelines.remove(pipelineName);
                 break;
             case CREATED:
-                // to enable the adaptation layer sending signals
+                // to enable the adaptation layer sending signals, see also signal handler in storm commons
                 handleSignalNamespace(pipelineName, NamespaceState.ENABLE);
                 ProfileControl.created(pipelineName);
                 break;
@@ -220,7 +224,7 @@ public class CoordinationManager {
      * @author Holger Eichelberger
      */
     private static class EnactmentEventHandler extends EventHandler<IEnactmentCompletedMonitoringEvent> {
-
+        
         /**
          * Creates a handler instance.
          */
@@ -231,6 +235,24 @@ public class CoordinationManager {
         @Override
         protected void handle(IEnactmentCompletedMonitoringEvent event) {
             store.received(event);
+            if (event instanceof AlgorithmChangedMonitoringEvent) {
+                AlgorithmChangedMonitoringEvent evt = (AlgorithmChangedMonitoringEvent) event;
+                PipelineInfo info = getPipelineInfo(evt.getPipeline());
+                if (null != info) {
+                    INameMapping mapping = CoordinationManager.getNameMapping(evt.getPipeline());
+                    ISubPipeline subPip = mapping.getSubPipelineByAlgorithmName(evt.getAlgorithm());
+                    if (null != subPip) {
+                        PipelineOptions opts = null;
+                        PipelineInfo subInfo = getPipelineInfo(subPip.getName());
+                        if (null != subInfo) {
+                            opts = subInfo.getOptions();
+                        }
+                        // stop the sub-pipeline, send to all for cleanup
+                        new PipelineCommand(subPip.getName(), PipelineCommand.Status.STOP, opts).execute(); 
+                    }
+                    info.setEnactedAlgorithm(evt.getPipelineElement(), evt.getAlgorithm());
+                }
+            }
         }
         
     }
@@ -523,6 +545,16 @@ public class CoordinationManager {
      */
     static void registerPipelineOptions(String pipeline, PipelineOptions options) {
         obtainPipelineInfo(pipeline).setOptions(options);
+    }
+    
+    /**
+     * Clears cached information about a pipeline. Handle with care!
+     * 
+     * @param pipeline the pipeline to be cleared
+     */
+    static void clearPipeline(String pipeline) {
+        pipelines.remove(pipeline);
+        pendingStartups.remove(pipeline);
     }
     
 }
