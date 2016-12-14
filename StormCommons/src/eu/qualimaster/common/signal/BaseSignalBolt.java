@@ -96,6 +96,20 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     }
 
     /**
+     * Sends a signal.
+     * 
+     * @param toPath the target element (path)
+     * @param signal the signal to be sent
+     * @throws Exception in case of execution problems
+     */
+    @Deprecated
+    public void sendSignal(String toPath, byte[] signal) throws Exception {
+        this.signalConnection.send(toPath, signal);
+    }
+
+    // checkstyle: resume exception type check
+
+    /**
      * Creates the port manager and considers pipeline interconnection ports from <code>conf</code>.
      * 
      * @param signalConnection the signal connection
@@ -218,18 +232,6 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     }
 
     /**
-     * Sends a signal.
-     * 
-     * @param toPath the target element (path)
-     * @param signal the signal to be sent
-     * @throws Exception in case of execution problems
-     */
-    @Deprecated
-    public void sendSignal(String toPath, byte[] signal) throws Exception {
-        this.signalConnection.send(toPath, signal);
-    }
-
-    /**
      * Sends a signal via the signal connection of this bolt.
      * 
      * @param signal the signal to be sent
@@ -238,9 +240,15 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     protected void sendSignal(TopologySignal signal) throws SignalException {
         signal.sendSignal(this.signalConnection);
     }
-    
-    // checkstyle: resume exception type check
 
+    /**
+     * Creates and installs a worker-wide signal handler to enable pipeline lifecycles. Handle with care, requires
+     * implicitly a forward event handler thread / connection with the infrastructure.
+     */
+    protected void installNamespaceLifecycleSignalHandler() {
+        SignalNamespaceLifecycleEventHandler.registerHandler();
+    }
+    
     /**
      * Sends an algorithm changed event.
      * 
@@ -283,6 +291,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
         prepareShutdown(signal);
         ComponentKeyRegistry.unregister(this);
         monitor.shutdown();
+        SignalNamespaceLifecycleEventHandler.unregisterHandler();
         if (Configuration.getPipelineSignalsQmEvents()) {
             EventManager.unregister(algorithmEventHandler);
             EventManager.unregister(parameterEventHandler);

@@ -290,12 +290,8 @@ public class SignalMechanism {
      * @param namespace the pipeline name / namespace to clear (for port manager)
      */
     public static void releaseMechanism(String namespace) {
+        // shall not happen as we are using only the global namespace
         CuratorFramework framework = FRAMEWORKS.remove(namespace);
-        try {
-            getPortManager().clearPortAssignments(namespace);
-        } catch (SignalException e) {
-            getLogger().error(e.getMessage());
-        }
         if (null != framework) {
             clearPipeline(framework, namespace);
             framework.close();

@@ -91,7 +91,9 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
         }
         ComponentKeyRegistry.register(pipeline, this, monitor.getComponentKey());
     }
-    
+
+    // checkstyle: resume exception type check
+
     /**
      * Creates the monitor instance.
      * 
@@ -189,8 +191,6 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
         //}
     }
 
-    // checkstyle: resume exception type check
-
     /**
      * Sends an algorithm changed event.
      * 
@@ -228,6 +228,14 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     protected void sendSignal(TopologySignal signal) throws SignalException {
         signal.sendSignal(this.signalConnection);
     }
+    
+    /**
+     * Creates and installs a worker-wide signal handler to enable pipeline lifecycles. Handle with care, requires
+     * implicitly a forward event handler thread / connection with the infrastructure.
+     */
+    protected void installNamespaceLifecycleSignalHandler() {
+        SignalNamespaceLifecycleEventHandler.registerHandler();
+    }
 
     // intentionally final so that subclasses cannot overwrite required shutdown sequence
     @Override
@@ -237,6 +245,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
         prepareShutdown(signal);
         ComponentKeyRegistry.unregister(this);
         monitor.shutdown();
+        SignalNamespaceLifecycleEventHandler.unregisterHandler();
         if (Configuration.getPipelineSignalsQmEvents()) {
             EventManager.unregister(parameterEventHandler);
             EventManager.unregister(shutdownEventHandler);

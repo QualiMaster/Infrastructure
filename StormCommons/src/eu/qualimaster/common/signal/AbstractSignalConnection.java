@@ -12,7 +12,8 @@ import eu.qualimaster.events.EventManager;
 import eu.qualimaster.events.IEvent;
 
 /**
- * An abstract signal connection implementing a zookeeper watcher.
+ * An abstract signal connection implementing a zookeeper watcher. Unfortunately, it seems that the underlying 
+ * zookeeper connection cannot be shared as then the signals are not delivered properly.
  * 
  * @author Cui Qin
  */
