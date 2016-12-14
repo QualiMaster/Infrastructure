@@ -62,7 +62,7 @@ public abstract class AbstractHyTopology extends AbstractTopology {
         
         double processorThroughput = processor.getObservedValue(TimeBehavior.THROUGHPUT_ITEMS);
         if ((isThrift() && processorThroughput > 0) || !isThrift()) { // currently, sometimes there, sometimes not
-            assertGreaterEquals(10, processor, TimeBehavior.THROUGHPUT_ITEMS);
+            assertGreaterEquals(1, processor, TimeBehavior.THROUGHPUT_ITEMS);
             
             assertEquals(processorThroughput, algorithm, TimeBehavior.THROUGHPUT_ITEMS, 1);
             assertEquals(processorThroughput, pip, TimeBehavior.THROUGHPUT_ITEMS, 1);

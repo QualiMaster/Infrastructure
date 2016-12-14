@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -424,7 +425,22 @@ public class ReasoningTask extends TimerTask {
     public ReasoningTask(IReasoningModelProvider provider) {
         this.provider = provider;
         tmp = RepositoryConnector.createTmpFolder();
+        tmp.deleteOnExit();
         checkProviderUpdate();
+    }
+    
+    @Override
+    public boolean cancel() {
+        boolean result = super.cancel();
+        dispose();
+        return result;
+    }
+    
+    /**
+     * Disposes temporary resources. To be called explicity if this class is not used as a timer task.
+     */
+    public void dispose() {
+        FileUtils.deleteQuietly(tmp);
     }
 
     /**
