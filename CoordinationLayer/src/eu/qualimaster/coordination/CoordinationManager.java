@@ -11,6 +11,7 @@ import org.apache.log4j.LogManager;
 
 import eu.qualimaster.common.signal.SignalMechanism;
 import eu.qualimaster.common.signal.SignalMechanism.NamespaceState;
+import eu.qualimaster.coordination.INameMapping.Algorithm;
 import eu.qualimaster.coordination.INameMapping.ISubPipeline;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand;
@@ -241,17 +242,22 @@ public class CoordinationManager {
                 PipelineInfo info = getPipelineInfo(evt.getPipeline());
                 if (null != info) {
                     INameMapping mapping = CoordinationManager.getNameMapping(evt.getPipeline());
-                    ISubPipeline subPip = mapping.getSubPipelineByAlgorithmName(evt.getAlgorithm());
-                    if (null != subPip) {
-                        PipelineOptions opts = null;
-                        PipelineInfo subInfo = getPipelineInfo(subPip.getName());
-                        if (null != subInfo) {
-                            opts = subInfo.getOptions();
-                        }
-                        // stop the sub-pipeline, send to all for cleanup
-                        new PipelineCommand(subPip.getName(), PipelineCommand.Status.STOP, opts).execute(); 
+                    String algorithm = evt.getAlgorithm(); // the implementation name
+                    Algorithm alg = mapping.getAlgorithmByImplName(algorithm);
+                    if (null != alg) { // map it back to the configured name
+                        algorithm = alg.getName();
                     }
-                    info.setEnactedAlgorithm(evt.getPipelineElement(), evt.getAlgorithm());
+                    String prevAlgorithm = info.getEnactedAlgorithm(evt.getPipelineElement());
+                    if (null != prevAlgorithm) {
+                        ISubPipeline subPip = mapping.getSubPipelineByAlgorithmName(prevAlgorithm);
+                        if (null != subPip) {
+                            PipelineInfo subInfo = getPipelineInfo(subPip.getName());
+                            PipelineOptions opts = subInfo == null ? null : subInfo.getOptions();
+                            // stop the sub-pipeline, send to all for cleanup
+                            new PipelineCommand(subPip.getName(), PipelineCommand.Status.STOP, opts).execute(); 
+                        }
+                    }
+                    info.setEnactedAlgorithm(evt.getPipelineElement(), algorithm);
                 }
             }
         }

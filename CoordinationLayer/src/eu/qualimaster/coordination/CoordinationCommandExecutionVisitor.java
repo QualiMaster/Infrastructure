@@ -275,7 +275,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
      * @param mapping the name mapping
      * @return the target namespace
      */
-    private String getTargetNamespace(INameMapping mapping) {
+    private static String getTargetNamespace(INameMapping mapping) {
         String result = getNamespace(mapping);
         PipelineInfo info = CoordinationManager.getPipelineInfo(mapping.getPipelineName());
         if (null != info) {
@@ -483,7 +483,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
         EventManager.handle(new PipelineLifecycleEvent(pipelineName, PipelineLifecycleEvent.Status.STOPPING, 
             command));
         for (Component c : mapping.getComponents()) {
-            ShutdownSignal signal = new ShutdownSignal(getNamespace(mapping), c.getName());
+            ShutdownSignal signal = new ShutdownSignal(getTargetNamespace(mapping), c.getName());
             send(command, signal); // ignore failing
         }
         Utils.sleep(CoordinationConfiguration.getShutdownSignalWaitTime());
