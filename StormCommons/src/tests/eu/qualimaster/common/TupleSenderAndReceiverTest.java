@@ -17,10 +17,14 @@ import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.base.algorithm.SwitchTuple;
 import eu.qualimaster.base.serializer.IGeneralTupleSerializer;
 import eu.qualimaster.base.serializer.ISwitchTupleSerializer;
-import eu.qualimaster.base.serializer.KryoGeneralTupleSerializer;
-import eu.qualimaster.base.serializer.KryoSwitchTupleSerializer;
+import eu.qualimaster.common.switching.IGeneralTupleSerializerCreator;
+import eu.qualimaster.common.switching.ISwitchTupleSerializerCreator;
+import eu.qualimaster.common.switching.ITupleReceiveCreator;
+import eu.qualimaster.common.switching.ITupleReceiverHandler;
+import eu.qualimaster.common.switching.KryoGeneralTupleSerializerCreator;
+import eu.qualimaster.common.switching.KryoSwitchTupleSerializerCreator;
 import eu.qualimaster.common.switching.SynchronizedQueue;
-import eu.qualimaster.common.switching.TupleReceiverHandler;
+import eu.qualimaster.common.switching.TupleReceiverHandlerCreator;
 import eu.qualimaster.common.switching.TupleReceiverServer;
 import eu.qualimaster.common.switching.TupleSender;
 import tests.eu.qualimaster.common.KryoTupleSerializerTest.DataItem;
@@ -74,8 +78,8 @@ public class TupleSenderAndReceiverTest {
         Config.registerSerialization(conf, DataItem.class, DataItemSerializer.class);
         
         //serializers
-        IGeneralTupleSerializer genSer = new KryoGeneralTupleSerializer(conf);
-        ISwitchTupleSerializer swiSer = new KryoSwitchTupleSerializer(conf);
+        IGeneralTupleSerializerCreator genSerC = new KryoGeneralTupleSerializerCreator(conf);
+        ISwitchTupleSerializerCreator swiSerC = new KryoSwitchTupleSerializerCreator(conf);
         
         //queue to store the tuple
         queue = new ConcurrentLinkedQueue<IGeneralTuple>();
@@ -84,11 +88,13 @@ public class TupleSenderAndReceiverTest {
         tmpSyn = new SynchronizedQueue<IGeneralTuple>(tmpQueue, 5);
         
         //creates the handler for receiving tuples, including general and switch tuple
-        TupleReceiverHandler handler = new TupleReceiverHandler(genSer, swiSer, syn, tmpSyn);        
-        TupleReceiverServer server = new TupleReceiverServer(handler, port);
+        ITupleReceiveCreator creator = new TupleReceiverHandlerCreator(genSerC, swiSerC, syn, tmpSyn);        
+        TupleReceiverServer server = new TupleReceiverServer(creator, port);
         server.start();
         System.out.println("Server is started...");
         
+        IGeneralTupleSerializer genSer = genSerC.createGeneralTupleSerializer();
+        ISwitchTupleSerializer swiSer = swiSerC.createSwitchTupleSerializer();
         TupleSender client = new TupleSender("localhost", port);
         
         Thread consumeTupleThread = new Thread(new ConsumeTuple());
@@ -124,24 +130,24 @@ public class TupleSenderAndReceiverTest {
         client.stop();
         
         try {
-            handler.stop();
-            //server.stop();
+            server.stop();
         } catch (IOException e) {
             e.printStackTrace();
         }
         
-        testSwitchTupleReceiver(swiSer);
+        testSwitchTupleReceiver(creator, swiSer);
     }
     
     /**
      * Test sending only switch tuple {@link ISwitchTuple}.
+     * @param creator the creator
      * @param swiSer the {@link ISwitchTuple} serializer
      */
-    public void testSwitchTupleReceiver(ISwitchTupleSerializer swiSer) {
+    public void testSwitchTupleReceiver(ITupleReceiveCreator creator, ISwitchTupleSerializer swiSer) {
         int port = 8998;
         //send only ISwitchTuple
-        TupleReceiverHandler swiHandler = new TupleReceiverHandler(swiSer, syn);        
-        TupleReceiverServer swiServer = new TupleReceiverServer(swiHandler, port);
+        ITupleReceiverHandler swiHandler = creator.create(true);        
+        TupleReceiverServer swiServer = new TupleReceiverServer(creator, port, true);
         swiServer.start();
         System.out.println("Switch Server is started...");
         

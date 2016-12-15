@@ -17,6 +17,8 @@ public class TupleReceiverServer implements Runnable {
     private ITupleReceiveCreator creator;
     private boolean cont = true;
     private int port;
+    private boolean useSwitchHandler;
+    
     /**
      * Creates a socket server for receiving tuples.
      * @param handler the handler for receiving tuples.
@@ -38,15 +40,26 @@ public class TupleReceiverServer implements Runnable {
      * @param port the port to create the socket server
      */
     public TupleReceiverServer(ITupleReceiveCreator creator, int port) {
+        this(creator, port, false);
+    }
+
+    /**
+     * Creates a socket server for receiving tuples.
+     * @param creator the tuple receive creator
+     * @param port the port to create the socket server
+     * @param useSwitchHandler use the switch handler or the general handler
+     */
+    public TupleReceiverServer(ITupleReceiveCreator creator, int port, boolean useSwitchHandler) {
         this.creator = creator;
         this.port = port;
+        this.useSwitchHandler = useSwitchHandler;
         try {
             serverSocket = new ServerSocket(port);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    
+
     /**
      * Starts the server.
      */
@@ -63,7 +76,7 @@ public class TupleReceiverServer implements Runnable {
                 Socket socket = serverSocket.accept();
                 LOGGER.info("Socket connection accepted " + port);
                 if (null != creator) {
-                    handler = creator.create();
+                    handler = creator.create(useSwitchHandler);
                 }
                 handler.setSocket(socket);
                 new Thread(handler).start();

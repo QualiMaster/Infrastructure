@@ -49,14 +49,28 @@ public class TupleSender {
         }
         return null != socket;
     }
+
     /**
      * Sends the data bytes.
      * @param bytes the bytes to be sent
      */
     public void send(byte[] bytes) {
+        send(bytes, false);
+    }
+    
+    /**
+     * Sends the data bytes.
+     * @param bytes the bytes to be sent
+     * @param flag send the bytes as flag (negate length)
+     */
+    private void send(byte[] bytes, boolean flag) {
         if (connect()) {
             try {
-                output.writeInt(bytes.length);
+                int len = bytes.length;
+                if (flag) {
+                    len = -len;
+                }
+                output.writeInt(len);
                 output.writeBytes(bytes);
                 output.flush();
             } catch (KryoException e) {
@@ -69,28 +83,28 @@ public class TupleSender {
      * Sends a flag indicating the {@link ISwitchTuple} data type.
      */
     public void sendSwitchTupleFlag() {
-        send(DataFlag.SWITCH_TUPLE_FLAG.getBytes());
+        send(DataFlag.SWITCH_TUPLE_FLAG.getBytes(), true);
     }
     
     /**
      * Sends a flag indicating the {@link IGeneralTuple} data type.
      */
     public void sendGeneralTupleFlag() {
-        send(DataFlag.GENERAL_TUPLE_FLAG.getBytes());
+        send(DataFlag.GENERAL_TUPLE_FLAG.getBytes(), true);
     }
     
     /**
      * Sends a flag indicating the temporary queue shall be used.
      */
     public void sendTemporaryQueueFlag() {
-        send(DataFlag.TEMPORARY_QUEUE_FLAG.getBytes());
+        send(DataFlag.TEMPORARY_QUEUE_FLAG.getBytes(), true);
     }
     
     /**
      * Sends a flag indicating the general queue shall be used.
      */
     public void sendGeneralQueueFlag() {
-        send(DataFlag.GENERAL_QUEUE_FLAG.getBytes());
+        send(DataFlag.GENERAL_QUEUE_FLAG.getBytes(), true);
     }
     
     /**
