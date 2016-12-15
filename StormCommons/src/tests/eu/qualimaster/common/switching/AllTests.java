@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 University of Hildesheim, Software Systems Engineering
+ * Copyright 2009-2016 University of Hildesheim, Software Systems Engineering
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package tests.eu.qualimaster.common;
+package tests.eu.qualimaster.common.switching;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
-import tests.eu.qualimaster.common.signal.PortManagerTest;
-
 /**
- * The tests for the storm commons component.
+ * Tests the signals.
  * 
+ * @author Cui Qin
  * @author Holger Eichelberger
  */
 @RunWith(Suite.class)
-@Suite.SuiteClasses({tests.eu.qualimaster.common.signal.AllTests.class, 
-    tests.eu.qualimaster.common.shedding.AllTests.class,
-    tests.eu.qualimaster.common.switching.AllTests.class,
-    RecordingTopologyBuilderTest.class, OutputItemsTest.class, HardwareConnectionTest.class, 
-    AlgorithmUtilsTest.class, KryoTupleSerializerTest.class, TupleSenderAndReceiverTest.class, 
-    PortManagerTest.class })
+@Suite.SuiteClasses({ParallelNetworkTest.class, 
+    //BaseSwitchSpoutTest.class
+    })
 public class AllTests {
-
 }

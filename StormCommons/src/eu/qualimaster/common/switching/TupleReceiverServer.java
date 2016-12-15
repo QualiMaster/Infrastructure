@@ -57,7 +57,7 @@ public class TupleReceiverServer implements Runnable {
     
     @Override
     public void run() {
-        while (cont && serverSocket != null) {
+        while (cont && serverSocket != null && !serverSocket.isClosed()) {
             try {
                 LOGGER.info("Accepting the socket connection....");
                 Socket socket = serverSocket.accept();
@@ -68,7 +68,10 @@ public class TupleReceiverServer implements Runnable {
                 handler.setSocket(socket);
                 new Thread(handler).start();
             } catch (IOException e) {
-                e.printStackTrace();
+                try {
+                    stop();
+                } catch (IOException e1) {
+                }
             } 
         }
     }
@@ -78,7 +81,7 @@ public class TupleReceiverServer implements Runnable {
      * @throws IOException the IO exception
      */
     public void stop() throws IOException {
-        LOGGER.info("Stopping server");
+        LOGGER.info("Stopping server on port " + port);
         if (cont) {
             cont = false;
         }

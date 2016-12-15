@@ -10,7 +10,6 @@ import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.Input;
 
 import eu.qualimaster.base.algorithm.IGeneralTuple;
-import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.base.serializer.IGeneralTupleSerializer;
 import eu.qualimaster.base.serializer.ISwitchTupleSerializer;
 /**
@@ -76,17 +75,22 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
             try {
                 if (kryoInput.canReadInt()) {
                     int len = kryoInput.readInt();
-                    byte[] ser = new byte[len];
-                    kryoInput.readBytes(ser);
-                    if (len == DataFlag.FLAG_BYTES_LEN) { //switch the tuple serializer
+                    if (len == DataFlag.DATA_FLAG) { //switch the tuple serializer
+                        byte[] ser = new byte[DataFlag.FLAG_BYTES_LEN];
+                        kryoInput.readBytes(ser);
                         switchMode(new String(ser));   
                         LOGGER.info("Received flag: " + new String(ser));
                     } else {
+                        byte[] ser = new byte[len];
+                        kryoInput.readBytes(ser);
                         enqueue(ser); //enqueue the received tuple
                     }
                 }
             } catch (KryoException e) {
-                e.printStackTrace();
+                try {
+                    stop();
+                } catch (IOException e1) {
+                }
             }
         }
     }
@@ -103,14 +107,16 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
     }
 
     @Override
-    public void stop() throws IOException {
+    public synchronized void stop() throws IOException {
         if (null != socket) {
             LOGGER.info("Stopping handler");
             cont = false;
             in.close();
             in = null;
-            kryoInput.close();
-            kryoInput = null;
+            if (null != kryoInput) {
+                kryoInput.close();
+                kryoInput = null;
+            }
             socket.close();
             socket = null;
             LOGGER.info("Stopped handler");
@@ -146,7 +152,7 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
             break;
         }
     }
-    
+
     /**
      * Enqueue the received tuple.
      * @param ser the tuple bytes
@@ -168,7 +174,7 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
                     syn.produce(tuple);
                 }
             }
-        } catch (NullPointerException e) {
+        } catch (NullPointerException e) { // TODO why catching NPE?
             e.printStackTrace();
         }
     }     

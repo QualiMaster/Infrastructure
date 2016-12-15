@@ -1,7 +1,5 @@
 package eu.qualimaster.common.switching;
 
-import eu.qualimaster.base.algorithm.IGeneralTuple;
-import eu.qualimaster.base.algorithm.ISwitchTuple;
 /**
  * Defines the data flag indicating the tuple type, i.e., {@link IGeneralTuple} and {@link ISwitchTuple}, 
  * as well as the queue to be used for storing received data.
@@ -13,6 +11,12 @@ public class DataFlag {
      * The length of the sent flag.
      */
     public static final int FLAG_BYTES_LEN = 8;
+
+    /**
+     * The used for signalling the flag as length.
+     */
+    public static final int DATA_FLAG = -FLAG_BYTES_LEN;
+    
     /**
      * The flag indicating the {@link ISwitchTuple} data type.
      */
