@@ -62,8 +62,9 @@ public class TupleReceiverServer implements Runnable {
                 LOGGER.info("Accepting the socket connection....");
                 Socket socket = serverSocket.accept();
                 LOGGER.info("Socket connection accepted " + port);
+                handler = creator.create();
                 handler.setSocket(socket);
-                new Thread(creator.create()).start();
+                new Thread(handler).start();
             } catch (IOException e) {
                 e.printStackTrace();
             } 
