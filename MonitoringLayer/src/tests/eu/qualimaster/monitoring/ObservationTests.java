@@ -18,9 +18,18 @@ package tests.eu.qualimaster.monitoring;
 import org.junit.Test;
 import org.junit.Assert;
 
+import eu.qualimaster.coordination.CoordinationManager;
+import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.coordination.IdentityMapping;
 import eu.qualimaster.monitoring.observations.DelegatingStatisticsObservation;
 import eu.qualimaster.monitoring.observations.DelegatingTimeFramedObservation;
 import eu.qualimaster.monitoring.observations.SingleObservation;
+import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
+import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
+import eu.qualimaster.monitoring.systemState.StateUtils;
+import eu.qualimaster.monitoring.systemState.SystemState;
+import eu.qualimaster.observables.Scalability;
+import eu.qualimaster.observables.TimeBehavior;
 
 /**
  * Tests individual observations.
@@ -34,6 +43,8 @@ public class ObservationTests {
      */
     @Test
     public void timeFramedAbsoluteStatistics() {
+        INameMapping mapping = new IdentityMapping("pip");
+        CoordinationManager.registerTestMapping(mapping); // avoid full startup
         DelegatingStatisticsObservation obs = new DelegatingStatisticsObservation(
             new DelegatingTimeFramedObservation(new SingleObservation(), 1000));
         
@@ -54,6 +65,39 @@ public class ObservationTests {
         Assert.assertEquals((500 + 1000) / 3, obs.getAverageValue(), 1);
         Assert.assertEquals(0, obs.getMinimumValue(), 1);
         Assert.assertEquals(1000, obs.getMaximumValue(), 5);
+        CoordinationManager.unregisterNameMapping(mapping);
+    }
+    
+    /**
+     * Tests the time-framed aggregation.
+     */
+    @Test
+    public void testTimeFramedAggregation() {
+        INameMapping mapping = new IdentityMapping("pip");
+        CoordinationManager.registerTestMapping(mapping); // avoid full startup
+        SystemState state = new SystemState();
+        PipelineSystemPart pip = state.obtainPipeline("pip");
+        PipelineNodeSystemPart node = pip.obtainPipelineNode("node");
+        
+        double[] data = {2, 10, 10, 10, 10, 10, 10, 55792, 126885, 700336, 912036, 1248618, 1498365, 1959288, 
+            2074404, 2151250};
+        
+        long time = System.currentTimeMillis();
+        for (int i = 0; i < data.length; i++) {
+            StateUtils.setValue(node, TimeBehavior.THROUGHPUT_ITEMS, data [i], null);
+            System.out.print(".");
+            if (i + 1 < data.length) { // don't sleep for the last one!
+                sleep(1000); // needed for the time frame although imprecise
+            }
+        }
+        System.out.println(".");
+        long timeDiff = System.currentTimeMillis() - time;
+        double items = node.getObservedValue(Scalability.ITEMS);
+        double expectedItems = (data[data.length - 1] / timeDiff) * 1000;
+        double diff = Math.abs(items - expectedItems);
+        Assert.assertTrue("expected " + expectedItems + " actual " + items + " diff " + diff + " not < 100 ", 
+            diff < 100);
+        CoordinationManager.unregisterNameMapping(mapping);
     }
 
     /**
