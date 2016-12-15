@@ -515,7 +515,6 @@ public class MonitoringManager {
     private static void handleStopping(PipelineLifecycleEvent event) {
         String pipelineName = event.getPipeline();
         if (null != pipelineName) {
-            // don't remove the pipeline - keep state
             PipelineSystemPart pipeline = state.getPipeline(pipelineName);
             if (null != pipeline) {
                 pipeline.changeStatus(PipelineLifecycleEvent.Status.STOPPING, false, event);
@@ -567,10 +566,13 @@ public class MonitoringManager {
                     handleStopping(event);
                     break;
                 case STARTED:
-                    // fallthrough
+                    pipeline = state.obtainPipeline(pipelineName);
+                    pipeline.changeStatus(status, false, null);
+                    break;
                 case STOPPED:
                     pipeline = state.obtainPipeline(pipelineName);
                     pipeline.changeStatus(status, false, null);
+                    state.removePipeline(pipelineName); // get rid of old state in any case
                     break;
                 case INITIALIZED:
                     PipelineInfo info = pipelines.get(pipelineName);
