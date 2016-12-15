@@ -42,7 +42,7 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 
 	private int counter;
 
-	public HBaseBatchStorageSupport(String tableName) {		
+	public HBaseBatchStorageSupport(String tableName) {
 		super(tableName);
 		log.info("Replay: constructing HBaseBatchStorageSupport");
 		// Configuration config = HBaseConfiguration.create();
@@ -133,6 +133,7 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 		}
 		super.disconnect();
 	}
+
 
 	@Override
 	// This implementation is fail-fast

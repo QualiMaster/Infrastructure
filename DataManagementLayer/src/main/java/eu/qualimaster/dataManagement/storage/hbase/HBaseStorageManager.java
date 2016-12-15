@@ -41,11 +41,13 @@ public class HBaseStorageManager extends
 			System.out.println("qualified Name " + qualifiedName);
 
 		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
+			// e.printStackTrace();
 			name = name.replaceAll("\\W", "-");
 			qualifiedName = Bytes.toString(TableName
 					.isLegalFullyQualifiedTableName(Bytes.toBytes(name)));
 
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		System.out.println("returning alternative name for table: " + qualifiedName);
 		return qualifiedName;

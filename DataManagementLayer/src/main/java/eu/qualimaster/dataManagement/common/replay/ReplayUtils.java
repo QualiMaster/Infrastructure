@@ -57,6 +57,10 @@ public class ReplayUtils {
         return Long.parseLong(hbaseKey[hbaseKey.length-1]);
     }
 
+    public static long getTimestamp(String timeValue) {
+        return formatter.parseMillis((String)timeValue);
+    }
+
     /***************************************************************************
      * Primitive arrays conversion utilities.
      **************************************************************************/
@@ -356,5 +360,9 @@ public class ReplayUtils {
             throw new RuntimeException("Cannot decode boolean from the buffer");
         }
         return bytes[offset] != (byte) 0;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(getTimestamp("11/15/2016,10:50:34"));
     }
 }
