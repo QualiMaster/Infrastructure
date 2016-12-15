@@ -174,7 +174,7 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
                     syn.produce(tuple);
                 }
             }
-        } catch (NullPointerException e) { // TODO why catching NPE?
+        } catch (NullPointerException e) { // TODO check whether catching RuntimeException in serializers is sufficient
             e.printStackTrace();
         }
     }     

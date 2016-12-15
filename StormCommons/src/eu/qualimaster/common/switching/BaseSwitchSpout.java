@@ -30,6 +30,7 @@ public abstract class BaseSwitchSpout extends BaseSignalSpout {
         super(name, namespace, sendRegular);
     }
     
+    @SuppressWarnings("rawtypes")
     @Override
     public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
         super.open(conf, context, collector);

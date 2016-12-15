@@ -13,8 +13,8 @@ import eu.qualimaster.base.algorithm.SwitchTuple;
 
 /**
  * Implementation of the serializer for the switch tuple.
+ * 
  * @author qin
- *
  */
 public class KryoSwitchTupleSerializer implements ISwitchTupleSerializer {
     private KryoValuesSerializer valuesSer;
@@ -33,14 +33,19 @@ public class KryoSwitchTupleSerializer implements ISwitchTupleSerializer {
         this.kryoIn = new Input(1);
         this.kryoOut = new Output(2000, 2000000000);
     }
-    
+
+    // checkstyle: stop exception type check
+
     @Override
     public byte[] serialize(ISwitchTuple tuple) {
         kryoOut.clear();
-        kryoOut.writeLong(tuple.getId());
         try {
+            kryoOut.writeLong(tuple.getId());
             valuesSer.serializeInto(tuple.getValues(), kryoOut);
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (RuntimeException e) {
+            // catch KryoExceptions and whatever Storm serializers like to throw
             e.printStackTrace();
         }
         return kryoOut.toBytes();
@@ -51,11 +56,19 @@ public class KryoSwitchTupleSerializer implements ISwitchTupleSerializer {
         ISwitchTuple tuple;
         if (null != ser && ser.length > 0) {
             kryoIn.setBuffer(ser);
-            tuple = new SwitchTuple(kryoIn.readLong(), valuesDeser.deserializeFrom(kryoIn));
+            try {
+                tuple = new SwitchTuple(kryoIn.readLong(), valuesDeser.deserializeFrom(kryoIn));
+            } catch (RuntimeException e) {
+                // Buffer underflow? kryoIn.available() may solve the problem but consumes time
+                // KryoException may be sufficient, Storm serializers like throwing plain RuntimeExceptions
+                tuple = null;
+            }
         } else {
             tuple = null;
         }
         return tuple;
     }
+
+    // checkstyle: resume exception type check
 
 }

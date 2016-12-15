@@ -10,10 +10,11 @@ import backtype.storm.serialization.KryoValuesDeserializer;
 import backtype.storm.serialization.KryoValuesSerializer;
 import eu.qualimaster.base.algorithm.GeneralTuple;
 import eu.qualimaster.base.algorithm.IGeneralTuple;
+
 /**
  * Implementation of the kryo serializer of the general Tuple {@link IGeneralTupleSerializer}.
+ * 
  * @author Cui Qin
- *
  */
 public class KryoGeneralTupleSerializer implements IGeneralTupleSerializer {
     private KryoValuesSerializer valuesSer;
@@ -31,12 +32,18 @@ public class KryoGeneralTupleSerializer implements IGeneralTupleSerializer {
         this.kryoIn = new Input(1);
         this.kryoOut = new Output(2000, 2000000000);
     }
+
+    // checkstyle: stop exception type check
+    
     @Override
     public byte[] serialize(IGeneralTuple tuple) {
         kryoOut.clear();
         try {
             valuesSer.serializeInto(tuple.getValues(), kryoOut);
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (RuntimeException e) {
+            // catch KryoExceptions and whatever Storm serializers like to throw
             e.printStackTrace();
         }
         return kryoOut.toBytes();
@@ -47,11 +54,19 @@ public class KryoGeneralTupleSerializer implements IGeneralTupleSerializer {
         IGeneralTuple tuple;
         if (null != ser && ser.length > 0) {
             kryoIn.setBuffer(ser);
-            tuple = new GeneralTuple(valuesDeser.deserializeFrom(kryoIn));
+            try {
+                tuple = new GeneralTuple(valuesDeser.deserializeFrom(kryoIn));
+            } catch (RuntimeException e) {
+                // Buffer underflow? kryoIn.available() may solve the problem but consumes time
+                // KryoException may be sufficient, Storm serializers like throwing plain RuntimeExceptions
+                tuple = null;
+            }
         } else {
             tuple = null;
         }
         return tuple;
     }
+
+    // checkstyle: resume exception type check
 
 }
