@@ -15,7 +15,6 @@
  */
 package eu.qualimaster.common.signal;
 
-import eu.qualimaster.common.signal.SignalMechanism.NamespaceState;
 import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
@@ -64,11 +63,12 @@ class SignalNamespaceLifecycleEventHandler extends EventHandler<PipelineLifecycl
         // see coordination layer lifecycle handler for state
         if (Status.CREATED == event.getStatus()) {
             String namespace = event.getPipeline();
+            SignalMechanism.initEnabledSignalNamespaceState(namespace);
             PipelineOptions opts = event.getOptions();
             if (null != opts && opts.isSubPipeline()) {
                 namespace = opts.getMainPipeline();
             }
-            SignalMechanism.changeSignalNamespaceState(namespace, NamespaceState.ENABLE);
+            SignalMechanism.initEnabledSignalNamespaceState(namespace);
         }
     }
 
