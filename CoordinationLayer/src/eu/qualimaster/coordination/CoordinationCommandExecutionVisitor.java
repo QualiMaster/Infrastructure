@@ -185,6 +185,8 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
         opts.markAsSubPipeline(mainPipeline);
         PipelineInfo info = CoordinationManager.getPipelineInfo(mainPipeline);
         String algorithm = null != info ? info.getEnactedAlgorithm(mainPipelineElement) : null;
+        LogManager.getLogger(CoordinationManager.class).info("CONFIG_KEY_INITIAL_SUB " + mainPipeline + " " 
+            + mainPipelineElement + " " + algorithm + " " + info);
         opts.setOption(Constants.CONFIG_KEY_INITIAL_SUBPIPELINE, Boolean.toString(null == algorithm));
         return opts;
     }

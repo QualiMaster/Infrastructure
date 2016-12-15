@@ -242,12 +242,19 @@ public class CoordinationManager {
                 PipelineInfo info = getPipelineInfo(evt.getPipeline());
                 if (null != info) {
                     INameMapping mapping = CoordinationManager.getNameMapping(evt.getPipeline());
-                    String algorithm = evt.getAlgorithm(); // the implementation name
+                    String pipelineElement = evt.getPipelineElement(); // possibly the implementation name
+                    String tmp = mapping.getPipelineNodeByImplName(pipelineElement);
+                    if (null != tmp) {
+                        pipelineElement = tmp;
+                    }
+                    String algorithm = evt.getAlgorithm(); // possibly the implementation name
                     Algorithm alg = mapping.getAlgorithmByImplName(algorithm);
                     if (null != alg) { // map it back to the configured name
                         algorithm = alg.getName();
                     }
-                    String prevAlgorithm = info.getEnactedAlgorithm(evt.getPipelineElement());
+                    LogManager.getLogger(CoordinationManager.class).info("Handling AlgChange "
+                        + pipelineElement + " " + algorithm + " " + evt);
+                    String prevAlgorithm = info.getEnactedAlgorithm(pipelineElement);
                     if (null != prevAlgorithm) {
                         ISubPipeline subPip = mapping.getSubPipelineByAlgorithmName(prevAlgorithm);
                         if (null != subPip) {
@@ -257,7 +264,9 @@ public class CoordinationManager {
                             new PipelineCommand(subPip.getName(), PipelineCommand.Status.STOP, opts).execute(); 
                         }
                     }
-                    info.setEnactedAlgorithm(evt.getPipelineElement(), algorithm);
+                    LogManager.getLogger(CoordinationManager.class).info("Enacting algorithm "
+                        + pipelineElement + " " + algorithm + " " + evt);
+                    info.setEnactedAlgorithm(pipelineElement, algorithm);
                 }
             }
         }
