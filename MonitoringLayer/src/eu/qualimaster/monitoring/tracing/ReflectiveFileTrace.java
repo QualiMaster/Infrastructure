@@ -52,23 +52,25 @@ public class ReflectiveFileTrace extends AbstractFileTrace {
      */
     private void tracePipeline(SystemState state, PipelineTraceInfo info, IParameterProvider parameters) {
         PipelineSystemPart pipeline = state.getPipeline(info.name);
-        print("pipeline:");
-        printSeparator();
-        print(pipeline.getName());
-        printSeparator();
-        trace(pipeline, PipelineSystemPart.class, null, null, null);
-        
-        Set<String> done = new HashSet<String>();
-        for (String nodeName : info.nodes) {
-            PipelineNodeSystemPart node = pipeline.getNode(nodeName);
-            tracePipelineNode(node);
-            done.add(nodeName);
-        }
-        for (PipelineNodeSystemPart node : pipeline.getNodes()) {
-            String name = node.getName();
-            if (!done.contains(name)) {
+        if (null != pipeline) { // unsure how this shall look for the reflective trace, pls check TracingTest
+            print("pipeline:");
+            printSeparator();
+            print(pipeline.getName());
+            printSeparator();
+            trace(pipeline, PipelineSystemPart.class, null, null, null);
+            
+            Set<String> done = new HashSet<String>();
+            for (String nodeName : info.nodes) {
+                PipelineNodeSystemPart node = pipeline.getNode(nodeName);
                 tracePipelineNode(node);
-                info.nodes.add(name);
+                done.add(nodeName);
+            }
+            for (PipelineNodeSystemPart node : pipeline.getNodes()) {
+                String name = node.getName();
+                if (!done.contains(name)) {
+                    tracePipelineNode(node);
+                    info.nodes.add(name);
+                }
             }
         }
         //print("pipeline/");

@@ -31,6 +31,7 @@ import eu.qualimaster.monitoring.systemState.SystemState;
 import eu.qualimaster.monitoring.tracing.FileTrace;
 import eu.qualimaster.monitoring.tracing.IParameterProvider;
 import eu.qualimaster.monitoring.tracing.ITrace;
+import eu.qualimaster.monitoring.tracing.ReflectiveFileTrace;
 import eu.qualimaster.observables.TimeBehavior;
 
 /**
@@ -60,30 +61,30 @@ public class TracingTest {
             }
         };
         
-        ITrace tracer = new FileTrace("test", System.out);
+        ITrace[] tracers = {new FileTrace("test", System.out), new ReflectiveFileTrace("test", System.out)};
         
         SystemState state = new SystemState();
         PipelineSystemPart main = state.obtainPipeline(mainMapping.getPipelineName());
         PipelineNodeSystemPart mainNode = main.obtainPipelineNode("mainNode");
         StateUtils.setValue(mainNode, TimeBehavior.LATENCY, 25, 0);
         
-        tracer.traceInfrastructure(state, paramProvider);
+        traceInfrastructure(tracers, state, paramProvider);
         
         PipelineSystemPart sub1 = state.obtainPipeline(sub1Mapping.getPipelineName());
         PipelineNodeSystemPart sub1Node = sub1.obtainPipelineNode("subNode1");
         StateUtils.setValue(sub1Node, TimeBehavior.LATENCY, 30, 0);
         
-        tracer.traceInfrastructure(state, paramProvider);
+        traceInfrastructure(tracers, state, paramProvider);
         
         PipelineSystemPart sub2 = state.obtainPipeline(sub2Mapping.getPipelineName());
         PipelineNodeSystemPart sub2Node = sub2.obtainPipelineNode("subNode2");
         StateUtils.setValue(sub2Node, TimeBehavior.LATENCY, 35, 0);
         
-        tracer.traceInfrastructure(state, paramProvider);
+        traceInfrastructure(tracers, state, paramProvider);
         
         state.removePipeline(sub1Mapping.getPipelineName());
         
-        tracer.traceInfrastructure(state, paramProvider);
+        traceInfrastructure(tracers, state, paramProvider);
 
         CoordinationManager.unregisterNameMapping(mainMapping);
         CoordinationManager.unregisterNameMapping(sub1Mapping);
@@ -91,6 +92,19 @@ public class TracingTest {
         
         // there is no real assert as checking the output of the tracer is tedious
         // it's more important that there is no exception
+    }
+
+    /**
+     * Applies the tracers to trace the infrastructure.
+     * 
+     * @param tracers the tracers
+     * @param state the system state
+     * @param parameters the parameter provider
+     */
+    private void traceInfrastructure(ITrace[] tracers, SystemState state, IParameterProvider parameters) {
+        for (ITrace trace : tracers) {
+            trace.traceInfrastructure(state, parameters);
+        }
     }
     
 }
