@@ -47,6 +47,56 @@ public class PipelineTopology {
          * @return the name
          */
         public String getName();
+        
+        /**
+         * Whether this element is active in case of alternative paths.
+         * 
+         * @return <code>true</code> for active, <code>false</code> else
+         */
+        public boolean isActive();
+        
+        /**
+         * Changes the active flag.
+         * 
+         * @param active the new active flag
+         */
+        public void setActive(boolean active);
+    }
+    
+    /**
+     * Represents a basic topology element. Topology elements are active by default.
+     * 
+     * @author Holger Eichelberger
+     */
+    public abstract static class TopologyElement implements ITopologyElement {
+        
+        private String name;
+        private boolean active = true;
+        
+        /**
+         * Creates a topology element.
+         * 
+         * @param name the name of the element
+         */
+        protected TopologyElement(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+        
+        @Override
+        public boolean isActive() {
+            return active;
+        }
+        
+        @Override
+        public void setActive(boolean active) {
+            this.active = active;
+        }
+
     }
     
     /**
@@ -57,8 +107,7 @@ public class PipelineTopology {
      * 
      * @author Holger Eichelberger
      */
-    public static class Processor implements ITopologyElement {
-        private String name;
+    public static class Processor extends TopologyElement {
         private int parallelization;
         private List<Stream> inputs;
         private List<Stream> outputs;
@@ -72,7 +121,7 @@ public class PipelineTopology {
          * @param tasks the identifiers for the logical parallelization (may be <b>null</b> if not present)
          */
         protected Processor(String name, int parallelization, int[] tasks) {
-            this.name = name;
+            super(name);
             this.parallelization = parallelization;
             addTasks(tasks);
         }
@@ -188,15 +237,6 @@ public class PipelineTopology {
          */
         public int getParallelization() {
             return parallelization;
-        }
-        
-        /**
-         * Returns the name of this processor.
-         * 
-         * @return the name
-         */
-        public String getName() {
-            return name;
         }
         
         /**
@@ -357,7 +397,7 @@ public class PipelineTopology {
         @Override
         public String toString() {
             String tasksString = null == tasks ? "{}" : tasks.toString();
-            return "Processor " + name + " #" + parallelization  + " " + tasksString + " in: " + inputs + " out: " 
+            return "Processor " + getName() + " #" + parallelization  + " " + tasksString + " in: " + inputs + " out: " 
                 + outputs;
         }
 
@@ -368,7 +408,7 @@ public class PipelineTopology {
      * 
      * @author Holger Eichelberger
      */
-    public static class Stream implements ITopologyElement {
+    public static class Stream extends TopologyElement {
         private String name;
         private Processor origin;
         private Processor target;
@@ -381,7 +421,7 @@ public class PipelineTopology {
          * @param target the target
          */
         public Stream(String name, Processor origin, Processor target) {
-            this.name = name;
+            super(name);
             if (null == origin) {
                 throw new IllegalArgumentException("origin is null");
             }
@@ -390,15 +430,6 @@ public class PipelineTopology {
             }
             this.origin = origin;
             this.target = target;
-        }
-        
-        /**
-         * Returns the name of this stream.
-         * 
-         * @return the name (empty if internal)
-         */
-        public String getName() {
-            return name;
         }
 
         /**

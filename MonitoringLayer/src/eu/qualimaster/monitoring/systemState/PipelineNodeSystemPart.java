@@ -174,12 +174,30 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
      */
     public void setCurrent(NodeImplementationSystemPart current) {
         if (current != this.current) {
+            changeCurrentTopologyActive(false);
             //unlink(this.current, selector); // sub-topology aggregation
             this.current = current;
             //link(this.current, selector); // sub-topology aggregation
             currentCount = 1;
+            changeCurrentTopologyActive(true);
         } else {
             currentCount++;
+        }
+    }
+    
+    /**
+     * Changes the active state of the sub-topology at "current".
+     * 
+     * @param active the active/passive state
+     */
+    private void changeCurrentTopologyActive(boolean active) {
+        if (null != current) {
+            PipelineTopology topo = getPipeline().getTopology();
+            if (null != topo) {
+                for (PipelineNodeSystemPart part : current.getNodes()) {
+                    topo.getProcessor(part.getName()).setActive(active);
+                }
+            }
         }
     }
     

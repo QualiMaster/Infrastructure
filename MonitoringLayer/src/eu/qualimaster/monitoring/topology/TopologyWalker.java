@@ -40,13 +40,13 @@ public class TopologyWalker {
                 boolean foundEdge = false;
                 for (int o = 0; !foundEdge && o < node.getOutputCount(); o++) {
                     Processor next = projection.getNext(node.getOutput(o));
-                    foundEdge = (null != next && !isMarked(next));
+                    foundEdge = (null != next && !isMarked(next) && next.isActive());
                 }
                 isEnd = !foundEdge;
             }
             boolean isLoop = isMarked(node);
             visitor.enter(node, isEnd, isLoop);
-            if (!isMarked(node) && !isEnd) {
+            if (!isMarked(node) && !isEnd && node.isActive()) {
                 mark(node);
                 for (int o = 0; o < node.getOutputCount(); o++) {
                     Stream out = node.getOutput(o);
