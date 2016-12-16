@@ -75,7 +75,9 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
             try {
                 if (kryoInput.canReadInt()) {
                     int len = kryoInput.readInt();
-                    if (len == DataFlag.DATA_FLAG) { //switch the tuple serializer
+                    if (len == DataFlag.EOD_FLAG) {
+                        stopQuietly();
+                    } else if (len == DataFlag.DATA_FLAG) { //switch the tuple serializer
                         byte[] ser = new byte[DataFlag.FLAG_BYTES_LEN];
                         kryoInput.readBytes(ser);
                         switchMode(new String(ser));   
@@ -87,10 +89,7 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
                     }
                 }
             } catch (KryoException e) {
-                try {
-                    stop();
-                } catch (IOException e1) {
-                }
+                stopQuietly();
             }
         }
     }
@@ -103,6 +102,16 @@ public class TupleReceiverHandler implements ITupleReceiverHandler {
             kryoInput = new Input(in);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Stops the receiver and catches the exception quietly.
+     */
+    private void stopQuietly() {
+        try {
+            stop();
+        } catch (IOException e) {
         }
     }
 

@@ -121,6 +121,7 @@ public class TupleSender {
     public void stop() {
         System.out.println("Stopping the sender...");
         if (null != output) {
+            output.writeInt(DataFlag.EOD_FLAG);
             output.close();
         }
         if ( null != socket) {

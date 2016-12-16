@@ -13,9 +13,14 @@ public class DataFlag {
     public static final int FLAG_BYTES_LEN = 8;
 
     /**
-     * The used for signalling the flag as length.
+     * Used for signalling the flag as length.
      */
     public static final int DATA_FLAG = -FLAG_BYTES_LEN;
+    
+    /**
+     * Used for signalling the end of a stream.
+     */
+    public static final int EOD_FLAG = -1;
     
     /**
      * The flag indicating the {@link ISwitchTuple} data type.
