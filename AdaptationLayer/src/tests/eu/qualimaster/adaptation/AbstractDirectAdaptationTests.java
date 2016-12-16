@@ -8,6 +8,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -785,14 +786,17 @@ public abstract class AbstractDirectAdaptationTests {
      */
     public static void printMeasures() {
         System.out.println("-------- MEASURES ---------");
-        for (String id : TimeMeasurementTracerFactory.getIdentifiers()) {
+        List<String> identifiers = new ArrayList<String>();
+        identifiers.addAll(TimeMeasurementTracerFactory.getIdentifiers());
+        Collections.sort(identifiers);
+        for (String id : identifiers) {
             System.out.println(id);
             Map<Measure, Long> observations = TimeMeasurementTracerFactory.getObservations(id);
-            TreeMap<String, Long> sorted = new TreeMap<String, Long>();
+            TreeMap<Integer, String> sorted = new TreeMap<Integer, String>();
             for (Map.Entry<Measure, Long> ent : observations.entrySet()) {
-                sorted.put(ent.getKey().name(), ent.getValue());
+                sorted.put(ent.getKey().ordinal(), ent.getKey() + " " + ent.getValue());
             }
-            for (Map.Entry<String, Long> ent : sorted.entrySet()) {
+            for (Map.Entry<Integer, String> ent : sorted.entrySet()) {
                 System.out.println(" " + ent.getKey() + " " + ent.getValue());
             }
         }

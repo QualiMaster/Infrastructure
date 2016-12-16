@@ -38,12 +38,12 @@ public class TimeMeasurementTracerFactory extends TracerFactory {
      * @author Holger Eichelberger
      */
     public enum Measure {
-        ANALYSIS,
-        ADAPT,
-        BIND,
         INITIALIZE,
+        ANALYSIS,
+        BIND,
+        STRATEGIES,
         ENACT,
-        STRATEGIES
+        ADAPT
     }
 
     /**
