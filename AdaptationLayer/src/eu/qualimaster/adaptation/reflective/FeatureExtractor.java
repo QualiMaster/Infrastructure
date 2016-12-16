@@ -16,12 +16,19 @@ import eu.qualimaster.adaptation.internal.AdaptationUnit;
  * @author  Andrea Ceroni
  */
 public class FeatureExtractor {
-
+    
     /** The name of the pipeline of interest */
     private String pipeline;
     
     /** The names of the nodes of the pipeline of interest */
     private ArrayList<String> nodes;
+    
+    /** The headers of the features (one list for each component) */
+    private HashMap<String, ArrayList<String>> headers;
+    
+    /** Flag indicating whether differences at different time points should be
+     * normalized or not. */
+    private boolean normalize;
     
     /** Counter to parse the monitoring log only once when extracting features */
     private int index;
@@ -30,10 +37,14 @@ public class FeatureExtractor {
      * Constructor with names of input pipeline and nodes.
      * @param pipeline the name of the pipeline of interest.
      * @param nodes the names of the nodes within the pipeline.
+     * @param headers the names of the measurements, one set for each component.
+     * @param normalize flag indicating whether differences of values should be normalized or not.
      */
-    public FeatureExtractor(String pipeline, ArrayList<String> nodes){
+    public FeatureExtractor(String pipeline, ArrayList<String> nodes, HashMap<String, ArrayList<String>> headers, boolean normalize){
         this.pipeline = pipeline;
         this.nodes = new ArrayList<>(nodes);
+        this.headers = new HashMap<>(headers);
+        this.normalize = normalize;
         this.index = 0;
     }
     
@@ -80,6 +91,9 @@ public class FeatureExtractor {
             patterns.add(extractFeatures(units.subList(i - windowSize, i)));
         }
         
+        // post process features
+        patterns = postProcess(patterns);
+        
         return patterns;
     }
     
@@ -98,7 +112,7 @@ public class FeatureExtractor {
         pattern.getFeatures().getLastMonitoring().addAll(lastFeatures);
         
         // extract aggregated features from the set of previous units
-        ArrayList<Double> aggregateFeatures = extractAggregateFeatures(units);
+        ArrayList<Double> aggregateFeatures = extractAggregateFeatures(units, this.normalize);
         pattern.getFeatures().getAggregateMonitoring().addAll(aggregateFeatures);
         
         return pattern;
@@ -134,6 +148,7 @@ public class FeatureExtractor {
      * Extracts features from a single monitoring unit (checking if the desired pipeline and
      * nodes are present).
      * @param unit the monitoring unit from which the features are extracted.
+     * measures that grow over time (e.g. throughput_volume and throughput_items).
      * @return the list of features of the monitoring unit.
      */
     private ArrayList<Double> extractFeatures(MonitoringUnit unit){
@@ -203,7 +218,7 @@ public class FeatureExtractor {
         return node.getMeasures();
     }
     
-    private ArrayList<Double> extractAggregateFeatures(List<MonitoringUnit> units){
+    private ArrayList<Double> extractAggregateFeatures(List<MonitoringUnit> units, boolean normalize){
         ArrayList<Double> aggregateFeatures = new ArrayList<>();
         
         // aggregate platform features
@@ -212,7 +227,7 @@ public class FeatureExtractor {
             for(MonitoringUnit unit : units){
                 featureMeasurements.add(unit.getPlatform().getMeasures().get(i));
             }
-            aggregateFeatures.addAll(extractAggregateFeatures(featureMeasurements));
+            aggregateFeatures.addAll(extractAggregateFeatures(featureMeasurements, normalize));
         }
         
         // get the pipeline of interest in each unit
@@ -233,7 +248,7 @@ public class FeatureExtractor {
                 Pipeline pipelineOfInterest = pipelinesOfInterest.get(unit.getTimestamp());
                 featureMeasurements.add(pipelineOfInterest.getMeasures().get(i));
             }
-            aggregateFeatures.addAll(extractAggregateFeatures(featureMeasurements));
+            aggregateFeatures.addAll(extractAggregateFeatures(featureMeasurements, normalize));
         }
         
         // get the nodes of interest in each pipeline of interest in each unit
@@ -257,7 +272,7 @@ public class FeatureExtractor {
                     Node nodeOfInterestInUnit = getNodeByName(nodesOfInterestInUnit, nodeOfInterestName);
                     featureMeasurements.add(nodeOfInterestInUnit.getMeasures().get(i));
                 }
-                aggregateFeatures.addAll(extractAggregateFeatures(featureMeasurements));
+                aggregateFeatures.addAll(extractAggregateFeatures(featureMeasurements, normalize));
             }
         }
         
@@ -272,16 +287,14 @@ public class FeatureExtractor {
         return null;
     }
     
-    private ArrayList<Double> extractAggregateFeatures(ArrayList<Double> measures){
+    private ArrayList<Double> extractAggregateFeatures(ArrayList<Double> measures, boolean normalize){
         ArrayList<Double> features = new ArrayList<>();
         
-        //TODO clarify where to do the normalization.
-        
         // variation between beginning and end of the period
-        features.add(computeLinearVariation(measures));
+        features.add(computeLinearVariation(measures, normalize));
         
         // variation of the variation from step to step (to model non-linear increases)
-        features.add(computeNonLinearVariation(measures));
+        features.add(computeNonLinearVariation(measures, normalize));
         
         return features;
     }
@@ -309,19 +322,29 @@ public class FeatureExtractor {
         else return nodesOfInterest;
     }
     
-    private double computeLinearVariation(ArrayList<Double> measures){
-        return measures.get(measures.size() - 1) - measures.get(0);
+    private double computeLinearVariation(ArrayList<Double> measures, boolean normalize){
+        double variation = measures.get(measures.size() - 1) - measures.get(0);
+        if(normalize){
+            if(measures.get(0) != 0) return variation / measures.get(0);
+            else return 1.0;
+        }
+        else return variation;
     }
     
-    private double computeNonLinearVariation(ArrayList<Double> measures){
-        ArrayList<Double> stepToStepVariations = computeStepToStepVariations(measures);
-        return computeLinearVariation(stepToStepVariations);
+    private double computeNonLinearVariation(ArrayList<Double> measures, boolean normalize){
+        ArrayList<Double> stepToStepVariations = computeStepToStepVariations(measures, normalize);
+        return computeLinearVariation(stepToStepVariations, !normalize);
     }
     
-    private ArrayList<Double> computeStepToStepVariations(ArrayList<Double> measures){
+    private ArrayList<Double> computeStepToStepVariations(ArrayList<Double> measures, boolean normalize){
         ArrayList<Double> variations = new ArrayList<>();
         for(int i = 1; i < measures.size(); i++){
-            variations.add(measures.get(i) - measures.get(i - 1));
+            double variation = measures.get(i) - measures.get(i - 1);
+            if(normalize){
+                if(measures.get(i - 1) != 0) variations.add(variation / measures.get(i - 1));
+                else variations.add(1.0);
+            }
+            else variations.add(variation);
         }
         return variations;
     }
@@ -384,6 +407,63 @@ public class FeatureExtractor {
         
         return line;
     }
+    
+    private int getMeasureIndex(String component, String measure){
+        ArrayList<String> header = this.headers.get(component);
+        for(int i = 0; i < header.size(); i++){
+            if(header.get(i).compareTo(measure) == 0){
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    private ArrayList<Pattern> postProcess(ArrayList<Pattern> patterns){
+        
+        // replace the absolute THROUGHPUT_ITEMS and THROUGHPUT_VOLUME with the difference wrt the previous values
+        int platformMeasures = this.headers.get("platform").size();
+        int pipelineMeasures = this.headers.get("pipeline").size();
+        int nodeMeasures = this.headers.get("pipeline node").size();
+        int throughputItemsIndex = platformMeasures + getMeasureIndex("pipeline", "THROUGHPUT_ITEMS");
+        int throughputVolumeIndex = platformMeasures + getMeasureIndex("pipeline", "THROUGHPUT_VOLUME");
+        int throughputItemsIndexNodeOffset = getMeasureIndex("pipeline node", "THROUGHPUT_ITEMS");
+        int throughputVolumeIndexNodeOffset = getMeasureIndex("pipeline node", "THROUGHPUT_VOLUME");
+        
+        double oldThroughputVolume = patterns.get(0).getFeatures().getLastMonitoring().get(throughputVolumeIndex);
+        double oldThroughputItems = patterns.get(0).getFeatures().getLastMonitoring().get(throughputItemsIndex);
+        for(int i = 1; i < patterns.size(); i++){
+            double currThroughputVolume = patterns.get(i).getFeatures().getLastMonitoring().get(throughputVolumeIndex);
+            patterns.get(i).getFeatures().getLastMonitoring().set(throughputVolumeIndex,
+                    currThroughputVolume - oldThroughputVolume);
+            oldThroughputVolume = currThroughputVolume;
+            
+            double currThroughputItems = patterns.get(i).getFeatures().getLastMonitoring().get(throughputItemsIndex);
+            patterns.get(i).getFeatures().getLastMonitoring().set(throughputItemsIndex,
+                    currThroughputItems - oldThroughputItems);
+            oldThroughputItems = currThroughputItems;
+        }
+        
+        for(int n = 0; n < this.nodes.size(); n++){
+            int throughputVolumeIndexNode = platformMeasures + pipelineMeasures + nodeMeasures*n + throughputVolumeIndexNodeOffset;
+            int throughputItemsIndexNode = platformMeasures + pipelineMeasures + nodeMeasures*n + throughputItemsIndexNodeOffset;
+            
+            oldThroughputVolume = patterns.get(0).getFeatures().getLastMonitoring().get(throughputVolumeIndexNode);
+            oldThroughputItems = patterns.get(0).getFeatures().getLastMonitoring().get(throughputItemsIndexNode);
+            for(int i = 1; i < patterns.size(); i++){
+                double currThroughputVolume = patterns.get(i).getFeatures().getLastMonitoring().get(throughputVolumeIndexNode);
+                patterns.get(i).getFeatures().getLastMonitoring().set(throughputVolumeIndexNode,
+                        currThroughputVolume - oldThroughputVolume);
+                oldThroughputVolume = currThroughputVolume;
+                
+                double currThroughputItems = patterns.get(i).getFeatures().getLastMonitoring().get(throughputItemsIndexNode);
+                patterns.get(i).getFeatures().getLastMonitoring().set(throughputItemsIndexNode,
+                        currThroughputItems - oldThroughputItems);
+                oldThroughputItems = currThroughputItems;
+            }
+        }
+        
+        return patterns;
+    }
 
     /**
      * @return the pipeline
@@ -397,5 +477,19 @@ public class FeatureExtractor {
      */
     public ArrayList<String> getNodes() {
         return nodes;
+    }
+
+    /**
+     * @return the normalize
+     */
+    public boolean isNormalize() {
+        return normalize;
+    }
+
+    /**
+     * @param normalize the normalize to set
+     */
+    public void setNormalize(boolean normalize) {
+        this.normalize = normalize;
     }
 }
