@@ -541,11 +541,12 @@ public class ReasoningTask extends TimerTask {
         if (null != listener) {
             listener.notifyReasoningResult(config, result);
         }
-        List<ViolatingClause> violating;
+        List<ViolatingClause> violating = null;
         if (null != result && result.hasConflict()) { //debugPrintReasoningResult(result);
             analyzerVisitor.setState(state, pipStatus);
             violating = analyzerVisitor.analyze(config, result);
-        } else {
+        } 
+        if (null == violating) {
             violating = new ArrayList<ViolatingClause>();
         }
         purgeActualDeviations(state, violating);
