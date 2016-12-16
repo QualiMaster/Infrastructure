@@ -330,7 +330,7 @@ public class Tracing {
      */
     static IObservable[] getObservableSequence(Class<?> cls, Collection<IObservable> observables) {
         IObservable[] result = SEQUENCES.get(cls);
-        if (null == result) {
+        if (null == result && null != observables) {
             TreeSet<IObservable> tmp = new TreeSet<IObservable>(ObservableComparator.INSTANCE);
             IObservable[] limit = LIMIT.get(cls.getClass());
             IObservable[] exclude = EXCLUDE.get(cls.getClass());

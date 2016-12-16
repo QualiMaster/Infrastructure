@@ -54,9 +54,11 @@ public class FileTrace extends AbstractFileTrace {
         PipelineSystemPart pipeline = state.getPipeline(info.name);
         print("pipeline:");
         printSeparator();
-        print(pipeline.getName());
+        if (null != pipeline) { // may already be gone
+            print(pipeline.getName());
+        }
         printSeparator();
-        trace(pipeline, null, null, null);
+        trace(pipeline, PipelineSystemPart.class, null, null, null);
         
         Set<String> done = new HashSet<String>();
         for (String nodeName : info.nodes) {
@@ -64,11 +66,13 @@ public class FileTrace extends AbstractFileTrace {
             tracePipelineNode(node);
             done.add(nodeName);
         }
-        for (PipelineNodeSystemPart node : pipeline.getNodes()) {
-            String name = node.getName();
-            if (!done.contains(name)) {
-                tracePipelineNode(node);
-                info.nodes.add(name);
+        if (null != pipeline) {
+            for (PipelineNodeSystemPart node : pipeline.getNodes()) {
+                String name = node.getName();
+                if (!done.contains(name)) {
+                    tracePipelineNode(node);
+                    info.nodes.add(name);
+                }
             }
         }
         print("pipeline/");
@@ -82,9 +86,9 @@ public class FileTrace extends AbstractFileTrace {
     private void tracePipelineNode(PipelineNodeSystemPart node) {
         if (null != node) {
             print(node.getName());
-            printSeparator();
-            trace(node, null, null, null);
         }
+        printSeparator();
+        trace(node, PipelineNodeSystemPart.class, null, null, null);
     }
 
     @Override

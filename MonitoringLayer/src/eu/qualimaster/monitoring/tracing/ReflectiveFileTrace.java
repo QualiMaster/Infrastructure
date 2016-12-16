@@ -40,7 +40,7 @@ public class ReflectiveFileTrace extends AbstractFileTrace {
         printSeparator();
         print(platform.getName());
         printSeparator();
-        trace(platform, null, null, null);
+        trace(platform, PlatformSystemPart.class, null, null, null);
     }
     
     /**
@@ -56,7 +56,7 @@ public class ReflectiveFileTrace extends AbstractFileTrace {
         printSeparator();
         print(pipeline.getName());
         printSeparator();
-        trace(pipeline, null, null, null);
+        trace(pipeline, PipelineSystemPart.class, null, null, null);
         
         Set<String> done = new HashSet<String>();
         for (String nodeName : info.nodes) {
@@ -85,7 +85,7 @@ public class ReflectiveFileTrace extends AbstractFileTrace {
             printSeparator();
             print(node.getName());
             printSeparator();
-            trace(node, null, null, null);
+            trace(node, PipelineNodeSystemPart.class, null, null, null);
         }
     }
 

@@ -123,7 +123,7 @@ public abstract class AbstractFileTrace implements ITrace {
         //predecessor settings
         tracePredecessors(predecessors);
         // first the settings
-        trace(node, NODE_MEASURES, null, null);
+        trace(node, PipelineNodeSystemPart.class, NODE_MEASURES, null, null);
         // parameter
         if (null != param) {
             for (AlgorithmParameter p : param) {
@@ -133,8 +133,8 @@ public abstract class AbstractFileTrace implements ITrace {
         // extra separator
         printSeparator(); 
         // then the dependent parameters
-        trace(node, null, NODE_MEASURES, null);
-        trace(alg, null, null, null);
+        trace(node, PipelineNodeSystemPart.class, null, NODE_MEASURES, null);
+        trace(alg, NodeImplementationSystemPart.class, null, null, null);
         if (mode.traceAlgorithms()) {
             traceParts(alg, null, null);
         }
@@ -211,13 +211,13 @@ public abstract class AbstractFileTrace implements ITrace {
         IObservable[] include) {
         printSeparator();
         for (PipelineNodeSystemPart part : nodeSequence(alg)) {
-            trace(part, exclude, include, null);
+            trace(part, PipelineNodeSystemPart.class, exclude, include, null);
             printSeparator();
             if (mode.traceTasks()) {
                 Processor proc = getProcessor(part);
                 if (null != proc && null != proc.tasks()) {
                     for (Integer taskId : proc.tasks()) {
-                        trace(part, exclude, include, taskId);            
+                        trace(part, PipelineNodeSystemPart.class, exclude, include, taskId);            
                     }
                 }
             }
@@ -452,21 +452,28 @@ public abstract class AbstractFileTrace implements ITrace {
     /**
      * Traces the values observed for <code>part</code>.
      * 
-     * @param part the part to trace
+     * @param part the part to trace (may be <b>null</b> if already gone)
+     * @param partCls the class of part, ignored if part is not <b>null</b>, otherwise used to determine the sequence
      * @param exclude observables to exclude - trace only other others (may be <b>null</b>)
      * @param include observables to include - trace only those (may be <b>null</b>)
      * @param taskId if given, trace only observations for <code>taskId</code>, print <code>part</code>-level 
      *     observables if <b>null</b> 
      */
-    protected void trace(SystemPart part, IObservable[] exclude, IObservable[] include, Integer taskId) {
+    protected void trace(SystemPart part, Class<? extends SystemPart> partCls, IObservable[] exclude, 
+        IObservable[] include, Integer taskId) {
         ComponentKey host = null;
-        IObservable[] sequence = Tracing.getObservableSequence(part);
+        IObservable[] sequence;
+        if (null != part) {
+            sequence = Tracing.getObservableSequence(part);
+        } else {
+            sequence = Tracing.getObservableSequence(partCls, null); // if not seen so far, no (specific) sequence is ok
+        }
         for (int o = 0; o < sequence.length; o++) {
             IObservable observable = sequence[o];
             if ((null == include || Arrays.contains(include, observable)) 
                 && (null == exclude || !Arrays.contains(exclude, observable))) {
                 boolean printed = false;
-                if (null != taskId) {
+                if (null != taskId && null != part) {
                     ComponentKey key = null;
                     Set<Object> keys = part.getComponentKeys(observable);
                     for (Object k : keys) {
@@ -484,9 +491,11 @@ public abstract class AbstractFileTrace implements ITrace {
                     } 
                 } 
                 if (!printed) {
-                    if (part.hasValue(observable)) {
+                    if (null != part && part.hasValue(observable)) {
                         print(part.getObservedValue(observable));
-                    } else {
+                        printed = true;
+                    } 
+                    if (!printed) {
                         print("");
                     }
                 }
