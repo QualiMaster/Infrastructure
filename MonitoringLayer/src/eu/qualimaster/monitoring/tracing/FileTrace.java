@@ -62,7 +62,7 @@ public class FileTrace extends AbstractFileTrace {
         
         Set<String> done = new HashSet<String>();
         for (String nodeName : info.nodes) {
-            PipelineNodeSystemPart node = pipeline.getNode(nodeName);
+            PipelineNodeSystemPart node = null != pipeline ? pipeline.getNode(nodeName) : null;
             tracePipelineNode(node);
             done.add(nodeName);
         }
