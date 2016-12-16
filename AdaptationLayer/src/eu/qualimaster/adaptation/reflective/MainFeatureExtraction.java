@@ -11,12 +11,13 @@ public class MainFeatureExtraction {
     private static final String PIPELINE = "ReflectiveRandomPip";
     private static final ArrayList<String> NODES = new ArrayList<String>(
             Arrays.asList("src", "processor", "snk"));
+    private static final boolean NORMALIZE = true;
 
     static public void main(String[] args) {
-        FeatureExtractor fe = new FeatureExtractor(PIPELINE, NODES);
         ReadUtils ru = new ReadUtils();
-        
         ArrayList<MonitoringUnit> monitoringUnits = ru.readMonitoringUnits(MONITORING_LOG);
+        
+        FeatureExtractor fe = new FeatureExtractor(PIPELINE, NODES, ru.getFilteredHeader(), NORMALIZE);
         ArrayList<Pattern> patterns = fe.extractFeatures(monitoringUnits, WINDOW_SIZE);
         fe.storeFeatures(patterns, OUTPUT_FILE);
     }

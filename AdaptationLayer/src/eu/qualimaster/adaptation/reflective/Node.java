@@ -14,6 +14,9 @@ public class Node {
 
     /** The observed measures */
     private ArrayList<Double> measures;
+    
+    /** The names of the measures */
+    private ArrayList<String> measuresNames;
 
     /**
      * @return the name
@@ -41,5 +44,19 @@ public class Node {
      */
     public void setMeasures(ArrayList<Double> measures) {
         this.measures = measures;
+    }
+
+    /**
+     * @return the measuresNames
+     */
+    public ArrayList<String> getMeasuresNames() {
+        return measuresNames;
+    }
+
+    /**
+     * @param measuresNames the measuresNames to set
+     */
+    public void setMeasuresNames(ArrayList<String> measuresNames) {
+        this.measuresNames = measuresNames;
     }
 }

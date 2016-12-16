@@ -14,6 +14,9 @@ public class Pipeline {
 
     /** The observed measures */
     private ArrayList<Double> measures;
+    
+    /** The names of the measures */
+    private ArrayList<String> measuresNames;
 
     /** The nodes of the pipeline */
     private ArrayList<Node> nodes;
@@ -58,5 +61,19 @@ public class Pipeline {
      */
     public void setNodes(ArrayList<Node> nodes) {
         this.nodes = nodes;
+    }
+
+    /**
+     * @return the measuresNames
+     */
+    public ArrayList<String> getMeasuresNames() {
+        return measuresNames;
+    }
+
+    /**
+     * @param measuresNames the measuresNames to set
+     */
+    public void setMeasuresNames(ArrayList<String> measuresNames) {
+        this.measuresNames = measuresNames;
     }
 }

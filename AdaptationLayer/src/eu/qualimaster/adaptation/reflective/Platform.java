@@ -14,6 +14,9 @@ public class Platform {
 
     /** The observed measures */
     private ArrayList<Double> measures;
+    
+    /** The names of the measures */
+    private ArrayList<String> measuresNames;
 
     /** The pipelines in the platform */
     private ArrayList<Pipeline> pipelines;
@@ -59,5 +62,19 @@ public class Platform {
      */
     public void setPipelines(ArrayList<Pipeline> pipelines) {
         this.pipelines = pipelines;
+    }
+
+    /**
+     * @return the measuresNames
+     */
+    public ArrayList<String> getMeasuresNames() {
+        return measuresNames;
+    }
+
+    /**
+     * @param measuresNames the measuresNames to set
+     */
+    public void setMeasuresNames(ArrayList<String> measuresNames) {
+        this.measuresNames = measuresNames;
     }
 }
