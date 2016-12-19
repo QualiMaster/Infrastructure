@@ -174,10 +174,57 @@ public class FeatureExtractor {
                 System.out.println("ERROR: pipeline " + this.pipeline + " is not made of the desired nodes");
                 return null;
             }
-            else unitFeatures.addAll(extractFeatures(nodesOfInterest));
+            else{
+                // extract features from the nodes of interest
+                unitFeatures.addAll(extractFeatures(nodesOfInterest));
+                unitFeatures.addAll(extractDifferenceFeatures(nodesOfInterest));
+            }
         }
 
         return unitFeatures;
+    }
+    
+    /**
+     * Extracts differences of features among any possible couple of nodes.
+     * @param nodes the nodes from which the features are extracted.
+     * @return the list of features of the nodes.
+     */
+    private ArrayList<Double> extractDifferenceFeatures(ArrayList<Node> nodes){
+        ArrayList<Double> nodesFeatures = new ArrayList<>();
+        for(int i = 0; i < nodes.size() - 1; i++){
+            for(int j = i + 1; j < nodes.size(); j++){
+                nodesFeatures.addAll(extractDifferenceFeatures(nodes.get(i), nodes.get(j), this.headers.get("pipeline node")));
+            }
+        }
+        return nodesFeatures;
+    }
+    
+    private ArrayList<Double> extractDifferenceFeatures(Node node1, Node node2, ArrayList<String> header){
+        ArrayList<Double> nodesFeatures = new ArrayList<>();
+        
+        // difference of THROUGHPUT_VOLUME
+        int volumeIndex = getMeasureIndex("pipeline node", "THROUGHPUT_VOLUME");
+        double volumeNode1 = node1.getMeasures().get(volumeIndex);
+        double difference = volumeNode1 - node2.getMeasures().get(volumeIndex);
+        if(volumeNode1 != 0)
+            nodesFeatures.add(difference / Math.abs(volumeNode1));
+        else if(difference == 0.0)
+            nodesFeatures.add(difference);
+        else
+            nodesFeatures.add(1.0);
+        
+        // difference of THROUGHPUT_VOLUME
+        int itemsIndex = getMeasureIndex("pipeline node", "THROUGHPUT_ITEMS");
+        double itemsNode1 = node1.getMeasures().get(itemsIndex);
+        difference = itemsNode1 - node2.getMeasures().get(itemsIndex);
+        if(itemsNode1 != 0)
+            nodesFeatures.add(difference / Math.abs(itemsNode1));
+        else if(difference == 0.0)
+            nodesFeatures.add(difference);
+        else
+            nodesFeatures.add(1.0);
+        
+        return nodesFeatures;
     }
     
     /**
@@ -325,7 +372,8 @@ public class FeatureExtractor {
     private double computeLinearVariation(ArrayList<Double> measures, boolean normalize){
         double variation = measures.get(measures.size() - 1) - measures.get(0);
         if(normalize){
-            if(measures.get(0) != 0) return variation / measures.get(0);
+            if(measures.get(0) != 0) return variation / Math.abs(measures.get(0));
+            else if (variation == 0.0) return variation;
             else return 1.0;
         }
         else return variation;
@@ -341,7 +389,8 @@ public class FeatureExtractor {
         for(int i = 1; i < measures.size(); i++){
             double variation = measures.get(i) - measures.get(i - 1);
             if(normalize){
-                if(measures.get(i - 1) != 0) variations.add(variation / measures.get(i - 1));
+                if(measures.get(i - 1) != 0) variations.add(variation / Math.abs(measures.get(i - 1)));
+                else if (variation == 0.0) variations.add(variation);
                 else variations.add(1.0);
             }
             else variations.add(variation);
