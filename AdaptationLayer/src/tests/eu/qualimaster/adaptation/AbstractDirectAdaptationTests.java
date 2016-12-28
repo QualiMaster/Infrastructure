@@ -168,7 +168,9 @@ public abstract class AbstractDirectAdaptationTests {
         adaptConfig = RepositoryConnector.createConfiguration(project, Phase.ADAPTATION);
         adaptRtVilModel = RepositoryConnector.obtainModel(RtVilModel.INSTANCE, "QM", null);
         tmp = RepositoryConnector.createTmpFolder();
-        new Models(Phase.ADAPTATION, adaptConfig, adaptRtVilModel, null, null);  // overrides
+//        new Models(Phase.ADAPTATION, adaptConfig, adaptRtVilModel, null, null);  // overrides
+        new Models(Phase.ADAPTATION, adaptConfig, adaptRtVilModel, null,
+            ConfigurationInitializer.createVariableMapping(adaptConfig));  // overrides
         ModelInitializer.removeLocation(getModelLocation(), ProgressObserver.NO_OBSERVER);
 
         EventManager.start();
