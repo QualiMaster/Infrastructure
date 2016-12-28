@@ -66,6 +66,7 @@ public class LocalStormEnvironment {
         AbstractCoordinationTests.sleep(3000); // wait for zookeeper
         cluster.shutdown();
         AbstractCoordinationTests.sleep(WAIT_AT_END); // wait for shutting down services
+        ThriftConnection.setLocalCluster(null);
     }
     
     /**

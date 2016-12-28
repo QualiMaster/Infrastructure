@@ -424,6 +424,7 @@ public class AbstractCoordinationTests {
         SignalMechanism.clear();
         CoordinationManager.stop();
         EventManager.unregister(tracker);
+        EventManager.cleanup();
         EventManager.stop();
         EventManager.unregister(failedHandler);
     }
