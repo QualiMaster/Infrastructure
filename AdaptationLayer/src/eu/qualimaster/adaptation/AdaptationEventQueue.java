@@ -255,6 +255,7 @@ public class AdaptationEventQueue {
                 } catch (InterruptedException e) {
                 }
             }
+            FileUtils.deleteQuietly(tmp);
         }
         
         /**

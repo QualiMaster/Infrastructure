@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.TimerTask;
 import java.util.TreeMap;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -185,7 +186,7 @@ public abstract class AbstractDirectAdaptationTests {
     public void tearDown() throws ModelManagementException {
         AlgorithmProfilePredictionManager.stop();
         VolumePredictionManager.stop();
-        tmp.delete();
+        FileUtils.deleteQuietly(tmp);
         ModelInitializer.unregisterLoader(ProgressObserver.NO_OBSERVER);
         EventManager.stop();
     }
