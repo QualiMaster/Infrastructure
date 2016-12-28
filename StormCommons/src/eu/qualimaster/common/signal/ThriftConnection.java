@@ -40,30 +40,38 @@ public class ThriftConnection {
 
     private static final Logger LOGGER = LogManager.getLogger(ThriftConnection.class);
     private static ILocalCluster localCluster;
+    private static Map<String, String> testNetworkNames = new HashMap<String, String>();
     private Client client;
     private TFramedTransport transport;
     private TSocket socket;
     private TBinaryProtocol protocol;
 
     /**
-     * Creates a connection from the infrastucture configuration object.
+     * Creates a connection from the infrastructure configuration object. Ignored if a local cluster is set 
+     * for testing.
+     * 
+     * @see #setLocalCluster(ILocalCluster)
      */
     public ThriftConnection() {
         this(Configuration.getNimbus(), Configuration.getThriftPort());
     }
     
     /**
-     * Creates a connection with explicit nimbus host.
+     * Creates a connection with explicit nimbus host. Ignored if a local cluster is set 
+     * for testing.
      * 
      * @param nimbusHost the nimbus host name
      * @param port the nimbus port number
+     * @see #setLocalCluster(ILocalCluster)
      */
     public ThriftConnection(String nimbusHost, int port) {
-        socket = new TSocket(nimbusHost, port);
-        LOGGER.info("Thrift connection info " + nimbusHost + " " + port);
-        transport = new TFramedTransport(socket);
-        protocol = new TBinaryProtocol(transport);
-        client = new Client(protocol);
+        if (null == localCluster) {
+            socket = new TSocket(nimbusHost, port);
+            LOGGER.info("Thrift connection info " + nimbusHost + " " + port);
+            transport = new TFramedTransport(socket);
+            protocol = new TBinaryProtocol(transport);
+            client = new Client(protocol);
+        }
     }
     
     /**
@@ -74,6 +82,42 @@ public class ThriftConnection {
      */
     public static final void setLocalCluster(ILocalCluster cluster) {
         localCluster = cluster;
+    }
+
+    /**
+     * Adds a network name mapping to be used with this thrift connection, e.g., for cluster queries. Useful
+     * if testing happens on a local machine and configured machines shall pretend that they do exist. [testing]
+     * 
+     * @param originalName the original network name
+     * @param mappedName the mapped network name
+     */
+    public static final void testMapNetworkName(String originalName, String mappedName) {
+        if (null != originalName) {
+            if (null == mappedName) {
+                testNetworkNames.remove(originalName);
+            } else {
+                testNetworkNames.put(originalName, mappedName);
+                
+            }
+        }
+    }
+    
+    /**
+     * Returns a mapped network name.
+     * 
+     * @param originalName the original name
+     * @return the mapped network name or <code>originalName</code> if no mapping is given
+     * @see #testMapNetworkName(String, String)
+     */
+    public static final String mapNetworkName(String originalName) {
+        String result = originalName;
+        if (null != originalName) {
+            String tmp = testNetworkNames.get(originalName);
+            if (null != tmp) {
+                result = tmp;
+            }
+        }
+        return result;
     }
     
     /**
