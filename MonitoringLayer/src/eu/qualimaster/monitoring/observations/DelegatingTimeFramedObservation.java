@@ -17,7 +17,9 @@ package eu.qualimaster.monitoring.observations;
 
 /**
  * Defines a time framed delegating observation, i.e., an observation for which the value
- * is related to the given time frame (e.g, tuples per second) based on an underlying observation.
+ * is related to the given time frame (e.g, tuples per second) based on an underlying observation. To keep
+ * monitoring information stable, we base the measurement on the first point in time the underlying observation
+ * received monitoring values. Upon algorithm switch, the related point in time must be cleared properly.
  * 
  * @author Holger Eichelberger
  */
