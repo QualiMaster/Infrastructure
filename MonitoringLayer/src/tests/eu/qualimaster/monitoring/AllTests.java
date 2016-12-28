@@ -20,6 +20,7 @@ import tests.eu.qualimaster.monitoring.profiling.ProfilingTests;
     //StormTest.class,
     HwMonitoringTest.class,
     SystemStateTest.class,
+    AggregationTest.class,
     LogTest.class,
     TopologyTests.class,
     ReasoningTaskTests.class, 

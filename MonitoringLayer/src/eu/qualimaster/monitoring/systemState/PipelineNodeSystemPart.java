@@ -123,7 +123,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
      */
     protected void adjustCurrent(PipelineNodeSystemPart source) {
         if (null != source.current && null != pipeline) {
-            setCurrent(pipeline.getPart(getType(), source.current.getName()));
+            setCurrent(pipeline.getPart(getType(), source.current.getName()), false);
         }
     }
     
@@ -166,38 +166,34 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
         }
         return ready;
     }
-    
+
     /**
      * Changes the current algorithm.
      * 
      * @param current the current algorithm
      */
     public void setCurrent(NodeImplementationSystemPart current) {
-        if (current != this.current) {
-            changeCurrentTopologyActive(false);
-            //unlink(this.current, selector); // sub-topology aggregation
-            this.current = current;
-            //link(this.current, selector); // sub-topology aggregation
-            currentCount = 1;
-            changeCurrentTopologyActive(true);
-        } else {
-            currentCount++;
-        }
+        setCurrent(current, true);
     }
     
     /**
-     * Changes the active state of the sub-topology at "current".
+     * Changes the current algorithm.
      * 
-     * @param active the active/passive state
+     * @param current the current algorithm
+     * @param switchedTo whether this is a call to indicate a switch or whether it its used for
+     *     internal purposes, e.g., copying
      */
-    private void changeCurrentTopologyActive(boolean active) {
-        if (null != current) {
-            PipelineTopology topo = getPipeline().getTopology();
-            if (null != topo) {
-                for (PipelineNodeSystemPart part : current.getNodes()) {
-                    topo.getProcessor(part.getName()).setActive(active);
-                }
+    private void setCurrent(NodeImplementationSystemPart current, boolean switchedTo) {
+        if (current != this.current) {
+            //unlink(this.current, ILinkSelector.ALL); // no links, happens by sub-topology aggregation
+            this.current = current;
+            //link(this.current, ILinkSelector.ALL); // no links, happens by ub-topology aggregation
+            currentCount = 1;
+            if (switchedTo) {
+                switchedTo();
             }
+        } else {
+            currentCount++;
         }
     }
     
@@ -411,7 +407,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
         PipelineTopology topology = provider.getTopology();
         if (null != topology) {
             Processor proc = topology.getProcessor(getName());
-            if (null != pipeline && null != current && current.getNodeCount() > 1 && null != proc) {
+            if (null != pipeline && null != current && null != proc) {
                 List<Processor> start = new ArrayList<Processor>();
                 List<Processor> end = new ArrayList<Processor>();
                 Map<Stream, Processor> next = new HashMap<Stream, Processor>();

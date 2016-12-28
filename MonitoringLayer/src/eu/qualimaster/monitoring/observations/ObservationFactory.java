@@ -189,6 +189,50 @@ public class ObservationFactory {
                 return /*new DelegatingStatisticsObservation(*/result/*)*/;
             }
         };
+        
+    /**
+     * A creator for a combination of a referencing observation, which is then time-framed. The referencing
+     * observation is reflecting the actual value of an underlying observation (given by the <code>reference</code>
+     * observable on the same observation provider).
+     * 
+     * @author Holger Eichelberger
+     */
+    public static class TimeFramedReferencingObservationCreator implements IObservationCreator {
+
+        private int timeFrame;
+        private IObservable reference;
+        private boolean enableValueChange;
+        
+        /**
+         * Creates the creator.
+         * 
+         * @param reference the reference to take the value from (shall be different than the observable to create
+         *   the observation for)
+         * @param timeFrame the time frame to aggregate, no time framing will be applied if <code>timeFrame</code> is
+         *   not positive
+         * @param enableValueChange enable value changes on the underlying reference or not, typically 
+         *   <code>false</code> is a safe setting to avoid cycles in the topology aggregation 
+         */
+        public TimeFramedReferencingObservationCreator(IObservable reference, int timeFrame, 
+            boolean enableValueChange) {
+            this.reference = reference;
+            this.timeFrame = timeFrame;
+            this.enableValueChange = enableValueChange;
+        }
+        
+        @Override
+        public IObservation create(IObservable observable, IPartType type, IObservationProvider observationProvider) {
+            IObservation result = new ReferencingObservation(observationProvider, reference, enableValueChange);
+            if (timeFrame > 0) {
+                result = new DelegatingTimeFramedObservation(result, timeFrame);
+            }
+            return result;
+        }
+        
+    }
+    
+    public static final IObservationCreator ITEMS_1S 
+        = new TimeFramedReferencingObservationCreator(TimeBehavior.THROUGHPUT_ITEMS, 1000, false);
     
     public static final IObservationCreator CREATOR_NULL = new IObservationCreator() {
 
@@ -433,7 +477,7 @@ public class ObservationFactory {
         registerCreator(Scalability.VOLATILITY, null, CREATOR_COMPOUND_STATISTICS_1S_ABS);
         registerCreator(Scalability.VOLUME, null, CREATOR_COMPOUND_STATISTICS_1S_ABS);
         // CREATOR_COMPOUND_STATISTICS_1S_ABS ; CREATOR_TOPOLOGY_SINK_SUM_STATISTICS_1S
-        registerCreator(Scalability.ITEMS, null, CREATOR_COMPOUND_TOPOLOGY_SINK_SUM_STATISTICS_1S); 
+        registerCreator(Scalability.ITEMS, null, ITEMS_1S); 
         //registerCreator(Scalability.ITEMS, PartType.PIPELINE, CREATOR_COMPOUND_TOPOLOGY_SINK_SUM_STATISTICS_1S);
         
         registerCreator(CloudResourceUsage.BANDWIDTH, null, CREATOR_SINGLE);
@@ -467,7 +511,7 @@ public class ObservationFactory {
             FunctionalSuitability.ACCURACY_ERROR_RATE, FunctionalSuitability.ACCURACY_CONFIDENCE, 
                 FunctionalSuitability.COMPLETENESS, FunctionalSuitability.BELIEVABILITY, 
                 FunctionalSuitability.RELEVANCY,
-            Scalability.VOLUME, Scalability.VELOCITY, Scalability.VARIETY,
+            Scalability.VOLUME, Scalability.VELOCITY, Scalability.VARIETY, Scalability.ITEMS,
             AnalysisObservables.IS_VALID, AnalysisObservables.IS_ENACTING);
         registerPart(PartType.SOURCE, 
             FunctionalSuitability.ACCURACY_CONFIDENCE, FunctionalSuitability.COMPLETENESS, 

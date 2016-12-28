@@ -49,6 +49,7 @@ public class DelegatingTopologyAggregatorObservation extends AbstractTopologyAgg
         ObservationAggregator aggregator = ObservationAggregatorFactory.getAggregator(getObservable());
         walker.visit(getProvider(), aggregator);
         double result = aggregator.getValue();
+        setFirstUpdate(aggregator.getFirstUpdate());
         ObservationAggregatorFactory.releaseAggregator(aggregator);
         StatisticsWalker.POOL.releaseInstance(walker);
         return result;

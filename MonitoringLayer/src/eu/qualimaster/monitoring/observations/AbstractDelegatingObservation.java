@@ -116,7 +116,12 @@ public abstract class AbstractDelegatingObservation implements IObservation {
     protected IObservation getDelegate() {
         return observation;
     }
-
+    
+    @Override
+    public long getFirstUpdate() {
+        return observation.getFirstUpdate();
+    }
+    
     @Override
     public long getLastUpdate() {
         return observation.getLastUpdate();
@@ -151,6 +156,16 @@ public abstract class AbstractDelegatingObservation implements IObservation {
     public void unlink(IObservation observation) {
         this.observation.unlink(observation);
     }
+    
+    @Override
+    public int getLinkCount() {
+        return observation.getLinkCount();
+    }
+
+    @Override
+    public IObservation getLink(int index) {
+        return observation.getLink(index);
+    }
 
     @Override
     public boolean statisticsWhileReading() {
@@ -164,6 +179,11 @@ public abstract class AbstractDelegatingObservation implements IObservation {
      */
     protected String toStringShortcut() {
         return "Del";
+    }
+
+    @Override
+    public void switchedTo(boolean direct) {
+        observation.switchedTo(false);
     }
 
 }

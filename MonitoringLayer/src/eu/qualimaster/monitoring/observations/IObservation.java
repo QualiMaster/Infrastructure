@@ -10,7 +10,8 @@ import java.util.Set;
  * keys) aggregated when calling {@link #getValue()}. Composites are important
  * when multiple parts of the infrastructure are combined to In case that a specific
  * {@link IObservation} does not support key-based observation compounds,
- * setting or incrementing values directly goes to represented value. 
+ * setting or incrementing values directly goes to represented value. Links are not copied, must be
+ * re-established by caller. 
  * 
  * @author Holger Eichelberger
  */
@@ -106,9 +107,16 @@ public interface IObservation extends Serializable {
     /**
      * Returns the timestamp of the last update.
      * 
-     * @return the timestamp, negative if no value was set
+     * @return the timestamp, negative if no value was set so far
      */
     public long getLastUpdate();
+    
+    /**
+     * Returns the timestamp of the very first update.
+     * 
+     * @return the timestamp, negative if no value was set so far
+     */
+    public long getFirstUpdate();
     
     /**
      * Manipulates the timestamp of the last update [testing].
@@ -156,10 +164,33 @@ public interface IObservation extends Serializable {
     public void unlink(IObservation observation);
     
     /**
+     * Returns the number of links.
+     * 
+     * @return the number of links
+     */
+    public int getLinkCount();
+    
+    /**
+     * Returns the specific link.
+     * 
+     * @param index the 0-based index of the link 
+     * @return the link
+     * @throws IndexOutOfBoundsException if <code>index &lt; 0 || index &gt;={@link #getLinkCount()}</code> 
+     */
+    public IObservation getLink(int index);
+    
+    /**
      * Returns whether this observation requires statistics calculation while reading or while writing.
      * 
      * @return <code>true</code> for reading, <code>false</code> for writing
      */
     public boolean statisticsWhileReading();
+
+    /**
+     * Called to indicate that state-based cleanup shall be performed (if needed) after an algorithm switch.
+     * 
+     * @param direct whether this is a direct call or an indirect call through other observations
+     */
+    public void switchedTo(boolean direct);
     
 }

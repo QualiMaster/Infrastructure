@@ -45,26 +45,32 @@ public class ObservationTests {
     public void timeFramedAbsoluteStatistics() {
         INameMapping mapping = new IdentityMapping("pip");
         CoordinationManager.registerTestMapping(mapping); // avoid full startup
+        SingleObservation base = new SingleObservation();
         DelegatingStatisticsObservation obs = new DelegatingStatisticsObservation(
-            new DelegatingTimeFramedObservation(new SingleObservation(), 1000));
+            new DelegatingTimeFramedObservation(base, 1000));
         
         Assert.assertEquals(0, obs.getValue(), 1);
         Assert.assertEquals(0, obs.getAverageValue(), 1);
         Assert.assertEquals(0, obs.getMinimumValue(), 1);
         Assert.assertEquals(0, obs.getMaximumValue(), 1);
         
-        obs.setValue(500, null); // 500 over 1 s -> 500
+        long start = System.currentTimeMillis();
+        base.setValue(500, null); // 500 over 1 s -> 500
+        double v1 = obs.getValue();
         sleep(1000);
-        obs.setValue(500, null); // 500 over 1 s -> 500
+        base.setValue(500, null); // 500 over 1 s -> 500
 
-        Assert.assertEquals(500, obs.getValue(), 5); // time diffs
-        obs.setValue(1000, null); // reset to 1000 over 1 s -> 1000
+        double v2 = obs.getValue();
+        Assert.assertEquals(500, v2, 5); // time diffs
+        base.setValue(1000, null); // reset to 1000 over 1 s -> 1000
         sleep(1000);
-        Assert.assertEquals(1000, obs.getValue(), 5); // time diffs
-        
-        Assert.assertEquals((500 + 1000) / 3, obs.getAverageValue(), 1);
+        long diff = System.currentTimeMillis() - start;
+        double exp = 1000 / (diff / 1000);
+        double v3 = obs.getValue();
+        Assert.assertEquals(exp, v3, 5); // time diffs
+        Assert.assertEquals((v1 + v2 + v3) / 4, obs.getAverageValue(), 1); // every read counts!
         Assert.assertEquals(0, obs.getMinimumValue(), 1);
-        Assert.assertEquals(1000, obs.getMaximumValue(), 5);
+        Assert.assertEquals(Math.max(Math.max(v1, v2), v3), obs.getMaximumValue(), 5);
         CoordinationManager.unregisterNameMapping(mapping);
     }
     

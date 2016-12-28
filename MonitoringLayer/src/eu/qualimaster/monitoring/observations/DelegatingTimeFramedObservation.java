@@ -25,10 +25,8 @@ public class DelegatingTimeFramedObservation extends AbstractDelegatingObservati
 
     private static final long serialVersionUID = 5671311309699530270L;
     
-    private double lastValue = 0;
     private double result = 0;
     private long timeFrame;
-    private long firstUpdate = -1;
 
     /**
      * Creates a time framed summarizing compound observation for the given time frame.
@@ -50,52 +48,25 @@ public class DelegatingTimeFramedObservation extends AbstractDelegatingObservati
     protected DelegatingTimeFramedObservation(DelegatingTimeFramedObservation source, IObservationProvider provider) {
         super(source, provider);
         this.timeFrame = source.timeFrame;
-        this.lastValue = source.lastValue;
         this.result = source.result;
     }
 
     @Override
     public void clear() {
-        lastValue = 0; 
         result = 0;
         super.clear();
-    }
-    
-    @Override
-    public void setValue(double value, Object key) {
-        super.setValue(value, key);
-        update();
-    }
-
-    @Override
-    public void setValue(Double value, Object key) {
-        super.setValue(value, key);
-        update();
-    }
-
-    @Override
-    public void incrementValue(double value, Object key) {
-        super.incrementValue(value, key);
-        update();
-    }
-
-    @Override
-    public void incrementValue(Double value, Object key) {
-        super.incrementValue(value, key);
-        update();
     }
 
     /**
      * Updates the time-frame observation.
      */
     private synchronized void update() {
-        long now = System.currentTimeMillis();
-        if (firstUpdate < 0) {
-            firstUpdate = now;
-        } else {
-            double curValue = super.getValue();
-            result = curValue / (now - firstUpdate) * timeFrame;
-            if (Double.isNaN(result)) {
+        long firstUpdate = super.getFirstUpdate();
+        if (firstUpdate > 0) {
+            long now = System.currentTimeMillis();
+            double value = super.getValue();
+            result = value / (now - firstUpdate) * timeFrame;
+            if (Double.isNaN(result) || Double.isInfinite(result)) {
                 result = 0;
             }
         }
@@ -103,11 +74,13 @@ public class DelegatingTimeFramedObservation extends AbstractDelegatingObservati
 
     @Override
     public double getValue() {
+        update();
         return result;
     }
 
     @Override
     public double getLocalValue() {
+        // no update, may imply topological aggregation and, thus, loops
         return result;
     }
 

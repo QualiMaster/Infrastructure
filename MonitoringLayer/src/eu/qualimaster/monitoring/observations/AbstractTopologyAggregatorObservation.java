@@ -20,7 +20,8 @@ import eu.qualimaster.monitoring.topology.ITopologyProvider;
 import eu.qualimaster.observables.IObservable;
 
 /**
- * A base class for different forms of topology aggregation.
+ * A base class for different forms of topology aggregation. Sub classes shall call {@link #setFirstUpdate(long)} 
+ * appropriately.
  * 
  * @author Holger Eichelberger
  */
@@ -29,6 +30,7 @@ public abstract class AbstractTopologyAggregatorObservation extends AbstractDele
     private static final long serialVersionUID = 5689818695869352019L;
     private ITopologyProvider provider;
     private IObservable observable;
+    private long firstUpdate = -1;
     
     /**
      * Creates a delegating topology aggregator for the given observable.
@@ -47,7 +49,7 @@ public abstract class AbstractTopologyAggregatorObservation extends AbstractDele
     @Override
     public double getValue() {
         double result = 0;
-        if (null != provider && null != provider.getTopology() && !isSimpleTopoplogy()) { 
+        if (null != provider && null != provider.getTopology() && !isSimpleTopoplogy()) {
             // simple: end of "recursion"
             result = calculateValue();
         } else {
@@ -99,6 +101,54 @@ public abstract class AbstractTopologyAggregatorObservation extends AbstractDele
     @Override
     protected String toStringShortcut() {
         return "Topo";
+    }
+    
+    @Override
+    public void clear() {
+        super.clear();
+        firstUpdate = -1;
+    }
+    
+    @Override
+    public synchronized long getFirstUpdate() {
+        long tmp = super.getFirstUpdate();
+        if (firstUpdate < 0) {
+            firstUpdate = tmp;
+        } else if (tmp > 0) {
+            firstUpdate = Math.min(firstUpdate, tmp);
+        }
+        return firstUpdate;
+    }
+    
+    /**
+     * Updates the first update value.
+     * 
+     * @param firstUpdate the new time stamp of the first update, may be negative if unknown (shall then not modify
+     *  the first update of this instance)
+     */
+    protected synchronized void setFirstUpdate(long firstUpdate) {
+        setFirstUpdate0(super.getFirstUpdate()); // take underlying component into account
+        setFirstUpdate0(firstUpdate);
+    }
+
+    /**
+     * Updates the first update value.
+     * 
+     * @param firstUpdate the new time stamp of the first update, may be negative if unknown (shall then not modify
+     *  the first update of this instance)
+     */
+    private void setFirstUpdate0(long firstUpdate) {
+        if (this.firstUpdate < 0) {
+            this.firstUpdate = firstUpdate;
+        } else if (firstUpdate > 0) {
+            this.firstUpdate = Math.min(this.firstUpdate, firstUpdate);
+        }
+    }
+    
+    @Override
+    public synchronized void switchedTo(boolean direct) {
+        firstUpdate = -1;
+        super.switchedTo(direct);
     }
 
 }

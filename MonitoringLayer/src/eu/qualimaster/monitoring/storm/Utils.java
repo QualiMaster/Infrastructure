@@ -208,7 +208,7 @@ public class Utils {
                 GlobalStreamId id = grouping.getKey();
                 StormProcessor origin = getProcessor(procs, mapName(mapping, id.get_componentId()));
                 if (null != origin) {
-                    if (!leaveOutConnection(mapping, origin, cfg, hwAlgType)) {
+                    if (!leaveOutConnection(mapping, origin, cfg, hwAlgType) && !origin.hasOutputTo(target)) {
                         Stream stream = new Stream(id.get_streamId(), origin, target);
                         origin.addOutput(stream);
                         target.addInput(stream);
@@ -695,6 +695,9 @@ public class Utils {
             if (targets.contains(node.getOutput(o).getTarget().getName())) {
                 count++;
             }
+        }
+        if (0 == count && targets.contains(node.getName())) { // node is the only one
+            count++;
         }
         return count;
     }

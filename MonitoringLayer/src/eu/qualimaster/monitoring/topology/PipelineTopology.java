@@ -48,19 +48,6 @@ public class PipelineTopology {
          */
         public String getName();
         
-        /**
-         * Whether this element is active in case of alternative paths.
-         * 
-         * @return <code>true</code> for active, <code>false</code> else
-         */
-        public boolean isActive();
-        
-        /**
-         * Changes the active flag.
-         * 
-         * @param active the new active flag
-         */
-        public void setActive(boolean active);
     }
     
     /**
@@ -71,7 +58,6 @@ public class PipelineTopology {
     public abstract static class TopologyElement implements ITopologyElement {
         
         private String name;
-        private boolean active = true;
         
         /**
          * Creates a topology element.
@@ -85,16 +71,6 @@ public class PipelineTopology {
         @Override
         public String getName() {
             return name;
-        }
-        
-        @Override
-        public boolean isActive() {
-            return active;
-        }
-        
-        @Override
-        public void setActive(boolean active) {
-            this.active = active;
         }
 
     }

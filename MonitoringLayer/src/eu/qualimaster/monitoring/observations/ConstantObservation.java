@@ -95,6 +95,11 @@ public class ConstantObservation implements IObservation {
     }
 
     @Override
+    public long getFirstUpdate() {
+        return 0;
+    }
+    
+    @Override
     public long getLastUpdate() {
         return 0;
     }
@@ -124,6 +129,16 @@ public class ConstantObservation implements IObservation {
     @Override
     public void unlink(IObservation observation) {
     }
+    
+    @Override
+    public int getLinkCount() {
+        return 0;
+    }
+
+    @Override
+    public IObservation getLink(int index) {
+        throw new IndexOutOfBoundsException();
+    }
 
     @Override
     public boolean statisticsWhileReading() {
@@ -134,5 +149,9 @@ public class ConstantObservation implements IObservation {
     public String toString() {
         return "Const[" + value + "]";
     }
-    
+
+    @Override
+    public void switchedTo(boolean direct) {
+    }
+
 }

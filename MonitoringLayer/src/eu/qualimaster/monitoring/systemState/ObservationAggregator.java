@@ -35,6 +35,7 @@ public class ObservationAggregator {
     private boolean pathAverage;
     private IAggregationFunction topologyAggregator;
     private boolean wasCompleted = false; // at least one defined path
+    private long firstUpdate = -1;
     
     /**
      * An observation aggregator.
@@ -115,6 +116,23 @@ public class ObservationAggregator {
             value = null;
         }
         path.add(value);
+        if (firstUpdate < 0) {
+            firstUpdate = part.getFirstUpdate(observable);
+        } else {
+            long tmp = part.getFirstUpdate(observable);
+            if (tmp > 0) {
+                firstUpdate = Math.min(firstUpdate, tmp);
+            }
+        }
+    }
+    
+    /**
+     * Returns the first update over all aggregated nodes.
+     * 
+     * @return the first update
+     */
+    public long getFirstUpdate() {
+        return firstUpdate;
     }
     
     /**

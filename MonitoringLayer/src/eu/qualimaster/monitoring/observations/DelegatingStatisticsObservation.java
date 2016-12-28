@@ -73,7 +73,7 @@ public class DelegatingStatisticsObservation extends AbstractDelegatingObservati
      * Collects the statistics.
      */
     private void collectStatistics() {
-        double value = getDelegate().getValue(); 
+        double value = getDelegate().getValue();
         sum.addAndGet(value);
         count.incrementAndGet();
         min.set(Math.min(min.get(), value));
@@ -177,10 +177,25 @@ public class DelegatingStatisticsObservation extends AbstractDelegatingObservati
     @Override
     public void clear() {
         super.clear();
+        clearImpl();
+    }
+
+    /**
+     * Implements clearing this instance.
+     */
+    private void clearImpl() {
         min.set(Double.MAX_VALUE);
         max.set(Double.MIN_VALUE);
         sum.set(0);
         count.set(0);
+    }
+    
+    @Override
+    public void switchedTo(boolean direct) {
+        if (!direct) {
+            clearImpl();
+        }
+        super.switchedTo(direct);
     }
 
     @Override
@@ -203,5 +218,5 @@ public class DelegatingStatisticsObservation extends AbstractDelegatingObservati
     protected String toStringShortcut() {
         return "Stat";
     }
-    
+
 }

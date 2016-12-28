@@ -1,0 +1,11 @@
+<mapping>
+  <pipeline name="pip" class="pip">
+      <node name="processor" type="family">
+          <component name="processor" container="pip" class="processor" receiver="true" thrift="false" tasks="1" alternative0 = "myAlg" alternative1 = "myAlg1"/>
+      </node>
+      <algorithm name="myAlg" implName="myAlg" class="myAlg">
+      </algorithm>
+      <algorithm name="myAlg1" implName="myAlg1" class="myAlg1">
+      </algorithm>
+  </pipeline>
+</mapping>

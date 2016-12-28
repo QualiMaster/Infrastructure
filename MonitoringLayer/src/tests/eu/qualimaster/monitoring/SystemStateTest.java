@@ -26,8 +26,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import eu.qualimaster.coordination.CoordinationManager;
+import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.coordination.IdentityMapping;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
-import eu.qualimaster.monitoring.MonitoringManager;
 import eu.qualimaster.monitoring.events.ComponentKey;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
 import eu.qualimaster.monitoring.parts.PartType;
@@ -45,6 +46,7 @@ import eu.qualimaster.monitoring.tracing.Tracing;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.ResourceUsage;
 import eu.qualimaster.observables.Scalability;
+import eu.qualimaster.observables.TimeBehavior;
 
 /**
  * Some system state tests.
@@ -58,12 +60,15 @@ public class SystemStateTest {
     private SystemState state;
     private PipelineSystemPart pip;
     private PipelineNodeSystemPart node;
+    private INameMapping mapping;
 
     /**
      * Executed before a single test.
      */
     @Before
     public void setUp() {
+        mapping = new IdentityMapping(PIPELINE_NAME);
+        CoordinationManager.registerTestMapping(mapping);
         state = new SystemState();
         pip = state.obtainPipeline(PIPELINE_NAME);
         node = pip.obtainPipelineNode(PROCESSOR_NODE_NAME);
@@ -74,7 +79,7 @@ public class SystemStateTest {
      */
     @After
     public void tearDown() {
-        CoordinationManager.unregisterNameMapping(MonitoringManager.getNameMapping(PIPELINE_NAME));
+        CoordinationManager.unregisterNameMapping(mapping);
         pip = null;
         node = null;
         state.clear();
@@ -209,6 +214,31 @@ public class SystemStateTest {
         Double actual = part.getObservedValue(observable);
         Assert.assertNotNull(actual);
         Assert.assertEquals(expected, actual, 0.005);
+    }
+    
+    /**
+     * Asserts the observed value for <code>observable</code> in <code>part</code>.
+     * 
+     * @param expected the expected value
+     * @param part the system part to look into
+     * @param observable the observable to assert the value for
+     */
+    public static void assertEquals(double expected, SystemPart part, IObservable observable) {
+        assertEquals(expected, part, observable, 0.005);
+    }
+    
+    /**
+     * Asserts the observed value for <code>observable</code> in <code>part</code>.
+     * 
+     * @param expected the expected value
+     * @param part the system part to look into
+     * @param observable the observable to assert the value for
+     * @param precision the precision to compare against
+     */
+    public static void assertEquals(double expected, SystemPart part, IObservable observable, double precision) {
+        Double actual = part.getObservedValue(observable);
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected, actual, precision);
     }
     
     /**
@@ -394,14 +424,17 @@ public class SystemStateTest {
      */
     @Test
     public void clearingTest() throws InterruptedException {
+        node.clear(TimeBehavior.THROUGHPUT_ITEMS); // reset firstUpdate!
         node.clear(Scalability.ITEMS);
-        node.setValue(Scalability.ITEMS, 750, null); // incremental - 0 change, frame 1000
+        node.setValue(TimeBehavior.THROUGHPUT_ITEMS, 750, null); // incremental - 0 change, frame 1000
         Thread.sleep(3000);
-        //Assert.assertEquals(750 / 3, node.getObservedValue(Scalability.ITEMS), 1);
+        Assert.assertEquals(750 / 3, node.getObservedValue(Scalability.ITEMS), 5);
+        
+        node.clear(TimeBehavior.THROUGHPUT_ITEMS); // reset firstUpdate!
         node.clear(Scalability.ITEMS);
-        node.setValue(Scalability.ITEMS, 1000, null);
+        node.setValue(TimeBehavior.THROUGHPUT_ITEMS, 1000, null);
         Thread.sleep(3000);
-        Assert.assertEquals(1000 / 3, node.getObservedValue(Scalability.ITEMS), 1);
+        Assert.assertEquals(1000 / 3, node.getObservedValue(Scalability.ITEMS), 5);
     }
 
 }

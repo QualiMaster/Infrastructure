@@ -8,6 +8,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.thrift7.TException;
 
+import eu.qualimaster.common.signal.ThriftConnection;
 import eu.qualimaster.monitoring.AbstractClusterMonitoringTask;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.MonitoringManager;
@@ -59,7 +60,7 @@ public class StormClusterMonitoringTask extends AbstractClusterMonitoringTask {
         int supervisorCount = supervisors.size();
         for (int s = 0; s < supervisorCount; s++) {
             SupervisorSummary sSummary = supervisors.get(s);
-            String key = sSummary.get_host();
+            String key = ThriftConnection.mapNetworkName(sSummary.get_host());
             if (sSummary.get_num_used_workers() > 0) {
                 used.add(key);
             } else {

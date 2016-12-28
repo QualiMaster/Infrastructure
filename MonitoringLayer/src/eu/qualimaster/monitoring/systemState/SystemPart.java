@@ -27,6 +27,7 @@ import java.util.Set;
 import eu.qualimaster.coordination.INameMapping.Component.Type;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
 import eu.qualimaster.monitoring.observations.AbstractCompoundObservation;
+import eu.qualimaster.monitoring.observations.AtomicDouble;
 import eu.qualimaster.monitoring.observations.IObservation;
 import eu.qualimaster.monitoring.observations.IObservationProvider;
 import eu.qualimaster.monitoring.observations.ObservationFactory;
@@ -38,7 +39,8 @@ import eu.qualimaster.monitoring.topology.PipelineTopology;
 import eu.qualimaster.observables.IObservable;
 
 /**
- * Stores monitoring information about a system part. <b>Do not return observations!</b>
+ * Stores monitoring information about a system part.
+ * Links are not copied, must be re-established by caller.
  * 
  * @author Holger Eichelberger
  */
@@ -99,6 +101,7 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
                 IObservation observation = value.getValue();
                 this.parameterValues.put(observable, observation.copy(this));
             }
+            // don't copy the links
         }
     }
     
@@ -223,15 +226,8 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
         }
         return copy;
     }
-    
-    /**
-     * Sets the value of the given <code>observable</code> by replacing the existing one.
-     * 
-     * @param observable the observable to change
-     * @param value the new value (may be <b>null</b> but then this method will perform an update of the data)
-     * @param key the key representing the compound in a composite observation,
-     *   may be <b>null</b>
-     */
+
+    @Override
     public void setValue(IObservable observable, double value, Object key) {
         synchronized (parameterValues) {
             IObservation observation = parameterValues.get(observable);
@@ -241,14 +237,7 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
         }
     }
     
-    /**
-     * Sets the value of the given <code>observable</code> by replacing the existing one.
-     * 
-     * @param observable the observable to be modified
-     * @param value the new value (may be <b>null</b> but then this method will perform an update of the data)
-     * @param key the key representing the compound in a composite observation,
-     *   may be <b>null</b>
-     */
+    @Override
     public void setValue(IObservable observable, Double value, Object key) {
         synchronized (parameterValues) {
             IObservation observation = parameterValues.get(observable);
@@ -258,14 +247,7 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
         }
     }
 
-    /**
-     * Increments the of the given <code>observable</code> value by adding <code>value</code> to the existing one. 
-     * 
-     * @param observable the observable to be modified
-     * @param value the new value (may be <b>null</b> but then this method will perform an update of the data)
-     * @param key the key representing the compound in a composite observation,
-     *   may be <b>null</b>
-     */
+    @Override
     public void incrementValue(IObservable observable, double value, Object key) {
         synchronized (parameterValues) {
             IObservation observation = parameterValues.get(observable);
@@ -275,14 +257,7 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
         }
     }
     
-    /**
-     * Increments the of the given <code>observable</code> value by adding <code>value</code> to the existing one. 
-     * 
-     * @param observable the observable to be modified
-     * @param value the new value (may be <b>null</b> but then this method will perform an update of the data)
-     * @param key the key representing the compound in a composite observation,
-     *   may be <b>null</b>
-     */
+    @Override
     public void incrementValue(IObservable observable, Double value, Object key) {
         synchronized (parameterValues) {
             IObservation observation = parameterValues.get(observable);
@@ -325,6 +300,7 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
      * 
      * @param observable the observable to clear
      */
+    @Override
     public void clear(IObservable observable) {
         synchronized (parameterValues) {
             IObservation observation = parameterValues.get(observable);
@@ -366,15 +342,7 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
         return getObservedValue(observable, false);
     }
     
-    /**
-     * Returns a measured quality parameter value. [convenience method]
-     * 
-     * @param observable the value to be returned for
-     * @param localValue the locally stored or the (topologically) aggregated value
-     * @return may be <b>0</b> if <code>observable</code> is not supported or has not been monitored. In order to 
-     *   discriminate these situations, please call {@link #supportsObservation(IObservable)} 
-     *   or {@link #hasValue(IObservable)}. 
-     */
+    @Override
     public double getObservedValue(IObservable observable, boolean localValue) {
         double result = 0;
         synchronized (parameterValues) {
@@ -402,6 +370,40 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
         return result;
     }
     
+
+    @Override
+    public long getFirstUpdate(IObservable observable) {
+        long result = -1;
+        synchronized (parameterValues) {
+            IObservation observation = parameterValues.get(observable);
+            if (null != observation) {
+                result = observation.getFirstUpdate();
+            }
+        }
+        return result;
+    }
+    
+    @Override
+    public void switchedTo(IObservable observable, boolean direct) {
+        synchronized (parameterValues) {
+            IObservation observation = parameterValues.get(observable);
+            if (null != observation) {
+                observation.switchedTo(direct);
+            }
+        }
+    }
+    
+    /**
+     * Signals an algorithm switch to all observations.
+     */
+    protected void switchedTo() {
+        synchronized (parameterValues) {
+            for (IObservation obs : parameterValues.values()) {
+                obs.switchedTo(true);
+            }
+        }
+    }
+    
     @Override
     public void setLastUpdate(IObservable observable, long timestamp) {
         synchronized (parameterValues) {
@@ -423,6 +425,18 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
         }
         return result;
     }
+    
+    @Override
+    public boolean isComposite(IObservable observable) {
+        boolean result = false;
+        synchronized (parameterValues) {
+            IObservation observation = parameterValues.get(observable);
+            if (null != observation) {
+                result = observation.isComposite();
+            }
+        }
+        return result;        
+    }
 
     @Override
     public boolean hasValue(IObservable observable) {
@@ -436,6 +450,76 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
         return result;
     }
     
+    @Override
+    public int getLinkCount(IObservable observable) {
+        int result = 0;
+        synchronized (parameterValues) {
+            IObservation observation = parameterValues.get(observable);
+            if (null != observation) {
+                result = observation.getLinkCount();
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public IObservation getLink(IObservable observable, int index) {
+        IObservation result = null;
+        synchronized (parameterValues) {
+            IObservation observation = parameterValues.get(observable);
+            if (null != observation) {
+                result = observation.getLink(index);
+            } else {
+                throw new IndexOutOfBoundsException();
+            }
+        }
+        return result;        
+    }
+    
+    @Override
+    public void link(IObservable observable, IObservation obs) {
+        synchronized (parameterValues) {
+            IObservation observation = parameterValues.get(observable);
+            if (null != observation) {
+                observation.link(obs);
+            }
+        }
+    }
+
+    @Override
+    public void unlink(IObservable observable, IObservation obs) {
+        synchronized (parameterValues) {
+            IObservation observation = parameterValues.get(observable);
+            if (null != observation) {
+                observation.unlink(obs);
+            }
+        }
+    }
+    
+    @Override
+    public boolean statisticsWhileReading(IObservable observable) {
+        boolean result = false;
+        synchronized (parameterValues) {
+            IObservation observation = parameterValues.get(observable);
+            if (null != observation) {
+                result = observation.statisticsWhileReading();
+            }
+        }
+        return result;
+    }
+    
+    @Override
+    public AtomicDouble getValue(IObservable observable, Object key) {
+        AtomicDouble result = null;
+        synchronized (parameterValues) {
+            IObservation observation = parameterValues.get(observable);
+            if (null != observation) {
+                result = observation.getValue(key);
+            }
+        }
+        return result;
+    }
+
     @Override
     public boolean supportsObservation(IObservable observable) {
         synchronized (parameterValues) {
@@ -492,7 +576,7 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
     }
     
     /**
-     * Unlinks the observables of <code>part</code> from into observable.
+     * Links the observables of <code>part</code> into this observable.
      * 
      * @param part the part to take the observables to unlink from (may be <b>null</b>)
      * @param selector selects the relevant observables

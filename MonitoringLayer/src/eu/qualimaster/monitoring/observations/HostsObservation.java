@@ -140,6 +140,11 @@ class HostsObservation implements IObservation {
     }
     
     @Override
+    public long getFirstUpdate() {
+        return provider.getFirstUpdate(ResourceUsage.EXECUTORS);
+    }
+    
+    @Override
     public void setLastUpdate(long timestamp) {
         provider.setLastUpdate(ResourceUsage.EXECUTORS, timestamp);
     }
@@ -169,6 +174,16 @@ class HostsObservation implements IObservation {
     }
     
     @Override
+    public int getLinkCount() {
+        return 0;
+    }
+
+    @Override
+    public IObservation getLink(int index) {
+        throw new IndexOutOfBoundsException();
+    }
+    
+    @Override
     public String toString() {
         return String.valueOf(getValue());
     }
@@ -176,6 +191,11 @@ class HostsObservation implements IObservation {
     @Override
     public boolean statisticsWhileReading() {
         return false;
+    }
+
+    @Override
+    public void switchedTo(boolean direct) {
+        // nothing to do, recalculated anyway;
     }
 
 }

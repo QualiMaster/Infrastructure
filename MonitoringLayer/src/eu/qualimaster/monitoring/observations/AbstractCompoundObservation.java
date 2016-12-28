@@ -29,6 +29,7 @@ public abstract class AbstractCompoundObservation implements IObservation {
     
     private static final long serialVersionUID = -5216597956347539458L;
     private AtomicLong lastUpdate = new AtomicLong(-1);
+    private AtomicLong firstUpdate = new AtomicLong(-1);
 
     private Map<Object, AtomicDouble> components = Collections.synchronizedMap(new HashMap<Object, AtomicDouble>());
     private List<IObservation> links;
@@ -56,11 +57,9 @@ public abstract class AbstractCompoundObservation implements IObservation {
                 this.components.put(key, new AtomicDouble(sourceVal.get()));
             }
         }
+        this.firstUpdate.set(source.firstUpdate.get());
         this.lastUpdate.set(source.lastUpdate.get());
-        if (null != source.links) {
-            this.links = new ArrayList<IObservation>(source.links.size());
-            this.links.addAll(source.links);
-        }
+        // don't copy links, must be re-established
     }
     
     @Override
@@ -116,7 +115,11 @@ public abstract class AbstractCompoundObservation implements IObservation {
                 }
             }
         }
-        lastUpdate.set(System.currentTimeMillis());
+        long now = System.currentTimeMillis();
+        if (firstUpdate.get() < 0) {
+            firstUpdate.set(now);
+        }
+        lastUpdate.set(now);
     }
 
     /**
@@ -258,6 +261,7 @@ public abstract class AbstractCompoundObservation implements IObservation {
     public void clear() {
         components.clear();
         lastUpdate.set(-1);
+        firstUpdate.set(-1);
         links = null;
     }
     
@@ -275,6 +279,20 @@ public abstract class AbstractCompoundObservation implements IObservation {
     @Override
     public long getLastUpdate() {
         return lastUpdate.get();
+    }
+    
+    @Override
+    public long getFirstUpdate() {
+        long first = firstUpdate.get();
+        if (null != links) {
+            for (int l = 0; l < links.size(); l++) {
+                long f = links.get(l).getFirstUpdate();
+                if (first < 0 || f < first) {
+                    first = f;
+                }
+            }
+        }
+        return first;
     }
 
     @Override
@@ -334,6 +352,19 @@ public abstract class AbstractCompoundObservation implements IObservation {
             }
         }
     }
+    
+    @Override
+    public int getLinkCount() {
+        return null == links ? 0 : links.size();
+    }
+
+    @Override
+    public IObservation getLink(int index) {
+        if (null == links) {
+            throw new IndexOutOfBoundsException();
+        }
+        return links.get(index);
+    }
 
     @Override
     public void unlink(IObservation observation) {
@@ -348,6 +379,13 @@ public abstract class AbstractCompoundObservation implements IObservation {
     @Override
     public boolean statisticsWhileReading() {
         return false;
+    }
+
+    @Override
+    public void switchedTo(boolean direct) {
+        if (!direct) {
+            clear();
+        }
     }
 
 }

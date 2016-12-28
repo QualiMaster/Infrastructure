@@ -107,9 +107,10 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
             for (Map.Entry<String, NodeImplementationSystemPart> entry : source.algorithms.entrySet()) {
                 NodeImplementationSystemPart impl = new NodeImplementationSystemPart(entry.getValue(), this, state); 
                 algorithms.put(entry.getKey(), impl);
-                for (PipelineNodeSystemPart node : impl.getNodes()) {
+                // don't fill algElements here, done below in establishAlgNodesLinks
+                /*for (PipelineNodeSystemPart node : impl.getNodes()) {
                     algElements.put(node.getName(), node);
-                }
+                }*/
             }
         }
         synchronized (sources) {
@@ -127,6 +128,7 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
         synchronized (elements) {
             for (Map.Entry<String, PipelineNodeSystemPart> entry : source.elements.entrySet()) {
                 getNode(entry.getKey()).adjustCurrent(entry.getValue());
+                establishAlgNodesLinks(entry.getValue());
             }
         }
         synchronized (algorithms) {
@@ -388,7 +390,8 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
                 }
                 result = new PipelineNodeSystemPart(nodeName, type, useThrift, this); 
                 elements.put(nodeName, result);
-                if (null != component) {
+                establishAlgNodesLinks(result);
+                /*if (null != component) {
                     for (String alt : component.getAlternatives()) {
                         NodeImplementationSystemPart algPart = getAlgorithm(alt);
                         if (null != algPart) {
@@ -405,9 +408,37 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
                             result.link(algPart);
                         }
                     }
-                }
+                }*/
             }
             return result;
+        }
+    }
+
+    /**
+     * Establishes the links between node, its alternative algorithms and their implementation nodes if existent.
+     * 
+     * @param node the node to establish the links for
+     */
+    private void establishAlgNodesLinks(PipelineNodeSystemPart node) {
+        INameMapping mapping = getNameMapping();
+        Component component = mapping.getPipelineNodeComponent(node.getName());
+        if (null != component) {
+            for (String alt : component.getAlternatives()) {
+                NodeImplementationSystemPart algPart = getAlgorithm(alt);
+                if (null != algPart) {
+                    Algorithm alg = mapping.getAlgorithm(alt);
+                    if (null != alg) {
+                        for (Component comp : alg.getComponents()) {
+                            PipelineNodeSystemPart compNode 
+                                = algPart.obtainPipelineNode(comp.getName()); // force creation
+                            algPart.link(compNode, ILinkSelector.ALL_EXTERNAL);
+                            // elements may cause endless recursions in aggregation
+                            algElements.put(comp.getName(), compNode);
+                        }
+                    }
+                    node.link(algPart);
+                }
+            }
         }
     }
 

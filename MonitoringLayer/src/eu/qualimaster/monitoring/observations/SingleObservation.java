@@ -18,6 +18,7 @@ public class SingleObservation implements IObservation {
                     
     private double initial;
     private AtomicDouble value = new AtomicDouble();
+    private AtomicLong firstUpdate = new AtomicLong(-1);
     private AtomicLong lastUpdate = new AtomicLong(-1);
     
     /**
@@ -48,6 +49,7 @@ public class SingleObservation implements IObservation {
         this.initial = source.initial;
         this.value.set(source.value.get());
         this.lastUpdate.set(source.lastUpdate.get());
+        this.firstUpdate.set(source.firstUpdate.get());
     }
     
     /**
@@ -96,7 +98,11 @@ public class SingleObservation implements IObservation {
      * Updates the base values.
      */
     private void update() {
-        lastUpdate.set(System.currentTimeMillis());
+        long now = System.currentTimeMillis();
+        if (firstUpdate.get() < 0) {
+            firstUpdate.set(now);
+        }
+        lastUpdate.set(now);
     }
 
     @Override
@@ -134,6 +140,7 @@ public class SingleObservation implements IObservation {
     public void clear() {
         value.set(initial);
         lastUpdate.set(-1);
+        firstUpdate.set(-1);
     }
 
     @Override
@@ -144,6 +151,11 @@ public class SingleObservation implements IObservation {
     @Override
     public long getLastUpdate() {
         return lastUpdate.get();
+    }
+    
+    @Override
+    public long getFirstUpdate() {
+        return firstUpdate.get();
     }
     
     @Override
@@ -175,10 +187,27 @@ public class SingleObservation implements IObservation {
     public void unlink(IObservation observation) {
         // nothing to do
     }
+    
+    @Override
+    public int getLinkCount() {
+        return 0;
+    }
+
+    @Override
+    public IObservation getLink(int index) {
+        throw new IndexOutOfBoundsException();
+    }
 
     @Override
     public boolean statisticsWhileReading() {
         return false;
+    }
+
+    @Override
+    public void switchedTo(boolean direct) {
+        if (!direct) {
+            clear();
+        }
     }
 
 }

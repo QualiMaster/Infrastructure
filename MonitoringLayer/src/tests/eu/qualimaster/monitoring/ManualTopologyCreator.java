@@ -37,8 +37,11 @@ import backtype.storm.generated.TopologyInfo;
 import eu.qualimaster.base.algorithm.IMainTopologyCreate;
 import eu.qualimaster.base.algorithm.TopologyOutput;
 import eu.qualimaster.coordination.NameMapping;
+import eu.qualimaster.events.EventHandler;
+import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineOptions;
 import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.coordination.INameMapping.Algorithm;
 import eu.qualimaster.coordination.INameMapping.Component;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
@@ -111,19 +114,47 @@ public class ManualTopologyCreator {
      * 
      * @author Holger Eichelberger
      */
-    private static class TopologyDescriptor {
+    public static class TopologyDescriptor {
         private TopologyInfo topoInfo;
         private INameMapping mapping;
         private StormTopology topology;
 
         /**
+         * Returns the Storm topology information.
+         * 
+         * @return the topology information
+         */
+        public TopologyInfo getTopologyInfo() {
+            return topoInfo;
+        }
+        
+        /**
+         * Returns the name mapping.
+         * 
+         * @return the name mapping
+         */
+        public INameMapping getNameMapping() {
+            return mapping;
+        }
+        
+        /**
+         * Returns the Storm topology.
+         * 
+         * @return the topology
+         */
+        public StormTopology getTopology() {
+            return topology;
+        }
+        
+        /**
          * Creates the internal monitoring topology for the loaded topology.
          * 
          * @return the internal monitoring topology
          */
-        private PipelineTopology createTopology() {
+        public PipelineTopology createTopology() {
             return Utils.buildPipelineTopology(topology, topoInfo, mapping);
         }
+        
     }
 
     /**
@@ -141,31 +172,47 @@ public class ManualTopologyCreator {
      * @throws IOException in case of I/O problems
      * @throws NoSuchFieldException if the options field in the topology creator does not exist
      */
-    private static TopologyDescriptor loadTopology(File jar, String pipelineName, PipelineOptions options) 
+    public static TopologyDescriptor loadTopology(File jar, String pipelineName, PipelineOptions options) 
         throws IOException, ClassNotFoundException, NoSuchFieldException, IllegalAccessException, 
         InstantiationException {
         TopologyDescriptor result = new TopologyDescriptor();
+        String topoClsName = "eu.qualimaster." + pipelineName + ".topology.Topology";
+        URLClassLoader urlLoader;
+        ClassLoader loader;
         URL[] urls = new URL[1];
         urls[0] = jar.toURI().toURL();
-        System.out.println(urls[0]);
-        URLClassLoader loader = new URLClassLoader(urls);
-        InputStream tmp = urls[0].openStream();
-        tmp.close();
-        Class<?> mCls = loader.loadClass("eu.qualimaster." + pipelineName + ".topology.Topology");
-        Class<?> cls = loader.loadClass("eu.qualimaster." + pipelineName + ".topology.Topology$MainTopologyCreator");
+        try {
+            Class.forName(topoClsName);
+            loader = ManualTopologyCreator.class.getClassLoader();
+            urlLoader = null;
+        } catch (ClassNotFoundException e) {
+            System.out.println(urls[0]);
+            urlLoader = new URLClassLoader(urls);
+            loader = urlLoader;
+        }
+        
+        Class<?> mCls = loader.loadClass(topoClsName);
+        Class<?> cls = loader.loadClass(topoClsName + "$MainTopologyCreator");
         if (IMainTopologyCreate.class.isAssignableFrom(cls)) {
             Field fld = mCls.getDeclaredField("options");
             fld.setAccessible(true);
             fld.set(null, options);
-            
-            IMainTopologyCreate create = (IMainTopologyCreate) cls.newInstance();
-            TopologyOutput output = create.createMainTopology();
-            result.topology = output.getBuilder().createTopology();
+
+            EventManager.start(false, true);
+
             URL mappingURL = new URL("jar:" + urls[0] + "!/mapping.xml");
             InputStream in = mappingURL.openStream();
             result.mapping = new NameMapping(pipelineName, in);
             in.close();
             System.out.println(result.mapping);            
+
+            SubTopologyStructureEventHandler handler = new SubTopologyStructureEventHandler(result.mapping);
+            EventManager.register(handler);
+
+            IMainTopologyCreate create = (IMainTopologyCreate) cls.newInstance();
+            TopologyOutput output = create.createMainTopology();
+            result.topology = output.getBuilder().createTopology();
+            EventManager.cleanup();
             
             result.topoInfo = new TopologyInfo();
             List<String> executors = new ArrayList<String>();
@@ -173,9 +220,21 @@ public class ManualTopologyCreator {
                 System.out.println("Faking " + c.getName());
                 executors.add(c.getName());
             }
+            for (Algorithm a : result.mapping.getAlgorithms()) {
+                for (Component c : a.getComponents()) {
+                    System.out.println("Faking " + c.getName());
+                    executors.add(c.getName());
+                }
+            }
+            executors.addAll(handler.executors);
             addExecutors(result.topoInfo, executors);
+
+            EventManager.stop();
+            EventManager.unregister(handler);
         }
-        loader.close();
+        if (null != urlLoader) {
+            urlLoader.close();
+        }
         return result;
     }
     
@@ -193,7 +252,71 @@ public class ManualTopologyCreator {
      */
     public static void main(String[] args) throws MalformedURLException, ClassNotFoundException, 
         IllegalAccessException, InstantiationException, IOException, NoSuchFieldException {
-        createLooseTopology();
+        //createTightTopology();
+        createHwProfilingTopology();
+    }
+    
+    /**
+     * A handler for sub-topology structure events. Fills the name mapping with relevant information from 
+     * a hand-crafted sub-topology and collects the reported executors.
+     * 
+     * @author Holger Eichelberger
+     */
+    private static class SubTopologyStructureEventHandler extends EventHandler<SubTopologyMonitoringEvent> {
+
+        private INameMapping mapping;
+        private List<String> executors = new ArrayList<String>();
+
+        /**
+         * Creates the handler based on a given name mapping.
+         * 
+         * @param mapping the name mapping
+         */
+        protected SubTopologyStructureEventHandler(INameMapping mapping) {
+            super(SubTopologyMonitoringEvent.class);
+            this.mapping = mapping;
+        }
+
+        @Override
+        protected void handle(SubTopologyMonitoringEvent event) {
+            mapping.considerSubStructures(event);
+            Map<String, List<String>> struct = event.getStructure();
+            for (Map.Entry<String, List<String>> ent : struct.entrySet()) {
+                for (String e : ent.getValue()) {
+                    String[] tmp = e.split(SubTopologyMonitoringEvent.SEPARATOR);
+                    if (null != tmp && 2 == tmp.length) {
+                        executors.add(tmp[0]);
+                    }
+                }
+            }
+        }
+        
+    }
+
+    /**
+     * Loads the HW profiling topology.
+     * 
+     * @throws MalformedURLException in case of a malformed URL
+     * @throws ClassNotFoundException in case that the topology class was not found
+     * @throws IllegalAccessException in case that the topology class cannot be accessed
+     * @throws InstantiationException in case that the topology class cannot be instantiated
+     * @throws IOException in case of I/O problems
+     * @throws NoSuchFieldException if the options field in the topology creator does not exist
+     */
+    public static void createHwProfilingTopology() throws MalformedURLException, ClassNotFoundException, 
+        IllegalAccessException, InstantiationException, IOException, NoSuchFieldException {
+        File model = new File("W:\\runtime-EclipseApplication26\\QM2.devel");
+        Properties prop = new Properties();
+        prop.put(MonitoringConfiguration.LOCAL_CONFIG_MODEL_ARTIFACT_LOCATION, model.getAbsolutePath());
+        MonitoringConfiguration.configure(prop);
+
+        String mainTopoName = "ProfileTestPip";
+        File file = new File("C:\\Users\\eichelbe\\Desktop\\tmp\\tsi\\ProfileTestPip.jar");
+        PipelineOptions mainTopoOptions = new PipelineOptions();
+        TopologyDescriptor mainTopoD = loadTopology(file, mainTopoName, mainTopoOptions);
+        
+        PipelineTopology topo = mainTopoD.createTopology();
+        System.out.println(topo);
     }
     
     /**
@@ -246,24 +369,31 @@ public class ManualTopologyCreator {
     public static void createTightTopology() throws MalformedURLException, ClassNotFoundException, 
         IllegalAccessException, InstantiationException, IOException, NoSuchFieldException {
 
-        File model = new File("C:\\Users\\eichelbe\\Desktop\\tmp\\tsi\\infrastructure_model_cui");
+        //File model = new File("C:\\Users\\eichelbe\\Desktop\\tmp\\tsi\\infrastructure_model_cui");
+        File model = new File("W:\\runtime-EclipseApplication26\\QM2.devel");
         Properties prop = new Properties();
         prop.put(MonitoringConfiguration.LOCAL_CONFIG_MODEL_ARTIFACT_LOCATION, model.getAbsolutePath());
         MonitoringConfiguration.configure(prop);
 
         String mainTopoName = "RandomPip";
-        File file = new File("C:\\Users\\eichelbe\\Desktop\\tmp\\tsi\\RandomPip.jar.loose");
+        //File file = new File("C:\\Users\\eichelbe\\Desktop\\tmp\\tsi\\RandomPip.jar.loose");
+        File file = new File("W:\\runtime-EclipseApplication26\\QM2.devel\\pipelines\\eu\\qualimaster\\RandomPip"
+            + "\\target\\RandomPip-0.0.1-SNAPSHOT-jar-with-dependencies.jar");
         PipelineOptions mainTopoOptions = new PipelineOptions();
         TopologyDescriptor mainTopoD = loadTopology(file, mainTopoName, mainTopoOptions);
         Map<String, List<String>> structure = new HashMap<String, List<String>>();
         structure.put("RandomProcessor2", split(
-            "RandomProcessor2Intermediary;eu.qualimaster.RandomPip.topology.RandomProcessor2Intermediary, "
-            + "RandomProcessor2processor2;eu.qualimaster.algorithms.Process2Bolt, RandomProcessor2EndBolt;"
-            + "eu.qualimaster.RandomPip.topology.RandomProcessor2EndBolt"));
+            //"RandomProcessor2Intermediary;eu.qualimaster.RandomPip.topology.RandomProcessor2Intermediary, "
+            //+ "RandomProcessor2processor2;eu.qualimaster.algorithms.Process2Bolt, "
+            //+ "RandomProcessor2EndBolt;eu.qualimaster.RandomPip.topology.RandomProcessor2EndBolt"
+            "RandomProcessor2processor2;eu.qualimaster.algorithms.Process2Bolt"
+            ));
         structure.put("RandomProcessor1", split(
-            "RandomProcessor1Intermediary;eu.qualimaster.RandomPip.topology.RandomProcessor1Intermediary, "
-            + "RandomProcessor1processor1;eu.qualimaster.algorithms.Process1Bolt, "
-            + "RandomProcessor1EndBolt;eu.qualimaster.RandomPip.topology.RandomProcessor1EndBolt"));
+            //"RandomProcessor1Intermediary;eu.qualimaster.RandomPip.topology.RandomProcessor1Intermediary, "
+            //+ "RandomProcessor1processor1;eu.qualimaster.algorithms.Process1Bolt, "
+            //+ "RandomProcessor1EndBolt;eu.qualimaster.RandomPip.topology.RandomProcessor1EndBolt"
+            "RandomProcessor1processor1;eu.qualimaster.algorithms.Process1Bolt"
+            ));
         mainTopoD.mapping.considerSubStructures(new SubTopologyMonitoringEvent(mainTopoName, structure, null));
         
         List<String> executors = new ArrayList<String>();

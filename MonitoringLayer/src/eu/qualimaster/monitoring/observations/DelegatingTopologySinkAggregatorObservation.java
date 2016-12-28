@@ -100,7 +100,7 @@ public class DelegatingTopologySinkAggregatorObservation extends AbstractTopolog
         @Override
         public void enter(Processor node, boolean isEnd, boolean isLoop) {
             if (isEnd) {
-                result = aggregate(result, node, aggregator);        
+                result = aggregate(result, node, aggregator);
             }
         }
         
@@ -139,6 +139,7 @@ public class DelegatingTopologySinkAggregatorObservation extends AbstractTopolog
         if (null != nodePart) {
             result = aggregator.calculate(result, nodePart.getObservedValue(getObservable(), 
                 nodePart == getProvider())); // last - self-cycle control
+            setFirstUpdate(nodePart.getFirstUpdate(getObservable()));
         }
         return result;
     }

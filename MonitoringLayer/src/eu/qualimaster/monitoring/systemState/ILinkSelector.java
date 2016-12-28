@@ -16,6 +16,7 @@
 package eu.qualimaster.monitoring.systemState;
 
 import eu.qualimaster.observables.IObservable;
+import eu.qualimaster.observables.Scalability;
 
 /**
  * A selector/filter to link system pats against each other.
@@ -31,7 +32,7 @@ public abstract class ILinkSelector {
         
         @Override
         protected boolean isLinkEnabled(IObservable observable) {
-            return true;
+            return Scalability.ITEMS != observable;
         }
     };
 
@@ -42,7 +43,7 @@ public abstract class ILinkSelector {
         
         @Override
         protected boolean isLinkEnabled(IObservable observable) {
-            return !observable.isInternal();
+            return Scalability.ITEMS != observable && !observable.isInternal();
         }
         
     };
