@@ -616,6 +616,7 @@ public abstract class AbstractDirectAdaptationTests {
                     if (null == event) {
                         TimeMeasurementTracerFactory.measure(true, Measure.ANALYSIS);
                         event = rTask.reason(false);
+                        System.out.println("Analysis result: " + event);                        
                         TimeMeasurementTracerFactory.measure(false, Measure.ANALYSIS);
                         if (!testSpec.assertAnalysis(step, event, monConfig)) {
                             event = null; // consume silently
