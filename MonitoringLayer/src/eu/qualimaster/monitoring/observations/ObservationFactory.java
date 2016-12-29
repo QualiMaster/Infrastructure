@@ -465,7 +465,7 @@ public class ObservationFactory {
         registerCreator(ResourceUsage.USED_MACHINES, null, CREATOR_SUM_COMPOUND);
         registerCreator(ResourceUsage.AVAILABLE_CPUS, null, CREATOR_SUM_COMPOUND);
         registerCreator(ResourceUsage.USED_CPUS, null, CREATOR_SUM_COMPOUND);
-        registerCreator(ResourceUsage.BANDWIDTH, null, CREATOR_SINGLE_STATISTICS); // really just for now
+        //registerCreator(ResourceUsage.BANDWIDTH, null, CREATOR_SINGLE); // really just for now
         registerCreator(ResourceUsage.CAPACITY, null, CREATOR_TOPOLOGY_COMPOUND); 
         registerCreator(ResourceUsage.EXECUTORS, null, CREATOR_SUM_COMPOUND); 
         registerCreator(ResourceUsage.TASKS, null, CREATOR_SUM_COMPOUND);
@@ -523,13 +523,13 @@ public class ObservationFactory {
             AnalysisObservables.IS_VALID, AnalysisObservables.IS_ENACTING);
         registerPart(PartType.PLATFORM, 
             ResourceUsage.AVAILABLE_MACHINES, ResourceUsage.AVAILABLE_DFES, 
-                ResourceUsage.USED_MACHINES, ResourceUsage.USED_DFES, ResourceUsage.BANDWIDTH);
+                ResourceUsage.USED_MACHINES, ResourceUsage.USED_DFES, CloudResourceUsage.BANDWIDTH);
         registerPart(PartType.MACHINE, 
-            ResourceUsage.BANDWIDTH, ResourceUsage.AVAILABLE, ResourceUsage.AVAILABLE_CPUS, ResourceUsage.LOAD, 
+            CloudResourceUsage.BANDWIDTH, ResourceUsage.AVAILABLE, ResourceUsage.AVAILABLE_CPUS, ResourceUsage.LOAD, 
                 ResourceUsage.AVAILABLE_FREQUENCY, ResourceUsage.AVAILABLE_MEMORY, ResourceUsage.USED_MEMORY);
         registerPart(PartType.CLUSTER, 
             ResourceUsage.AVAILABLE_CPUS, ResourceUsage.AVAILABLE_DFES, ResourceUsage.USED_CPUS, 
-                ResourceUsage.USED_DFES, ResourceUsage.BANDWIDTH, ResourceUsage.AVAILABLE);
+                ResourceUsage.USED_DFES, CloudResourceUsage.BANDWIDTH, ResourceUsage.AVAILABLE);
         registerPart(PartType.CLOUDENV,
             CloudResourceUsage.BANDWIDTH, CloudResourceUsage.PING, CloudResourceUsage.USED_HARDDISC_MEM, 
             CloudResourceUsage.USED_PROCESSORS, CloudResourceUsage.USED_WORKING_STORAGE, 

@@ -18,6 +18,8 @@ package eu.qualimaster.monitoring;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.log4j.LogManager;
+
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.Observables;
 import net.ssehub.easy.varModel.confModel.IDecisionVariable;
@@ -48,11 +50,24 @@ public class ObservableMapper {
      */
     private static final void registerAll(IObservable[] observables) {
         for (IObservable obs : observables) {
-            NAME_OBSERVABLE_MAPPING.put(getMappedName(obs), obs);
-            TYPENAME_OBSERVABLE_MAPPING.put(getMappedTypeName(obs), obs);
+            String tmp = getMappedName(obs);
+            if (NAME_OBSERVABLE_MAPPING.containsKey(tmp)) {
+                LogManager.getLogger(ObservableMapper.class).warn("Observable " + obs 
+                    + " already registered for name mapping. Ignoring.");            
+            } else {
+                NAME_OBSERVABLE_MAPPING.put(tmp, obs);    
+            }
+            
+            tmp = getMappedTypeName(obs);
+            if (TYPENAME_OBSERVABLE_MAPPING.containsKey(tmp)) {
+                LogManager.getLogger(ObservableMapper.class).warn("Observable " + obs 
+                    + " already registered for type mapping. Ignoring.");
+            } else {
+                TYPENAME_OBSERVABLE_MAPPING.put(getMappedTypeName(obs), obs);
+            }
         }
     }
-
+    
     /**
      * Returns the mapped (variable) name.
      * 

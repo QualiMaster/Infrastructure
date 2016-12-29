@@ -31,6 +31,7 @@ import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
 import eu.qualimaster.monitoring.systemState.SystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
+import eu.qualimaster.observables.CloudResourceUsage;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.ResourceUsage;
 import eu.qualimaster.observables.TimeBehavior;
@@ -92,55 +93,55 @@ public class SimpleMonitoringTests {
         assertPart(platform, TimeBehavior.LATENCY, null);
         assertPart(pPart, TimeBehavior.LATENCY, 0);
         assertPart(sourcePart, TimeBehavior.LATENCY, 0);
-        assertPart(sourcePart, ResourceUsage.BANDWIDTH, null);
+        assertPart(sourcePart, CloudResourceUsage.BANDWIDTH, null);
         assertPart(processPart, TimeBehavior.LATENCY, 0);
-        assertPart(processPart, ResourceUsage.BANDWIDTH, null);
+        assertPart(processPart, CloudResourceUsage.BANDWIDTH, null);
         assertPart(sinkPart, TimeBehavior.LATENCY, 0);
-        assertPart(sinkPart, ResourceUsage.BANDWIDTH, null);
+        assertPart(sinkPart, CloudResourceUsage.BANDWIDTH, null);
 
         MonitoringManager.handleEvent(new PipelineElementObservationMonitoringEvent(
             TestNameMapping.PIPELINE_NAME, null, null, TimeBehavior.LATENCY, 1500));
         assertPart(platform, TimeBehavior.LATENCY, null);
         assertPart(pPart, TimeBehavior.LATENCY, 1500);
         assertPart(sourcePart, TimeBehavior.LATENCY, 0);
-        assertPart(sourcePart, ResourceUsage.BANDWIDTH, null);
+        assertPart(sourcePart, CloudResourceUsage.BANDWIDTH, null);
         assertPart(processPart, TimeBehavior.LATENCY, 0);
-        assertPart(processPart, ResourceUsage.BANDWIDTH, null);
+        assertPart(processPart, CloudResourceUsage.BANDWIDTH, null);
         assertPart(sinkPart, TimeBehavior.LATENCY, 0);
-        assertPart(sinkPart, ResourceUsage.BANDWIDTH, null);
+        assertPart(sinkPart, CloudResourceUsage.BANDWIDTH, null);
 
         MonitoringManager.handleEvent(new PipelineElementObservationMonitoringEvent(
             TestNameMapping.PIPELINE_NAME, TestNameMapping.NODE_SOURCE, null, TimeBehavior.LATENCY, 1000));
         assertPart(platform, TimeBehavior.LATENCY, null);
         assertPart(pPart, TimeBehavior.LATENCY, 1500);
         assertPart(sourcePart, TimeBehavior.LATENCY, 1000);
-        assertPart(sourcePart, ResourceUsage.BANDWIDTH, null);
+        assertPart(sourcePart, CloudResourceUsage.BANDWIDTH, null);
         assertPart(processPart, TimeBehavior.LATENCY, 0);
-        assertPart(processPart, ResourceUsage.BANDWIDTH, null);
+        assertPart(processPart, CloudResourceUsage.BANDWIDTH, null);
         assertPart(sinkPart, TimeBehavior.LATENCY, 0);
-        assertPart(sinkPart, ResourceUsage.BANDWIDTH, null);
+        assertPart(sinkPart, CloudResourceUsage.BANDWIDTH, null);
 
         MonitoringManager.handleEvent(new PipelineElementObservationMonitoringEvent(
             TestNameMapping.PIPELINE_NAME, TestNameMapping.NODE_PROCESS, null, TimeBehavior.LATENCY, 1700));
         assertPart(platform, TimeBehavior.LATENCY, null);
         assertPart(pPart, TimeBehavior.LATENCY, 1500);
         assertPart(sourcePart, TimeBehavior.LATENCY, 1000);
-        assertPart(sourcePart, ResourceUsage.BANDWIDTH, null);
+        assertPart(sourcePart, CloudResourceUsage.BANDWIDTH, null);
         assertPart(processPart, TimeBehavior.LATENCY, 1700);
-        assertPart(processPart, ResourceUsage.BANDWIDTH, null);
+        assertPart(processPart, CloudResourceUsage.BANDWIDTH, null);
         assertPart(sinkPart, TimeBehavior.LATENCY, 0);
-        assertPart(sinkPart, ResourceUsage.BANDWIDTH, null);
+        assertPart(sinkPart, CloudResourceUsage.BANDWIDTH, null);
 
         MonitoringManager.handleEvent(new PipelineElementObservationMonitoringEvent(
             TestNameMapping.PIPELINE_NAME, TestNameMapping.NODE_SINK, null, TimeBehavior.LATENCY, 600));
         assertPart(platform, TimeBehavior.LATENCY, null);
         assertPart(pPart, TimeBehavior.LATENCY, 1500);
         assertPart(sourcePart, TimeBehavior.LATENCY, 1000);
-        assertPart(sourcePart, ResourceUsage.BANDWIDTH, null);
+        assertPart(sourcePart, CloudResourceUsage.BANDWIDTH, null);
         assertPart(processPart, TimeBehavior.LATENCY, 1700);
-        assertPart(processPart, ResourceUsage.BANDWIDTH, null);
+        assertPart(processPart, CloudResourceUsage.BANDWIDTH, null);
         assertPart(sinkPart, TimeBehavior.LATENCY, 600);
-        assertPart(sinkPart, ResourceUsage.BANDWIDTH, null);
+        assertPart(sinkPart, CloudResourceUsage.BANDWIDTH, null);
     }
 
     /**
@@ -349,13 +350,13 @@ public class SimpleMonitoringTests {
         assertPart(platform, TimeBehavior.LATENCY, null);
         assertPart(pPart, TimeBehavior.LATENCY, 0);
         assertPart(sourcePart, TimeBehavior.LATENCY, 0);
-        assertPart(sourcePart, ResourceUsage.BANDWIDTH, null);
+        assertPart(sourcePart, CloudResourceUsage.BANDWIDTH, null);
         assertPart(sourcePart, TimeBehavior.ENACTMENT_DELAY, 0);
         assertPart(processPart, TimeBehavior.LATENCY, 600);
         assertPart(processPart, TimeBehavior.ENACTMENT_DELAY, 200);
-        assertPart(processPart, ResourceUsage.BANDWIDTH, null);
+        assertPart(processPart, CloudResourceUsage.BANDWIDTH, null);
         assertPart(sinkPart, TimeBehavior.LATENCY, 0);
-        assertPart(sinkPart, ResourceUsage.BANDWIDTH, null);
+        assertPart(sinkPart, CloudResourceUsage.BANDWIDTH, null);
         assertPart(sinkPart, TimeBehavior.ENACTMENT_DELAY, 0);
 
         assertSerializable(state);

@@ -120,7 +120,7 @@ public class CloudEnvironmentTests {
      * @param unset the part to be checked for unset (ignored if <b>null</b>)
      * @see #assertValue(CloudEnvironmentSystemPart, CloudResourceUsage, double)
      */
-    private void assertValue(CloudEnvironmentSystemPart part, CloudResourceUsage observable, double value, 
+    private void assertValue(CloudEnvironmentSystemPart part, IObservable observable, double value, 
         CloudEnvironmentSystemPart unset) {
         assertValue(part, observable, value);
         if (null != unset) {
@@ -135,7 +135,7 @@ public class CloudEnvironmentTests {
      * @param observable the observable
      * @param value the value to set and expect
      */
-    private void assertValue(CloudEnvironmentSystemPart part, CloudResourceUsage observable, double value) {
+    private void assertValue(CloudEnvironmentSystemPart part, IObservable observable, double value) {
         part.setValue(observable, value, null);
         Assert.assertTrue(part.hasValue(observable));
         Assert.assertEquals(value, part.getObservedValue(observable), 0.05);
