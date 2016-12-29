@@ -5,7 +5,6 @@ import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.storm.curator.framework.imps.CuratorFrameworkState;
 import org.apache.storm.zookeeper.WatchedEvent;
 import org.apache.storm.zookeeper.Watcher;
-import org.apache.storm.zookeeper.data.Stat;
 
 import eu.qualimaster.Configuration;
 import eu.qualimaster.events.EventManager;
@@ -64,11 +63,12 @@ public abstract class AbstractSignalConnection implements Watcher {
     protected void initWatcher() throws Exception {
         if (Configuration.getPipelineSignalsCurator() && isConnected()) {
             String path = getWatchedPath();
-            Stat stat = client.checkExists().forPath(path);
+            /*Stat stat = client.checkExists().forPath(path);
             if (stat == null) {
                 client.create().creatingParentsIfNeeded().forPath(path);
-            }
-            stat = client.checkExists().usingWatcher(this).forPath(path);
+            }*/
+            SignalMechanism.createWithParents(client, path);
+            client.checkExists().usingWatcher(this).forPath(path);
         }
     }
     
@@ -141,10 +141,11 @@ public abstract class AbstractSignalConnection implements Watcher {
     public void send(String toPath, byte[] signal) throws Exception {
         if (Configuration.getPipelineSignalsCurator()) {
             if (isConnected()) {
-                Stat stat = client.checkExists().forPath(toPath);
-                if (stat == null) {
-                    client.create().creatingParentsIfNeeded().forPath(toPath);
-                }
+                //Stat stat = client.checkExists().forPath(toPath);
+                //if (stat == null) {
+                //    client.create().creatingParentsIfNeeded().forPath(toPath);
+                //}
+                SignalMechanism.createWithParents(client, toPath);
                 client.setData().forPath(toPath, signal);
             }
         } else {

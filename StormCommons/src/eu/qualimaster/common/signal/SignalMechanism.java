@@ -29,6 +29,8 @@ import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.storm.curator.framework.CuratorFrameworkFactory;
 import org.apache.storm.curator.framework.imps.CuratorFrameworkState;
 import org.apache.storm.curator.retry.RetryNTimes;
+import org.apache.storm.zookeeper.KeeperException;
+import org.apache.storm.zookeeper.data.Stat;
 
 import eu.qualimaster.Configuration;
 import eu.qualimaster.events.EventManager;
@@ -382,9 +384,10 @@ public class SignalMechanism {
             String path = getTopologyExecutorPath(topology, executor);
             org.apache.storm.zookeeper.data.Stat stat = framework.checkExists().forPath(path);
             if (stat == null) {
-                framework.create().creatingParentsIfNeeded().forPath(path);
-                getLogger().info("created path " + path);
-                stat = framework.checkExists().forPath(path);
+                //framework.create().creatingParentsIfNeeded().forPath(path);
+                //getLogger().info("created path " + path);
+                //stat = framework.checkExists().forPath(path);
+                stat = createWithParents(framework, path);
             }
             if (stat == null) {
                 throw new Exception("component does not exist " + namespace + ":" + path);
@@ -395,6 +398,31 @@ public class SignalMechanism {
             getLogger().error(e.getMessage(), e);
             throw new SignalException(e);
         }
+    }
+    
+    /**
+     * Create lazily with parents, ignore if node exists.
+     * 
+     * @param framework the curator framework to use
+     * @param path the path to create
+     * @return the node statistics (<b>null</b> if no node was created, however)
+     * @throws Exception as thrown by curator except for node exists while creating
+     */
+    static Stat createWithParents(CuratorFramework framework, String path) throws Exception {
+        Stat stat = framework.checkExists().forPath(path);
+        if (stat == null) {
+            try {
+                // may need to do this recursively
+                framework.create().creatingParentsIfNeeded().forPath(path);
+                getLogger().info("created path " + path);
+            } catch (KeeperException e) {
+                if (e.code() != KeeperException.Code.NODEEXISTS) {
+                    throw e;
+                }
+            }
+            stat = framework.checkExists().forPath(path);
+        }
+        return stat;
     }
 
     /**
