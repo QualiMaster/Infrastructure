@@ -154,5 +154,53 @@ public class ObservableMapper {
     public static final IObservable getObservable(IDecisionVariable var) {
         return getObservable(var.getDeclaration());
     }
-    
+
+    /**
+     * Returns the full name mapping.
+     * 
+     * @return the full name mapping (copy)
+     */
+    public static Map<String, IObservable> getNameMapping() {
+        Map<String, IObservable> result = new HashMap<String, IObservable>();
+        result.putAll(NAME_OBSERVABLE_MAPPING);
+        return result;
+    }
+
+    /**
+     * Returns the full type name mapping.
+     * 
+     * @return the full type name mapping (copy)
+     */
+    public static Map<String, IObservable> getTypeNameMapping() {
+        Map<String, IObservable> result = new HashMap<String, IObservable>();
+        result.putAll(TYPENAME_OBSERVABLE_MAPPING);
+        return result;
+    }
+
+    /**
+     * Returns the full reverse name mapping.
+     * 
+     * @return the full reverse name mapping (copy)
+     */
+    public static Map<IObservable, String> getReverseNameMapping() {
+        Map<IObservable, String> result = new HashMap<IObservable, String>();
+        for (Map.Entry<String, IObservable> ent : NAME_OBSERVABLE_MAPPING.entrySet()) {
+            result.put(ent.getValue(), ent.getKey());
+        }
+        return result;
+    }
+
+    /**
+     * Returns the full reverse type name mapping.
+     * 
+     * @return the full reverse type name mapping (copy)
+     */
+    public static Map<IObservable, String> getReverseTypeNameMapping() {
+        Map<IObservable, String> result = new HashMap<IObservable, String>();
+        for (Map.Entry<String, IObservable> ent : TYPENAME_OBSERVABLE_MAPPING.entrySet()) {
+            result.put(ent.getValue(), ent.getKey());
+        }
+        return result;
+    }
+
 }

@@ -584,7 +584,7 @@ public class ReasoningTask extends TimerTask {
         if (null != result) {
             System.out.println("CONFLICT");     
             for (int m = 0; m < result.getMessageCount(); m++) {
-                System.out.println(result.getMessage(m));
+                System.out.println(result.getMessage(m).getDescription());
                 List<Constraint> csts = result.getMessage(m).getProblemConstraints();
                 for (int c = 0; c < csts.size(); c++) {
                     System.out.println("  " + StringProvider.toIvmlString(csts.get(c).getConsSyntax()));
