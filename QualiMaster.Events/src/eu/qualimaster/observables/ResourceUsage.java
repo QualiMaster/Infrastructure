@@ -37,7 +37,7 @@ public enum ResourceUsage implements IObservable {
      * Denotes the number of actually used CPUs (reconfigurable hardware, &gt;=0).
      */
     USED_DFES,
-    BANDWIDTH,
+    //BANDWIDTH, // moved to CloudResourceUsage for now
 
     // new
     /**

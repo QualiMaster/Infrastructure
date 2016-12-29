@@ -7,8 +7,6 @@ package eu.qualimaster.observables;
  */
 public enum CloudResourceUsage implements IObservable {
 
-    // partly overlaps with ResourceUsage, but we accept this for now to avoid overlaps
-    
     PING,
     BANDWIDTH,
     USED_HARDDISC_MEM,
