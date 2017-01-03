@@ -16,8 +16,10 @@ import ch.qos.logback.classic.Level;
 import de.uni_hildesheim.sse.easy.loader.ListLoader;
 import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.common.logging.QmLogging;
+import eu.qualimaster.coordination.events.ModelUpdatedEvent;
 import eu.qualimaster.dataManagement.storage.hdfs.HdfsUtils;
 import eu.qualimaster.easy.extension.internal.ConfigurationInitializer;
+import eu.qualimaster.events.EventManager;
 import eu.qualimaster.file.Utils;
 import eu.qualimaster.infrastructure.InitializationMode;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
@@ -283,6 +285,7 @@ public class RepositoryConnector {
                 this.variableMapping = update.variableMapping;
                 this.location = update.location;
                 update = null;
+                EventManager.send(new ModelUpdatedEvent());
             }
         }
 
