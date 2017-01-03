@@ -174,9 +174,31 @@ public class HardwareConnectionTest {
          * Creates the handler.
          * 
          * @param sock the socket to create the handler for
+         * @param callback optional callback to be informed about server actions
          * @return the handler
          */
-        public FakeHandler createHandler(Socket sock);
+        public FakeHandler createHandler(Socket sock, IFakeServerCallback callback);
+        
+    }
+    
+    /**
+     * To be informed about server actions, e.g., to create handling processes.
+     * 
+     * @author Holger Eichelberger
+     */
+    public interface IFakeServerCallback {
+        
+        /**
+         * Notifies about uploading an algorithm.
+         * 
+         * @param message the uploading response message
+         */
+        public void notifyUpload(UploadMessageOut message);
+        
+        /**
+         * Notifies about stopping the server / algorithm.
+         */
+        public void notifyStop();
         
     }
     
@@ -187,8 +209,9 @@ public class HardwareConnectionTest {
      */
     public static class FakeServer implements Runnable {
 
-        public static final int BASE_IN_PORT = 1234;
-        public static final int BASE_OUT_PORT = 1235;
+        private static int baseInPort = 1234;
+        private static int baseOutPort = 1235;
+        private IFakeServerCallback callback;
         private int port;
         private IHandlerCreator creator;
         private ServerSocket serverSocket;
@@ -207,6 +230,27 @@ public class HardwareConnectionTest {
             this.creator = creator;
             serverSocket = new ServerSocket(port);
             System.out.println("Server socket created on " + port);            
+        }
+        
+        /**
+         * Sets the server callback.
+         * 
+         * @param callback the callback, no callback if <b>null</b>
+         */
+        public void setCallback(IFakeServerCallback callback) {
+            this.callback = callback;
+        }
+        
+        /**
+         * Changes the base ports used as startinng point for assigning in/out ports.
+         * May affect test case validity.
+         * 
+         * @param in the base input port
+         * @param out the base output port
+         */
+        public static void setBasePorts(int in, int out) {
+            baseInPort = in;
+            baseOutPort = out;
         }
         
         /**
@@ -242,7 +286,7 @@ public class HardwareConnectionTest {
                     Socket sock = serverSocket.accept();
                     //sock.setSoTimeout(200);
                     System.out.println("Socket connection accepted " + port);
-                    FakeHandler handler = creator.createHandler(sock);
+                    FakeHandler handler = creator.createHandler(sock, callback);
                     handlers.add(handler);
                     System.out.println("Socket connection handler started");
                     if (handler.doStart()) {
@@ -299,15 +343,18 @@ public class HardwareConnectionTest {
 
         private Set<String> running = new HashSet<String>();
         private FakeHandler sender;
-        
+        private IFakeServerCallback callback;
+
         /**
          * Creates the handler.
          * 
          * @param socket the socket to work on
+         * @param callback the server callback (may be <b>null</b>)
          */
-        public ReceivingHandler(Socket socket) {
+        public ReceivingHandler(Socket socket, IFakeServerCallback callback) {
             super(socket);
             sender = catchHandler(senders);
+            this.callback = callback;
         }
         
         @Override
@@ -354,9 +401,12 @@ public class HardwareConnectionTest {
                         int pCount = tmp.getPortCount();
                         int[] ports = new int[pCount];
                         for (int p = 0; p < pCount; p++) {
-                            ports[p] = FakeServer.BASE_OUT_PORT + p;
+                            ports[p] = FakeServer.baseOutPort + p;
                         }
-                        response = new UploadMessageOut(FakeServer.BASE_IN_PORT, ports);
+                        response = new UploadMessageOut(FakeServer.baseInPort, ports);
+                        if (null != callback) {
+                            callback.notifyUpload(response);
+                        }
                         running.add(id);
                     }
                 }
@@ -381,6 +431,9 @@ public class HardwareConnectionTest {
                     if (running.contains(id)) {
                         response = new StopMessageOut(MessageTable.Code.SUCCESS.toMsg());
                         running.remove(id);
+                        if (null != callback) {
+                            callback.notifyStop();
+                        }
                     } else {
                         response = new StopMessageOut(MessageTable.Code.STOP_ERROR.toMsg());
                     }
@@ -479,8 +532,8 @@ public class HardwareConnectionTest {
         FakeServer sendingServer = new FakeServer(port, new IHandlerCreator() {
 
             @Override
-            public FakeHandler createHandler(Socket sock) {
-                return new ReceivingHandler(sock);
+            public FakeHandler createHandler(Socket sock, IFakeServerCallback callback) {
+                return new ReceivingHandler(sock, callback);
             }
             
         });
@@ -498,7 +551,7 @@ public class HardwareConnectionTest {
         FakeServer receivingServer = new FakeServer(port, new IHandlerCreator() {
 
             @Override
-            public FakeHandler createHandler(Socket sock) {
+            public FakeHandler createHandler(Socket sock, IFakeServerCallback callback) {
                 return new SendingHandler(sock);
             }
             
