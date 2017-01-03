@@ -60,20 +60,37 @@ public class HwMonitoringTest {
      * 
      * @author Holger Eichelberger
      */
-    private static class FakeServer implements Runnable {
+    public static class FakeMonitoringServer implements Runnable {
         
+        private int port;
+        private int freeDfes;
         private ServerSocket serverSocket;
         private boolean cont = true;
-        private List<FakeHandler> handlers = new ArrayList<FakeHandler>();
+        private List<FakeMonitoringHandler> handlers = new ArrayList<FakeMonitoringHandler>();
 
         /**
          * Creates the fake server.
          * 
+         * @param port the network port to create the server for
+         * @param freeDfes the number of free DFEs to return
          * @throws IOException in case of I/O problems
          */
-        private FakeServer() throws IOException {
-            serverSocket = new ServerSocket(PORT);
-            System.out.println("Server socket created on " + PORT);            
+        public FakeMonitoringServer(int port, int freeDfes) throws IOException {
+            this.port = port;
+            this.freeDfes = freeDfes;
+            serverSocket = new ServerSocket(port);
+            System.out.println("Server socket created on " + port);            
+        }
+        
+        /**
+         * Returns the answer.
+         * 
+         * @param freeDfes the number of free DFEs
+         */
+        public void setFreeDfes(int freeDfes) {
+            for (FakeMonitoringHandler handler : handlers) {
+                handler.setFreeDfes(freeDfes);
+            }
         }
         
         /**
@@ -81,7 +98,7 @@ public class HwMonitoringTest {
          */
         public void start() {
             new Thread(this).start();
-            System.out.println("Server thread started " + PORT);
+            System.out.println("Server thread started " + port);
         }
         
         /**
@@ -92,7 +109,7 @@ public class HwMonitoringTest {
         public void stop() throws IOException {
             System.out.println("Stopping server");
             cont = false;
-            for (FakeHandler handler : handlers) {
+            for (FakeMonitoringHandler handler : handlers) {
                 handler.stop();
             }
             handlers.clear();
@@ -107,8 +124,8 @@ public class HwMonitoringTest {
             while (cont) {
                 try {
                     Socket sock = serverSocket.accept();
-                    System.out.println("Socket connection accepted " + PORT);
-                    FakeHandler handler = new FakeHandler(sock);
+                    System.out.println("Socket connection accepted " + port);
+                    FakeMonitoringHandler handler = new FakeMonitoringHandler(sock, freeDfes);
                     handlers.add(handler);
                     System.out.println("Socket connection handler started");
                     new Thread(handler).start();
@@ -131,8 +148,9 @@ public class HwMonitoringTest {
      * 
      * @author Holger Eichelberger
      */
-    private static class FakeHandler implements Runnable {
+    private static class FakeMonitoringHandler implements Runnable {
         
+        private int freeDfes;
         private Socket socket;
         private PrintWriter out;
         private BufferedReader in;
@@ -142,9 +160,11 @@ public class HwMonitoringTest {
          * Creates a fake handler.
          * 
          * @param socket the socket connection
+         * @param freeDfes the number of (initially) free DFEs
          * @throws IOException in case of I/O problems
          */
-        private FakeHandler(Socket socket) throws IOException {
+        private FakeMonitoringHandler(Socket socket, int freeDfes) throws IOException {
+            this.freeDfes = freeDfes;
             this.socket = socket;
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -178,7 +198,7 @@ public class HwMonitoringTest {
                     String req = in.readLine();
                     if (null != req) {
                         System.out.println("Request read \"" + req + "\"");
-                        out.println(DFES_FREE);
+                        out.println(freeDfes);
                         System.out.println("Answer sent");
                     }
                 } catch (SocketException e) {
@@ -193,6 +213,15 @@ public class HwMonitoringTest {
             }
         }
         
+        /**
+         * Changes the number of free DFEs.
+         * 
+         * @param freeDfes the number of free DFEs
+         */
+        private void setFreeDfes(int freeDfes) {
+            this.freeDfes = freeDfes;
+        }
+        
     }
     
     /**
@@ -202,7 +231,7 @@ public class HwMonitoringTest {
      */
     @Test(timeout = 5000)
     public void testHwMonitoring() throws IOException {
-        FakeServer server = new FakeServer();
+        FakeMonitoringServer server = new FakeMonitoringServer(PORT, DFES_FREE);
         server.start();
         
         SystemState state = new SystemState();
