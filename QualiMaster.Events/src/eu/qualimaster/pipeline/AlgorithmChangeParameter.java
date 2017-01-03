@@ -53,13 +53,13 @@ public enum AlgorithmChangeParameter {
 
     /**
      * TCP port for receiving command responses from a hardware co-processor. If not given or needed, the same value 
-     * as {@link #CONTROL_OUTPUT_PORT} is assumed.
+     * as {@link #OUTPUT_PORT} is assumed.
      */
     CONTROL_RESPONSE_PORT(Integer.class, IParameterAccessor.INT_ACCESSOR),
 
     /**
      * TCP port for sending requests to a hardware co-processor. If not given or needed, the same value 
-     * as {@link #CONTROL_OUTPUT_PORT} is assumed.
+     * as {@link #OUTPUT_PORT} is assumed.
      */
     CONTROL_REQUEST_PORT(Integer.class, IParameterAccessor.INT_ACCESSOR),
     
