@@ -467,8 +467,11 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
         super.fill(prefix, name, state);
         synchronized (elements) {
             for (Map.Entry<String, PipelineNodeSystemPart> entry : elements.entrySet()) {
-                entry.getValue().fill(FrozenSystemState.PIPELINE_ELEMENT, 
-                    FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state);
+                PipelineNodeSystemPart part = entry.getValue();
+                if (!part.isInternal()) {
+                    part.fill(FrozenSystemState.PIPELINE_ELEMENT, 
+                        FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state);
+                }
             }
         }
         synchronized (algorithms) {

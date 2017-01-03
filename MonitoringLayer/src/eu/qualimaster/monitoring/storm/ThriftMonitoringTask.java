@@ -264,7 +264,7 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
                 }
                 boolean isInternal = Utils.isInternal(executor); 
                 ExecutorStats stats = executor.get_stats();
-                PipelineNodeSystemPart nodePart = SystemState.getNodePart(mapping, part, nodeName);
+                PipelineNodeSystemPart nodePart = check(SystemState.getNodePart(mapping, part, nodeName), isInternal);
                 if (!isInternal) {
                     nonInternalCount++;
                     if (isUp(nodePart, executor)) {
@@ -311,6 +311,20 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
             LOGGER.error("no mapping for " + topology.get_name());
         }
         return part;
+    }
+    
+    /**
+     * Checks whether <code>nodePart</code> shall be/is internal.
+     * 
+     * @param nodePart the node part
+     * @param isInternal the internal flag
+     * @return <code>nodePart</code> 
+     */
+    private static PipelineNodeSystemPart check(PipelineNodeSystemPart nodePart, boolean isInternal) {
+        if (isInternal) {
+            nodePart.markAsInternal();
+        }
+        return nodePart;
     }
     
     /**

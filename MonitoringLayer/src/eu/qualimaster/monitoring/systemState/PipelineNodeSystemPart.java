@@ -51,6 +51,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
     private PipelineSystemPart pipeline;
     private NodeImplementationSystemPart parent; // parent
     private int currentCount = 0;
+    private boolean internal = false;
     
     /**
      * Creates a pipeline node system part.
@@ -97,6 +98,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
         super(source, state);
         this.pipeline = pipeline;
         this.useThrift = source.useThrift;
+        this.internal = source.internal;
         pipeline.registerNode(this);
     }
     
@@ -113,6 +115,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
         super(source, state);
         this.parent = algorithm;
         this.useThrift = source.useThrift;
+        this.internal = source.internal;
         algorithm.getPipeline().registerNode(this);
     }
     
@@ -434,6 +437,22 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
     @Override
     public PipelineNodeSystemPart getNode(String name) {
         return getParentTopologyProvider().getNode(name);
+    }
+    
+    /**
+     * Mark this node as an internal implementation node. A node marked once as internal remains internal.
+     */
+    public void markAsInternal() {
+        internal = true;
+    }
+    
+    /**
+     * Return whether this node is considered as internal.
+     * 
+     * @return <code>true</code> for internal, <code>false</code> else
+     */
+    public boolean isInternal() {
+        return internal;
     }
     
 }
