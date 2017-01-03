@@ -156,7 +156,8 @@ public class StormUtils {
             if (!mappingFile.exists()) {
                 throw new TopologyTestInfoException("Cannot find mapping file " + mappingFile.getAbsolutePath(), null);
             }
-            String topologyClass = "eu.qualimaster." + name + ".topology.Topology$MainTopologyCreator";
+            String topologyMainClass = "eu.qualimaster." + name + ".topology.Topology";
+            String topologyClass = topologyMainClass + "$MainTopologyCreator";
             URL[] urls = new URL[1];
             try {
                 urls[0] = path.toURI().toURL();
@@ -164,6 +165,15 @@ public class StormUtils {
                 throw new TopologyTestInfoException(e.getMessage(), e);
             }
             try (URLClassLoader loader = new URLClassLoader(urls)) {
+                Class<?> mCls = loader.loadClass(topologyMainClass);
+                try {
+                    Field fld = mCls.getDeclaredField("options");
+                    fld.setAccessible(true);
+                    fld.set(null, new PipelineOptions());
+                } catch (NoSuchFieldException ne) {
+                    System.out.println("options field not found!");
+                }
+                
                 Class<?> cls = loader.loadClass(topologyClass);
                 Object obj = cls.newInstance();
                 if (obj instanceof IMainTopologyCreate) {
