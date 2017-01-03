@@ -19,6 +19,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import org.apache.log4j.LogManager;
+
 import com.google.protobuf.ByteString;
 
 import eu.qualimaster.dataManagement.serialization.SerializerRegistry;
@@ -58,6 +60,8 @@ public class HardwareControlConnection {
      * @throws IOException if the control interface cannot be created for some reason, trying to close open connections 
      */
     public HardwareControlConnection(String ip, int sendingPort, int receivingPort) throws IOException {
+        LogManager.getLogger(HardwareControlConnection.class).info("Creating hardware control connection to " + ip 
+            + " sending " + sendingPort + " receiving " + receivingPort); 
         try {
             transmitter = new Transmitter(ip, sendingPort);
             receiver = new Receiver(ip, receivingPort);
