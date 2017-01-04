@@ -67,6 +67,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     @Override
     @SuppressWarnings("rawtypes")
     public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
+        getLogger().info("Prepare--basesignalbolt.... " + pipeline + "/" + this.name);
         if (conf.containsKey(Constants.CONFIG_KEY_SUBPIPELINE_NAME)) {
             pipeline = (String) conf.get(Constants.CONFIG_KEY_SUBPIPELINE_NAME);
         }
@@ -79,10 +80,8 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
             context.addTaskHook(monitor);
         }
         try {
-            getLogger().info("Prepare--basesignalbolt.... " + pipeline + "/" + this.name);
             signalConnection = new StormSignalConnection(this.name, this, pipeline);
             signalConnection.init(conf);
-            getLogger().info("Prepared--basesignalbolt.... " + pipeline + "/" + this.name);
             if (Configuration.getPipelineSignalsQmEvents()) {
                 algorithmEventHandler = AlgorithmChangeEventHandler.createAndRegister(this, pipeline, name);
                 parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, pipeline, name);
@@ -93,6 +92,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
             getLogger().error("Error SignalConnection:" + e.getMessage(), e);
         }
         ComponentKeyRegistry.register(pipeline, this, monitor.getComponentKey());
+        getLogger().info("Prepared--basesignalbolt.... " + pipeline + "/" + this.name);
     }
 
     /**

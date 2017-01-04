@@ -3,6 +3,7 @@ package eu.qualimaster.common.signal;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.storm.curator.framework.CuratorFrameworkFactory;
@@ -20,6 +21,7 @@ import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
  */
 public class StormSignalConnection extends AbstractSignalConnection {
 
+    private static AtomicBoolean configured = new AtomicBoolean(false);
     private String pipeline;
     
     /**
@@ -103,16 +105,19 @@ public class StormSignalConnection extends AbstractSignalConnection {
      */
     @SuppressWarnings({ "rawtypes" })
     public static void configureEventBus(Map conf) {
-        Configuration.transferConfigurationFrom(conf);
-        Object tmp = conf.get(QmLogging.ENABLING_PROPERTY);
-        boolean enableLogging = false;
-        if (tmp instanceof Boolean) {
-            enableLogging = ((Boolean) tmp).booleanValue();
-        } else if (null != tmp ) {
-            enableLogging = Boolean.valueOf(tmp.toString()).booleanValue();
-        }
-        if (enableLogging) {
-            QmLogging.install();
+        boolean cfg = configured.getAndSet(true);
+        if (!cfg) {
+            Configuration.transferConfigurationFrom(conf);
+            Object tmp = conf.get(QmLogging.ENABLING_PROPERTY);
+            boolean enableLogging = false;
+            if (tmp instanceof Boolean) {
+                enableLogging = ((Boolean) tmp).booleanValue();
+            } else if (null != tmp ) {
+                enableLogging = Boolean.valueOf(tmp.toString()).booleanValue();
+            }
+            if (enableLogging) {
+                QmLogging.install();
+            }
         }
     }
     

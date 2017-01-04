@@ -65,6 +65,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     @SuppressWarnings("rawtypes")
     @Override
     public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
+        getLogger().info("Prepare--basesignalspout.... " + pipeline + "/" + this.name);
         if (conf.containsKey(Constants.CONFIG_KEY_SUBPIPELINE_NAME)) {
             pipeline = (String) conf.get(Constants.CONFIG_KEY_SUBPIPELINE_NAME);
         }
@@ -77,10 +78,8 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
             context.addTaskHook(monitor);
         }
         try {
-            getLogger().info("Prepare--basesignalspout.... " + pipeline + "/" + this.name);
             signalConnection = new StormSignalConnection(this.name, this, pipeline);
             signalConnection.init(conf);
-            getLogger().info("Prepared--basesignalspout.... " + pipeline + "/" + this.name);
             if (Configuration.getPipelineSignalsQmEvents()) {
                 parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, pipeline, name);
                 shutdownEventHandler = ShutdownEventHandler.createAndRegister(this, pipeline, name);
@@ -90,6 +89,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
             getLogger().error("Error SignalConnection:" + e.getMessage(), e);
         }
         ComponentKeyRegistry.register(pipeline, this, monitor.getComponentKey());
+        getLogger().info("Prepared--basesignalspout.... " + pipeline + "/" + this.name);
     }
 
     // checkstyle: resume exception type check
