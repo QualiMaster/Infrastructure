@@ -464,8 +464,8 @@ public class ProfileControl implements IProfile {
      * 
      * @return the logger
      */
-    private Logger getLogger() {
-        return LogManager.getLogger(getClass());
+    private static Logger getLogger() {
+        return LogManager.getLogger(ProfileControl.class);
     }
     
     /**
@@ -499,8 +499,8 @@ public class ProfileControl implements IProfile {
     
                     hw = Configuration.dereference(hw);
                     setStringParameter(cmd, AlgorithmChangeParameter.COPROCESSOR_HOST, hw, "host");
-                    setIntParameter(cmd, AlgorithmChangeParameter.CONTROL_RESPONSE_PORT, hw, "commandSendingPort");
-                    setIntParameter(cmd, AlgorithmChangeParameter.CONTROL_REQUEST_PORT, hw, "commandReceivingPort");
+                    setIntParameter(cmd, AlgorithmChangeParameter.CONTROL_RESPONSE_PORT, hw, "commandReceivingPort");
+                    setIntParameter(cmd, AlgorithmChangeParameter.CONTROL_REQUEST_PORT, hw, "commandSendingPort");
                 }
             }
         } catch (ModelQueryException e) {

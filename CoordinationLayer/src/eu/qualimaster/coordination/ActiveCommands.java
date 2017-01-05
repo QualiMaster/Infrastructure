@@ -107,6 +107,7 @@ class ActiveCommands {
                     if (cmds.containsKey(signature)) {
                         EventManager.send(new CoordinationCommandExecutionEvent(cmd, c, 
                             CoordinationExecutionCode.RESPONSE_TIMEOUT, "Enactment response timeout"));
+                        //CoordinationManager.execute(c); // for resending 
                         break;
                     }
                 }            
