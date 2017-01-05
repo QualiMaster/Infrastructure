@@ -141,7 +141,7 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
     /**
      * Denotes the maximum time that we wait for accepting that an existing executor has been created and is 
      * active (Integer in s). The actual time can be faster due to sending startup events (executor, task observation).
-     * 0 or negative values switch off the detection heuristic.
+     * 0 or negative values switch off the detection heuristic. Disabled in ADAPTIVE startup mode.
      */
     public static final String TIME_STORM_EXECUTOR_STARTUP = "storm.executor.startup.time";
 

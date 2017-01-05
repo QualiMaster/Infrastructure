@@ -234,6 +234,17 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
     }
     
     /**
+     * Returns the executor start waiting time. Disabled in adaptive startup mode as we have to rely on all events
+     * being sent correctly.
+     * 
+     * @return the executor start waiting time in seconds
+     */
+    private static int getExecutorStartWaitingTime() {
+        return InitializationMode.ADAPTIVE == MonitoringConfiguration.getInitializationMode() 
+            ? 0 : MonitoringConfiguration.getStormExecutorStartupWaitingTime();
+    }
+    
+    /**
      * Aggregates the values for the topology.
      * 
      * @param topology the topology information to be aggregated
@@ -245,7 +256,7 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
     private PipelineSystemPart aggregateTopology(TopologyInfo topology) throws TException, NotAliveException {
         PipelineSystemPart part = null;
         INameMapping mapping = MonitoringManager.getNameMapping(pipeline);
-        int executorStartWaitingTime = MonitoringConfiguration.getStormExecutorStartupWaitingTime();
+        int executorStartWaitingTime = getExecutorStartWaitingTime();
         if (null != mapping) {
             part = preparePipelineAggregation(topology, mapping);
             List<ExecutorSummary> executors = topology.get_executors();
