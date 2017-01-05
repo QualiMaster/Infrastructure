@@ -40,8 +40,7 @@ public class Configuration {
 
     public static final String CONFIG_KEY_STORM_ZOOKEEPER_PORT = Config.STORM_ZOOKEEPER_PORT;
     public static final String CONFIG_KEY_STORM_ZOOKEEPER_SERVERS = Config.STORM_ZOOKEEPER_SERVERS;
-    public static final String CONFIG_KEY_STORM_ZOOKEEPER_RETRY_TIMES = Config.STORM_ZOOKEEPER_RETRY_TIMES;
-    public static final String CONFIG_KEY_STORM_ZOOKEEPER_RETRY_INTERVAL = Config.STORM_ZOOKEEPER_RETRY_INTERVAL;
+    // don't use the retry time/interval as for startup intensive components this may overlap/cause Netty to fail
     
     /**
      * Denotes the timeout for clearing response messages in the infrastructure (non-negative Integer).
@@ -129,9 +128,10 @@ public class Configuration {
     public static final String RETRY_INTERVAL_ZOOKEEPER = "zookeeper.retry.interval";
 
     /**
-     * The default value for {@link #RETRY_INTERVAL_ZOOKEEPER} ({@value}).
+     * The default value for {@link #RETRY_INTERVAL_ZOOKEEPER} ({@value}). This value must be significantly smaller
+     * than the retry time of Storm anf shall be faster than the retry time*trials of Netty.
      */
-    public static final int DEFAULT_RETRY_INTERVAL_ZOOKEEPER = 1000;
+    public static final int DEFAULT_RETRY_INTERVAL_ZOOKEEPER = 100;
     
     /**
      * Defines the ports to be used for (dynamic) data connections among pipeline parts on software level 
@@ -725,11 +725,13 @@ public class Configuration {
      * @see #transferConfigurationFrom(Map)
      */
     public static void transferConfigurationTo(IOptionSetter options) {
-        options.setOption(Configuration.HOST_EVENT, getEventHost());
-        options.setOption(Configuration.PORT_EVENT, getEventPort());
-        options.setOption(Configuration.EVENT_DISABLE_LOGGING, getEventDisableLogging());
-        options.setOption(Configuration.PIPELINE_INTERCONN_PORTS, getPipelinePorts());
-        options.setOption(Configuration.MONITORING_VOLUME_ENABLED, enableVolumeMonitoring());
+        options.setOption(HOST_EVENT, getEventHost());
+        options.setOption(PORT_EVENT, getEventPort());
+        options.setOption(EVENT_DISABLE_LOGGING, getEventDisableLogging());
+        options.setOption(PIPELINE_INTERCONN_PORTS, getPipelinePorts());
+        options.setOption(MONITORING_VOLUME_ENABLED, enableVolumeMonitoring());
+        options.setOption(RETRY_INTERVAL_ZOOKEEPER, getZookeeperRetryInterval());
+        options.setOption(RETRY_TIMES_ZOOKEEPER, getZookeeperRetryTimes());
     }
 
     /**
@@ -759,11 +761,11 @@ public class Configuration {
             }
             prop.put(HOST_ZOOKEEPER, tmp);
         }
-        if (null != conf.get(CONFIG_KEY_STORM_ZOOKEEPER_RETRY_TIMES)) {
-            prop.put(RETRY_TIMES_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_RETRY_TIMES).toString());
+        if (null != conf.get(RETRY_TIMES_ZOOKEEPER)) {
+            prop.put(RETRY_TIMES_ZOOKEEPER, conf.get(RETRY_TIMES_ZOOKEEPER).toString());
         }
-        if (null != conf.get(CONFIG_KEY_STORM_ZOOKEEPER_RETRY_INTERVAL)) {
-            prop.put(RETRY_INTERVAL_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_RETRY_INTERVAL).toString());
+        if (null != conf.get(RETRY_INTERVAL_ZOOKEEPER)) {
+            prop.put(RETRY_INTERVAL_ZOOKEEPER, conf.get(RETRY_INTERVAL_ZOOKEEPER).toString());
         }
 
         // if storm has a configuration value and the actual configuration is not already
