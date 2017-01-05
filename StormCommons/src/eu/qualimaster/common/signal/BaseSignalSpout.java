@@ -3,6 +3,9 @@ package eu.qualimaster.common.signal;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.apache.storm.curator.framework.CuratorFramework;
+import org.apache.storm.curator.framework.state.ConnectionState;
+import org.apache.storm.curator.framework.state.ConnectionStateListener;
 
 import eu.qualimaster.Configuration;
 import eu.qualimaster.common.monitoring.MonitoringPluginRegistry;
@@ -35,6 +38,8 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     private transient ShutdownEventHandler shutdownEventHandler;
     private transient Monitor monitor;
     private transient PortManager portManager;
+    private transient boolean signalConnInitialized;
+    private transient boolean initMonitorOnSignalConnInit;
     
     /**
      * Creates a signal spout.
@@ -66,20 +71,34 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     @Override
     public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
         getLogger().info("Prepare--basesignalspout.... " + pipeline + "/" + this.name);
+        StormSignalConnection.configureEventBus(conf);
         if (conf.containsKey(Constants.CONFIG_KEY_SUBPIPELINE_NAME)) {
             pipeline = (String) conf.get(Constants.CONFIG_KEY_SUBPIPELINE_NAME);
         }
-        StormSignalConnection.configureEventBus(conf);
+        EventManager.asyncSend(new ConnectEvent(pipeline + "/" + this.name));
         monitor = createMonitor(pipeline, name, true, context);
         if (initMonitorDuringOpen()) {
-            initMonitor();
+            monitor.init(sendRegular);
         }
         if (Constants.MEASURE_BY_TASK_HOOKS) {
             context.addTaskHook(monitor);
         }
         try {
             signalConnection = new StormSignalConnection(this.name, this, pipeline);
-            signalConnection.init(conf);
+            signalConnection.init(conf, new ConnectionStateListener() {
+                
+                @Override
+                public void stateChanged(CuratorFramework client, ConnectionState state) {
+                    getLogger().info("Curator state changed " + state + " " + pipeline + "/" + name + " "
+                        + " sigConInit " + signalConnInitialized + " initMonOnSigConn " + initMonitorOnSignalConnInit);
+                    if (ConnectionState.CONNECTED == state) {
+                        signalConnInitialized = true;
+                        if (initMonitorOnSignalConnInit) {
+                            monitor.init(sendRegular);                            
+                        }
+                    }
+                }
+            });
             if (Configuration.getPipelineSignalsQmEvents()) {
                 parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, pipeline, name);
                 shutdownEventHandler = ShutdownEventHandler.createAndRegister(this, pipeline, name);
@@ -123,7 +142,13 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      * Initializes monitoring for this node.
      */
     protected final void initMonitor() {
-        monitor.init(sendRegular);
+        getLogger().info("Init monitor " + pipeline + "/" + name + " sigConInit " + signalConnInitialized
+            + " initMonOnSigConn " + initMonitorOnSignalConnInit);
+        if (signalConnInitialized) {
+            monitor.init(sendRegular);
+        } else {
+            initMonitorOnSignalConnInit = true;
+        }
     }
     
     /**

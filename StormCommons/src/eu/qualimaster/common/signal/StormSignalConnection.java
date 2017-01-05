@@ -3,10 +3,10 @@ package eu.qualimaster.common.signal;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.storm.curator.framework.CuratorFrameworkFactory;
+import org.apache.storm.curator.framework.state.ConnectionStateListener;
 import org.apache.storm.curator.retry.RetryNTimes;
 
 import backtype.storm.utils.Utils;
@@ -21,7 +21,6 @@ import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
  */
 public class StormSignalConnection extends AbstractSignalConnection {
 
-    private static AtomicBoolean configured = new AtomicBoolean(false);
     private String pipeline;
     
     /**
@@ -42,21 +41,24 @@ public class StormSignalConnection extends AbstractSignalConnection {
      * Initializes the connection.
      * 
      * @param conf the storm configuration
+     * @param listener an optional connection state listener (may be <b>null</b>)
      * @throws Exception in case of execution problems
      */
     @SuppressWarnings("rawtypes")
-    public void init(Map conf) throws Exception {
+    public void init(Map conf, ConnectionStateListener listener) throws Exception {
         if (Configuration.getPipelineSignalsCurator()) {
             String connectString = zkHosts(conf);
             SignalMechanism.setConnectString(pipeline, connectString);
-            int retryCount = Utils.getInt(conf.get("storm.zookeeper.retry.times"));
-            int retryInterval = Utils.getInt(conf.get("storm.zookeeper.retry.interval"));
+            int retryCount = Configuration.getZookeeperRetryTimes();
+            int retryInterval = Configuration.getZookeeperRetryInterval();
             // use global namespace here
             CuratorFramework client = CuratorFrameworkFactory.builder().namespace(SignalMechanism.GLOBAL_NAMESPACE).
                 connectString(connectString).retryPolicy(new RetryNTimes(retryCount, retryInterval)).build();
             super.setClient(client);
+            if (null != listener) {
+                client.getConnectionStateListenable().addListener(listener);
+            }
             client.start();
-    
             initWatcher(); // failing
         }
         SignalMechanism.initEnabledSignalNamespaceState(pipeline);
@@ -105,19 +107,16 @@ public class StormSignalConnection extends AbstractSignalConnection {
      */
     @SuppressWarnings({ "rawtypes" })
     public static void configureEventBus(Map conf) {
-        boolean cfg = configured.getAndSet(true);
-        if (!cfg) {
-            Configuration.transferConfigurationFrom(conf);
-            Object tmp = conf.get(QmLogging.ENABLING_PROPERTY);
-            boolean enableLogging = false;
-            if (tmp instanceof Boolean) {
-                enableLogging = ((Boolean) tmp).booleanValue();
-            } else if (null != tmp ) {
-                enableLogging = Boolean.valueOf(tmp.toString()).booleanValue();
-            }
-            if (enableLogging) {
-                QmLogging.install();
-            }
+        Configuration.transferConfigurationFrom(conf);
+        Object tmp = conf.get(QmLogging.ENABLING_PROPERTY);
+        boolean enableLogging = false;
+        if (tmp instanceof Boolean) {
+            enableLogging = ((Boolean) tmp).booleanValue();
+        } else if (null != tmp ) {
+            enableLogging = Boolean.valueOf(tmp.toString()).booleanValue();
+        }
+        if (enableLogging) {
+            QmLogging.install();
         }
     }
     

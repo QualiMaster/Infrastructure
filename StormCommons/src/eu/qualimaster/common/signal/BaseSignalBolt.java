@@ -3,6 +3,9 @@ package eu.qualimaster.common.signal;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.apache.storm.curator.framework.CuratorFramework;
+import org.apache.storm.curator.framework.state.ConnectionState;
+import org.apache.storm.curator.framework.state.ConnectionStateListener;
 
 import eu.qualimaster.Configuration;
 import eu.qualimaster.common.monitoring.MonitoringPluginRegistry;
@@ -37,6 +40,8 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     private transient ShutdownEventHandler shutdownEventHandler;
     private transient Monitor monitor;
     private transient PortManager portManager;
+    private transient boolean signalConnInitialized;
+    private transient boolean initMonitorOnSignalConnInit;
 
     /**
      * Creates a base signal Bolt with no regular event sending.
@@ -68,20 +73,35 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     @SuppressWarnings("rawtypes")
     public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
         getLogger().info("Prepare--basesignalbolt.... " + pipeline + "/" + this.name);
+        StormSignalConnection.configureEventBus(conf);
         if (conf.containsKey(Constants.CONFIG_KEY_SUBPIPELINE_NAME)) {
             pipeline = (String) conf.get(Constants.CONFIG_KEY_SUBPIPELINE_NAME);
         }
-        StormSignalConnection.configureEventBus(conf);
+        EventManager.asyncSend(new ConnectEvent(pipeline + "/" + this.name));
         monitor = createMonitor(pipeline, name, true, context);
         if (initMonitorDuringPrepare()) {
-            initMonitor();
+            monitor.init(sendRegular);
         }
         if (Constants.MEASURE_BY_TASK_HOOKS) {
             context.addTaskHook(monitor);
         }
         try {
             signalConnection = new StormSignalConnection(this.name, this, pipeline);
-            signalConnection.init(conf);
+            signalConnection.init(conf, new ConnectionStateListener() {
+                
+                @Override
+                public void stateChanged(CuratorFramework client, ConnectionState state) {
+                    if (ConnectionState.CONNECTED == state) {
+                        getLogger().info("Curator state changed " + state + " " + pipeline + "/" + name + " "
+                            + " sigConInit " + signalConnInitialized + " initMonOnSigConn " 
+                            + initMonitorOnSignalConnInit);
+                        signalConnInitialized = true;
+                        if (initMonitorOnSignalConnInit) {
+                            monitor.init(sendRegular);                            
+                        }
+                    }
+                }
+            });
             if (Configuration.getPipelineSignalsQmEvents()) {
                 algorithmEventHandler = AlgorithmChangeEventHandler.createAndRegister(this, pipeline, name);
                 parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, pipeline, name);
@@ -150,7 +170,13 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      * Initializes monitoring for this node.
      */
     protected final void initMonitor() {
-        monitor.init(sendRegular);
+        getLogger().info("Init monitor " + pipeline + "/" + name + " sigConInit " + signalConnInitialized
+            + " initMonOnSigConn " + initMonitorOnSignalConnInit);
+        if (signalConnInitialized) {
+            monitor.init(sendRegular);
+        } else {
+            initMonitorOnSignalConnInit = true;
+        }
     }
     
     /**

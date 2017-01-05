@@ -341,7 +341,6 @@ public class SignalMechanism {
             getLogger().info("Creating a curator framework for " + namespace + " using " + connectString);
             result = CuratorFrameworkFactory.builder().namespace(namespace)
                 .connectString(connectString)
-                //.retryPolicy(new RetryOneTime(500)).build();
                 .retryPolicy(new RetryNTimes(Configuration.getZookeeperRetryTimes(), 
                     Configuration.getZookeeperRetryInterval())).build();
             getLogger().info("Created a curator framework: " + result);
