@@ -5,9 +5,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -542,13 +546,19 @@ public class Configuration {
      * @return the zookeeper connect string, host name and port separated by ":", multiple zookeepers by ","
      */
     public static String getZookeeperConnectString(String zookeepers, int zkPort) {
-        StringTokenizer hosts = new StringTokenizer(zookeepers, ",");
+        StringTokenizer tokens = new StringTokenizer(zookeepers, ",");
+        List<String> hosts = new ArrayList<String>();
+        while (tokens.hasMoreTokens()) {
+            hosts.add(tokens.nextToken());
+        }
+        Collections.shuffle(hosts); // try addressing different zookeepers as first
         StringBuffer result = new StringBuffer();
-        while (hosts.hasMoreTokens()) {
-            result.append(hosts.nextToken());
+        Iterator<String> iter = hosts.iterator();
+        while (iter.hasNext()) {
+            result.append(iter.next());
             result.append(":");
             result.append(zkPort);
-            if (hosts.hasMoreTokens()) {
+            if (iter.hasNext()) {
                 result.append(",");
             }
         }
