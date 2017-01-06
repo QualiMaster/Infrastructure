@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,21 +33,41 @@ public class ConfigurationTests {
     private static final String ZK2 = "zookeeper2.sse.uni-hildesheim.de";
     
     /**
-     * Turns a port and a set of hosts into a zookeeper connect string.
+     * Turns a port and a set of hosts into a set. Direct comparison with configuration option is not possible
+     * due to host shuffling.
      * 
      * @param port the zookeeper port
      * @param hosts the host names
-     * @return the connect string
+     * @return the connect set for comparison
      */
-    private static String toConnectString(int port, String... hosts) {
-        String result = "";
+    private static Set<String> toConnectSet(int port, String... hosts) {
+        Set<String> result = new HashSet<String>();
         for (int i = 0; i < hosts.length; i++) {
-            if (i > 0) {
-                result += ",";
+            result.add(hosts[i]);
+        }
+        result.add(Integer.toString(port));
+        return result;
+    }
+
+    /**
+     * Turns a zookeeper connect string into a set for comparison. Direct comparison of the string is not possible
+     * due to host shuffling.
+     * 
+     * @param connectString the connect string
+     * @return the connect set for comparison
+     */
+    private static Set<String> toConnectSet(String connectString) {
+        Set<String> result = new HashSet<String>();
+        StringTokenizer tokens = new StringTokenizer(connectString, ",");
+        while (tokens.hasMoreTokens()) {
+            String t = tokens.nextToken();
+            String[] hostPort = t.split(":");
+            if (2 == hostPort.length) {
+                result.add(hostPort[0]);
+                result.add(hostPort[1]);
+            } else {
+                result.add(t);
             }
-            result += hosts[i];
-            result += ":";
-            result += port;
         }
         return result;
     }
@@ -58,7 +79,7 @@ public class ConfigurationTests {
         Assert.assertEquals("nimbus.sse.uni-hildesheim.de", Configuration.getNimbus());
         Assert.assertEquals(ZK1, Configuration.getZookeeper());
         Assert.assertEquals(ZK_PORT, Configuration.getZookeeperPort());
-        Assert.assertEquals(toConnectString(ZK_PORT, ZK1), Configuration.getZookeeperConnectString());
+        Assert.assertEquals(toConnectSet(ZK_PORT, ZK1), toConnectSet(Configuration.getZookeeperConnectString()));
         Assert.assertEquals("qm.sse.uni-hildesheim.de", Configuration.getEventHost());
         Assert.assertEquals(2999, Configuration.getEventPort());
         Assert.assertEquals(111, Configuration.getShutdownSignalWaitTime());
@@ -98,7 +119,7 @@ public class ConfigurationTests {
      * Tests for the properties set in {@link #buildProperties(Properties)}.
      */
     protected void testViaProperties() {
-        Assert.assertEquals(toConnectString(ZK_PORT, ZK1, ZK2), Configuration.getZookeeperConnectString());
+        Assert.assertEquals(toConnectSet(ZK_PORT, ZK1, ZK2), toConnectSet(Configuration.getZookeeperConnectString()));
     }
     
     /**
