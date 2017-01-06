@@ -144,7 +144,8 @@ public class ShedderTests {
             Assert.assertEquals(count, enabled);
         } else {
             int expected = (int) Math.abs((count - enabled) - (count * probability));
-            Assert.assertTrue("enabled " + enabled + " count " + count + " expected " + expected, expected <= 2);
+            // more difference due to probabilistic
+            Assert.assertTrue("enabled " + enabled + " count " + count + " expected " + expected, expected <= 4);
         }
     }
 
