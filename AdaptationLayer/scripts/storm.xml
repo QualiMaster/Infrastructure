@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xmlns="http://sse.uni-hildesheim.de/instrumentation" 
+	 exclusive="true" 
+	 memAccounting="CREATION_NATIVEUNALLOCATION"
+	 mainDefault="START"
+         localEventProcessing="true"
+	 scopeType="GROUP_INHERIT"
+	 accountableResources="CPU_TIME, MEMORY"
+	 sumResources="CPU_TIME, MEMORY"
+	 instanceIdentifierKind="IDENTITY_HASHCODE"
+         defaultGroupResources="CPU_TIME, MEMORY"> <!-- , MEMORY; CONSTRUCTION retransformJavaLib instrumentJavaLib-->
+        <namespace name="" typeOf="backtype.storm.topology.IRichSpout" instanceIdentifierKind="IDENTITY_HASHCODE"/>
+	<namespace name="" typeOf="backtype.storm.topology.IRichBolt" instanceIdentifierKind="IDENTITY_HASHCODE"/>
+</configuration>
