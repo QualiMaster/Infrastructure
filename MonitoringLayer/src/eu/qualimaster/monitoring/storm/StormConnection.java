@@ -67,7 +67,7 @@ public class StormConnection extends ThriftConnection {
     public void close() {
         super.close();
         if (null != curator) {
-            curator.close();
+            ZkUtils.close(curator);
         }
     }
     
