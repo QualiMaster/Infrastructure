@@ -22,17 +22,21 @@ import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 public class StormSignalConnection extends AbstractSignalConnection {
 
     private String pipeline;
+    private String connectString;
     
     /**
      * Creates a storm signal connection.
      * 
      * @param name the name of this element
      * @param listener the signal listener
-     * @param pipeline the name of the pipeline 
+     * @param pipeline the name of the pipeline
+     * @param conf the storm configuration 
      */
-    public StormSignalConnection(String name, SignalListener listener, String pipeline) {
+    @SuppressWarnings("rawtypes")
+    public StormSignalConnection(String name, SignalListener listener, String pipeline, Map conf) {
         super(name, listener);
         this.pipeline = pipeline;
+        this.connectString = zkHosts(conf);
     }
 
     // checkstyle: stop exception type check
@@ -40,20 +44,19 @@ public class StormSignalConnection extends AbstractSignalConnection {
     /**
      * Initializes the connection.
      * 
-     * @param conf the storm configuration
      * @param listener an optional connection state listener (may be <b>null</b>)
      * @throws Exception in case of execution problems
      */
-    @SuppressWarnings("rawtypes")
-    public void init(Map conf, ConnectionStateListener listener) throws Exception {
+    public void init(ConnectionStateListener listener) throws Exception {
         if (Configuration.getPipelineSignalsCurator()) {
-            String connectString = zkHosts(conf);
             SignalMechanism.setConnectString(pipeline, connectString);
             int retryCount = Configuration.getZookeeperRetryTimes();
             int retryInterval = Configuration.getZookeeperRetryInterval();
-            // use global namespace here
+            // use global namespace here - create individual connections for watchers
             CuratorFramework client = CuratorFrameworkFactory.builder().namespace(SignalMechanism.GLOBAL_NAMESPACE).
                 connectString(connectString).retryPolicy(new RetryNTimes(retryCount, retryInterval)).build();
+            // unsure, so far reuse did sometimes not allow passing all signals
+            //CuratorFramework client = SignalMechanism.obtainFramework(SignalMechanism.GLOBAL_NAMESPACE);
             super.setClient(client);
             if (null != listener) {
                 client.getConnectionStateListenable().addListener(listener);

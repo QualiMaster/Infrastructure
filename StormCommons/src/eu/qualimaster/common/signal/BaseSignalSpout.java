@@ -32,6 +32,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     private String name;
     private String pipeline;
     private boolean sendRegular;
+    private String interconnPorts;
     private LoadShedder<?> shedder = NoShedder.INSTANCE;
     private transient StormSignalConnection signalConnection;
     private transient ParameterChangeEventHandler parameterEventHandler;
@@ -72,6 +73,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
         getLogger().info("Prepare--basesignalspout.... " + pipeline + "/" + this.name);
         StormSignalConnection.configureEventBus(conf);
+        interconnPorts = BaseSignalBolt.getInterconnPorts(conf);        
         if (conf.containsKey(Constants.CONFIG_KEY_SUBPIPELINE_NAME)) {
             pipeline = (String) conf.get(Constants.CONFIG_KEY_SUBPIPELINE_NAME);
         }
@@ -84,26 +86,29 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
             context.addTaskHook(monitor);
         }
         try {
-            signalConnection = new StormSignalConnection(this.name, this, pipeline);
-            signalConnection.init(conf, new ConnectionStateListener() {
-                
-                @Override
-                public void stateChanged(CuratorFramework client, ConnectionState state) {
-                    getLogger().info("Curator state changed " + state + " " + pipeline + "/" + name + " "
-                        + " sigConInit " + signalConnInitialized + " initMonOnSigConn " + initMonitorOnSignalConnInit);
-                    if (ConnectionState.CONNECTED == state) {
-                        signalConnInitialized = true;
-                        if (initMonitorOnSignalConnInit) {
-                            monitor.init(sendRegular);                            
-                        }
-                    }
-                }
-            });
+            signalConnection = new StormSignalConnection(this.name, this, pipeline, conf);
             if (Configuration.getPipelineSignalsQmEvents()) {
                 parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, pipeline, name);
                 shutdownEventHandler = ShutdownEventHandler.createAndRegister(this, pipeline, name);
+                signalConnInitialized = true;
+            } else {
+                signalConnection.init(new ConnectionStateListener() {
+                    
+                    @Override
+                    public void stateChanged(CuratorFramework client, ConnectionState state) {
+                        getLogger().info("Curator state changed " + state + " " + pipeline + "/" + name + " "
+                            + " sigConInit " + signalConnInitialized + " initMonOnSigConn " 
+                            + initMonitorOnSignalConnInit);
+                        if (ConnectionState.CONNECTED == state) {
+                            signalConnInitialized = true;
+                            if (initMonitorOnSignalConnInit) {
+                                monitor.init(sendRegular);                            
+                            }
+                        }
+                    }
+                });
+                portManager = BaseSignalBolt.createPortManager(signalConnection, interconnPorts);
             }
-            portManager = BaseSignalBolt.createPortManager(signalConnection, conf);
         } catch (Exception e) {
             getLogger().error("Error SignalConnection:" + e.getMessage(), e);
         }
@@ -157,6 +162,9 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      * @return the port manager
      */
     protected PortManager getPortManager() {
+        if (null == portManager) { // create on demand for using QM event signals
+            portManager = BaseSignalBolt.createPortManager(signalConnection, interconnPorts);
+        }
         return portManager;
     }
     
@@ -223,7 +231,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      *            the new algorithm enacted
      */
     protected void sendAlgorithmChangedEvent(String algorithm) {
-        signalConnection.sendAlgorithmChangedEvent(algorithm);
+        signalConnection.sendAlgorithmChangedEvent(algorithm); // goes anyway over QMEvents
     }
 
     @Override
@@ -251,7 +259,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
      * @throws SignalException in case that the execution / signal sending fails
      */
     protected void sendSignal(TopologySignal signal) throws SignalException {
-        signal.sendSignal(this.signalConnection);
+        signal.sendSignal(signalConnection);
     }
     
     /**
@@ -265,7 +273,9 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     // intentionally final so that subclasses cannot overwrite required shutdown sequence
     @Override
     public final void notifyShutdown(ShutdownSignal signal) {
-        portManager.close();
+        if (null != portManager) {
+            portManager.close();
+        }
         signalConnection.close();
         prepareShutdown(signal);
         ComponentKeyRegistry.unregister(this);

@@ -307,11 +307,7 @@ public class SignalMechanism {
      * @throws SignalException if the global signal mechanism cannot be obtained 
      */
     public static PortManager getPortManager() throws SignalException {
-        try {
-            return new PortManager(obtainFramework(GLOBAL_NAMESPACE));
-        } catch (IOException e) {
-            throw new SignalException(e);
-        }
+        return new PortManager(obtainFramework(GLOBAL_NAMESPACE));
     }
 
     /**
@@ -334,7 +330,7 @@ public class SignalMechanism {
      * @return the curator famework
      * @throws IOException in case of errors obtaining the curator framework
      */
-    static CuratorFramework obtainFramework(String namespace) throws IOException {
+    public static CuratorFramework obtainFramework(String namespace) {
         CuratorFramework result = FRAMEWORKS.get(namespace);
         if (null == result) {
             String connectString = getConnectString(namespace);
@@ -430,12 +426,7 @@ public class SignalMechanism {
      * @param pipeline the pipeline name
      */
     public static void clearPipeline(String pipeline) {
-        try {
-            CuratorFramework framework = obtainFramework(GLOBAL_NAMESPACE);
-            clearPipeline(framework, pipeline);
-        } catch (IOException e) {
-            getLogger().warn("While clearing pipeline " + pipeline + ": " + e.getMessage());
-        }
+        clearPipeline(obtainFramework(GLOBAL_NAMESPACE), pipeline);
     }
 
     /**
@@ -516,12 +507,8 @@ public class SignalMechanism {
         getLogger().info("Sending the signal: " + signal + ", with the namespace enabled? " + space.getState());
         if (Configuration.getPipelineSignalsCurator()) {
             if (null == mechanism) {
-                try {
-                    getLogger().info("Obtaining the framework...");
-                    mechanism = obtainFramework(GLOBAL_NAMESPACE);
-                } catch (IOException e) {
-                    throw new SignalException(e);
-                }
+                getLogger().info("Obtaining the framework...");
+                mechanism = obtainFramework(GLOBAL_NAMESPACE);
             }
             if (NamespaceState.DISABLE == space.getState()) {
                 space.cacheSignal(new CachedSignal(mechanism, signal) {

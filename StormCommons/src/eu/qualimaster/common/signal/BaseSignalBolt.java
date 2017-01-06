@@ -34,6 +34,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     private String pipeline;
     private boolean sendRegular;
     private LoadShedder<?> shedder = NoShedder.INSTANCE;
+    private String interconnPorts;
     private transient StormSignalConnection signalConnection;
     private transient AlgorithmChangeEventHandler algorithmEventHandler;
     private transient ParameterChangeEventHandler parameterEventHandler;
@@ -74,6 +75,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
         getLogger().info("Prepare--basesignalbolt.... " + pipeline + "/" + this.name);
         StormSignalConnection.configureEventBus(conf);
+        interconnPorts = getInterconnPorts(conf);
         if (conf.containsKey(Constants.CONFIG_KEY_SUBPIPELINE_NAME)) {
             pipeline = (String) conf.get(Constants.CONFIG_KEY_SUBPIPELINE_NAME);
         }
@@ -86,28 +88,30 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
             context.addTaskHook(monitor);
         }
         try {
-            signalConnection = new StormSignalConnection(this.name, this, pipeline);
-            signalConnection.init(conf, new ConnectionStateListener() {
-                
-                @Override
-                public void stateChanged(CuratorFramework client, ConnectionState state) {
-                    if (ConnectionState.CONNECTED == state) {
-                        getLogger().info("Curator state changed " + state + " " + pipeline + "/" + name + " "
-                            + " sigConInit " + signalConnInitialized + " initMonOnSigConn " 
-                            + initMonitorOnSignalConnInit);
-                        signalConnInitialized = true;
-                        if (initMonitorOnSignalConnInit) {
-                            monitor.init(sendRegular);                            
-                        }
-                    }
-                }
-            });
+            signalConnection = new StormSignalConnection(this.name, this, pipeline, conf);
             if (Configuration.getPipelineSignalsQmEvents()) {
                 algorithmEventHandler = AlgorithmChangeEventHandler.createAndRegister(this, pipeline, name);
                 parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, pipeline, name);
                 shutdownEventHandler = ShutdownEventHandler.createAndRegister(this, pipeline, name);
+                signalConnInitialized = true;
+            } else {
+                signalConnection.init(new ConnectionStateListener() {
+                    
+                    @Override
+                    public void stateChanged(CuratorFramework client, ConnectionState state) {
+                        if (ConnectionState.CONNECTED == state) {
+                            getLogger().info("Curator state changed " + state + " " + pipeline + "/" + name + " "
+                                + " sigConInit " + signalConnInitialized + " initMonOnSigConn " 
+                                + initMonitorOnSignalConnInit);
+                            signalConnInitialized = true;
+                            if (initMonitorOnSignalConnInit) {
+                                monitor.init(sendRegular);                            
+                            }
+                        }
+                    }
+                });
+                portManager = createPortManager(signalConnection, interconnPorts);
             }
-            portManager = createPortManager(signalConnection, conf);
         } catch (Exception e) {
             getLogger().error("Error SignalConnection:" + e.getMessage(), e);
         }
@@ -124,22 +128,35 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      */
     @Deprecated
     public void sendSignal(String toPath, byte[] signal) throws Exception {
-        this.signalConnection.send(toPath, signal);
+        if (null != signalConnection) {
+            signalConnection.send(toPath, signal);
+        } else {
+            getLogger().error("Deprecated signal sending not supported by signal mechanism.");
+        }
     }
 
     // checkstyle: resume exception type check
 
     /**
-     * Creates the port manager and considers pipeline interconnection ports from <code>conf</code>.
+     * Creates the port manager and considers pipeline interconnection ports.
      * 
      * @param signalConnection the signal connection
-     * @param conf the Storm configuration
+     * @param interconnPorts the pipeline interconnection ports.
      * @return the port manager instance
      */
+    static PortManager createPortManager(StormSignalConnection signalConnection, String interconnPorts) {
+        return new PortManager(signalConnection.getClient(), PortManager.createPortRangeQuietly(interconnPorts));
+    }
+    
+    /**
+     * Returns the pipeline interconnection ports.
+     * 
+     * @param conf the storm configuration
+     * @return the interconnection ports if configured
+     */
     @SuppressWarnings("rawtypes")
-    static PortManager createPortManager(StormSignalConnection signalConnection, Map conf) {
-        return new PortManager(signalConnection.getClient(), 
-            PortManager.createPortRangeQuietly(String.valueOf(conf.get(Configuration.PIPELINE_INTERCONN_PORTS))));
+    static String getInterconnPorts(Map conf) {
+        return String.valueOf(conf.get(Configuration.PIPELINE_INTERCONN_PORTS));
     }
     
     /**
@@ -185,6 +202,9 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      * @return the port manager
      */
     protected PortManager getPortManager() {
+        if (null == portManager) { // create on demand for using QM event signals
+            portManager = createPortManager(signalConnection, interconnPorts);
+        }
         return portManager;
     }
     
@@ -264,7 +284,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      * @throws SignalException in case that the execution / signal sending fails
      */
     protected void sendSignal(TopologySignal signal) throws SignalException {
-        signal.sendSignal(this.signalConnection);
+        signal.sendSignal(signalConnection);
     }
 
     /**
@@ -281,7 +301,7 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      * @param algorithm the new algorithm enacted
      */
     protected void sendAlgorithmChangedEvent(String algorithm) {
-        signalConnection.sendAlgorithmChangedEvent(algorithm);
+        signalConnection.sendAlgorithmChangedEvent(algorithm); // goes anyway over QMEvents
     }
 
     @Override
@@ -312,7 +332,9 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     // intentionally final so that subclasses cannot overwrite required shutdown sequence
     @Override
     public final void notifyShutdown(ShutdownSignal signal) {
-        portManager.close();
+        if (null != portManager) {
+            portManager.close();
+        }
         signalConnection.close();
         prepareShutdown(signal);
         ComponentKeyRegistry.unregister(this);
