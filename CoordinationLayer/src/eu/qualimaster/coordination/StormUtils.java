@@ -1060,7 +1060,7 @@ public class StormUtils {
                         ZkUtils.setAssignment(framework, tInfo, newAssng);
                     }
                 }
-                framework.close();
+                ZkUtils.close(framework);
                 connection.close();
             } catch (Exception e) {
                 throw new IOException(e.getMessage());

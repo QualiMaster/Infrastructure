@@ -35,6 +35,7 @@ import org.apache.storm.curator.retry.RetryOneTime;
 import clojure.lang.IPersistentCollection;
 import clojure.lang.IPersistentMap;
 import clojure.lang.LazySeq;
+import eu.qualimaster.common.signal.SignalMechanism;
 import backtype.storm.daemon.common.SupervisorInfo;
 import backtype.storm.daemon.common.Assignment;
 import backtype.storm.daemon.common.WorkerHeartbeat;
@@ -54,6 +55,7 @@ public class ZkUtils {
      * Denotes an unknown (worker beat) time.
      */
     public static final long UNKNOWN_TIME = -1;
+    public static final boolean REUSE_CURATOR = false;
     
     private static final String STORM_NS = "storm";
     private static final Logger LOGGER = LogManager.getLogger(ZkUtils.class);
@@ -69,14 +71,31 @@ public class ZkUtils {
      * Obtains a Curator framework instance for Storm and tries to 
      * start it.
      * 
-     * @return the framework instance
+     * @return the framework instance, use {@link #close(CuratorFramework)} for releasing the resulting instance 
+     *   due to {@link #REUSE_CURATOR}; don't define watchers on the resulting instance
      */
     public static CuratorFramework obtainCuratorFramework() {
-        String connectString = CoordinationConfiguration.getZookeeperConnectString();
-        CuratorFramework framework = CuratorFrameworkFactory.builder().connectString(connectString)
-            .namespace(STORM_NS).retryPolicy(new RetryOneTime(500)).build();
-        framework.start();
+        CuratorFramework framework;
+        if (REUSE_CURATOR) {
+            String connectString = CoordinationConfiguration.getZookeeperConnectString();
+            framework = CuratorFrameworkFactory.builder().connectString(connectString)
+                .namespace(STORM_NS).retryPolicy(new RetryOneTime(500)).build();
+            framework.start();
+        } else {
+            framework = SignalMechanism.obtainFramework(STORM_NS);
+        }
         return framework;
+    }
+    
+    /**
+     * Close a curator framework returned by {@link #obtainCuratorFramework()}.
+     * 
+     * @param framework the framework
+     */
+    public static void close(CuratorFramework framework) {
+        if (!REUSE_CURATOR) {
+            framework.close();
+        }
     }
 
     // checkstyle: stop exception type check
