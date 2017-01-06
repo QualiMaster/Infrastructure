@@ -1063,7 +1063,7 @@ public class StormUtils {
                 ZkUtils.close(framework);
                 connection.close();
             } catch (Exception e) {
-                throw new IOException(e.getMessage());
+                throw new IOException(e.getMessage(), e);
             }
         } else {
             LOGGER.info("No actual changes to the parallelism requested: " + changes);

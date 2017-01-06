@@ -77,12 +77,12 @@ public class ZkUtils {
     public static CuratorFramework obtainCuratorFramework() {
         CuratorFramework framework;
         if (REUSE_CURATOR) {
+            framework = SignalMechanism.obtainFramework(STORM_NS);
+        } else {
             String connectString = CoordinationConfiguration.getZookeeperConnectString();
             framework = CuratorFrameworkFactory.builder().connectString(connectString)
                 .namespace(STORM_NS).retryPolicy(new RetryOneTime(500)).build();
             framework.start();
-        } else {
-            framework = SignalMechanism.obtainFramework(STORM_NS);
         }
         return framework;
     }
