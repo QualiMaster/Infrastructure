@@ -81,8 +81,8 @@ public class AggregationTest {
         
         SystemStateTest.assertEquals(allItems, alg, TimeBehavior.THROUGHPUT_ITEMS);
         SystemStateTest.assertEquals(allItems, node, TimeBehavior.THROUGHPUT_ITEMS);
-        SystemStateTest.assertEquals(items, alg, Scalability.ITEMS, 5); // different time frames
-        SystemStateTest.assertEquals(items, node, Scalability.ITEMS, 5);
+        SystemStateTest.assertEquals(items, alg, Scalability.ITEMS, 10); // different time frames, jenkins
+        SystemStateTest.assertEquals(items, node, Scalability.ITEMS, 10);
         
         // copy and cause different state -> links
         SystemState copy = new SystemState(state);
