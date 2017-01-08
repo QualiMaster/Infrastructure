@@ -79,8 +79,8 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
         if (conf.containsKey(Constants.CONFIG_KEY_SUBPIPELINE_NAME)) {
             pipeline = (String) conf.get(Constants.CONFIG_KEY_SUBPIPELINE_NAME);
         }
-        EventManager.asyncSend(new ConnectEvent(pipeline + "/" + this.name));
         monitor = createMonitor(pipeline, name, true, context);
+        EventManager.asyncSend(new ConnectTaskMonitoringEvent(pipeline, name, monitor.getComponentKey()));
         if (initMonitorDuringPrepare()) {
             monitor.init(sendRegular);
         }

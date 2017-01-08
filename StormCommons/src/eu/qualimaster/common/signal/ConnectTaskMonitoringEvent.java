@@ -15,35 +15,29 @@
  */
 package eu.qualimaster.common.signal;
 
-import eu.qualimaster.events.IEvent;
+import java.io.Serializable;
+
+import eu.qualimaster.monitoring.events.AbstractPipelineElementMonitoringEvent;
 
 /**
- * A dummy event for forcing startup of the event manager.
+ * An event sent to indicate the creation/connect of a task to the infrastructure. The monitoring layer can use
+ * this event to detect whether a task/worker was restarted (new key with same task id is being connected).
  * 
  * @author Holger Eichelberger
  */
-public class ConnectEvent implements IEvent {
+public class ConnectTaskMonitoringEvent extends AbstractPipelineElementMonitoringEvent {
 
     private static final long serialVersionUID = -7128804008518291862L;
-    private String id;
 
     /**
      * Creates a connect event with an id to be printed out.
      * 
-     * @param id the id
+     * @param pipeline pipeline the pipeline name
+     * @param pipelineElement pipeline element the name of the pipeline element
+     * @param key the aggregation component key (may be <b>null</b>)
      */
-    public ConnectEvent(String id) {
-        this.id = id;
-    }
-    
-    @Override
-    public String getChannel() {
-        return null;
-    }
-
-    @Override
-    public String toString() {
-        return "ConnectEvent " + id;
+    public ConnectTaskMonitoringEvent(String pipeline, String pipelineElement, Serializable key) {
+        super(pipeline, pipelineElement, key);
     }
 
 }
