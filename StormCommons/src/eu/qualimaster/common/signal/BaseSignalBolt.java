@@ -322,6 +322,10 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
     @Override
     public void notifyAlgorithmChange(AlgorithmChangeSignal signal) {
      // empty: keep interface/implementations stable
+        ParameterChangeSignal pChange = signal.toParameterChange();
+        if (null != pChange) {
+            notifyParameterChange(pChange);
+        }
     }
 
     @Override

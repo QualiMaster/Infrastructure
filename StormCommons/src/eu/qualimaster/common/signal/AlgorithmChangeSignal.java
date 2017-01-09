@@ -223,5 +223,20 @@ public class AlgorithmChangeSignal extends AbstractTopologyExecutorSignal {
     public String toString() {
         return "AlgChangeSignal " + super.toString() + " " + getAlgorithm();
     }
+    
+    /**
+     * Turns this algorithm change signal into the corresponding (merged) parameter change signal.
+     *  
+     * @return the corresponding signal or <b>null</b> if no parameter change shall happen
+     */
+    public ParameterChangeSignal toParameterChange() {
+        ParameterChangeSignal result;
+        if (0 == getChangeCount()) {
+            result = null;
+        } else {
+            result = new ParameterChangeSignal(getTopology(), getExecutor(), changes, getCauseMessageId()); 
+        }
+        return result;
+    }
 
 }
