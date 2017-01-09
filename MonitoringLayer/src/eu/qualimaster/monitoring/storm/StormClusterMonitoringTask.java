@@ -97,7 +97,7 @@ public class StormClusterMonitoringTask extends AbstractClusterMonitoringTask {
                 aggregate(part, supervisors);
                 sendSummaryEvent(part, null, MonitoringManager.DEMO_MSG_INFRASTRUCTURE);
             } catch (TException e) {
-                LOGGER.error("Cannot obtain thrift data " + e.getMessage(), e);
+                LOGGER.error("Cluster monitoring: Cannot obtain thrift data " + e.getMessage());
             } catch (IllegalStateException e) {
                 // monitoring runs longer than topology exists... ignore
             }
