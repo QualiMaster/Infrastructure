@@ -23,6 +23,7 @@ import eu.qualimaster.coordination.commands.AlgorithmChangeCommand;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.coordination.commands.LoadSheddingCommand;
 import eu.qualimaster.coordination.commands.ParameterChangeCommand;
+import eu.qualimaster.monitoring.events.AbstractPipelineElementMonitoringEvent;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 import eu.qualimaster.monitoring.events.IEnactmentCompletedMonitoringEvent;
 import eu.qualimaster.monitoring.events.LoadSheddingChangedMonitoringEvent;
@@ -99,6 +100,22 @@ public class EnactmentSignatureProvider {
     }
     
     /**
+     * Returns a mapped back element name from an implementation name.
+     * 
+     * @param evt the pipeline element monitoring event
+     * @return the (mapped back) element name
+     */
+    private static String getPipelineElementName(AbstractPipelineElementMonitoringEvent evt) {
+        String eltName = evt.getPipelineElement();
+        INameMapping mapping = CoordinationManager.getNameMapping(evt.getPipeline());
+        String tmp = mapping.getPipelineNodeByImplName(eltName);
+        if (null != tmp) {
+            eltName = tmp;
+        }
+        return eltName;
+    }
+    
+    /**
      * Registers the provider instances for algorithm change signatures.
      */
     private static void registerAlgorithmChangeProviders() {
@@ -106,7 +123,7 @@ public class EnactmentSignatureProvider {
 
             @Override
             public String getSignature(AlgorithmChangedMonitoringEvent evt) {
-                return getAlgChangeSignature(evt.getPipeline(), evt.getPipelineElement(), evt.getAlgorithm());
+                return getAlgChangeSignature(evt.getPipeline(), getPipelineElementName(evt), evt.getAlgorithm());
             }
             
         });
@@ -114,8 +131,13 @@ public class EnactmentSignatureProvider {
 
             @Override
             public String getSignature(AlgorithmChangeCommand cmd) {
-                //return getAlgChangeSignature(cmd.getPipeline(), cmd.getPipelineElement(), cmd.getAlgorithm());
-                return null; // TODO preliminary until pipeline implementation stable
+                String result = null;
+                if (CoordinationConfiguration.doCommandCompletionOnEvent()) {
+                    result = getAlgChangeSignature(cmd.getPipeline(), cmd.getPipelineElement(), cmd.getAlgorithm()); 
+                } else {
+                    result = null;
+                }
+                return result;
             }
             
         });
@@ -130,7 +152,7 @@ public class EnactmentSignatureProvider {
 
             @Override
             public String getSignature(LoadSheddingChangedMonitoringEvent evt) {
-                return getLoadSheddingChangeSignature(evt.getPipeline(), evt.getPipelineElement(), 
+                return getLoadSheddingChangeSignature(evt.getPipeline(), getPipelineElementName(evt), 
                     evt.getShedder());
             }
             
@@ -154,7 +176,7 @@ public class EnactmentSignatureProvider {
 
             @Override
             public String getSignature(ReplayChangedMonitoringEvent evt) {
-                return getReplayChangeSignature(evt.getPipeline(), evt.getPipelineElement(), 
+                return getReplayChangeSignature(evt.getPipeline(), getPipelineElementName(evt), 
                     evt.getTicket(), evt.getStartReplay());
             }
             
@@ -193,9 +215,14 @@ public class EnactmentSignatureProvider {
 
             @Override
             public String getSignature(ParameterChangeCommand cmd) {
-                /*return getParamChangeSignature(cmd.getPipeline(), cmd.getPipelineElement(), cmd.getParameter(), 
-                    cmd.getValue());*/
-                return null; // TODO preliminary until pipeline implementation stable
+                String result;
+                if (CoordinationConfiguration.doCommandCompletionOnEvent()) {
+                    result = getParamChangeSignature(cmd.getPipeline(), cmd.getPipelineElement(), cmd.getParameter(), 
+                        cmd.getValue());
+                } else {
+                    result = null;
+                }
+                return result;
             }
             
         });
