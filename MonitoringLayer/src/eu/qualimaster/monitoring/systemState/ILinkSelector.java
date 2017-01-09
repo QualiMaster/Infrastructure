@@ -15,6 +15,10 @@
  */
 package eu.qualimaster.monitoring.systemState;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import eu.qualimaster.observables.AnalysisObservables;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.Scalability;
 
@@ -24,7 +28,7 @@ import eu.qualimaster.observables.Scalability;
  * @author Holger Eichelberger
  */
 public abstract class ILinkSelector {
-
+    
     /**
      * Selects all observables.
      */
@@ -32,7 +36,7 @@ public abstract class ILinkSelector {
         
         @Override
         protected boolean isLinkEnabled(IObservable observable) {
-            return Scalability.ITEMS != observable;
+            return !EXCLUDE.contains(observable);
         }
     };
 
@@ -43,11 +47,29 @@ public abstract class ILinkSelector {
         
         @Override
         protected boolean isLinkEnabled(IObservable observable) {
-            return Scalability.ITEMS != observable && !observable.isInternal();
+            return !EXCLUDE.contains(observable) && !observable.isInternal();
         }
         
     };
+
+    private static final Set<IObservable> EXCLUDE = new HashSet<IObservable>();
     
+    static {
+        EXCLUDE.add(Scalability.ITEMS);
+        EXCLUDE.add(AnalysisObservables.IS_ENACTING);
+        EXCLUDE.add(AnalysisObservables.IS_VALID);
+    }
+    
+    /**
+     * Returns whether the given <code>observable</code> enables (explicit) propagation of values.
+     * 
+     * @param observable the observable
+     * @return <code>true</code> for propagation, <code>false</code> else
+     */
+    public static boolean enablePropagation(IObservable observable) {
+        return !observable.isInternal();
+    }
+
     /**
      * Returns whether the given <code>observable</code> shall be linked.
      * 

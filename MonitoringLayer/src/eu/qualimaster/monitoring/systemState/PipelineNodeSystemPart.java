@@ -279,7 +279,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
      */
     private void doSetValue(IObservable observable, double value, Object key) { 
         super.setValue(observable, value, key);
-        if (null != current) {
+        if (null != current && ILinkSelector.enablePropagation(observable)) {
             current.setValue(observable, value, key);
         }
         if (null != parent) {
@@ -313,7 +313,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
      */
     private void doSetValue(IObservable observable, Double value, Object key) {
         super.setValue(observable, value, key);
-        if (null != current) {
+        if (null != current && ILinkSelector.enablePropagation(observable)) {
             current.setValue(observable, value, key);
         }            
         if (null != parent) {
@@ -337,7 +337,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
         }
         if (doit) {
             super.incrementValue(observable, value, key);
-            if (null != current) {
+            if (null != current && ILinkSelector.enablePropagation(observable)) {
                 current.incrementValue(observable, value, key);
             }
             if (null != parent) {
@@ -362,7 +362,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
         } 
         if (doit) {
             super.incrementValue(observable, value, key);
-            if (null != current) {
+            if (null != current && ILinkSelector.enablePropagation(observable)) {
                 current.incrementValue(observable, value, key);
             }
             if (null != parent) {
