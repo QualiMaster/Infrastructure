@@ -46,9 +46,11 @@ public class EnactingPipelineTests {
     
     /**
      * Tests the enacting pipeline elements.
+     * 
+     * @throws InterruptedException shall not occur
      */
     @Test
-    public void testEnacting() {
+    public void testEnacting() throws InterruptedException {
         final String pipName = "RandomPip";
         final String eltSrc = "src";
         final String fEltSrc = pipName + FrozenSystemState.SEPARATOR + eltSrc;
@@ -93,6 +95,8 @@ public class EnactingPipelineTests {
         Assert.assertTrue(elts.isEnacting(fEltSnk));
         assertEnacting(state, pipName, eltSnk, true, false);
 
+        Thread.sleep(500); // -> enactment delay
+        
         elts.handle(cmd, false);
         Assert.assertFalse(elts.isEnacting(pipName));
         assertEnacting(state, pipName, null, false, false);
