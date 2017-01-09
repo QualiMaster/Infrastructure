@@ -2,6 +2,7 @@ package eu.qualimaster.monitoring;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +22,8 @@ import eu.qualimaster.coordination.commands.ReplayCommand;
 import eu.qualimaster.coordination.commands.ScheduleWavefrontAdaptationCommand;
 import eu.qualimaster.coordination.commands.ShutdownCommand;
 import eu.qualimaster.coordination.commands.UpdateCommand;
+import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
+import eu.qualimaster.monitoring.events.FrozenSystemState;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
 import eu.qualimaster.observables.AnalysisObservables;
@@ -48,7 +51,7 @@ import eu.qualimaster.observables.TimeBehavior;
  * 
  * @author Holger Eichelberger
  */
-class EnactingPipelineElements {
+public class EnactingPipelineElements {
 
     public static final EnactingPipelineElements INSTANCE = new EnactingPipelineElements();
     private Map<String, Long> enacting = Collections.synchronizedMap(new HashMap<String, Long>());
@@ -73,41 +76,68 @@ class EnactingPipelineElements {
             String fPath = PipelineUtils.toFrozenStatePath(path);
             long enactmentDelay = -1;
             if (mark) {
-                enacting.put(fPath, System.currentTimeMillis());
-                Integer count = enactingPipelines.get(pipelineElement);
-                if (null == count) {
-                    count = 1;
-                } else {
-                    count++;
+                if (1 == modifyCount(enactingPipelines, pipeline, 1)) {
+                    enacting.put(pipeline, 0L);
                 }
-                enactingPipelines.put(pipelineElement, count);
+                if (1 == modifyCount(enactingPipelines, fPath, 1)) {
+                    enacting.put(fPath, System.currentTimeMillis());
+                }
             } else {
-                Long start = enacting.remove(fPath);
-                if (null != start) {
-                    enactmentDelay = System.currentTimeMillis() - start;
+                if (0 == modifyCount(enactingPipelines, pipeline, -1)) {
+                    enacting.remove(pipeline);
                 }
-                Integer count = enactingPipelines.get(pipelineElement);
-                if (null != count) { // just to be sure - also for tests
-                    if (1 == count) {
-                        enactingPipelines.remove(pipelineElement);
-                    } else {
-                        enactingPipelines.put(pipelineElement, count - 1);
+                if (0 == modifyCount(enactingPipelines, fPath, -1)) {
+                    Long start = enacting.remove(fPath);
+                    if (null != start) {
+                        enactmentDelay = System.currentTimeMillis() - start;
                     }
                 }
             }
-            PipelineSystemPart psp = MonitoringManager.getSystemState().getPipeline(pipeline);
+            PipelineSystemPart psp = MonitoringManager.getSystemState().obtainPipeline(pipeline);
             if (null != psp) {
-                if (enactingPipelines.containsKey(pipeline)) {
-                    psp.setValue(AnalysisObservables.IS_ENACTING, 
-                        enactingPipelines.containsKey(pipeline) ? 1.0 : 0.0, null);
-                }
-                PipelineNodeSystemPart pnsp = psp.getPipelineNode(pipelineElement);
+                psp.setValue(AnalysisObservables.IS_ENACTING, 
+                    enactingPipelines.containsKey(pipeline) ? 1.0 : 0.0, null);
+                PipelineNodeSystemPart pnsp = psp.obtainPipelineNode(pipelineElement);
                 if (null != pnsp) {
                     pnsp.setValue(AnalysisObservables.IS_ENACTING, mark ? 1.0 : 0.0, null);
                     pnsp.setValue(TimeBehavior.ENACTMENT_DELAY, enactmentDelay, null);
                 }
             }
         }
+    }
+
+    /**
+     * Modified a counter stored in a map.
+     * 
+     * @param map the map to be modified
+     * @param id the id of the map entry
+     * @param change the value change
+     * @return the actual value after modification (<code>0</code> even if there was no modification or the entry did 
+     *   not exist)
+     */
+    private static int modifyCount(Map<String, Integer> map, String id, int change) {
+        Integer count = map.get(id);
+        if (change > 0) {
+            if (null == count) {
+                count = 0;
+            } 
+            count += change;
+            map.put(id, count);
+        } else if (change < 0) {
+            if (null != count) { // just to be sure - also for tests
+                count = count + change;
+                if (count <= 0) {
+                    map.remove(id);
+                    count = 0;
+                } else {
+                    map.put(id, count);
+                }
+            }
+        }
+        if (null == count) {
+            count = 0;
+        }
+        return count;
     }
     
     /**
@@ -116,7 +146,7 @@ class EnactingPipelineElements {
      * @param fPath the frozen state path to look for
      * @return <code>true</code> in case of a running enactment, <code>false</code> else
      */
-    boolean isEnacting(String fPath) {
+    public boolean isEnacting(String fPath) {
         return enacting.containsKey(fPath);
     }
     
@@ -126,13 +156,50 @@ class EnactingPipelineElements {
      * @param command the command
      * @param mark whether the command shall be marked as enacting or unmarked
      */
-    void handle(CoordinationCommand command, boolean mark) {
+    public void handle(CoordinationCommand command, boolean mark) {
         if (null != command) {
             EnactmentCommandCollector collector = new EnactmentCommandCollector();
             command.accept(collector);
             List<CoordinationCommand> commands = collector.getResult();
             for (CoordinationCommand cmd : commands) {
                 cmd.accept(getCommandVisitor(mark));
+            }
+        }
+    }
+    
+    /**
+     * Handles pipeline lifecycle events.
+     * 
+     * @param event the event to handle
+     */
+    public void handle(PipelineLifecycleEvent event) {
+        switch (event.getStatus()) {
+        case STARTING:
+        case STOPPED:
+            clearAll(enacting, event.getPipeline());
+            clearAll(enactingPipelines, event.getPipeline());
+            break;
+        default:
+            break;
+        }
+    }
+    
+    /**
+     * Clears all entries from map with key equals <code>name</code> or starting with 
+     * <code>name</code> + {@link FrozenSystemState#SEPARATOR} as prefix.
+     *
+     * @param <T> the value type
+     * @param map the map to clear
+     * @param name the name for entries to clear
+     */
+    private static <T> void clearAll(Map<String, T> map, String name) {
+        String namePrefix = name + FrozenSystemState.SEPARATOR;
+        Iterator<Map.Entry<String, T>> iter = map.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, T> entry = iter.next();
+            String key = entry.getKey();
+            if (key.equals(name) || key.startsWith(namePrefix)) {
+                iter.remove();
             }
         }
     }

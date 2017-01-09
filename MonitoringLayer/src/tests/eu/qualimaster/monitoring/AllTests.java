@@ -32,6 +32,7 @@ import tests.eu.qualimaster.monitoring.profiling.ProfilingTests;
     ResourceUnpackingTests.class,
     TracingTest.class,
     // must be last
+    EnactingPipelineTests.class,
     MonitoringConfigurationTests.class})
 public class AllTests {
 }
