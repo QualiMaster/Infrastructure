@@ -66,6 +66,8 @@ public class CoordinationConfigurationTests extends DataManagementConfigurationT
              CoordinationConfiguration.getSpecificPipelineSettingsArtifactSpecification());
         Assert.assertEquals(CoordinationConfiguration.DEFAULT_INIT_MODE, 
              CoordinationConfiguration.getInitializationMode());
+        Assert.assertEquals(CoordinationConfiguration.DEFAULT_COMMAND_COMPLETION_ON_EVENT, 
+             CoordinationConfiguration.doCommandCompletionOnEvent());
     }
 
     @Override

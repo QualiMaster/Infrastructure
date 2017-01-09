@@ -574,7 +574,8 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
             if (null != getTracer()) {
                 getTracer().logEntryWritten(text);
             }
-            if (sendEvent) {
+            if (sendEvent && !CoordinationConfiguration.doCommandCompletionOnEvent()) {
+                // config option: else leave to CommandStore/ActiveCommands to send the event on reception
                 EventManager.handle(new CoordinationCommandExecutionEvent(command, cmd, code, message));
             }
         }

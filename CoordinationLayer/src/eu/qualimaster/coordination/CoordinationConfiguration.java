@@ -188,6 +188,18 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
      */
     public static final String DEFAULT_SPECIFICPIPSETTINGS_ARTIFACT_SPEC = EMPTY_VALUE;
     
+    /**
+     * Whether {@link CoordinationCommandExecutionEvent} indicating the completion of a command shall be sent 
+     * by default upon issuing the respective signals (value <code>false</code>) or only on a corresponding 
+     * monitoring event (<code>true</code>).
+     */
+    public static final String COMMAND_COMPLETION_ON_EVENT = "coordination.commandCompletion.onEvent";
+    
+    /**
+     * The default value for {@link #COMMAND_COMPLETION_ON_EVENT} ({@value}).
+     */
+    public static final boolean DEFAULT_COMMAND_COMPLETION_ON_EVENT = false; // TODO change to true
+    
     static final PropertyReader<DetailMode> DETAIL_MODE_READER = new PropertyReader<DetailMode>() {
 
         @Override
@@ -235,6 +247,8 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
         = createStringOption(PROFILE_LOCATION, DEFAULT_PROFILE_LOCATION);
     private static ConfigurationOption<String> specificPipelineSettingsArtifactLocation
         = createStringOption(SPECIFICPIPSETTINGS_ARTIFACT_SPEC, DEFAULT_SPECIFICPIPSETTINGS_ARTIFACT_SPEC);
+    private static ConfigurationOption<Boolean> commandCompletionOnEvent 
+        = createBooleanOption(COMMAND_COMPLETION_ON_EVENT, DEFAULT_COMMAND_COMPLETION_ON_EVENT);
 
     /**
      * Reads the configuration settings from the file.
@@ -457,6 +471,16 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
      */
     public static String getSpecificPipelineSettingsArtifactSpecification() {
         return specificPipelineSettingsArtifactLocation.getValue();
+    }
+    
+    /**
+     * Returns whether command completion on event or by default shall happen.
+     * 
+     * @return <code>true</code> on event indicating a successful completion or <code>false</code> by default
+     *   after turning the command into a signal
+     */
+    public static boolean doCommandCompletionOnEvent() {
+        return commandCompletionOnEvent.getValue();
     }
     
 }
