@@ -27,7 +27,7 @@ import backtype.storm.topology.base.*;
  */
 @SuppressWarnings("serial")
 public abstract class BaseSignalSpout extends BaseRichSpout implements SignalListener, IParameterChangeListener, 
-    IShutdownListener, ILoadSheddingListener, IMonitoringChangeListener {
+    IShutdownListener, ILoadSheddingListener, IMonitoringChangeListener, IAlgorithmChangeListener {
 
     private String name;
     private String pipeline;
@@ -35,6 +35,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
     private String interconnPorts;
     private LoadShedder<?> shedder = NoShedder.INSTANCE;
     private transient StormSignalConnection signalConnection;
+    private transient AlgorithmChangeEventHandler algorithmEventHandler;
     private transient ParameterChangeEventHandler parameterEventHandler;
     private transient ShutdownEventHandler shutdownEventHandler;
     private transient Monitor monitor;
@@ -88,6 +89,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
         try {
             signalConnection = new StormSignalConnection(this.name, this, pipeline, conf);
             if (Configuration.getPipelineSignalsQmEvents()) {
+                algorithmEventHandler = AlgorithmChangeEventHandler.createAndRegister(this, pipeline, name);
                 parameterEventHandler = ParameterChangeEventHandler.createAndRegister(this, pipeline, name);
                 shutdownEventHandler = ShutdownEventHandler.createAndRegister(this, pipeline, name);
                 signalConnInitialized = true;
@@ -239,10 +241,22 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
         getLogger().info("onSignal: Listening on the signal! " + pipeline + "/" + name);
         boolean done = ParameterChangeSignal.notify(data, pipeline, name, this);
         if (!done) {
+            done = AlgorithmChangeSignal.notify(data, pipeline, name, this);
+        }
+        if (!done) {
             done = ShutdownSignal.notify(data, pipeline, name, this);
         }
         if (!done) {
             done = LoadSheddingSignal.notify(data, pipeline, name, this);
+        }
+    }
+    
+    @Override
+    public void notifyAlgorithmChange(AlgorithmChangeSignal signal) {
+     // empty: keep interface/implementations stable
+        ParameterChangeSignal pChange = signal.toParameterChange();
+        if (null != pChange) {
+            notifyParameterChange(pChange);
         }
     }
 
@@ -282,6 +296,7 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
         monitor.shutdown();
         SignalNamespaceLifecycleEventHandler.unregisterHandler();
         if (Configuration.getPipelineSignalsQmEvents()) {
+            EventManager.unregister(algorithmEventHandler);
             EventManager.unregister(parameterEventHandler);
             EventManager.unregister(shutdownEventHandler);
         }
