@@ -17,6 +17,7 @@ package eu.qualimaster.common.signal;
 
 import java.io.Serializable;
 
+import eu.qualimaster.common.QMInternal;
 import eu.qualimaster.monitoring.events.AbstractPipelineElementMonitoringEvent;
 
 /**
@@ -25,6 +26,7 @@ import eu.qualimaster.monitoring.events.AbstractPipelineElementMonitoringEvent;
  * 
  * @author Holger Eichelberger
  */
+@QMInternal
 public class ConnectTaskMonitoringEvent extends AbstractPipelineElementMonitoringEvent {
 
     private static final long serialVersionUID = -7128804008518291862L;
