@@ -529,6 +529,7 @@ public class ReasoningTask extends TimerTask {
         }
         // map monitoring to config
         ReasoningResult result = null;
+        RepositoryConnector.associatePhase(Thread.currentThread(), Phase.MONITORING);
         Executor exec = RepositoryConnector.createExecutor(rtVilModel, tmp, config, event, state);
         exec.stopAfterBindValues();
         try {
@@ -538,6 +539,7 @@ public class ReasoningTask extends TimerTask {
         } catch (Exception e) { // be extremely careful
             getLogger().error("During value binding: " + e.getMessage(), e);
         }
+        RepositoryConnector.associatePhase(Thread.currentThread(), null);
         if (null != listener) {
             listener.notifyReasoningResult(config, result);
         }
