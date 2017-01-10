@@ -18,7 +18,6 @@ package tests.eu.qualimaster.monitoring;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import eu.qualimaster.adaptation.events.AdaptationEvent;
@@ -86,11 +85,11 @@ public class ValueBindingTest {
     /**
      * Tests user constraints.
      */
-    @Ignore
     @Test
     public void testUserConstraint() {
         // setup test 
         IReasoningModelProvider provider = new PhaseReasoningModelProvider(Phase.MONITORING);
+        RepositoryConnector.associatePhase(Thread.currentThread(), Phase.MONITORING); // play on the safe side
         ReasoningTask task = new ReasoningTask(provider);
         // prepare the system state
         SystemState state = MonitoringManager.getSystemState();
@@ -99,7 +98,6 @@ public class ValueBindingTest {
         pip.setValue(ResourceUsage.EXECUTORS, 2, null);
         NodeImplementationSystemPart alg1 = pip.getAlgorithm("alg1");
         NodeImplementationSystemPart alg2 = pip.getAlgorithm("alg2");
-
         // ----------------- force alg 1 -----------------------
         alg1.setValue(TimeBehavior.THROUGHPUT_ITEMS, 22, null);
         alg2.setValue(TimeBehavior.THROUGHPUT_ITEMS, 22, null);
@@ -119,7 +117,6 @@ public class ValueBindingTest {
         Assert.assertNull(event); // shall not occur multiple times
         assertAlgorithmIsValid(TRUE, frozenState, alg1);
         assertAlgorithmIsValid(FALSE, frozenState, alg2);
-        
         alg1.setValue(TimeBehavior.THROUGHPUT_ITEMS, 21, null);
         alg2.setValue(TimeBehavior.THROUGHPUT_ITEMS, 21, null);
 
@@ -128,7 +125,6 @@ public class ValueBindingTest {
         Assert.assertNull(event); // shall not occur multiple times
         assertAlgorithmIsValid(TRUE, frozenState, alg1);
         assertAlgorithmIsValid(FALSE, frozenState, alg2);
-        
         // ----------------- force alg 2 -----------------------
         alg1.setValue(TimeBehavior.THROUGHPUT_ITEMS, 28, null);
         alg2.setValue(TimeBehavior.THROUGHPUT_ITEMS, 28, null);
@@ -157,6 +153,7 @@ public class ValueBindingTest {
         assertAlgorithmIsValid(FALSE, frozenState, alg1);
         assertAlgorithmIsValid(TRUE, frozenState, alg2);
         task.dispose();
+        RepositoryConnector.associatePhase(Thread.currentThread(), null);
     }
     
     /**
