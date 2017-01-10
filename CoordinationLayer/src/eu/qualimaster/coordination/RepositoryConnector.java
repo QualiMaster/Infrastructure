@@ -486,11 +486,13 @@ public class RepositoryConnector {
     private static boolean readModels() {
         boolean result = false;
         String artifactSpec = CoordinationConfiguration.getConfigurationModelArtifactSpecification();
-        if (null != artifactSpec && artifactSpec.length() > 0) { 
+        if (null != artifactSpec && artifactSpec.length() > 0) {
+            File modelPathF = null;
+            boolean modelDone = false;
             try {
                 Path modelPath = getCurrentModelPath();
                 modelPath = updateModel(modelPath, artifactSpec);
-                File modelPathF = modelPath.toFile();
+                modelPathF = modelPath.toFile();
 
                 File propLocation = modelPathF;
                 File location = new File(modelPathF, "qm.xml");
@@ -516,26 +518,33 @@ public class RepositoryConnector {
                     }
                     getLogger().info("loading models for " + phase + " done ");
                 }
-                String settingsTarget = CoordinationConfiguration.getPipelineSettingsLocation();
-                if (null != settingsTarget && !CoordinationConfiguration.isEmpty(settingsTarget)) {
-                    File settingsFolderF = new File(modelPathF, "settings");
-                    if (settingsFolderF.exists()) {
-                        unpackSpecificSettingsArtifact(settingsFolderF);
-                        File settingsTargetF = new File(settingsTarget);
-                        //HdfsUtils.createFolder(settingsTargetF); // initial, be sure
-                        HdfsUtils.clearFolder(settingsTargetF);
-                        //HdfsUtils.deleteFolder(settingsTargetF, true);
-                        String tgt = HdfsUtils.copy(settingsFolderF, settingsTargetF, false, false);
-                        getLogger().info("unpacked settings to (" + tgt + ")");
-                    } else {
-                        getLogger().info("no settings folder in model (" + settingsFolderF.getAbsolutePath() + ")");
-                    }
-                }
-                PluginRegistry.executeUnpackingPlugins(modelPathF, null);
+                modelDone = true;
             } catch (IOException e) {
                 getLogger().error("Extracting Infrastructure Model: " + e.getMessage());
             } catch (ModelManagementException e) {
                 getLogger().error("Extracting Infrastructure Model: " + e.getMessage());
+            }
+            if (modelDone) {
+                try {
+                    String settingsTarget = CoordinationConfiguration.getPipelineSettingsLocation();
+                    if (null != settingsTarget && !CoordinationConfiguration.isEmpty(settingsTarget)) {
+                        File settingsFolderF = new File(modelPathF, "settings");
+                        if (settingsFolderF.exists()) {
+                            unpackSpecificSettingsArtifact(settingsFolderF);
+                            File settingsTargetF = new File(settingsTarget);
+                            //HdfsUtils.createFolder(settingsTargetF); // initial, be sure
+                            HdfsUtils.clearFolder(settingsTargetF);
+                            //HdfsUtils.deleteFolder(settingsTargetF, true);
+                            String tgt = HdfsUtils.copy(settingsFolderF, settingsTargetF, false, false);
+                            getLogger().info("unpacked settings to (" + tgt + ")");
+                        } else {
+                            getLogger().info("no settings folder in model (" + settingsFolderF.getAbsolutePath() + ")");
+                        }
+                    }
+                } catch (IOException e) {
+                    getLogger().error("Extracting pipeline settings (ignored): " + e.getMessage());
+                }
+                PluginRegistry.executeUnpackingPlugins(modelPathF, null);
             }
             result = true;
         } else {
