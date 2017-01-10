@@ -135,6 +135,7 @@ public class RepositoryConnector {
     private static Properties modelProperties = new Properties();
     private static ListLoader loader;
     private static Map<IPhase, Models> models = new HashMap<IPhase, Models>();
+    private static Map<Thread, IPhase> phases = new HashMap<Thread, IPhase>();
     private static File modelsLocation;
     private static int updateCount = 0;
     
@@ -648,6 +649,32 @@ public class RepositoryConnector {
      */
     public static Models getModels(IPhase phase) {
         return models.get(phase);
+    }
+    
+    /**
+     * Associates <code>key</code> to <code>phase</code>.
+     * 
+     * @param key the key, nothing happens if <b>null</b>
+     * @param phase assigns phase to <code>key</code>, removes any mapping of <b>null</b>
+     */
+    public static void associatePhase(Thread key, IPhase phase) {
+        if (null != key) {
+            if (null == phase) {
+                phases.remove(key);
+            } else {
+                phases.put(key, phase);
+            }
+        }
+    }
+    
+    /**
+     * Returns the phase associated to <code>key</code>.
+     * 
+     * @param key the key to return the phase for
+     * @return the associated phase, may be <b>null</b> if there is none or <code>key</code> is <b>null</b>
+     */
+    public static IPhase getPhase(Thread key) {
+        return null == key ? null : phases.get(key);
     }
     
     /**
