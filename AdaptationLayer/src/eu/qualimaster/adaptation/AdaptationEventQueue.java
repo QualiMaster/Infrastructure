@@ -324,6 +324,7 @@ public class AdaptationEventQueue {
                     }
                 }
             }
+            RepositoryConnector.associatePhase(Thread.currentThread(), Phase.ADAPTATION);
             Executor exec = RepositoryHelper.createExecutor(rtVilModel, tmp, config, event, state);
             exec.setReasoningHook(ReasoningHook.INSTANCE);
             if (!AdaptationConfiguration.isReasoningEnabled() || !WITH_REASONING) {
@@ -351,6 +352,7 @@ public class AdaptationEventQueue {
                 // TODO adaptation log
                 LOGGER.error("During adaptation: " + e.getMessage(), e);
             }
+            RepositoryConnector.associatePhase(Thread.currentThread(), null);
             if (log) {
                 TracerFactory.setInstance(null); // thread-based reset
             }
