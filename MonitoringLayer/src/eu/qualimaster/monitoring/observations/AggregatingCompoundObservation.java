@@ -39,10 +39,7 @@ public class AggregatingCompoundObservation extends AbstractCompoundObservation 
      * @return the value
      */
     private double getValue0() {
-        double result = aggregator.getInitialValue();
-        for (ObservedValue value : values()) {
-            result = aggregator.calculate(result, value.get());
-        }
+        double result = aggregate(aggregator);
         if (aggregator.doAverage()) {
             int count = getComponentCount();
             if (count > 0) {

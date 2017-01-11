@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import eu.qualimaster.monitoring.events.IRemovalSelector;
+import eu.qualimaster.monitoring.systemState.IAggregationFunction;
 
 /**
  * Implements a compound observation, mapping all null keys to a single value. This class reacts on 
@@ -176,11 +177,25 @@ public abstract class AbstractCompoundObservation implements IObservation {
     }
     
     /**
+     * Aggregates the value of this compound.
+     * 
+     * @param aggregator the aggregator
+     * @return the aggregated value
+     */
+    protected double aggregate(IAggregationFunction aggregator) {
+        double result = aggregator.getInitialValue();
+        for (ObservedValue value : values()) {
+            result = aggregator.calculate(result, value.get());
+        }
+        return result;
+    }
+    
+    /**
      * Returns an iterable of the values.
      * 
      * @return the iterable of the values
      */
-    protected Iterable<? extends AtomicDouble> values() {
+    private Iterable<? extends AtomicDouble> values() {
         Iterable<? extends AtomicDouble> result;
         if (null == links) {
             result = components.values();
