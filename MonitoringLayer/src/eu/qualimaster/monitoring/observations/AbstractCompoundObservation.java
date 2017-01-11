@@ -184,38 +184,23 @@ public abstract class AbstractCompoundObservation implements IObservation {
      */
     protected double aggregate(IAggregationFunction aggregator) {
         double result = aggregator.getInitialValue();
-        for (ObservedValue value : values()) {
+        if (null != links) {
+            for (int l = links.size() - 1; l >= 0; l--) {
+                IObservation obs = links.get(l);
+                for (Object key : obs.getComponentKeys()) {
+                    AtomicDouble val = obs.getValue(key);
+                    if (null != val && !components.containsKey(key)) {
+                        result = aggregator.calculate(result, val.get());
+                    }
+                }
+            }
+        } 
+        for (ObservedValue value : components.values()) {
             result = aggregator.calculate(result, value.get());
         }
         return result;
     }
     
-    /**
-     * Returns an iterable of the values.
-     * 
-     * @return the iterable of the values
-     */
-    private Iterable<? extends AtomicDouble> values() {
-        Iterable<? extends AtomicDouble> result;
-        if (null == links) {
-            result = components.values();
-        } else {
-            Map<Object, AtomicDouble> vals = new HashMap<Object, AtomicDouble>();
-            for (int l = links.size() - 1; l >= 0; l--) {
-                IObservation obs = links.get(l);
-                for (Object key : obs.getComponentKeys()) {
-                    AtomicDouble val = obs.getValue(key);
-                    if (null != val) {
-                        vals.put(key, val);
-                    }
-                }
-            }
-            vals.putAll(components);
-            result = vals.values();
-        }
-        return result;
-    }
-
     @Override
     public String toString() {
         String result = "{";
