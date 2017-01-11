@@ -73,9 +73,10 @@ public class Prediction {
      * integer indicating the number of steps that still have to be waited
      * before being able to make predictions.
      * 
-     * @return The predicted volume within the next time step.
+     * @param pointsToForecast the number of future data points to forecast.
+     * @return The predicted volume within the next time steps.
      */
-    public double predict() {
+    public double[] predict(int pointsToForecast) {
         try {
             // if there are not enough values in the recent history, return a
             // negative value indicating the steps to wait
@@ -83,8 +84,10 @@ public class Prediction {
                     .size()) {
                 System.out
                         .println("Not enough recent values to make predictions.");
-                return this.recentVolumes.size()
+                double[] forecast = new double[1];
+                forecast[0] = this.recentVolumes.size()
                         - this.forecaster.getTSLagMaker().getMaxLag();
+                return forecast;
             }
 
             // prime the forecaster with enough recent historical data to cover
@@ -92,14 +95,20 @@ public class Prediction {
             this.forecaster.primeForecaster(this.recentVolumes);
 
             // forecast the desired number of data points
+            // outer list is over the steps, inner list is over the targets
             List<List<NumericPrediction>> wekaForecast = this.forecaster
-                    .forecast(1, System.out);
-            double forecast = wekaForecast.get(0).get(0).predicted();
+                    .forecast(pointsToForecast, System.out);
+            //double forecast = wekaForecast.get(0).get(0).predicted();
+            
+            double[] forecast = new double[pointsToForecast];
+            for(int i = 0; i < pointsToForecast; i++) {
+                forecast[i] = wekaForecast.get(i).get(0).predicted();
+                }
 
             return forecast;
         } catch (Exception e) {
             e.printStackTrace();
-            return -1;
+            return null;
         }
     }
 

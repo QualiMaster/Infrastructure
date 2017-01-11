@@ -97,6 +97,9 @@ public class VolumePredictor {
 
     /** The size of the recent history (number of time points) */
     private static final int RECENT_HISTORY_SIZE = 10;
+    
+    /** The number of data points to forecast */
+    private static final int POINTS_TO_FORECAST = 5;
 
     /**
      * The number of recent data points for checking small but regular increases
@@ -247,6 +250,7 @@ public class VolumePredictor {
         String timestamp = getTimestamp();
         HashMap<String, Double> alarms = new HashMap<>();
         HashMap<String, Double> normalizedAlarms = new HashMap<>();
+        HashMap<String, Double> durations = new HashMap<>();
         ArrayList<String> unknownTerms = new ArrayList<>();
         for (String termId : observations.keySet()) {
             // get the name of the source term from its id
@@ -278,17 +282,18 @@ public class VolumePredictor {
                 model.updateRecentVolumes(timestamp, currVolume);
 
                 // predict the volume within the next time step
-                double prediction = model.predict();
-                System.out.print((int) prediction + "\t");
+                double[] predictions = model.predict(POINTS_TO_FORECAST);
+                System.out.print((int) predictions[0] + "\t");
 
                 // check whether the predicted volume is critical and, if so,
                 // include the term when raising the alarm
-                double deviation = evaluatePrediction(termName, prediction);
-                if (deviation != -1) {
-                    alarms.put(termId, deviation);
-                    normalizedAlarms.put(termId, deviation / currVolume);
+                double[] alarm = evaluatePrediction(termName, predictions);
+                if (alarm[0] != -1) {
+                    alarms.put(termId, alarm[0]);
+                    normalizedAlarms.put(termId, alarm[0] / currVolume);
+                    durations.put(termId, alarm[1]);
                 }
-                System.out.print(deviation + "\t");
+                System.out.print(alarm[0] + "\t" + alarm[1] + "\t" + "|" + "\t");
             } else {
                 if (!this.monitoredTerms.contains(termName))
                     unknownTerms.add(termName);
@@ -303,7 +308,7 @@ public class VolumePredictor {
         // raise an alarm to the adaptation layer containing all the critical
         // terms and their volumes
         if (!alarms.isEmpty())
-            raiseAlarms(alarms, normalizedAlarms);
+            raiseAlarms(alarms, normalizedAlarms, durations);
         else
             this.adaptationEvent = null;
 
@@ -346,7 +351,7 @@ public class VolumePredictor {
         this.blindModels.putAll(newBlindModels);
     }
 
-    private double evaluatePrediction(String term, double prediction) {
+    private double[] evaluatePrediction(String term, double[] predictions) {
         // handles 2 cases:
         // - signal high peaks (using recent history to compute avg should
         // detect these)
@@ -355,6 +360,9 @@ public class VolumePredictor {
         // with always increasing values so the new values, although higher, do
         // not result in alarms
 
+        // an alarm is made of a magnitude and a duration probability
+        double[] alarm = new double[2];
+        
         // compute average and std deviation within the recent history
         ArrayList<Long> recentVolumesForTerm = this.recentVolumes.get(term);
         double[] stats = computeStatistics(recentVolumesForTerm);
@@ -365,13 +373,17 @@ public class VolumePredictor {
         // System.out.print((int)stats[0] + "\t");
         // System.out.print((int)stats[1] + "\t");
         System.out.print((int) threshold + "\t");
-        if (prediction > threshold) {
+        if (predictions[0] > threshold) {
             Long current = recentVolumesForTerm
                     .get(recentVolumesForTerm.size() - 1);
-            if (prediction > current)
-                return (double) (prediction - current);
+            if (predictions[0] > current){
+                alarm[0] = (double) (predictions[0] - current);
+                alarm[1] = estimateDuration(predictions, threshold, current);
+                return alarm;
+            }
+            
             else
-                return -1;
+                return new double[]{-1,-1};
             // return (prediction - threshold);
         }
 
@@ -381,7 +393,30 @@ public class VolumePredictor {
         // computeIncrease(recentVolumesForTerm);
 
         else
-            return -1;
+            return new double[]{-1,-1};
+    }
+    
+    private double estimateDuration(double[] predictions, double threshold, double current){
+        
+        // TODO try considering: time of the day of the increase, relative/absolute increase
+        
+        double probability = 0;
+        
+        // contribution of exceeding threshold and current values at the next time points.
+        // this part contributes with 0.5 to the duration probability.
+        double piece = (1.0 / predictions.length) / 4;
+        for(double prediction : predictions){
+            if(prediction > current) probability += piece;
+            if(prediction > threshold) probability += piece;
+        }
+        
+        // contribution of the difference between the first and last future point.
+        // this part contributes with the other 0.5 to the duration probability.
+        double trend = Math.abs((predictions[4] - predictions[0]) / predictions[0]);
+        probability += 0.5 - trend;
+        probability = Math.max(0, probability);
+        
+        return probability;
     }
 
     private double[] computeStatistics(ArrayList<Long> data) {
@@ -429,11 +464,12 @@ public class VolumePredictor {
     }
 
     private void raiseAlarms(HashMap<String, Double> alarms,
-            HashMap<String, Double> normalizedAlarms) {
+            HashMap<String, Double> normalizedAlarms,
+            HashMap<String, Double> durations) {
         // use the event class defined in the infrastructure to send alarms to
         // the adaptation layer
         SourceVolumeAdaptationEvent svae = new SourceVolumeAdaptationEvent(
-                this.pipeline, this.source, alarms, normalizedAlarms);
+                this.pipeline, this.source, alarms, normalizedAlarms, durations);
         this.adaptationEvent = svae;
         EventManager.send(svae);
     }
