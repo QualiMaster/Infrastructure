@@ -379,7 +379,8 @@ public class StormTest extends AbstractCoordinationTests {
         
         Map<String, TopologyTestInfo> topologies = new HashMap<String, TopologyTestInfo>();
         topologies.put(TestTopology.PIP_NAME, new TopologyTestInfo(topology, 
-            new File(Utils.getTestdataDir(), "pipeline.xml"), topoCfg, createProfileData(TestTopology.PIP_NAME)));
+            new File(Utils.getTestdataDir(), "profilingPipeline.xml"), 
+            topoCfg, createProfileData(TestTopology.PIP_NAME)));
         env.setTopologies(topologies);
         
         new ProfileAlgorithmCommand(Naming.NODE_PROCESS, Naming.NODE_PROCESS_ALG1).execute();

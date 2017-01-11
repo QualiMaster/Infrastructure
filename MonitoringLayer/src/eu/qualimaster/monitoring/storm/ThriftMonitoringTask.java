@@ -264,7 +264,7 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
             List<String> uptime = new ArrayList<String>();
             List<String> eventsReceived = new ArrayList<String>();
             int executorRunningCount = 0; // first heuristics... uptime of executors - does not work in every case
-            int nonInternalCount = 0; // second heuristics... non-legacy pipelines sending proper events
+            List<String> nonInternal = new ArrayList<String>(); // second heuristics... non-legacy pipelines via events
             int nonInternalRunningCount = 0;
             for (int e = 0; e < executors.size(); e++) {
                 ExecutorSummary executor = executors.get(e);
@@ -277,7 +277,7 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
                 ExecutorStats stats = executor.get_stats();
                 PipelineNodeSystemPart nodePart = check(SystemState.getNodePart(mapping, part, nodeName), isInternal);
                 if (!isInternal) {
-                    nonInternalCount++;
+                    nonInternal.add(nodeName);
                     if (isUp(nodePart, executor)) {
                         nonInternalRunningCount++;
                         eventsReceived.add(nodeName);
@@ -305,9 +305,9 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
                 || PipelineLifecycleEvent.Status.STARTING == part.getStatus())) {
                 // consider pipeline creation finished as soon as all executors are running and ready to work
                 LOGGER.info("Trying to elevate '" + part.getName() + "' to CREATED: uptime " + uptime + " " 
-                    + executors.size() + " " + executorRunningCount + " event received " + eventsReceived + " " 
-                    + nonInternalCount + " " + nonInternalRunningCount);
-                if (executors.size() == executorRunningCount || nonInternalCount == nonInternalRunningCount) {
+                    + executors.size() + " " + executorRunningCount + " events expected " + nonInternal + " received " 
+                    + eventsReceived + " " + nonInternal.size() + " " + nonInternalRunningCount);
+                if (executors.size() == executorRunningCount || nonInternal.size() == nonInternalRunningCount) {
                     part.changeStatus(PipelineLifecycleEvent.Status.CREATED, true);
                     createdChanged = true;
                 }
