@@ -3,7 +3,6 @@ package eu.qualimaster.monitoring.observations;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -32,7 +31,7 @@ public abstract class AbstractCompoundObservation implements IObservation {
     private AtomicLong lastUpdate = new AtomicLong(-1);
     private AtomicLong firstUpdate = new AtomicLong(-1);
 
-    private Map<Object, AtomicDouble> components = Collections.synchronizedMap(new HashMap<Object, AtomicDouble>());
+    private Map<Object, AtomicDouble> components = new HashMap<Object, AtomicDouble>();
     private List<IObservation> links;
     
     /**
@@ -51,11 +50,13 @@ public abstract class AbstractCompoundObservation implements IObservation {
      */
     protected AbstractCompoundObservation(AbstractCompoundObservation source) {
         Set<Object> keys = new HashSet<Object>();
-        keys.addAll(source.components.keySet());
-        for (Object key : keys) {
-            AtomicDouble sourceVal = source.components.get(key);
-            if (null != sourceVal) {
-                this.components.put(key, new AtomicDouble(sourceVal.get()));
+        synchronized (source.components) {
+            keys.addAll(source.components.keySet());
+            for (Object key : keys) {
+                AtomicDouble sourceVal = source.components.get(key);
+                if (null != sourceVal) {
+                    this.components.put(key, new AtomicDouble(sourceVal.get()));
+                }
             }
         }
         this.firstUpdate.set(source.firstUpdate.get());
@@ -104,7 +105,10 @@ public abstract class AbstractCompoundObservation implements IObservation {
         }
         if (!done) {
             key = checkKey(key);
-            AtomicDouble val = components.get(key);
+            AtomicDouble val;
+            synchronized (components) {
+                val = components.get(key);
+            }
             if (null == val) {
                 val = new AtomicDouble(value);
                 put(key, val);
@@ -130,16 +134,18 @@ public abstract class AbstractCompoundObservation implements IObservation {
      * @param value the new value
      */
     private void put(Object key, AtomicDouble value) {
-        if (key instanceof IRemovalSelector && components.containsKey(key)) {
-            Iterator<Object> iter = components.keySet().iterator();
-            while (iter.hasNext()) {
-                Object k = iter.next();
-                if (k instanceof IRemovalSelector && ((IRemovalSelector) k).remove(key)) {
-                    iter.remove();
+        synchronized (components) {
+            if (key instanceof IRemovalSelector && components.containsKey(key)) {
+                Iterator<Object> iter = components.keySet().iterator();
+                while (iter.hasNext()) {
+                    Object k = iter.next();
+                    if (k instanceof IRemovalSelector && ((IRemovalSelector) k).remove(key)) {
+                        iter.remove();
+                    }
                 }
             }
+            components.put(key, value);
         }
-        components.put(key, value);
     }
     
     /**
@@ -167,7 +173,10 @@ public abstract class AbstractCompoundObservation implements IObservation {
 
     @Override
     public boolean isValueSet() {
-        boolean def = !components.isEmpty();
+        boolean def;
+        synchronized (components) {
+            def = !components.isEmpty();
+        }
         if (!def && null != links) {
             for (int l = 0; !def && l < links.size(); l++) {
                 def = links.get(l).isValueSet();
@@ -189,14 +198,18 @@ public abstract class AbstractCompoundObservation implements IObservation {
                 IObservation obs = links.get(l);
                 for (Object key : obs.getComponentKeys()) {
                     AtomicDouble val = obs.getValue(key);
-                    if (null != val && !components.containsKey(key)) {
-                        result = aggregator.calculate(result, val.get());
+                    synchronized (components) {
+                        if (null != val && !components.containsKey(key)) {
+                            result = aggregator.calculate(result, val.get());
+                        }
                     }
                 }
             }
-        } 
-        for (ObservedValue value : components.values()) {
-            result = aggregator.calculate(result, value.get());
+        }
+        synchronized (components) {
+            for (ObservedValue value : components.values()) {
+                result = aggregator.calculate(result, value.get());
+            }
         }
         return result;
     }
@@ -204,16 +217,18 @@ public abstract class AbstractCompoundObservation implements IObservation {
     @Override
     public String toString() {
         String result = "{";
-        Iterator<Map.Entry<Object, AtomicDouble>> iter = components.entrySet().iterator(); 
         Set<Object> done = new HashSet<Object>();
-        while (iter.hasNext()) {
-            Map.Entry<Object, AtomicDouble> ent = iter.next();
-            Object key = ent.getKey();
-            result += toString(key, ent.getValue());
-            if (iter.hasNext()) {
-                result += ", ";                
+        synchronized (components) {
+            Iterator<Map.Entry<Object, AtomicDouble>> iter = components.entrySet().iterator(); 
+            while (iter.hasNext()) {
+                Map.Entry<Object, AtomicDouble> ent = iter.next();
+                Object key = ent.getKey();
+                result += toString(key, ent.getValue());
+                if (iter.hasNext()) {
+                    result += ", ";                
+                }
+                done.add(key);
             }
-            done.add(key);
         }
         if (null != links) {
             boolean emitComma = !done.isEmpty();
@@ -259,7 +274,9 @@ public abstract class AbstractCompoundObservation implements IObservation {
     
     @Override
     public void clear() {
-        components.clear();
+        synchronized (components) {
+            components.clear();
+        }
         lastUpdate.set(-1);
         firstUpdate.set(-1);
         links = null;
@@ -267,7 +284,10 @@ public abstract class AbstractCompoundObservation implements IObservation {
     
     @Override
     public AtomicDouble getValue(Object key) {
-        AtomicDouble result = components.get(checkKey(key));
+        AtomicDouble result;
+        synchronized (components) {
+            result = components.get(checkKey(key));
+        }
         if (null == result && null != links) {
             for (int l = 0; null == result && l < links.size(); l++) {
                 result = links.get(l).getValue(key);
@@ -302,7 +322,10 @@ public abstract class AbstractCompoundObservation implements IObservation {
 
     @Override
     public int getComponentCount() {
-        int result = components.size();
+        int result;
+        synchronized (components) {
+            result = components.size();
+        }
         if (null != links) {
             for (int l = 0; l < links.size(); l++) {
                 result = links.get(l).getComponentCount();
@@ -314,8 +337,10 @@ public abstract class AbstractCompoundObservation implements IObservation {
     @Override
     public void clearComponents(Collection<Object> keys) {
         if (null != keys) {
-            for (Object key : keys) {
-                components.remove(key);
+            synchronized (components) {
+                for (Object key : keys) {
+                    components.remove(key);
+                }
             }
             if (null != links) {
                 for (int l = 0; l < links.size(); l++) {
@@ -330,10 +355,14 @@ public abstract class AbstractCompoundObservation implements IObservation {
         Set<Object> result;
         if (null == links) {
             result = new HashSet<Object>();
-            result.addAll(components.keySet());
+            synchronized (components) {
+                result.addAll(components.keySet());
+            }
         } else {
             result = new HashSet<Object>();
-            result.addAll(components.keySet());
+            synchronized (components) {
+                result.addAll(components.keySet());
+            }
             for (int l = 0; l < links.size(); l++) {
                 result.addAll(links.get(l).getComponentKeys());
             }
