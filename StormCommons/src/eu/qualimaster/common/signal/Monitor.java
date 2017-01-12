@@ -74,6 +74,7 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     private TimerEventHandler timerHandler;
     private boolean collectVolume = Configuration.enableVolumeMonitoring();
     private boolean initialized = false;
+    private int taskId;
     
     /**
      * Creates a monitor and sends once the executors resource usage event. Call {@link #start(boolean)} as soon as the 
@@ -92,7 +93,8 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
         this.name = name;
         this.executionTime = new IncrementalAverage();
         this.sendInterval = 500;
-        this.key = new ComponentKey(context.getThisWorkerPort(), context.getThisTaskId());
+        this.taskId = context.getThisTaskId();
+        this.key = new ComponentKey(context.getThisWorkerPort(), taskId);
         this.key.setThreadId(Thread.currentThread().getId());
         this.includeItems = includeItems;
     }
@@ -281,7 +283,7 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
 
     @Override
     public void emit(EmitInfo info) {
-        if (null != info && null != info.values) {
+        if (null != info && null != info.values && info.taskId == taskId) {
             itemsSend.addAndGet(info.values.size());
             if (collectVolume) {
                 itemsVolume.addAndGet(MEMGATHERER.getObjectSize(info.values));
@@ -300,7 +302,7 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
 
     @Override
     public void boltExecute(BoltExecuteInfo info) {
-        if (null != info && null != info.executeLatencyMs) {
+        if (null != info && null != info.executeLatencyMs && info.executingTaskId == taskId) {
             executionTime.addValue(info.executeLatencyMs);
             checkSend(System.currentTimeMillis());
         }
