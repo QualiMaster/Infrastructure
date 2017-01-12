@@ -101,9 +101,7 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
      */
     @QMInternal
     public SourceVolumeAdaptationEvent(String pipeline, String source, Map<String, Double> findings,
-        Map<String, Double> normFindings,
-        Map<String, Double> durations) {
-        
+        Map<String, Double> normFindings, Map<String, Double> durations) {
         if (null == findings || findings.isEmpty() || null == normFindings || normFindings.isEmpty()) {
             throw new IllegalArgumentException("no findings");
         }
@@ -189,6 +187,8 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
     }
 
     /**
+     * Returns the durations for individual events.
+     * 
      * @return the durations
      */
     public Map<String, Double> getDurations() {
