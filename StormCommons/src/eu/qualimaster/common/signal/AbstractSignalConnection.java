@@ -1,5 +1,6 @@
 package eu.qualimaster.common.signal;
 
+import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.storm.curator.framework.imps.CuratorFrameworkState;
@@ -61,7 +62,13 @@ public abstract class AbstractSignalConnection implements Watcher {
      * @throws Exception in case of execution problems
      */
     protected void initWatcher() throws Exception {
-        if (Configuration.getPipelineSignalsCurator() && isConnected()) {
+        if (Configuration.getPipelineSignalsCurator()) {
+            while (!isConnected()) { // block until connected, having the watcher initialized is important for lifecycle
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                }
+            }
             String path = getWatchedPath();
             /*Stat stat = client.checkExists().forPath(path);
             if (stat == null) {
@@ -69,6 +76,7 @@ public abstract class AbstractSignalConnection implements Watcher {
             }*/
             SignalMechanism.createWithParents(client, path);
             client.checkExists().usingWatcher(this).forPath(path);
+            LogManager.getLogger(getClass()).info("Initialized watcher on " + path);
         }
     }
     
