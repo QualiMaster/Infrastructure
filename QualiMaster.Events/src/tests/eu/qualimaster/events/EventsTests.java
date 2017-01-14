@@ -102,6 +102,25 @@ public class EventsTests {
         Assert.assertEquals("pip", svae.getPipeline());
         Assert.assertEquals("src", svae.getSource());
         assertEquals(expected, svae.getFindings());
+
+        Map<String, Double> norm = new HashMap<String, Double>();
+        norm.put("$APL", 1.0);
+        svae = new SourceVolumeAdaptationEvent("pip", "src", expected, norm);
+        Assert.assertEquals("pip", svae.getPipeline());
+        Assert.assertEquals("src", svae.getSource());
+        assertEquals(expected, svae.getFindings());
+        assertEquals(norm, svae.getNormalizedFindings());
+        svae.getAllDeviations();
+        svae.getAverageDeviations();
+
+        Map<String, Double> durations = new HashMap<String, Double>();
+        expected.put("$APL", 50.0);
+        svae = new SourceVolumeAdaptationEvent("pip", "src", expected, norm, durations);
+        Assert.assertEquals("pip", svae.getPipeline());
+        Assert.assertEquals("src", svae.getSource());
+        assertEquals(expected, svae.getFindings());
+        assertEquals(norm, svae.getNormalizedFindings());
+        assertEquals(norm, svae.getNormalizedFindings());
     }
     
     /**
@@ -424,7 +443,6 @@ public class EventsTests {
         Assert.assertEquals(opts, lEvt.getOptions());
         Assert.assertEquals("1234", lEvt.getCauseMessageId());
         Assert.assertEquals("abcd", lEvt.getCauseSenderId());
-
     }
 
     /**
