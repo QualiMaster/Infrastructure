@@ -345,7 +345,12 @@ public class Kalman extends AbstractMatrixPredictor {
      * @throws NumberFormatException if parsing fails
      */
     private static double parseDouble(String text) throws NumberFormatException {
-        return Double.parseDouble(text.replace(",", "")); // handle , for 1000s
+        String t = text.replace(",", "");
+        try {
+            return Double.parseDouble(t); // handle , for 1000s
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("parsing " + t + ": " + e.getMessage());
+        }
     }
     
     /**
