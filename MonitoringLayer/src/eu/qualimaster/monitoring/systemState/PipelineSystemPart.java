@@ -377,8 +377,8 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
                 INameMapping mapping = getNameMapping();
                 if (elements.isEmpty()) {
                     // pre-initialize top-level nodes to avoid sequence dependency of events
-                    for (Component comp : mapping.getComponents()) {
-                        obtainPipelineNode(mapping, comp.getName());
+                    for (String node : mapping.getPipelineNodeNames()) {
+                        obtainPipelineNode(mapping, node);
                     }
                     result = getPipelineNodeImpl(nodeName);
                 } 
