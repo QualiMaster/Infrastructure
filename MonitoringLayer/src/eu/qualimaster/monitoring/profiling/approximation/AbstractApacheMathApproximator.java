@@ -43,12 +43,14 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
     /**
      * Creates an abstract approximator.
      * 
+     * @param strategy the storage strategy
      * @param path the path to load a persisted version from
      * @param parameterName the parameter name
      * @param observable the observable this approximator is handling
      */
-    protected AbstractApacheMathApproximator(File path, Object parameterName, IObservable observable) {
-        super(path, parameterName, observable);
+    protected AbstractApacheMathApproximator(IStorageStrategy strategy, File path, Object parameterName, 
+        IObservable observable) {
+        super(strategy, path, parameterName, observable);
     }
     
     @Override
@@ -89,6 +91,21 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
 
     @Override
     protected void doLoad(File folder) {
+        try {
+            doLoad(folder, obs);
+        } catch (IOException e) {
+            getLogger().warn("While loading approximator: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Loads persistent last recent weighted observed points from <code>folder</code>.
+     * 
+     * @param folder the folder
+     * @param obs the observed points to be filled as a side effect
+     * @throws IOException in case of any loading problems
+     */
+    private void doLoad(File folder, LastRecentWeightedObservedPoints obs) throws IOException {
         File file = getFile(folder);
         if (file.exists()) {
             try (LineNumberReader in = new LineNumberReader(new FileReader(file))) {
@@ -104,7 +121,7 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
                 } while (null != line);
                 in.close();
             } catch (IOException e) {
-                getLogger().warn("While loading approximator: " + e.getMessage());
+                throw e;
             }
         }
     }
@@ -166,7 +183,7 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
      * @return the file name
      */
     private File getFile(File folder) {
-        String name = getParameterName() + "-" + getObservable().name() + getSuffix();
+        String name = getStorageStrategy().getApproximatorFileName(getParameterName(), getObservable(), getSuffix());
         name = Constants.toFileName(name);
         return new File(folder, name);
     }
@@ -199,4 +216,9 @@ public abstract class AbstractApacheMathApproximator extends AbstractApproximato
         return obs.size();
     }
     
+    @Override
+    public void merge(File file) throws IOException {
+        doLoad(file, obs);
+    }
+
 }

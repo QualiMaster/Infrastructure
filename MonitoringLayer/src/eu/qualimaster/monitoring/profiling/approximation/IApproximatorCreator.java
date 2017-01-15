@@ -29,11 +29,13 @@ public interface IApproximatorCreator {
     /**
      * Creates an instance of an approximator.
      * 
+     * @param strategy the storage strategy
      * @param path the path to load the approximator from
      * @param paramName the parameter name
      * @param observable the observable to approximate
      * @return the approximator instance
      */
-    public IApproximator createApproximator(File path, Object paramName, IObservable observable);
+    public IApproximator createApproximator(IStorageStrategy strategy, File path, Object paramName, 
+        IObservable observable);
 
 }

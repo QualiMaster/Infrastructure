@@ -91,19 +91,6 @@ public class ProfileReader {
     }
     
     /**
-     * Reads a CSV file.
-     * 
-     * @param args ignored
-     * @throws IOException in case of I/O problems
-     */
-    public static void main(String[] args) throws IOException {
-        if (args.length != 2) {
-            System.err.println("expects the file name of the CSV file to read and the target folder");
-            System.exit(0);
-        }
-    }
-    
-    /**
      * Reads back a profile.
      * 
      * @param input the input CSV file from profiling
@@ -120,7 +107,6 @@ public class ProfileReader {
         pred.add(AlgorithmProfileHelper.SRC_NAME);
         predecessors.put(AlgorithmProfileHelper.FAM_NAME, pred);
         Map<String, Serializable> param = new HashMap<String, Serializable>();
-        param.put("numWorkers", 5);
         if (null != additionalParams) {
             param.putAll(additionalParams);
         }

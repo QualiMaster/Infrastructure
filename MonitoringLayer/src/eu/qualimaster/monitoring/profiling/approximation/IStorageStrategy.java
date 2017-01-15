@@ -85,4 +85,77 @@ public interface IStorageStrategy {
     public String generateKey(PipelineElement element, Map<Object, Serializable> key, IObservable observable, 
         boolean includeParameters);
 
+    /**
+     * Returns whether <code>folder</code> is an approximators folder.
+     * 
+     * @param file the file to test
+     * @return <code>true</code> if it is an approximators folder, <code>false</code> else
+     */
+    public boolean isApproximatorsFolder(File file);
+    
+    /**
+     * Returns the name of the map file.
+     * 
+     * @return the name of the map file
+     */
+    public String getMapFileName();
+
+    /**
+     * Returns the file name for this approximator (without suffix).
+     * 
+     * @param parameterName the parameter name
+     * @param observable the observable
+     * @param suffix (may already be prepended by a ".")
+     * @return the file name without suffix
+     */
+    public String getApproximatorFileName(Object parameterName, IObservable observable, String suffix);
+
+    /**
+     * Carries information about creating an approximator.
+     * 
+     * @author Holger Eichelberger
+     */
+    public class ApproximatorInfo {
+        
+        private Object parameterName;
+        private IObservable observable;
+        
+        /**
+         * Creates an instance.
+         * 
+         * @param parameterName the parameter name
+         * @param observable the observable
+         */
+        public ApproximatorInfo(Object parameterName, IObservable observable) {
+            this.parameterName = parameterName;
+            this.observable = observable;
+        }
+        
+        /**
+         * Returns the parameter name.
+         * 
+         * @return the parameter name
+         */
+        public Object getParameterName() {
+            return parameterName;
+        }
+        
+        /**
+         * Returns the observable.
+         * 
+         * @return the observable
+         */
+        public IObservable getObservable() {
+            return observable;
+        }
+    }
+    
+    /**
+     * Parses an approximator file name.
+     * 
+     * @param fileName the file name
+     * @return the approximator information
+     */
+    public ApproximatorInfo parseApproximatorFileName(String fileName);
+    
 }

@@ -75,9 +75,10 @@ public class Pipelines {
     }
     
     /**
-     * Releases all known pipelines.
+     * Stores and releases all known pipelines.
      * 
      * @see #releasePipeline(String)
+     * @see #storeAll()
      */
     static void releaseAllPipelines() {
         Iterator<Pipeline> iter = pipelines.values().iterator();
@@ -86,6 +87,16 @@ public class Pipelines {
             pip.store();
             pip.clear();
             iter.remove();
+        }
+    }
+
+    /**
+     * Stores all known pipelines.
+     */
+    static void storeAll() {
+        Iterator<Pipeline> iter = pipelines.values().iterator();
+        while (iter.hasNext()) {
+            iter.next().store();
         }
     }
 

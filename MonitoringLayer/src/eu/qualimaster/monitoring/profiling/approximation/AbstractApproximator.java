@@ -30,21 +30,33 @@ public abstract class AbstractApproximator implements IApproximator {
     private IObservable observable;
     private Object parameterName;
     private boolean updated = false;
+    private IStorageStrategy strategy;
 
     /**
      * Creates an abstract approximator.
      * 
+     * @param strategy the storage strategy
      * @param path the path to load a persisted version from
      * @param parameterName the parameter name
      * @param observable the observable this approximator is handling
      * @see #initialize()
      * @see #load(File)
      */
-    protected AbstractApproximator(File path, Object parameterName, IObservable observable) {
+    protected AbstractApproximator(IStorageStrategy strategy, File path, Object parameterName, IObservable observable) {
         this.observable = observable;
         this.parameterName = parameterName;
+        this.strategy = strategy;
         initialize();
         load(path);
+    }
+    
+    /**
+     * Returns the storage strategy.
+     * 
+     * @return the storage strategy
+     */
+    protected IStorageStrategy getStorageStrategy() {
+        return strategy;
     }
 
     /**

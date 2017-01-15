@@ -37,8 +37,9 @@ public class HarmonicApacheMathApproximator extends AbstractApacheMathCurveFitte
     public static final IApproximatorCreator INSTANCE_10 = new IApproximatorCreator() {
         
         @Override
-        public IApproximator createApproximator(File path, Object paramName, IObservable observable) {
-            return new HarmonicApacheMathApproximator(path, paramName, observable, 10);
+        public IApproximator createApproximator(IStorageStrategy strategy, File path, Object paramName, 
+            IObservable observable) {
+            return new HarmonicApacheMathApproximator(strategy, path, paramName, observable, 10);
         }
     };
     
@@ -47,14 +48,15 @@ public class HarmonicApacheMathApproximator extends AbstractApacheMathCurveFitte
     /**
      * Creates a harmonic approximator.
      * 
+     * @param strategy the storage strategy
      * @param path the path to load a persisted version from
      * @param parameterName the parameter name
      * @param observable the observable this approximator is handling
      * @param maxIterations the maximum number of iterations for the optimization of the curve fitting
      */
-    public HarmonicApacheMathApproximator(File path, Object parameterName, IObservable observable, 
-        int maxIterations) {
-        super(path, parameterName, observable);
+    public HarmonicApacheMathApproximator(IStorageStrategy strategy, File path, Object parameterName, 
+        IObservable observable, int maxIterations) {
+        super(strategy, path, parameterName, observable);
         this.maxIterations = Math.max(1, maxIterations);
     }
 

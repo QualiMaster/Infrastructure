@@ -400,19 +400,19 @@ public class TraceReader {
     /**
      * Reads a CSV file.
      * 
-     * @param args ignored
+     * @param args the file to read
      * @throws IOException in case of I/O problems
      */
     public static void main(String[] args) throws IOException {
         if (args.length != 1) {
             System.err.println("expects the file name of the CSV file to read");
-            System.exit(0);
+        } else {
+            File file = new File(args[0]);
+            TraceReader reader = new TraceReader();
+            reader.readCsv(file);
+            AlgorithmProfilePredictionManager.start();
+            AlgorithmProfilePredictionManager.stop();
         }
-        File file = new File(args[0]);
-        TraceReader reader = new TraceReader();
-        reader.readCsv(file);
-        AlgorithmProfilePredictionManager.start();
-        AlgorithmProfilePredictionManager.stop();
     }
 
 }

@@ -37,8 +37,9 @@ public class SplineInterpolationLinearExtrapolationApproximator extends Abstract
     public static final IApproximatorCreator INSTANCE = new IApproximatorCreator() {
         
         @Override
-        public IApproximator createApproximator(File path, Object paramName, IObservable observable) {
-            return new SplineInterpolationLinearExtrapolationApproximator(path, paramName, observable);
+        public IApproximator createApproximator(IStorageStrategy strategy, File path, Object paramName, 
+            IObservable observable) {
+            return new SplineInterpolationLinearExtrapolationApproximator(strategy, path, paramName, observable);
         }
     };
     
@@ -50,12 +51,14 @@ public class SplineInterpolationLinearExtrapolationApproximator extends Abstract
     /**
      * Creates a polynomial approximator.
      * 
+     * @param strategy the storage strategy
      * @param path the path to load a persisted version from
      * @param parameterName the parameter name
      * @param observable the observable this approximator is handling
      */
-    public SplineInterpolationLinearExtrapolationApproximator(File path, Object parameterName, IObservable observable) {
-        super(path, parameterName, observable);
+    public SplineInterpolationLinearExtrapolationApproximator(IStorageStrategy strategy, File path, 
+        Object parameterName, IObservable observable) {
+        super(strategy, path, parameterName, observable);
     }
 
     @Override

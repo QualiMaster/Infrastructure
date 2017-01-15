@@ -37,8 +37,9 @@ public class PolynomialApacheMathApproximator extends AbstractApacheMathCurveFit
     public static final IApproximatorCreator INSTANCE_3 = new IApproximatorCreator() {
         
         @Override
-        public IApproximator createApproximator(File path, Object paramName, IObservable observable) {
-            return new PolynomialApacheMathApproximator(path, paramName, observable, 3);
+        public IApproximator createApproximator(IStorageStrategy strategy, File path, Object paramName, 
+            IObservable observable) {
+            return new PolynomialApacheMathApproximator(strategy, path, paramName, observable, 3);
         }
     };
     
@@ -47,13 +48,15 @@ public class PolynomialApacheMathApproximator extends AbstractApacheMathCurveFit
     /**
      * Creates a polynomial approximator.
      * 
+     * @param strategy the storage strategy
      * @param path the path to load a persisted version from
      * @param parameterName the parameter name
      * @param observable the observable this approximator is handling
      * @param degree the degree of the polynom to fit
      */
-    public PolynomialApacheMathApproximator(File path, Object parameterName, IObservable observable, int degree) {
-        super(path, parameterName, observable);
+    public PolynomialApacheMathApproximator(IStorageStrategy strategy, File path, Object parameterName, 
+        IObservable observable, int degree) {
+        super(strategy, path, parameterName, observable);
         this.degree = Math.max(1, degree);
     }
 

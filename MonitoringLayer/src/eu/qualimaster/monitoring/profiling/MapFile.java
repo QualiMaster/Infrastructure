@@ -18,7 +18,9 @@ package eu.qualimaster.monitoring.profiling;
 import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -29,6 +31,7 @@ import java.util.Set;
  */
 public class MapFile {
 
+    public static final String NAME = "_map";
     private File file;
     private Properties mapData = new Properties(); // might not be ideal, but shall do the job
 
@@ -38,7 +41,7 @@ public class MapFile {
      * @param folder the storage folder
      */
     public MapFile(File folder) {
-        this.file = new File(folder, "_map");
+        this.file = new File(folder, NAME);
     }
     
     /**
@@ -135,9 +138,9 @@ public class MapFile {
     }
     
     /**
-     * Returns the keys.
+     * Returns the keys/identifiers.
      * 
-     * @return the keys
+     * @return the keys/identifiers
      */
     public Set<String> keys() {
         Set<String> result = new HashSet<String>();
@@ -146,6 +149,61 @@ public class MapFile {
             result.add(e.nextElement().toString());
         }
         return result;
+    }
+    
+    /**
+     * Indicates what to do with a file corresponding to a merged entry.
+     * 
+     * @author Holger Eichelberger
+     */
+    public enum MergeStatus {
+        
+        /**
+         * The original mapping was overridden. Remove/do not copy the file.
+         */
+        OBSOLETE,
+        
+        /**
+         * This file is needed from the profile being merged in. Take over/copy it.
+         */
+        TAKE_OVER
+    }
+
+    /**
+     * Merges two predictor files and returns the mapping of the represented files. Existing entries will be
+     * overwritten.
+     * 
+     * @param other the other predictor
+     * @return a mapping of files and what to do with them in case of a physical merging
+     */
+    public Map<File, MergeStatus> merge(MapFile other) {
+        Map<File, MergeStatus> result = new HashMap<File, MergeStatus>();
+        for (String key : keys()) {
+            File myFile = getFile(key);
+            result.put(myFile, MergeStatus.TAKE_OVER);
+        }
+        for (String key : other.keys()) {
+            File myFile = getFile(key);
+            File otherFile = other.getFile(key);
+            if (null != otherFile) {
+                if (null != myFile) {
+                    result.put(myFile, MergeStatus.OBSOLETE);
+                }
+                put(key, other.get(key));
+                result.put(otherFile, MergeStatus.TAKE_OVER);
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * Returns whether two map files have the same mappings.
+     * 
+     * @param other the other map file
+     * @return <code>true</code> for the same mappings, <code>false</code> else
+     */
+    public boolean sameMapping(MapFile other) {
+        return mapData.equals(other.mapData);
     }
 
 }

@@ -354,7 +354,8 @@ public class PipelineElement {
         if (null == result) {
             IApproximatorCreator creator = ProfilingRegistry.getApproximatorCreator(paramName, observable);
             if (null != creator) {
-                result = creator.createApproximator(getApproximatorsPath(), paramName, observable);
+                result = creator.createApproximator(getProfileCreator().getStorageStrategy(), getApproximatorsPath(), 
+                    paramName, observable);
                 if (null != result) {
                     if (null == obsApproximators) {
                         obsApproximators = new HashMap<>();

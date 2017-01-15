@@ -24,9 +24,11 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import eu.qualimaster.monitoring.profiling.DefaultStorageStrategy;
 import eu.qualimaster.monitoring.profiling.approximation.HarmonicApacheMathApproximator;
 import eu.qualimaster.monitoring.profiling.approximation.IApproximator;
 import eu.qualimaster.monitoring.profiling.approximation.IApproximatorCreator;
+import eu.qualimaster.monitoring.profiling.approximation.IStorageStrategy;
 import eu.qualimaster.monitoring.profiling.approximation.PolynomialApacheMathApproximator;
 import eu.qualimaster.monitoring.profiling.approximation.SplineInterpolationLinearExtrapolationApproximator;
 import eu.qualimaster.observables.TimeBehavior;
@@ -271,7 +273,8 @@ public class ApproximatorTest {
         File tmp = new File(FileUtils.getTempDirectory(), "approx");
         tmp.mkdirs();
         
-        IApproximator approx1 = creator.createApproximator(tmp, "key", TimeBehavior.LATENCY);
+        IStorageStrategy strategy = DefaultStorageStrategy.INSTANCE;
+        IApproximator approx1 = creator.createApproximator(strategy, tmp, "key", TimeBehavior.LATENCY);
         Assert.assertNotNull(approx1);
         for (int d = 0; d < data.size(); d++) {
             data.get(d).update(approx1);
@@ -280,7 +283,7 @@ public class ApproximatorTest {
         Assert.assertNotNull(f);
         Assert.assertTrue(f.exists());
         
-        IApproximator approx2 = creator.createApproximator(tmp, "key", TimeBehavior.LATENCY);
+        IApproximator approx2 = creator.createApproximator(strategy, tmp, "key", TimeBehavior.LATENCY);
         Assert.assertNotNull(approx2);
         Assert.assertTrue(approx2.containsSameData(approx1));
 

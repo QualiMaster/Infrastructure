@@ -24,6 +24,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import eu.qualimaster.monitoring.profiling.ProfileReader;
+import eu.qualimaster.monitoring.tracing.TraceReader;
 import eu.qualimaster.monitoring.tracing.TraceReader.PipelineEntry;
 import tests.eu.qualimaster.coordination.Utils;
 
@@ -50,6 +51,16 @@ public class ProfileReaderTest {
         File[] inOutput = outputFolder.listFiles();
         Assert.assertTrue(null != inOutput && inOutput.length > 0);
         FileUtils.deleteQuietly(outputFolder);
+    }
+    
+    /**
+     * Just calling main without effects.
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test
+    public void testMain() throws IOException {
+        TraceReader.main(new String[]{}); // shall not cause anything
     }
 
 }

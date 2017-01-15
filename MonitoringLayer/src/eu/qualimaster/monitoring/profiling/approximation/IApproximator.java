@@ -16,6 +16,7 @@
 package eu.qualimaster.monitoring.profiling.approximation;
 
 import java.io.File;
+import java.io.IOException;
 
 import eu.qualimaster.observables.IObservable;
 
@@ -74,4 +75,12 @@ public interface IApproximator {
      */
     public boolean containsSameData(IApproximator approx);
 
+    /**
+     * Merges the data in <code>file</code> into this approximator.
+     * 
+     * @param file the file
+     * @throws IOException if reading fails
+     */
+    public void merge(File file) throws IOException;
+    
 }

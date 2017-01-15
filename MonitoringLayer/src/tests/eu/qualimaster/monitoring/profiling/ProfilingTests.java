@@ -18,6 +18,8 @@ package tests.eu.qualimaster.monitoring.profiling;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
+import tests.eu.qualimaster.monitoring.ProfileReaderTest;
+
 /**
  * The test suite for the Monitoring Profiling support. Do not rename this class.
  * 
@@ -32,6 +34,7 @@ import org.junit.runners.Suite;
     QuantizerTest.class,
     ManagerTest.class, 
     SelectionTests.class, 
-    ApproximatorTest.class})
+    ApproximatorTest.class, 
+    ProfileReaderTest.class})
 public class ProfilingTests {
 }

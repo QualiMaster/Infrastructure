@@ -23,6 +23,7 @@ import java.util.TreeMap;
 
 import eu.qualimaster.monitoring.profiling.approximation.IStorageStrategy;
 import eu.qualimaster.observables.IObservable;
+import eu.qualimaster.observables.Observables;
 
 /**
  * Implements the default storage strategy using hierarchical paths based on the profile key.
@@ -30,9 +31,10 @@ import eu.qualimaster.observables.IObservable;
  * @author Christopher Voges
  * @author Holger Eichelberger
  */
-class DefaultStorageStrategy implements IStorageStrategy {
+public class DefaultStorageStrategy implements IStorageStrategy {
 
     public static final IStorageStrategy INSTANCE = new DefaultStorageStrategy();
+    private static final String APPROX_FOLDER = "approximators";
     
     /**
      * Prevents external instantiation.
@@ -78,7 +80,7 @@ class DefaultStorageStrategy implements IStorageStrategy {
         for (String string : nesting) {
             folder = new File(folder, string);
         }
-        return new File(folder, "approximators");
+        return new File(folder, APPROX_FOLDER);
     }
 
     @Override
@@ -155,6 +157,47 @@ class DefaultStorageStrategy implements IStorageStrategy {
     private static String keyToString(Map<Object, Serializable> key, Object part) {
         Serializable tmp = key.get(part);
         return null == tmp ? "" : tmp.toString();
+    }
+
+    @Override
+    public boolean isApproximatorsFolder(File file) {
+        return APPROX_FOLDER.equals(file.getName());
+    }
+
+    @Override
+    public String getMapFileName() {
+        return MapFile.NAME;
+    }
+
+    @Override
+    public String getApproximatorFileName(Object parameterName, IObservable observable, String suffix) {
+        String name = parameterName + "-" + observable.name();
+        if (null != suffix) {
+            if (!suffix.startsWith(".")) {
+                name += ".";
+            }
+            name += suffix;
+        }
+        return Constants.toFileName(name);
+    }
+
+    @Override
+    public ApproximatorInfo parseApproximatorFileName(String fileName) {
+        ApproximatorInfo result = null;
+        String name = fileName;
+        int pos = name.lastIndexOf('.');
+        if (pos > 0) {
+            name = name.substring(0, pos);
+        }
+        // name constants for observables shall not contain a - (naming conventions)
+        pos = name.lastIndexOf("-");
+        if (pos > 0 && pos < name.length()) { // somewhere in-between
+            IObservable obs = Observables.valueOf(name.substring(pos + 1));
+            if (null != obs) {
+                result = new ApproximatorInfo(name.substring(0, pos), obs);
+            }
+        }
+        return result;
     }
 
 }

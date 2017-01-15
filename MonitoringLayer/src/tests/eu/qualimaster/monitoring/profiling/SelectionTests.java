@@ -43,7 +43,9 @@ import eu.qualimaster.monitoring.observations.ObservationFactory;
 import eu.qualimaster.monitoring.observations.ObservationFactory.IObservationCreator;
 import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictionManager;
 import eu.qualimaster.monitoring.profiling.Constants;
+import eu.qualimaster.monitoring.profiling.MapFile;
 import eu.qualimaster.monitoring.profiling.MultiPredictionResult;
+import eu.qualimaster.monitoring.profiling.ProfileMerger;
 import eu.qualimaster.monitoring.profiling.MultiPredictionResult.Prediction;
 import eu.qualimaster.monitoring.profiling.ProfilingRegistry;
 import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
@@ -883,6 +885,75 @@ public class SelectionTests {
             }
         }
         return best;
+    }
+    
+    /**
+     * Tests the profile merger (we need a profile for that).
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test
+    public void profileMergerTest() throws IOException {
+        ProfileMerger.main(new String[]{}); // shall not cause anything
+        AlgorithmProfilePredictionManager.store();
+        File testDataFolder1 = new File(testDataFolder.getParentFile(), testDataFolder.getName() + "1");
+        File testDataFolderT = new File(testDataFolder.getParentFile(), testDataFolder.getName() + "T");
+        FileUtils.deleteQuietly(testDataFolder1);
+        FileUtils.deleteQuietly(testDataFolderT);
+        
+        // just merge with itself, shall be the same afterwards
+        FileUtils.copyDirectory(testDataFolder, testDataFolder1);
+        testDataFolderT.mkdirs();
+        
+        ProfileMerger merger = new ProfileMerger(); // default storage strategy
+        merger.index(testDataFolder);
+        merger.index(testDataFolder1);
+        merger.merge(testDataFolderT);
+
+        assertSameDirectories(testDataFolderT, testDataFolder, true);
+        
+        FileUtils.deleteQuietly(testDataFolder1);
+        FileUtils.deleteQuietly(testDataFolderT);
+    }
+    
+    /**
+     * Asserts that two profile directories can be considered the same.
+     * 
+     * @param actual the actual directory
+     * @param expected the expected directory
+     * @param top whether we compare top or contained elements
+     */
+    private void assertSameDirectories(File actual, File expected, boolean top) {
+        Assert.assertNotNull(actual);
+        Assert.assertNotNull(expected);
+        if (expected.exists()) {
+            Assert.assertTrue(actual.getAbsolutePath() + " does not exist", actual.exists());
+        }
+
+        if (!top) {
+            Assert.assertEquals(actual.getName(), expected.getName());
+        }
+        if (expected.isDirectory()) {
+            Assert.assertTrue(actual.isDirectory());
+            File[] eFiles = expected.listFiles();
+            File[] aFiles = actual.listFiles();
+            if (null != eFiles) {
+                Assert.assertNotNull(aFiles);
+                for (File e : eFiles) {
+                    assertSameDirectories(new File(actual, e.getName()), e, false);
+                }
+            } else {
+                Assert.assertNull(eFiles);
+            }
+        } else {
+            Assert.assertTrue(actual.isFile());
+            // file size may differ, however
+            if (MapFile.NAME.equals(actual.getName())) {
+                MapFile eMF = new MapFile(expected);
+                MapFile aMF = new MapFile(actual);
+                Assert.assertTrue(aMF.sameMapping(eMF));
+            }
+        }
     }
 
 }

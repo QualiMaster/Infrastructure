@@ -328,6 +328,13 @@ public class AlgorithmProfilePredictionManager {
         }
         return result;
     }
+    
+    /**
+     * Stores all known pipelines and profiles.
+     */
+    public static void store() {
+        Pipelines.storeAll();
+    }
 
     /**
     * Called upon shutdown of the infrastructure. Clean up global resources here.
