@@ -87,6 +87,28 @@ public class PipelineElement {
     }
     
     /**
+     * Returns all parameters.
+     * 
+     * @return the parameters (copy)
+     */
+    public Map<Object, Serializable> getParameters() {
+        Map<Object, Serializable> result = new HashMap<Object, Serializable>();
+        result.putAll(parameters);
+        return result;
+    }
+    
+    /**
+     * Changes all parameters as given.
+     * 
+     * @param parameters the new/overriding parameters (ignored if <b>null</b>)
+     */
+    public void setParameters(Map<Object, Serializable> parameters) {
+        if (null != parameters) {
+            this.parameters.putAll(parameters);
+        }
+    }
+    
+    /**
      * Sets a current parameter value. [public for testing]
      * 
      * @param param the parameter name

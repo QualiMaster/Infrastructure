@@ -30,6 +30,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import eu.qualimaster.coordination.CoordinationManager;
+import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.coordination.IdentityMapping;
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
@@ -61,17 +64,18 @@ import tests.eu.qualimaster.monitoring.genTopo.TestProcessor;
  */
 public class ManagerTest {
 
-    // TODO check multi-step prediction (pre-requisites?)
-
     private static final IObservable[] OBSERVABLES = new IObservable[] {TimeBehavior.LATENCY, 
         TimeBehavior.THROUGHPUT_ITEMS, Scalability.ITEMS};
     private File testFolder = new File(FileUtils.getTempDirectory(), "profilingTest");
+    private INameMapping mapping;
 
     /**
      * Prepares a test.
      */
     @Before
     public void before() {
+        mapping = new IdentityMapping("pip");
+        CoordinationManager.registerTestMapping(mapping);
         AlgorithmProfilePredictionManager.clear();
         FileUtils.deleteQuietly(testFolder);
         defaultPredictionSteps();
@@ -86,8 +90,9 @@ public class ManagerTest {
     public void after() {
         AlgorithmProfilePredictionManager.useTestData(null);
         defaultPredictionSteps();
-//FileUtils.deleteQuietly(testFolder);
+        FileUtils.deleteQuietly(testFolder);
         AlgorithmProfilePredictionManager.clear();
+        CoordinationManager.unregisterNameMapping(mapping);
     }
     
     /**
@@ -106,6 +111,7 @@ public class ManagerTest {
     @Test
     public void testManagerPipelineLifecycle() {
         testLifecycle(false, 0);
+        FileUtils.deleteQuietly(testFolder);
         testLifecycle(false, 1);
     }
 
@@ -115,6 +121,7 @@ public class ManagerTest {
     @Test
     public void testManagerProfilingPipelineLifecycle() {
         testLifecycle(true, 0);
+        FileUtils.deleteQuietly(testFolder);
         testLifecycle(true, 1);
     }
 
@@ -415,9 +422,9 @@ public class ManagerTest {
             System.out.println();
             desc.assertPipelineStructure();
             // see registerPredictionSteps
-            assertPrediction(desc, TimeBehavior.LATENCY, 0.1);
+            assertPrediction(desc, TimeBehavior.LATENCY, 0.2);
             assertPrediction(desc, TimeBehavior.THROUGHPUT_ITEMS, 0.6); // increasing
-            assertPrediction(desc, Scalability.ITEMS, 0.11); // Failed with 0.1
+            assertPrediction(desc, Scalability.ITEMS, 0.2); // Failed with 0.1
 
             desc.predictParameterValues(desc.getNumericParameterName(), null); // TODO assert
             

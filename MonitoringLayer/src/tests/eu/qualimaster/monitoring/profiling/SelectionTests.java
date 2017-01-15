@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -47,6 +48,8 @@ import eu.qualimaster.monitoring.profiling.MapFile;
 import eu.qualimaster.monitoring.profiling.MultiPredictionResult;
 import eu.qualimaster.monitoring.profiling.ProfileMerger;
 import eu.qualimaster.monitoring.profiling.MultiPredictionResult.Prediction;
+import eu.qualimaster.monitoring.profiling.Pipeline;
+import eu.qualimaster.monitoring.profiling.PipelineElement;
 import eu.qualimaster.monitoring.profiling.ProfilingRegistry;
 import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
@@ -710,10 +713,40 @@ public class SelectionTests {
      */
     @Test
     public void testPrediction() {
+        testAll(5);
+        
+        // keep relevant data - can we get the predictors back?
+        Pipeline pip = AlgorithmProfilePredictionManager.obtainPipeline(PIP_NAME);
+        PipelineElement elt = pip.getElement(FAM_ELT);
+        Map<Object, Serializable> params = elt.getParameters();
+        String active = elt.getActiveAlgorithm();
+        
+        // store and clear state
+        AlgorithmProfilePredictionManager.store();
+        AlgorithmProfilePredictionManager.clear();
+
+        // re-create structure
+        pip = AlgorithmProfilePredictionManager.obtainPipeline(PIP_NAME);
+        pip.setPath(testDataFolder.getAbsolutePath());
+        elt = pip.obtainElement(FAM_ELT);
+        elt.setParameters(params);
+        elt.setActive(active);
+        
+        testAll(5);
+        
+        //printLogs(System.out);
+    }
+
+    /**
+     * Tests predictions against measured values.
+     * 
+     * @param steps the maximum number of steps
+     */
+    private void testAll(int steps) {
         for (AlgorithmDescriptor alg : algorithms.values()) {
             for (IObservable obs : MEASURED) { // CAPACITY / ITEMS does not work, also as validated
                 int origSteps = ProfilingRegistry.getPredictionSteps(obs);
-                for (int i = 0; i < 5; i++) { // prediction steps ahead
+                for (int i = 0; i < steps; i++) { // prediction steps ahead
                     long time = (LAST_TIME + i) * TIME_STEP;
                     double o;
                     if (alg.hasTrace(obs)) {
@@ -728,7 +761,6 @@ public class SelectionTests {
                 ProfilingRegistry.registerPredictionSteps(obs, origSteps);
             }
         }
-        //printLogs(System.out);
     }
     
     /**

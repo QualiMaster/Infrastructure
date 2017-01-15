@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package eu.qualimaster.monitoring.profiling.predictors;
+
 import java.util.Properties;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
@@ -246,7 +247,7 @@ public class Kalman extends AbstractMatrixPredictor {
                         /* 
                          * ... simulate updates using the last prediction.
                          * If an update must be simulated and there is no predicted value 
-                         * to use instead of the measurement, 'defaultMeasurenment' value is used for the update.
+                         * to use instead of the measurement, 'defaultMeasurement' value is used for the update.
                          */
                         update(lastUpdated + 1 , prediction == Constants.NO_PREDICTION 
                             ? lastUpdate : defaultMeasurement);
@@ -303,7 +304,7 @@ public class Kalman extends AbstractMatrixPredictor {
                 String[] line = lines[i].split(",");
                 matrix[i] = new double[line.length];
                 for (int j = 0; j < matrix[i].length; j++) {
-                    matrix[i][j] = Double.parseDouble(line[j]);
+                    matrix[i][j] = parseDouble(line[j]);
                 }
             }
             result = MatrixUtils.createRealMatrix(matrix);
@@ -320,7 +321,6 @@ public class Kalman extends AbstractMatrixPredictor {
      */
     private static RealVector stringTo2DVector(String string) {
         RealVector result = null;
-        
         try {
             int start = string.indexOf("{") + 1;
             int end = string.indexOf("}");
@@ -328,22 +328,31 @@ public class Kalman extends AbstractMatrixPredictor {
             String[] line = string.split(";");
             double[] vector = new double[line.length];
             for (int i = 0; i < vector.length; i++) {
-                vector[i] = Double.parseDouble(line[i]);
+                vector[i] = parseDouble(line[i]);
             }
-            
             result = MatrixUtils.createRealVector(vector);
         } catch (NumberFormatException | NullPointerException e) {
             LogManager.getLogger(Kalman.class).error(e.getMessage(), e);
         }
-        
         return result;
+    }
+    
+    /**
+     * Parses a double value from text in math3 notation.
+     * 
+     * @param text the text to parse
+     * @return the double value
+     * @throws NumberFormatException if parsing fails
+     */
+    private static double parseDouble(String text) throws NumberFormatException {
+        return Double.parseDouble(text.replace(",", "")); // handle , for 1000s
     }
     
     /**
      * Update models and the Kalman-Filter after a change in the parameters / matrices.
      */
     private void reinitialize() {
-        pm = new DefaultProcessModel(mA, mB, mQ, xVector, mP);
+        pm = new DefaultProcessModel(mA, mB, mQ, xVector, mP); // xVector, mP
         mm = new DefaultMeasurementModel(mH, mR);
         filter = new KalmanFilter(pm, mm);
     }
@@ -357,8 +366,8 @@ public class Kalman extends AbstractMatrixPredictor {
         result.put(KEY_MATRIX_H, mH.toString());
         result.put(KEY_MATRIX_Q, mQ.toString());
         result.put(KEY_MATRIX_R, mR.toString());
-        result.put(KEY_MATRIX_P, mP.toString());
-        result.put(KEY_VECTOR_X, xVector.toString());
+        result.put(KEY_MATRIX_P, filter.getErrorCovarianceMatrix().toString());
+        result.put(KEY_VECTOR_X, filter.getStateEstimationVector().toString());
         result.put(KEY_VECTOR_CONTROL, controlVector.toString());
         result.put(KEY_LAST_UPDATED, String.valueOf(lastUpdated));
         result.put(KEY_LAST_UPDATE, String.valueOf(lastUpdate));
