@@ -33,7 +33,7 @@ import org.apache.log4j.LogManager;
 import eu.qualimaster.monitoring.profiling.Constants;
 import eu.qualimaster.monitoring.profiling.Utils;
 
-import static eu.qualimaster.monitoring.profiling.predictors.Utils.parseDouble;
+import static eu.qualimaster.monitoring.profiling.predictors.Utils.*;
 
 /**
  * Kalman Implementation for the QualiMaster-Project using the
@@ -286,59 +286,26 @@ public class Kalman extends AbstractMatrixPredictor {
         return predict(1);
     }
 
-    /**
-     * Generates a 2-dimensional {@link RealMatrix} from a given String.
-     * @param string The needed form is '{{double,double,...},...,{...}}'.
-     * @return A {@link RealMatrix} if the conversion was successful, else <null>.
-     */
-    public static RealMatrix stringTo2DMatrix(String string) {
-        RealMatrix result = null;
-        try {
-            // 2D-> '{{' marks the start and '}}' the end.
-            int start = string.indexOf("{{") + 2;
-            int end = string.indexOf("}}");
-            string = string.substring(start, end);
-            // Create lines
-            String[] lines = string.split("\\},\\{");
-            double[][] matrix = new double[lines.length][];
-            // Fill lines
-            for (int i = 0; i < matrix.length; i++) {
-                String[] line = lines[i].split(",");
-                matrix[i] = new double[line.length];
-                for (int j = 0; j < matrix[i].length; j++) {
-                    matrix[i][j] = parseDouble(line[j]);
-                }
-            }
-            result = MatrixUtils.createRealMatrix(matrix);
-        } catch (NullArgumentException | DimensionMismatchException | NumberFormatException e) {
-            LogManager.getLogger(Kalman.class).error(e.getMessage(), e);
-        }
+    
+    @Override
+    protected Properties toProperties() {
+        Properties result = new Properties();
+        result.put(KEY_MEASUREMENT_NOISE, String.valueOf(measurementNoise));
+        result.put(KEY_MATRIX_A, matrixToString(mA));
+        result.put(KEY_MATRIX_B, matrixToString(mB));
+        result.put(KEY_MATRIX_H, matrixToString(mH));
+        result.put(KEY_MATRIX_Q, matrixToString(mQ));
+        result.put(KEY_MATRIX_R, matrixToString(mR));
+        result.put(KEY_MATRIX_P, matrixToString(filter.getErrorCovarianceMatrix()));
+        result.put(KEY_VECTOR_X, vectorToString(filter.getStateEstimationVector()));
+        result.put(KEY_VECTOR_CONTROL, vectorToString(controlVector));
+        result.put(KEY_LAST_UPDATED, String.valueOf(lastUpdated));
+        result.put(KEY_LAST_UPDATE, String.valueOf(lastUpdate));
+        result.put(KEY_ALLOWED_GAP, String.valueOf(allowedGap));
+        result.put(KEY_DEFAULT_MEASUREMENT, String.valueOf(defaultMeasurement));
         return result;
     }
-    
-    /**
-     * Generates a 2-dimensional {@link RealVector} from a given String.
-     * @param string The needed form is '{double;double;...}'.
-     * @return A {@link RealVector} if the conversion was successful, else <null>.
-     */
-    private static RealVector stringTo2DVector(String string) {
-        RealVector result = null;
-        try {
-            int start = string.indexOf("{") + 1;
-            int end = string.indexOf("}");
-            string = string.substring(start, end);
-            String[] line = string.split(";");
-            double[] vector = new double[line.length];
-            for (int i = 0; i < vector.length; i++) {
-                vector[i] = parseDouble(line[i]);
-            }
-            result = MatrixUtils.createRealVector(vector);
-        } catch (NumberFormatException | NullPointerException e) {
-            LogManager.getLogger(Kalman.class).error(e.getMessage(), e);
-        }
-        return result;
-    }
-    
+
     /**
      * Update models and the Kalman-Filter after a change in the parameters / matrices.
      */
@@ -346,25 +313,6 @@ public class Kalman extends AbstractMatrixPredictor {
         pm = new DefaultProcessModel(mA, mB, mQ, xVector, mP); // xVector, mP
         mm = new DefaultMeasurementModel(mH, mR);
         filter = new KalmanFilter(pm, mm);
-    }
-    
-    @Override
-    protected Properties toProperties() {
-        Properties result = new Properties();
-        result.put(KEY_MEASUREMENT_NOISE, String.valueOf(measurementNoise));
-        result.put(KEY_MATRIX_A, mA.toString());
-        result.put(KEY_MATRIX_B, mB.toString());
-        result.put(KEY_MATRIX_H, mH.toString());
-        result.put(KEY_MATRIX_Q, mQ.toString());
-        result.put(KEY_MATRIX_R, mR.toString());
-        result.put(KEY_MATRIX_P, filter.getErrorCovarianceMatrix().toString());
-        result.put(KEY_VECTOR_X, filter.getStateEstimationVector().toString());
-        result.put(KEY_VECTOR_CONTROL, controlVector.toString());
-        result.put(KEY_LAST_UPDATED, String.valueOf(lastUpdated));
-        result.put(KEY_LAST_UPDATE, String.valueOf(lastUpdate));
-        result.put(KEY_ALLOWED_GAP, String.valueOf(allowedGap));
-        result.put(KEY_DEFAULT_MEASUREMENT, String.valueOf(defaultMeasurement));
-        return result;
     }
 
     /**
@@ -379,7 +327,7 @@ public class Kalman extends AbstractMatrixPredictor {
         RealMatrix tempM = null;
         String tmp = prop.getProperty(key);
         if (null != tmp) {
-            tempM = stringTo2DMatrix(tmp);
+            tempM = stringToMatrix(tmp);
         }
         return null != tempM ? tempM : deflt;
     }
@@ -396,7 +344,7 @@ public class Kalman extends AbstractMatrixPredictor {
         RealVector tempV = null;
         String tmp = prop.getProperty(key);
         if (null != tmp) {
-            tempV = stringTo2DVector(tmp);
+            tempV = stringToVector(tmp);
         }
         return null != tempV ? tempV : deflt;
     }

@@ -15,9 +15,17 @@
  */
 package eu.qualimaster.monitoring.profiling.predictors;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.exception.NullArgumentException;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
+import org.apache.log4j.LogManager;
+
 /**
  * Some predictor utilites.
  * 
+ * @author Christopher Voges
  * @author Holger Eichelberger
  */
 public class Utils {
@@ -30,7 +38,7 @@ public class Utils {
      * @throws NumberFormatException if parsing fails
      */
     public static double parseDouble(String text) throws NumberFormatException {
-        String t = text.replace(",", "");
+        String t = text.trim().replace(",", "");
         int pos = t.lastIndexOf('.');
         if (pos > 0) {
             t = t.substring(0, pos).replace(".", "") + t.substring(pos); // include ".", linux/english formatting
@@ -40,6 +48,122 @@ public class Utils {
         } catch (NumberFormatException e) {
             throw new NumberFormatException("parsing " + t + ": " + e.getMessage());
         }
+    }
+
+    /**
+     * Generates a 2-dimensional {@link RealMatrix} from a given String.
+     * @param string The needed form is '{{double,double,...},...,{...}}'.
+     * @return A {@link RealMatrix} if the conversion was successful, else <null>.
+     */
+    public static RealMatrix stringToMatrix(String string) {
+        RealMatrix result = null;
+        try {
+            // 2D-> '{{' marks the start and '}}' the end.
+            int start = string.indexOf("{{") + 2;
+            int end = string.indexOf("}}");
+            string = string.substring(start, end);
+            // Create lines
+            String[] lines = string.split("\\},\\{");
+            double[][] matrix = new double[lines.length][];
+            // Fill lines
+            for (int i = 0; i < matrix.length; i++) {
+                String[] line = lines[i].split(";");
+                matrix[i] = new double[line.length];
+                for (int j = 0; j < matrix[i].length; j++) {
+                    matrix[i][j] = parseDouble(line[j]);
+                }
+            }
+            result = MatrixUtils.createRealMatrix(matrix);
+        } catch (NullArgumentException | DimensionMismatchException | NumberFormatException e) {
+            LogManager.getLogger(Kalman.class).error(e.getMessage(), e);
+        }
+        return result;
+    }
+    
+    /**
+     * Generates a 2-dimensional {@link RealVector} from a given String.
+     * @param string The needed form is '{double;double;...}'.
+     * @return A {@link RealVector} if the conversion was successful, else <null>.
+     */
+    public static RealVector stringToVector(String string) {
+        RealVector result = null;
+        try {
+            int start = string.indexOf("{") + 1;
+            int end = string.indexOf("}");
+            string = string.substring(start, end);
+            String[] line = string.split(";");
+            boolean isEmpty = false;
+            if (1 == line.length) {
+                isEmpty = line[0].trim().isEmpty();
+            }
+            double[] vector;
+            if (isEmpty) {
+                vector = new double[0];
+            } else {
+                vector = new double[line.length];
+                for (int i = 0; i < vector.length; i++) {
+                    vector[i] = parseDouble(line[i]);
+                }
+            }
+            result = MatrixUtils.createRealVector(vector);
+        } catch (NumberFormatException | NullPointerException e) {
+            LogManager.getLogger(Kalman.class).error(e.getMessage(), e);
+        }
+        return result;
+    }
+    
+    /**
+     * Turns a vector into a string.
+     * 
+     * @param vector the vector
+     * @return the string representation
+     */
+    public static String vectorToString(RealVector vector) {
+        String result = "{";
+        int dim = vector.getDimension();
+        for (int i = 0; i < dim; i++) {
+            result += toString(vector.getEntry(i));
+            if (i + 1 < dim) {
+                result += ";";
+            }
+        }
+        return result + "}";
+    }
+    
+    /**
+     * Turns a matrix into a string.
+     * 
+     * @param matrix the matrix
+     * @return the string
+     */
+    public static String matrixToString(RealMatrix matrix) {
+        String result = "{";
+        int cols = matrix.getColumnDimension();
+        int rows = matrix.getRowDimension();
+        for (int r = 0; r < rows; r++) {
+            result += "{";
+            for (int c = 0; c < cols; c++) {
+                result += toString(matrix.getEntry(r, c));
+                if (c + 1 < cols) {
+                    result += ";";
+                }
+            }
+            result += "}";
+            if (r + 1 < rows) {
+                result += ",";
+            }
+        }
+        return result + "}";
+    }
+    
+    /**
+     * Turns a double into a string.
+     * 
+     * @param value the value to be turned into a string
+     * @return the string value
+     */
+    public static String toString(double value) {
+        return String.valueOf(value);
     }
 
 }
