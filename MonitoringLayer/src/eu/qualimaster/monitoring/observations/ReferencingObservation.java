@@ -169,4 +169,9 @@ public class ReferencingObservation implements IObservation {
         provider.switchedTo(observable, false);
     }
 
+    @Override
+    public String toString() {
+        return "ref " + observable + " " + getValue();
+    }
+    
 }

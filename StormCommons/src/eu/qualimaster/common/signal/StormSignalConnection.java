@@ -66,6 +66,13 @@ public class StormSignalConnection extends AbstractSignalConnection {
         }
         SignalMechanism.initEnabledSignalNamespaceState(pipeline);
     }
+
+    @Override
+    protected long maxWaitingTime() {
+        int retryCount = Configuration.getZookeeperRetryTimes();
+        int retryInterval = Configuration.getZookeeperRetryInterval();
+        return Math.max(super.maxWaitingTime(), retryCount + retryInterval);
+    }
     
     /**
      * Returns the watched path.

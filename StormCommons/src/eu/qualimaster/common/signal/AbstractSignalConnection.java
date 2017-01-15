@@ -54,6 +54,15 @@ public abstract class AbstractSignalConnection implements Watcher {
         return client;
     }
     
+    /**
+     * Returns the maximum waiting time for obtaining a connection.
+     * 
+     * @return the maximum waiting time in ms
+     */
+    protected long maxWaitingTime() {
+        return 3000;
+    }
+    
     // checkstyle: stop exception type check
     
     /**
@@ -63,11 +72,18 @@ public abstract class AbstractSignalConnection implements Watcher {
      */
     protected void initWatcher() throws Exception {
         if (Configuration.getPipelineSignalsCurator()) {
-            while (!isConnected()) { // block until connected, having the watcher initialized is important for lifecycle
+            final long maxWaitingTime = maxWaitingTime();
+            long now = System.currentTimeMillis();
+            // block until connected, having the watcher initialized is important for lifecycle
+            while (!isConnected() && System.currentTimeMillis() - now < maxWaitingTime) { 
                 try {
                     Thread.sleep(50);
                 } catch (InterruptedException e) {
                 }
+            }
+            if (!isConnected()) {
+                LogManager.getLogger(getClass()).warn("Curator connection not connected after waiting time " 
+                    + maxWaitingTime + "ms");
             }
             String path = getWatchedPath();
             /*Stat stat = client.checkExists().forPath(path);
