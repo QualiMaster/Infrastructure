@@ -43,6 +43,8 @@ import eu.qualimaster.monitoring.observations.ObservationFactory;
 import eu.qualimaster.monitoring.observations.ObservationFactory.IObservationCreator;
 import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictionManager;
 import eu.qualimaster.monitoring.profiling.Constants;
+import eu.qualimaster.monitoring.profiling.MultiPredictionResult;
+import eu.qualimaster.monitoring.profiling.MultiPredictionResult.Prediction;
 import eu.qualimaster.monitoring.profiling.ProfilingRegistry;
 import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
@@ -755,11 +757,93 @@ public class SelectionTests {
                 double p = AlgorithmProfilePredictionManager.predict(PIP_NAME, FAM_ELT, alg.getName(), obs, null);
                 Assert.assertTrue("OBS " + obs + " for " + alg.getName() + " not in 15% " + o + " " + p, 
                     Math.abs(o - p) / o <= 0.15);
+                p = prediction.get(obs);
+                Assert.assertTrue("OBS " + obs + " for " + alg.getName() + " not in 15% " + o + " " + p, 
+                    Math.abs(o - p) / o <= 0.15);
             }            
         }
         String best = simpleWeighting(result, weighting);
         Assert.assertEquals(HW_ALG, best); // by construction
     }
+    
+    /**
+     * Tests the multi prediction result.
+     */
+    @Test
+    public void testMultiPrediction() {
+        Set<IObservable> observables = new HashSet<IObservable>();
+        for (IObservable obs : RELEVANT) {
+            observables.add(obs);
+        }
+        MultiPredictionResult result = AlgorithmProfilePredictionManager.predict(PIP_NAME, FAM_ELT, 
+            algorithms.keySet(), observables);
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.algorithms());
+        Assert.assertEquals(result.algorithms(), algorithms.keySet());
+        for (AlgorithmDescriptor alg : algorithms.values()) {
+            List<Prediction> predictions = result.getPredictions(alg.getName());
+            Assert.assertNotNull(predictions);
+            Assert.assertTrue(1 == predictions.size()); // due to construction
+            Prediction pred = predictions.get(0);
+            Assert.assertNotNull(pred);
+            Assert.assertNotNull(pred.getParameters());
+            Map<IObservable, Double> prediction = pred.getResult();
+            long time = LAST_TIME * TIME_STEP;
+            for (IObservable obs : MEASURED) { // CAPACITY / ITEMS does not work, also as validated
+                double o;
+                if (alg.hasTrace(obs)) {
+                    o = alg.getObservation(obs, time);
+                } else {  // we have no trace to produce the observation, take the last logged measured one
+                    o = alg.getLastLoggedMeasuredValue(obs); 
+                }
+                double p = AlgorithmProfilePredictionManager.predict(PIP_NAME, FAM_ELT, alg.getName(), obs, null);
+                Assert.assertTrue("OBS " + obs + " for " + alg.getName() + " not in 15% " + o + " " + p, 
+                    Math.abs(o - p) / o <= 0.15);
+                p = prediction.get(obs);
+                Assert.assertTrue("OBS " + obs + " for " + alg.getName() + " not in 15% " + o + " " + p, 
+                    Math.abs(o - p) / o <= 0.15);
+            }            
+        }
+    }
+    
+    /**
+     * Tests setting/retrieving/resetting test values on the prediction manager.
+     */
+    @Test
+    public void testTests() {
+        Set<IObservable> observables = new HashSet<IObservable>();
+        for (IObservable obs : RELEVANT) {
+            observables.add(obs);
+        }
+        
+        Double pred = 25.0;
+        AlgorithmProfilePredictionManager.setTestPrediction(pred);
+        for (AlgorithmDescriptor alg : algorithms.values()) {
+            Assert.assertEquals(AlgorithmProfilePredictionManager.predict(PIP_NAME, FAM_ELT, 
+                 alg.getName(), RELEVANT[0], null), pred.doubleValue(), 0.05);
+        }
+        AlgorithmProfilePredictionManager.setTestPrediction(null);
+        
+        Map<String, Map<IObservable, Double>> pPreds = new HashMap<String, Map<IObservable, Double>>();
+        AlgorithmProfilePredictionManager.setTestParameterPredictions(pPreds);
+        Assert.assertEquals(AlgorithmProfilePredictionManager.predictParameterValues(PIP_NAME, FAM_ELT, 
+            "a", observables, null), pPreds);
+        AlgorithmProfilePredictionManager.setTestParameterPredictions(null);
+        
+        Map<String, Map<IObservable, Double>> preds = new HashMap<String, Map<IObservable, Double>>();
+        AlgorithmProfilePredictionManager.setTestPredictions(preds);
+        Assert.assertEquals(AlgorithmProfilePredictionManager.predict(PIP_NAME, FAM_ELT, algorithms.keySet(), 
+            observables, null), preds);
+        AlgorithmProfilePredictionManager.setTestPredictions(null);
+
+        MultiPredictionResult multiRes = new MultiPredictionResult();
+        AlgorithmProfilePredictionManager.setTestPredictionsMulti(multiRes);
+        Assert.assertEquals(AlgorithmProfilePredictionManager.predict(PIP_NAME, FAM_ELT, 
+            algorithms.keySet(), observables), multiRes);
+        AlgorithmProfilePredictionManager.setTestPredictionsMulti(null);
+    }
+    
+    // test the tests
     
     /**
      * Implements a simple weighting of mass predictions.

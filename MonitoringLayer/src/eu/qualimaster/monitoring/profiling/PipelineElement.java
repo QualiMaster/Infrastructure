@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.LogManager;
 
@@ -31,6 +32,8 @@ import eu.qualimaster.monitoring.profiling.approximation.IStorageStrategy;
 import eu.qualimaster.monitoring.profiling.quantizers.Quantizer;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.tracing.Tracing;
+import eu.qualimaster.monitoring.tracing.TraceReader.Entry;
+import eu.qualimaster.monitoring.tracing.TraceReader.PipelineEntry;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.Scalability;
 
@@ -55,7 +58,7 @@ public class PipelineElement {
     /**
      * Maps profile keys to profiles.
      */
-    private Map<Object, IAlgorithmProfile> profiles = new HashMap<>();
+    private Map<Map<Object, Serializable>, IAlgorithmProfile> profiles = new HashMap<>();
     
     /**
      * Maps parameter identifiers and observables to an approximator for unknown points, i.e., 
@@ -260,7 +263,7 @@ public class PipelineElement {
             for (int p = 0; p < predCount; p++) {
                 inputRate += pred.get(p).getObservedValue(Scalability.ITEMS);
             }
-            inputRate /= predCount;
+            //inputRate /= predCount;
             parameters.put(Constants.KEY_INPUT_RATE, quantizer.quantize(inputRate));
         }
     }
@@ -279,6 +282,38 @@ public class PipelineElement {
         for (IObservable obs : family.getObservables()) {
             if (family.hasValue(obs)) {
                 updateParameterApproximators(obs, family.getObservedValue(obs), true);
+            }
+        }
+    }
+
+    /**
+     * Updates the predictor(s) from a profiled CSV file.
+     * 
+     * @param pipelineEntry the pipeline to update the predictors
+     * @param algorithm the name of the profiled algorithm
+     * @param predecessors the predecessors of this pipeline element
+     */
+    void update(PipelineEntry pipelineEntry, String algorithm, List<String> predecessors) {
+        this.setActive(algorithm);
+        Entry entry = pipelineEntry.getNodeEntry(getName());
+        if (null != entry) {
+            Quantizer<Double> quantizer = ProfilingRegistry.getQuantizer(Scalability.ITEMS, false);
+            if (null != predecessors && null != quantizer) {
+                double inputRate = 0;
+                for (String pred : predecessors) {
+                    Double o = pipelineEntry.getNodeEntry(pred).getObservation(Scalability.ITEMS);
+                    if (null != o) {
+                        inputRate += o;
+                    }
+                }
+                parameters.put(Constants.KEY_INPUT_RATE, quantizer.quantize(inputRate));
+            }
+            Map<Object, Serializable> key = getKey(null, null);
+            IAlgorithmProfile profile = obtainProfile(key);
+            profile.update(pipelineEntry.getTimestamp(), entry);
+    
+            for (IObservable obs : entry.observables()) {
+                updateParameterApproximators(obs, entry.getObservation(obs), true);
             }
         }
     }
@@ -385,6 +420,32 @@ public class PipelineElement {
         Map<Object, Serializable> key = getKey(algorithm, targetValues);
         IAlgorithmProfile profile = obtainProfile(key);
         return predict(profile, observable);
+    }
+
+    /**
+     * Predict the next value for all known parameters for this pipeline element.
+     * 
+     * @param algorithm the name of the algorithm (take the active one if <b>null</b>)
+     * @param observables the observables to predict
+     * @param result the result object to be modified as a side effect
+     */
+    void predict(String algorithm, Set<IObservable> observables, MultiPredictionResult result) {
+        for (Map.Entry<Map<Object, Serializable>, IAlgorithmProfile> entry : profiles.entrySet()) {
+            Map<Object, Serializable> key = entry.getKey();
+            if (algorithm.equals(key.get(Constants.KEY_ALGORITHM))) {
+                IAlgorithmProfile profile = entry.getValue();
+                Map<IObservable, Double> algResults = new HashMap<IObservable, Double>();
+                for (IObservable obs : observables) {
+                    double predicted = predict(profile, obs);
+                    algResults.put(obs, (Constants.NO_PREDICTION == predicted) ? null : predicted);
+                }
+                // don't return internal key object, remove algorithm pseudo-parameter
+                Map<Object, Serializable> k = new HashMap<Object, Serializable>();
+                k.putAll(key);
+                k.remove(Constants.KEY_ALGORITHM);
+                result.add(algorithm, k, algResults);
+            }
+        }
     }
 
     /**

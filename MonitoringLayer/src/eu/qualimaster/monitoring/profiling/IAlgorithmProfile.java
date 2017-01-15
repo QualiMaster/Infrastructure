@@ -18,6 +18,7 @@ package eu.qualimaster.monitoring.profiling;
 import java.io.File;
 
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
+import eu.qualimaster.monitoring.tracing.TraceReader.Entry;
 import eu.qualimaster.observables.IObservable;
 
 /**
@@ -38,7 +39,15 @@ public interface IAlgorithmProfile {
      * @param family the family used to update the predictors
      */
     public void update(PipelineNodeSystemPart family);
-    
+
+    /**
+     * Updates the profile according to the measurements in <code>entry</code>.
+     * 
+     * @param timestamp the update timestamp
+     * @param entry the entry used to update the predictors
+     */
+    public void update(long timestamp, Entry entry);
+
     /**
      * Predicts a value for the given <code>obserable</code>.
      * 

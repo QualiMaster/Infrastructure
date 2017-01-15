@@ -17,6 +17,7 @@ package eu.qualimaster.monitoring.profiling;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,7 +32,9 @@ import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 import eu.qualimaster.monitoring.events.AlgorithmProfilePredictionRequest;
 import eu.qualimaster.monitoring.events.AlgorithmProfilePredictionResponse;
 import eu.qualimaster.monitoring.events.ParameterChangedMonitoringEvent;
+import eu.qualimaster.monitoring.profiling.ProfileReader.Meta;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
+import eu.qualimaster.monitoring.tracing.TraceReader.PipelineEntry;
 import eu.qualimaster.observables.IObservable;
 
 /**
@@ -46,6 +49,7 @@ public class AlgorithmProfilePredictionManager {
     private static IAlgorithmProfileCreator creator = new KalmanProfileCreator(); // currently fixed, may be replaced
     private static boolean predict = true;
     private static Double testPrediction;
+    private static MultiPredictionResult testPredictionsMulti;
     private static Map<String, Map<IObservable, Double>> testPredictions;
     private static Map<String, Map<IObservable, Double>> testParameterPredictions;
  
@@ -206,8 +210,8 @@ public class AlgorithmProfilePredictionManager {
      *   observables ({@link IObservable}-Double) or parameter values (String-value)
      * @return the predicted values with <b>null</b> as prediction if there is none, or <b>null</b> if no prediction is 
      *   possible at all, e.g., pipeline or element unknown
-     *   
-     * @see #setParameterPredictions(Map)
+     * 
+     * @see #setTestPredictions(Map)
      * @see #enablePrediction(boolean)
      */
     public static Map<String, Map<IObservable, Double>> predict(String pipeline, String element, Set<String> algorithms,
@@ -231,6 +235,36 @@ public class AlgorithmProfilePredictionManager {
             }
         }
         return null == testPredictions ? result : testPredictions;
+    }
+
+    /**
+     * Performs a mass-prediction for a set of algorithms and a set of observables.
+     * 
+     * @param pipeline the pipeline name containing <code>element</code>
+     * @param element the pipeline element name running <code>algorithm</code>
+     * @param algorithms the algorithms to predict for
+     * @param observables the observables to create the prediction for
+     * @return the predicted values 
+     *   
+     * @see #setTestPredictionsMulti(MultiPredictionResult)
+     * @see #enablePrediction(boolean)
+     */
+    public static MultiPredictionResult predict(String pipeline, String element, Set<String> algorithms,
+        Set<IObservable> observables) {
+        MultiPredictionResult result = null;
+        if (predict && null != algorithms) {
+            result = new MultiPredictionResult();
+            Pipeline pip = Pipelines.getPipeline(pipeline);
+            if (null != pip) {
+                PipelineElement elt = pip.getElement(element);
+                if (null != elt) {
+                    for (String algorithm : algorithms) {
+                        elt.predict(algorithm, observables, result);
+                    }
+                }
+            }
+        }
+        return null == testPredictionsMulti ? result : testPredictionsMulti;
     }
     
     /**
@@ -294,75 +328,6 @@ public class AlgorithmProfilePredictionManager {
         }
         return result;
     }
-    
-    /**
-     * Predicts the best algorithm for the given situation.
-     * 
-     * @param pipeline the pipeline name containing <code>element</code>
-     * @param element the pipeline element name running <code>algorithm</code>
-     * @param algorithms the algorithms to predict for
-     * @param weighting the weighting of observables
-     * @param targetValues the target values for prediction. Predict the next step if <b>null</b> or empty. May contain
-     *   observables ({@link IObservable}-Double) or parameter values (String-value)
-     * @return the predicted algorithm or <b>null</b> if no one can be predicted
-     */
-    /*@Deprecated
-    public static String predict(String pipeline, String element, Set<String> algorithms, 
-        Map<IObservable, Double> weighting, Map<Object, Serializable> targetValues) {
-        String result = null;
-        if (predict && null != algorithms && null != weighting) {
-            Pipeline pip = Pipelines.getPipeline(pipeline);
-            if (null != pip) {
-                PipelineElement elt = pip.getElement(element);
-                if (null != elt) {
-                    result = simpleWeighting(elt, algorithms, weighting, targetValues);
-                }
-            }
-        }
-        return result;
-    }*/
-
-    /**
-     * Performs a simple weighting-based maximization over algorithms.
-     * 
-     * @param elt the pipeline element to predict for
-     * @param algorithms the algorithms to take into account
-     * @param weighting the weighting of observables
-     * @param targetValues the target values for prediction. Predict the next step if <b>null</b> or empty. May contain
-     *   observables ({@link IObservable}-Double) or parameter values (String-value)
-     * @return the predicted algorithm or <b>null</b> if no one can be predicted
-     */
-    /*@Deprecated
-    private static String simpleWeighting(PipelineElement elt, Set<String> algorithms, 
-        Map<IObservable, Double> weighting, Map<Object, Serializable> targetValues) {
-        String best = null;
-        double bestVal = 0;
-        for (String algorithm : algorithms) {
-            double algVal = 0;
-            for (Map.Entry<IObservable, Double> ent : weighting.entrySet()) {
-                IObservable obs = ent.getKey();
-                Double weight = ent.getValue();
-                double sum = 0;
-                double weights = 0;
-                if (null != obs && null != weight) {
-                    double predicted = elt.predict(algorithm, obs, targetValues);
-                    if (Constants.NO_PREDICTION != predicted) {
-                        sum = predicted * weight;
-                        weights += weight;
-                    }
-                }
-                if (weights != 0) {
-                    algVal = sum / weights;
-                } else {
-                    algVal = 0;
-                }
-            }
-            if (null == best || algVal > bestVal) {
-                best = algorithm;
-            }
-        }
-        return best;
-    }*/
 
     /**
     * Called upon shutdown of the infrastructure. Clean up global resources here.
@@ -382,6 +347,30 @@ public class AlgorithmProfilePredictionManager {
             baseFolder = MonitoringConfiguration.getProfileLocation();
         } else {
             baseFolder = folder;
+        }
+    }
+
+    /**
+     * Fills the algorithm profiles with the given entries. [just for replaying a stored pipeline from a CSV]
+     * 
+     * @param entries the CSV entries
+     * @param meta the meta information about the pipeline
+     */
+    public static void fill(List<PipelineEntry> entries, Meta meta) {
+        for (PipelineEntry entry : entries) {
+            Pipeline pip = Pipelines.obtainPipeline(entry.getName(), creator);
+            pip.setPath(baseFolder);
+            pip.enableProfilingMode();
+            for (String node : entry.nodes()) {
+                PipelineElement elt = pip.obtainElement(node);
+                Map<String, Serializable> params = meta.getParameters(node);
+                if (null != params) {
+                    for (Map.Entry<String, Serializable> param : params.entrySet()) {
+                        elt.setParameter(param.getKey(), param.getValue());
+                    }
+                }
+                elt.update(entry, meta.getAlgorithm(), meta.getPredecessors(node));
+            }
         }
     }
     
@@ -450,6 +439,15 @@ public class AlgorithmProfilePredictionManager {
      */
     public static void setTestPredictions(Map<String, Map<IObservable, Double>> predictions) {
         testPredictions = predictions;
+    }
+
+    /**
+     * Sets the next mass predictions for testing. The values remain valid until changed by the next call.
+     * 
+     * @param predictions the next predictions
+     */
+    public static void setTestPredictionsMulti(MultiPredictionResult predictions) {
+        testPredictionsMulti = predictions;
     }
     
     /**

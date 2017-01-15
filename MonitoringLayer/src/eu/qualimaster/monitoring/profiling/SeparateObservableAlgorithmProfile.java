@@ -30,6 +30,7 @@ import eu.qualimaster.monitoring.profiling.approximation.IStorageStrategy;
 import eu.qualimaster.monitoring.profiling.predictors.IAlgorithmProfilePredictor;
 import eu.qualimaster.monitoring.profiling.validators.IValidator;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
+import eu.qualimaster.monitoring.tracing.TraceReader.Entry;
 import eu.qualimaster.observables.IObservable;
 
 /**
@@ -287,6 +288,16 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
                 if (null != predictor) {
                     predictor.update(family.getLastUpdate(obs) / 1000, family.getObservedValue(obs));
                 }
+            }
+        }
+    }
+
+    @Override
+    public void update(long timestamp, Entry entry) {
+        for (IObservable obs : entry.observables()) {
+            IAlgorithmProfilePredictor predictor = obtainPredictor(obs);
+            if (null != predictor) {
+                predictor.update(timestamp / 1000, entry.getObservation(obs));
             }
         }
     }
