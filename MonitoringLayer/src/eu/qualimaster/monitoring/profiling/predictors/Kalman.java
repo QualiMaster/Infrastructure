@@ -33,6 +33,8 @@ import org.apache.log4j.LogManager;
 import eu.qualimaster.monitoring.profiling.Constants;
 import eu.qualimaster.monitoring.profiling.Utils;
 
+import static eu.qualimaster.monitoring.profiling.predictors.Utils.parseDouble;
+
 /**
  * Kalman Implementation for the QualiMaster-Project using the
  * Apache-math-library to reengineer the approach used in the RainMon-Project,
@@ -335,22 +337,6 @@ public class Kalman extends AbstractMatrixPredictor {
             LogManager.getLogger(Kalman.class).error(e.getMessage(), e);
         }
         return result;
-    }
-    
-    /**
-     * Parses a double value from text in math3 notation.
-     * 
-     * @param text the text to parse
-     * @return the double value
-     * @throws NumberFormatException if parsing fails
-     */
-    private static double parseDouble(String text) throws NumberFormatException {
-        String t = text.replace(",", "");
-        try {
-            return Double.parseDouble(t); // handle , for 1000s
-        } catch (NumberFormatException e) {
-            throw new NumberFormatException("parsing " + t + ": " + e.getMessage());
-        }
     }
     
     /**

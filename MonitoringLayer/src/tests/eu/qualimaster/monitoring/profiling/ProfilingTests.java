@@ -28,6 +28,7 @@ import tests.eu.qualimaster.monitoring.ProfileReaderTest;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
+    UtilsTest.class,
     InstantiationTest.class, 
     PerformanceTest.class, 
     QualityTest.class,
