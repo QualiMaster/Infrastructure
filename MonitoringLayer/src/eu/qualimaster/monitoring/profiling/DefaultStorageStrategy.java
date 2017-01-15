@@ -200,4 +200,44 @@ public class DefaultStorageStrategy implements IStorageStrategy {
         return result;
     }
 
+    @Override
+    public String stripToProfilingIdentifier(String identifier) {
+        String result = identifier;
+        if (null != identifier) {
+            result = stripLeadingEntry(result, "pipeline=");
+            result = stripLeadingEntry(result, "element=");
+        }
+        return result;
+    }
+    
+    /**
+     * Strips until the first separator.
+     * 
+     * @param identifier the identifier to strip
+     * @return the stripped identifier or <code>identifier</code>
+     */
+    private static String stripUntilFirstSeparator(String identifier) {
+        String result = identifier;
+        int pos = result.indexOf(":");
+        if (pos > 0 && pos < result.length()) {
+            result = result.substring(pos + 1);
+        }
+        return result;
+    }
+
+    /**
+     * Strips the entire leading entry.
+     * 
+     * @param identifier the identifier to strip
+     * @param entryKey the entry key to strip
+     * @return the stripped identifier or <code>identifier</code>
+     */
+    private static String stripLeadingEntry(String identifier, String entryKey) {
+        String result = identifier;
+        if (result.startsWith(entryKey)) {
+            result = stripUntilFirstSeparator(identifier);
+        }
+        return result;
+    }
+
 }

@@ -158,4 +158,12 @@ public interface IStorageStrategy {
      */
     public ApproximatorInfo parseApproximatorFileName(String fileName);
     
+    /**
+     * Strips a given identifier to a profiling identifier.
+     * 
+     * @param identifier the identifier
+     * @return the stripped identifier or <code>identifier</code> if nothing can be stripped
+     */
+    public String stripToProfilingIdentifier(String identifier);
+    
 }

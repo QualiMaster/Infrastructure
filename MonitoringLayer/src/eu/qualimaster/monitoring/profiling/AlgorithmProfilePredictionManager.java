@@ -67,12 +67,12 @@ public class AlgorithmProfilePredictionManager {
     }
     
     /**
-     * Obtains a pipeline.
+     * Obtains a pipeline. [public for testing]
      * 
      * @param name the name of the pipeline
      * @return the pipeline
      */
-    private static Pipeline obtainPipeline(String name) {
+    public static Pipeline obtainPipeline(String name) {
         return Pipelines.obtainPipeline(name, creator);
     }
 

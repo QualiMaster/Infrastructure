@@ -267,7 +267,7 @@ public class Kalman extends AbstractMatrixPredictor {
                 prediction = Constants.NO_PREDICTION;
             }
         } else {
-            System.err.println("Warning: Prediction should only be called after at least one update-call!");
+            LogManager.getLogger(Kalman.class).warn("Prediction should only be called after at least one update-call!");
         }
         return prediction;
     }

@@ -87,21 +87,21 @@ public class PipelineElement {
     }
     
     /**
-     * Sets a current parameter value.
+     * Sets a current parameter value. [public for testing]
      * 
      * @param param the parameter name
      * @param value the parameter value
      */
-    void setParameter(String param, Serializable value) {
+    public void setParameter(String param, Serializable value) {
         parameters.put(param,  value);
     }
     
     /**
-     * Defines the active algorithm.
+     * Defines the active algorithm. [public for testing]
      * 
      * @param activeAlgorithm the active algorithm
      */
-    void setActive(String activeAlgorithm) {
+    public void setActive(String activeAlgorithm) {
         this.activeAlgorithm = activeAlgorithm;
     }
     

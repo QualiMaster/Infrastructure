@@ -64,12 +64,12 @@ public class Pipeline {
     }
     
     /**
-     * Obtains a pipeline element, i.e., creates a new one if there is none.
+     * Obtains a pipeline element, i.e., creates a new one if there is none. [public for testing]
      * 
      * @param name the name of the pipeline element
      * @return the pipeline element
      */
-    PipelineElement obtainElement(String name) {
+    public PipelineElement obtainElement(String name) {
         PipelineElement result = elements.get(name);
         if (null == result) {
             result = new PipelineElement(this, name);
@@ -98,11 +98,11 @@ public class Pipeline {
     }
     
     /**
-     * Explicitly sets the profile path.
+     * Explicitly sets the profile path. [public for testing]
      * 
      * @param path the path
      */
-    void setPath(String path) {
+    public void setPath(String path) {
         this.path = path;
     }
     

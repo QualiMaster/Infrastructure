@@ -158,37 +158,6 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
     public File getFolder(IObservable observable) {
         return getStorageStrategy(element).getPredictorPath(element, element.getPath(), key, observable);
     }
-
-    /**
-     * Returns the folder for a predictor.
-     * 
-     * @param path the base path
-     * @param identifier the profile identifier
-     * @return the folder
-     */
-    /*private File getFolder(String path, String identifier) {
-        return getFolder(element, path, identifier);
-    }*/
-    
-    /**
-     * Returns the folder for a predictor.
-     * 
-     * @param element the pipeline element
-     * @param path the base path
-     * @param identifier the profile identifier
-     * @return the folder
-     */
-    /*private static File getFolder(PipelineElement element, String path, String identifier) {
-        File folder = new File(path);
-        // Get subfolder from nesting information 
-        String[] nesting = identifier.split(";")[0].split(":");
-        for (String string : nesting) {
-            folder = new File(folder, string);
-        }
-        // set kind of the predictor as subfolder
-        String subfolder = element.getProfileCreator().getStorageSubFolder();
-        return new File(folder, subfolder);
-    }*/
     
     /**
      * Stores a given predictor.
@@ -236,6 +205,9 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
         MapFile mapFile = new MapFile(folder);
         mapFile.load();
         File instanceFile = mapFile.getFile(identifier);
+        if (null == instanceFile) {
+            instanceFile = mapFile.getFile(getStorageStrategy(element).stripToProfilingIdentifier(identifier));
+        }
         predictor.load(instanceFile, identifier);
     }
 
