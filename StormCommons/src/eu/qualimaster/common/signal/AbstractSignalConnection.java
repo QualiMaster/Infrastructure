@@ -6,10 +6,12 @@ import org.apache.storm.curator.framework.CuratorFramework;
 import org.apache.storm.curator.framework.imps.CuratorFrameworkState;
 import org.apache.storm.zookeeper.WatchedEvent;
 import org.apache.storm.zookeeper.Watcher;
+import org.apache.storm.zookeeper.data.Stat;
 
 import eu.qualimaster.Configuration;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.events.IEvent;
+import eu.qualimaster.file.Utils;
 
 /**
  * An abstract signal connection implementing a zookeeper watcher. Unfortunately, it seems that the underlying 
@@ -76,10 +78,7 @@ public abstract class AbstractSignalConnection implements Watcher {
             long now = System.currentTimeMillis();
             // block until connected, having the watcher initialized is important for lifecycle
             while (!isConnected() && System.currentTimeMillis() - now < maxWaitingTime) { 
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                }
+                Utils.sleep(50);
             }
             if (!isConnected()) {
                 LogManager.getLogger(getClass()).warn("Curator connection not connected after waiting time " 
@@ -91,8 +90,9 @@ public abstract class AbstractSignalConnection implements Watcher {
                 client.create().creatingParentsIfNeeded().forPath(path);
             }*/
             SignalMechanism.createWithParents(client, path);
-            client.checkExists().usingWatcher(this).forPath(path);
-            LogManager.getLogger(getClass()).info("Initialized watcher on " + path);
+            Stat stat = client.checkExists().usingWatcher(this).forPath(path);
+            Utils.sleep(100);
+            LogManager.getLogger(getClass()).info("Initialized watcher on " + path + " " + stat);
         }
     }
     

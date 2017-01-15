@@ -47,6 +47,7 @@ import eu.qualimaster.easy.extension.internal.HardwareRepositoryHelper;
 import eu.qualimaster.easy.extension.internal.PipelineHelper;
 import eu.qualimaster.easy.extension.internal.VariableHelper;
 import eu.qualimaster.events.EventManager;
+import eu.qualimaster.file.Utils;
 import eu.qualimaster.infrastructure.PipelineOptions;
 import eu.qualimaster.pipeline.AlgorithmChangeParameter;
 import net.ssehub.easy.instantiation.core.model.common.VilException;
@@ -506,6 +507,8 @@ public class ProfileControl implements IProfile {
         } catch (ModelQueryException e) {
             getLogger().error(e.getMessage());
         }
+        // sometimes workers need a bit longer to have their watchers ready
+        Utils.sleep(500);
         cmd.execute();
     }
 
