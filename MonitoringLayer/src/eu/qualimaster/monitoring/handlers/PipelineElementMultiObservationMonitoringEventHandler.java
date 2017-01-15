@@ -44,8 +44,11 @@ public class PipelineElementMultiObservationMonitoringEventHandler
 
     @Override
     protected void handle(PipelineElementMultiObservationMonitoringEvent event, SystemState state) {
-        handle(event, state, true);
-        handle(event, state, false);
+        boolean doneMain = handle(event, state, true);
+        boolean doneSub = handle(event, state, false); // try sub-pipeline
+        if (!(doneMain || doneSub)) {
+            logNotFound(event, state);
+        }
     }
 
     /**
@@ -55,11 +58,13 @@ public class PipelineElementMultiObservationMonitoringEventHandler
      * @param state the actual system state to be modified
      * @param forMainPipeline handle for main pipeline (<code>true</code>) or try handling for a 
      *   sub-pipeline (<code>false</code>)
+     * @return <code>true</code> if the event was handled, <code>false</code> else
      */
-    private void handle(PipelineElementMultiObservationMonitoringEvent event, SystemState state, 
+    private boolean handle(PipelineElementMultiObservationMonitoringEvent event, SystemState state, 
         boolean forMainPipeline) {
+        boolean done = false;
         SystemPart target = determineAggregationPart(event, state, forMainPipeline);
-        if (null != target) {
+        if (null != target && !target.useThrift()) {
             Object key = event.getKey();
             boolean updateCapacity = false;
             for (Map.Entry<IObservable, Double> ent : event.getObservations().entrySet()) {
@@ -73,7 +78,9 @@ public class PipelineElementMultiObservationMonitoringEventHandler
                 StateUtils.updateCapacity(target, key, false);
             }
             StateUtils.checkTaskAndExecutors(target, key);
-        }
+            done = true;
+        } 
+        return done;
     }
     
 }

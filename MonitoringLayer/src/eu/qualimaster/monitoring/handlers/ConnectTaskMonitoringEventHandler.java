@@ -37,7 +37,8 @@ public class ConnectTaskMonitoringEventHandler extends MonitoringEventHandler<Co
 
     @Override
     protected void handle(ConnectTaskMonitoringEvent event, SystemState state) {
-        // TODO search for use of key, discard old uses
+        // do not run checkTaskAndExecutors in here, this is too early - curator connection on worker not guaranteed
+        // can be used to clean up old task entries where it makes sense to avoid multi-aggregation of the same value
     }
 
 }

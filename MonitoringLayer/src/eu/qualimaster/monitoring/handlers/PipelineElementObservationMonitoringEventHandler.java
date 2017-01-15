@@ -42,8 +42,11 @@ public class PipelineElementObservationMonitoringEventHandler
 
     @Override
     protected void handle(PipelineElementObservationMonitoringEvent event, SystemState state) {
-        handle(event, state, true);
-        handle(event, state, false);
+        boolean doneMain = handle(event, state, true);
+        boolean doneSub = handle(event, state, false); // try sub-pipeline
+        if (!(doneMain || doneSub)) {
+            logNotFound(event, state);
+        }
     }
     
     /**
@@ -53,10 +56,13 @@ public class PipelineElementObservationMonitoringEventHandler
      * @param state the actual system state to be modified
      * @param forMainPipeline handle for main pipeline (<code>true</code>) or try handling for a 
      *   sub-pipeline (<code>false</code>)
+     * @return <code>true</code> if the event was handled, <code>false</code> else
      */
-    private void handle(PipelineElementObservationMonitoringEvent event, SystemState state, boolean forMainPipeline) {
+    private boolean handle(PipelineElementObservationMonitoringEvent event, SystemState state, 
+        boolean forMainPipeline) {
+        boolean done = false;
         SystemPart target = determineAggregationPart(event, state, forMainPipeline);
-        if (null != target) {
+        if (null != target && !target.useThrift()) {
             Object key = event.getKey();
             IObservable observable = event.getObservable();
             if (!observable.isInternal()) {
@@ -66,7 +72,9 @@ public class PipelineElementObservationMonitoringEventHandler
                 }
             }
             StateUtils.checkTaskAndExecutors(target, key);
+            done = true;
         }
+        return done;
     }
 
 }

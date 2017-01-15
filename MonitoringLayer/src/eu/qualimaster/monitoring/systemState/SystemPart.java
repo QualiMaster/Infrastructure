@@ -121,6 +121,15 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
     }
     
     /**
+     * Whether thrift shall be used for monitoring. This is intended as a hint to the Monitoring layer.
+     * 
+     * @return <code>true</code> for thrift, <code>false</code> else
+     */
+    public boolean useThrift() {
+        return false; // may be true for nodes only
+    }
+    
+    /**
      * Returns all observables supported by this system part.
      * 
      * @return all observables

@@ -108,9 +108,6 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
                 NodeImplementationSystemPart impl = new NodeImplementationSystemPart(entry.getValue(), this, state); 
                 algorithms.put(entry.getKey(), impl);
                 // don't fill algElements here, done below in establishAlgNodesLinks
-                /*for (PipelineNodeSystemPart node : impl.getNodes()) {
-                    algElements.put(node.getName(), node);
-                }*/
             }
         }
         synchronized (sources) {
@@ -378,40 +375,43 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
             PipelineNodeSystemPart result = getPipelineNodeImpl(nodeName);
             if (null == result) {
                 INameMapping mapping = getNameMapping();
-                Component component = mapping.getPipelineNodeComponent(nodeName);
-                Type type;
-                boolean useThrift;
-                if (null == component) { // assume legacy sub-topology
-                    type = Type.UNKNOWN;
-                    useThrift = true;
-                } else {
-                    type = component.getType();
-                    useThrift = component.useThrift();
-                }
-                result = new PipelineNodeSystemPart(nodeName, type, useThrift, this); 
-                elements.put(nodeName, result);
-                establishAlgNodesLinks(result);
-                /*if (null != component) {
-                    for (String alt : component.getAlternatives()) {
-                        NodeImplementationSystemPart algPart = getAlgorithm(alt);
-                        if (null != algPart) {
-                            Algorithm alg = mapping.getAlgorithm(alt);
-                            if (null != alg) {
-                                for (Component comp : alg.getComponents()) {
-                                    PipelineNodeSystemPart compNode 
-                                        = algPart.obtainPipelineNode(comp.getName()); // force creation
-                                    algPart.link(compNode, ILinkSelector.ALL_EXTERNAL);
-                                    // elements may cause endless recursions in aggregation
-                                    algElements.put(comp.getName(), compNode);
-                                }
-                            }
-                            result.link(algPart);
-                        }
+                if (elements.isEmpty()) {
+                    // pre-initialize top-level nodes to avoid sequence dependency of events
+                    for (Component comp : mapping.getComponents()) {
+                        obtainPipelineNode(mapping, comp.getName());
                     }
-                }*/
+                    result = getPipelineNodeImpl(nodeName);
+                } 
+                if (null == result) {
+                    result = obtainPipelineNode(mapping, nodeName);
+                }
             }
             return result;
         }
+    }
+
+    /**
+     * creates a node of a pipeline via its node name.
+     * 
+     * @param mapping the name mapping
+     * @param nodeName the name of the pipeline element
+     * @return the created system part 
+     */
+    private PipelineNodeSystemPart obtainPipelineNode(INameMapping mapping, String nodeName) {
+        Component component = mapping.getPipelineNodeComponent(nodeName);
+        Type type;
+        boolean useThrift;
+        if (null == component) { // assume legacy sub-topology
+            type = Type.UNKNOWN;
+            useThrift = true;
+        } else {
+            type = component.getType();
+            useThrift = component.useThrift();
+        }
+        PipelineNodeSystemPart result = new PipelineNodeSystemPart(nodeName, type, useThrift, this); 
+        elements.put(nodeName, result);
+        establishAlgNodesLinks(result);
+        return result;
     }
 
     /**

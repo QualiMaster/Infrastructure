@@ -84,7 +84,7 @@ public abstract class MonitoringEventHandler <E extends MonitoringEvent> {
      * @return the system part (platform by default, may be <b>null</b> if it should be a pipeline/element in 
      *   a dead pipeline or a non-existing sub-pipeline)
      */
-    protected static SystemPart determineAggregationPart(AbstractPipelineElementMonitoringEvent event, 
+    protected SystemPart determineAggregationPart(AbstractPipelineElementMonitoringEvent event, 
         SystemState state, boolean forMainPipeline) {
         String pipelineName = event.getPipeline();
         SystemPart target;
@@ -108,12 +108,34 @@ public abstract class MonitoringEventHandler <E extends MonitoringEvent> {
                     if (null != nPart) {
                         target = nPart;
                     }
+                } else {
+                    if (forMainPipeline) { // for now
+                        getLogger().warn("Pipeline " + pipelineName + " not active for " + event);
+                    }
                 }
             }
         } else {
             target = null; // indicate no pipeline
         }
         return target;
+    }
+    
+    /**
+     * Logs a non-assignable assignable pipeline element monitoring event (if not the containing pipeline is 
+     * shutting down).
+     * 
+     * @param event the event
+     * @param state the system state
+     */
+    protected void logNotFound(AbstractPipelineElementMonitoringEvent event, SystemState state) {
+        boolean log = true;
+        PipelineSystemPart pip = state.getPipeline(event.getPipeline());
+        if (null != pip) {
+            log = !pip.isShuttingDown(); // don't log during shutdown, event is not relevant anymore
+        }
+        if (log) {
+            getLogger().warn("No aggregation part known for " + event);
+        }
     }
 
     /**

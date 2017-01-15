@@ -379,12 +379,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
         }
     }
 
-    
-    /**
-     * Whether thrift shall be used for monitoring. This is intended as a hint to the Monitoring layer.
-     * 
-     * @return <code>true</code> for thrift, <code>false</code> else
-     */
+    @Override
     public boolean useThrift() {
         return useThrift;
     }
