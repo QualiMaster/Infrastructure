@@ -422,9 +422,15 @@ public class AlgorithmProfilePredictionManager {
                     predictParameterValues(pipeline, pipelineElement, parameter, observables, targetValues);
                 EventManager.send(new AlgorithmProfilePredictionResponse(event, result));
             } else {
-                Map<String, Map<IObservable, Double>> result = 
-                    predict(pipeline, pipelineElement, event.getAlgorithms(), observables, targetValues);
-                EventManager.send(new AlgorithmProfilePredictionResponse(event, result));
+                if (event.doMultiAlgorithmPrediction()) {
+                    MultiPredictionResult result = predict(pipeline, pipelineElement, event.getAlgorithms(), 
+                        observables);
+                    EventManager.send(new AlgorithmProfilePredictionResponse(event, result));
+                } else {
+                    Map<String, Map<IObservable, Double>> result = 
+                        predict(pipeline, pipelineElement, event.getAlgorithms(), observables, targetValues);
+                    EventManager.send(new AlgorithmProfilePredictionResponse(event, result));
+                }
             }
         }
         

@@ -15,10 +15,15 @@
  */
 package eu.qualimaster.monitoring.events;
 
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import eu.qualimaster.common.QMInternal;
 import eu.qualimaster.events.AbstractResponseEvent;
+import eu.qualimaster.monitoring.profiling.MultiPredictionResult;
+import eu.qualimaster.monitoring.profiling.MultiPredictionResult.Prediction;
 import eu.qualimaster.observables.IObservable;
 
 /**
@@ -35,6 +40,7 @@ public class AlgorithmProfilePredictionResponse extends AbstractResponseEvent<Al
     @Deprecated
     private String algorithm;
     private Map<String, Map<IObservable, Double>> massPrediction;
+    private Map<String, Map<Object, Serializable>> parameters;
     
     /**
      * Creates the response.
@@ -72,6 +78,44 @@ public class AlgorithmProfilePredictionResponse extends AbstractResponseEvent<Al
         super(request);
         this.massPrediction = massPrediction;
     }
+
+    /**
+     * Creates the response for a multi-algorithm mass-prediction request. Here, the response does not use plain
+     * algorithm names rather than algorithm-prediction idenfifiers with a numerical prediction index postfix and 
+     * fills {@link #getParameters()}. Use {@link #getAlgorithmName()} to retrieve the underlying algorithm name.
+     * 
+     * @param request the request
+     * @param result the multi-prediction result
+     */
+    public AlgorithmProfilePredictionResponse(AlgorithmProfilePredictionRequest request, MultiPredictionResult result) {
+        super(request);
+        // rewrite result so that it fits to existing interfaces / weighting functions
+        massPrediction = new HashMap<String, Map<IObservable, Double>>();
+        for (String alg : result.algorithms()) {
+            List<Prediction> predictions = result.getPredictions(alg);
+            for (int i = 0; i < predictions.size(); i++) {
+                Prediction pred = predictions.get(i);
+                String identifier = alg + "-" + i;
+                massPrediction.put(identifier, pred.getResult());
+                parameters.put(identifier, pred.getParameters());
+            }
+        }
+    }
+    
+    /**
+     * Turns an algorithm-prediction identifier used in multi-algorithm mass-predictions to the original algorithm name.
+     * 
+     * @param identifier the algorithm-prediction identifier
+     * @return the algorithm name
+     */
+    public static String getAlgorithmName(String identifier) {
+        String result = identifier;
+        int pos = result.lastIndexOf('-');
+        if (pos > 0) {
+            result = result.substring(0, pos);
+        }
+        return result;
+    }
     
     /**
      * The predicted value.
@@ -97,10 +141,21 @@ public class AlgorithmProfilePredictionResponse extends AbstractResponseEvent<Al
      * Returns the result for a mass-prediction request.
      * 
      * @return the prediction results, may be <b>null</b>, if there is no prediction the double objects 
-     *     shall be <b>null</b>
+     *     shall be <b>null</b>. In case of a multi-algorithm prediction, the algorithm names are algorithm-prediction 
+     *     identifiers postfixed by a prediction id ({@link #getAlgorithmName(String)}.
      */
     public Map<String, Map<IObservable, Double>> getMassPrediction() {
         return massPrediction;
+    }
+    
+    /**
+     * Returns the parameters, but only in multi-algorithm mass predictions.
+     * 
+     * @return the parameters (containing algorithm-prediction identifiers, see {@link #getAlgorithmName(String)}), 
+     *     may be <b>null</b>
+     */
+    public Map<String, Map<Object, Serializable>> getParameters() {
+        return parameters;
     }
     
 }

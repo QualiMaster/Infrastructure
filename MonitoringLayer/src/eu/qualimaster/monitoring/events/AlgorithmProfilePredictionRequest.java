@@ -42,6 +42,7 @@ public class AlgorithmProfilePredictionRequest extends AbstractReturnableEvent {
     private Map<Object, Serializable> targetValues;
     private Set<String> algorithms;
     private Set<IObservable> observables;
+    private boolean multiAlgorithmPrediction;
 
     /**
      * Creates a request (internal).
@@ -155,6 +156,25 @@ public class AlgorithmProfilePredictionRequest extends AbstractReturnableEvent {
         this(pipeline, pipelineElement, targetValues);
         this.observables = observables;
         this.parameter = parameter;
+    }
+
+    /**
+     * Requests multi-algorithm prediction, i.e., over all known parameter combinations.
+     * 
+     * @return <code>this</code>
+     */
+    public AlgorithmProfilePredictionRequest withMultiAlgorithmPrediction() {
+        this.multiAlgorithmPrediction = true;
+        return this;
+    }
+    
+    /**
+     * Returns whether multi-algorithm prediction shall be done.
+     * 
+     * @return <code>true</code> for multi algorithm prediction, <code>false</code> else
+     */
+    public boolean doMultiAlgorithmPrediction() {
+        return multiAlgorithmPrediction;
     }
 
     /**
