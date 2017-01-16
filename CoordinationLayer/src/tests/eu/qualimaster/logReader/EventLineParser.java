@@ -63,28 +63,19 @@ public class EventLineParser {
                 do {
                     startLength = line.length();
                     int pos = line.indexOf('=');
-                    String obsName = line.substring(0, pos);
-                    consume(pos);
-                    int end = iterDouble(0);
-                    if (end > 0) {
-                        String value = line.substring(0, end);
-                        consume(end - 1);
-                        IObservable obs = Observables.valueOf(obsName);
-                        if (null != obs) {
-                            try {
-                                double v = Double.parseDouble(value);
-                                result.put(obs, v);
-                            } catch (NumberFormatException e) {
-                                errorNumberFormat(e.getMessage());
-                                line = null;
-                            }
-                        } else {
-                            line = null;
+                    if (pos > 0) {
+                        String obsName = line.substring(0, pos);
+                        consume(pos);
+                        int end = iterDouble(0);
+                        if (end > 0) {
+                            String value = line.substring(0, end);
+                            consume(end - 1);
+                            parseObservation(obsName, value, result);
                         }
-                    }
-                    if (null != line && line.startsWith(",")) {
-                        consume(0);
-                        consumeWhitespace(); // HERE!!!
+                        if (null != line && line.startsWith(",")) {
+                            consume(0);
+                            consumeWhitespace();
+                        }
                     }
                 } while (!isEndOfLine(startLength) && !line.startsWith("}"));
                 if (null != line && line.startsWith("}")) {
@@ -99,6 +90,28 @@ public class EventLineParser {
             result = null;
         }
         return result;
+    }
+
+    /**
+     * Parses an observation.
+     * 
+     * @param obsName the observable name
+     * @param value the value
+     * @param result the observables, modified as a side effect
+     */
+    private void parseObservation(String obsName, String value, Map<IObservable, Double> result) {
+        IObservable obs = Observables.valueOf(obsName);
+        if (null != obs) {
+            try {
+                double v = Double.parseDouble(value);
+                result.put(obs, v);
+            } catch (NumberFormatException e) {
+                errorNumberFormat(e.getMessage());
+                line = null;
+            }
+        } else {
+            line = null;
+        }
     }
 
     /**
