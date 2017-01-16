@@ -19,6 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
+import org.apache.log4j.LogManager;
+
 import eu.qualimaster.monitoring.profiling.Utils;
 
 /**
@@ -40,8 +42,9 @@ public abstract class AbstractMatrixPredictor implements IAlgorithmProfilePredic
      * {@link #toStringArrayList()}.
      * 
      * @param data the data to set
+     * @throws IllegalArgumentException if the data cannot be set for some reason
      */
-    protected abstract void setProperties(Properties data);
+    protected abstract void setProperties(Properties data) throws IllegalArgumentException;
     
     @Override
     public void store(File file, String identifier) throws IOException {
@@ -52,7 +55,11 @@ public abstract class AbstractMatrixPredictor implements IAlgorithmProfilePredic
     public void load(File file, String key) throws IOException {
         Properties prop = new Properties();
         Utils.load(file, prop);
-        setProperties(prop);
+        try {
+            setProperties(prop);
+        } catch (IllegalArgumentException e) {
+            LogManager.getLogger(Kalman.class).warn("Cannot read Kalman for " + file + ": " + e.getMessage());
+        }
     }
     
 }

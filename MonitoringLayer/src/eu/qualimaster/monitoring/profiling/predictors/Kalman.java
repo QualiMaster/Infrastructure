@@ -24,6 +24,7 @@ import org.apache.commons.math3.filter.DefaultProcessModel;
 import org.apache.commons.math3.filter.KalmanFilter;
 import org.apache.commons.math3.filter.MeasurementModel;
 import org.apache.commons.math3.filter.ProcessModel;
+import org.apache.commons.math3.linear.MatrixDimensionMismatchException;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
@@ -356,7 +357,7 @@ public class Kalman extends AbstractMatrixPredictor {
     
     
     @Override
-    protected void setProperties(Properties data) {
+    protected void setProperties(Properties data) throws IllegalArgumentException {
         // currently constant - write/read for future extension
         Utils.getDouble(data, KEY_MEASUREMENT_NOISE, DEFAULT_MEASUREMENT_NOISE); // ignore value
         RealMatrix mA = getMatrix(data, KEY_MATRIX_A, DEFAULT_A);
@@ -374,9 +375,13 @@ public class Kalman extends AbstractMatrixPredictor {
         allowedGap = Utils.getInt(data, KEY_ALLOWED_GAP, allowedGap);
         defaultMeasurement = Utils.getDouble(data, KEY_DEFAULT_MEASUREMENT, defaultMeasurement);
 
-        ProcessModel pm = new DefaultProcessModel(mA, mB, mQ, xVector, mP); // xVector, mP
-        MeasurementModel mm = new DefaultMeasurementModel(mH, mR);
-        filter = new KalmanFilter(pm, mm);
+        try {
+            ProcessModel pm = new DefaultProcessModel(mA, mB, mQ, xVector, mP); // xVector, mP
+            MeasurementModel mm = new DefaultMeasurementModel(mH, mR);
+            filter = new KalmanFilter(pm, mm);
+        } catch (NullArgumentException | DimensionMismatchException | MatrixDimensionMismatchException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
     }
 
     @Override
