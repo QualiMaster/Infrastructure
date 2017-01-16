@@ -78,4 +78,20 @@ public interface IAlgorithmProfilePredictor extends Cloneable {
      */
     public void load(File file, String identifier) throws IOException;
     
+    /**
+     * Returns whether two predictors are considered equal.
+     * 
+     * @param other the other predictor
+     * @param diff the tolerance for double comparisons
+     * @return <code>true</code> if considered equal, <code>false</code> else
+     */
+    public boolean equals(IAlgorithmProfilePredictor other, double diff);
+
+    /**
+     * Returns the timestamp of the last update.
+     * 
+     * @return the timestamp
+     */
+    public long getLastUpdated();
+    
 }

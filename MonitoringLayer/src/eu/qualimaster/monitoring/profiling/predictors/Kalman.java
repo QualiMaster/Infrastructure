@@ -61,96 +61,86 @@ public class Kalman extends AbstractMatrixPredictor {
     private static final String KEY_ALLOWED_GAP = "allowedGap";
     private static final String KEY_DEFAULT_MEASUREMENT = "defaultMeasurement";
 
-    /**
-     * Noise is eliminated  beforehand, but it can (for
-     * algorithm reasons) not be 0. Instead a double value of 0.0001d is set.
-     */
-    private double measurementNoise = 0.0001d;
-    
     /** 
      * The discrete time interval between measurements. (1 second, fixed)
      * This is also the range for a single prediction step, i.e. one second into the future.
      */
-    private final double dt = 1d;
+    private static final double DT = 1d;
     
     /**
-     * A - state transition matrix.
+     * State transition matrix (A).
      */
-    private RealMatrix mA = MatrixUtils.createRealMatrix(new double[][] {
-        {1, dt, 0,  0 },
+    private static final RealMatrix DEFAULT_A = MatrixUtils.createRealMatrix(new double[][] {
+        {1, DT, 0,  0 },
         {0,  1, 0,  0 },
-        {0,  0, 1, dt },
+        {0,  0, 1, DT },
         {0,  0, 0,  1 }});
 
     /**
-     * B - control input matrix D.
+     * Control input matrix (B).
      */
-    private RealMatrix mB = MatrixUtils.createRealMatrix(new double[][] {
+    private static final RealMatrix DEFAULT_B = MatrixUtils.createRealMatrix(new double[][] {
         {0, 0, 0, 0 },
         {0, 0, 0, 0 },
         {0, 0, 1, 0 },
         {0, 0, 0, 1 }});
     
     /**
-     * H - measurement matrix. 
+     * Measurement matrix (H). 
      */
-    private RealMatrix mH = MatrixUtils.createRealMatrix(new double[][] {
+    private static final RealMatrix DEFAULT_H = MatrixUtils.createRealMatrix(new double[][] {
         {1, 0, 0, 0 },
         {0, 0, 0, 0 },
         {0, 0, 1, 0 },
         {0, 0, 0, 0 }});
+    
+    /**
+     * Noise is eliminated  beforehand, but it can (for
+     * algorithm reasons) not be 0. Instead a double value of 0.0001d is set.
+     */
+    private static final double DEFAULT_MEASUREMENT_NOISE = 0.0001d;
 
     /**
-     * Q - process noise covariance matrix.
+     * Process noise covariance matrix (Q).
      */
-    private RealMatrix mQ = MatrixUtils.createRealMatrix(4, 4);
+    private static final RealMatrix DEFAULT_Q = MatrixUtils.createRealMatrix(4, 4);
     
-    private double var = measurementNoise * measurementNoise;
+    private static final double VAR = DEFAULT_MEASUREMENT_NOISE * DEFAULT_MEASUREMENT_NOISE;
     
     /**
-     * R - measurement noise covariance matrix.
+     * Measurement noise covariance matrix (R).
      */
-    private RealMatrix mR = MatrixUtils.createRealMatrix(new double[][] {
-        {var,    0,   0,    0 },
+    private static final RealMatrix DEFAULT_R = MatrixUtils.createRealMatrix(new double[][] {
+        {VAR,    0,   0,    0 },
         {0,   1e-3,   0,    0 },
-        {0,      0, var,    0 },
+        {0,      0, VAR,    0 },
         {0,      0,   0, 1e-3 }});
 
     /**
-     * P - error covariance matrix.
+     * Error covariance matrix (P).
      */
-    private RealMatrix mP = MatrixUtils.createRealMatrix(new double[][] {
-            {var,    0,   0,    0 },
+    private static final RealMatrix DEFAULT_P = MatrixUtils.createRealMatrix(new double[][] {
+            {VAR,    0,   0,    0 },
             {0,   1e-3,   0,    0 },
-            {0,      0, var,    0 },
+            {0,      0, VAR,    0 },
             {0,      0,   0, 1e-3 }});
 
     /**
      * Vector used to store the start value for a new timeline.
      * (initial x, its velocity, initial y, its velocity)
      */
-    private RealVector xVector = MatrixUtils.createRealVector(new double[] {0, 1, 0, 0 });
-
-    /**
-     * The {@link ProcessModel} for the Kalman-Filter. 
-     */
-    private ProcessModel pm = new DefaultProcessModel(mA, mB, mQ, xVector, mP);
-
-    /**
-     * The {@link MeasurementModel} for the Kalman-Filter. 
-     */
-    private MeasurementModel mm = new DefaultMeasurementModel(mH, mR);
-
-    /**
-     * The instance of Apaches {@link KalmanFilter}.
-     */
-    private KalmanFilter filter = new KalmanFilter(pm, mm);
+    private static final RealVector DEFAULT_X_VECTOR = MatrixUtils.createRealVector(new double[] {0, 1, 0, 0 });
 
     /**
      * This vector is used to add e.g. acceleration. For us/now it is a 
      * zero-vector.
      */
     private RealVector controlVector = MatrixUtils.createRealVector(new double[] {0, 0, 0, 0});
+    
+    /**
+     * The instance of Apaches {@link KalmanFilter}.
+     */
+    private KalmanFilter filter;
     
     /**
      * The point in time this Kalman-Instance was last updated as seconds since midnight, January 1, 1970 UTC.
@@ -177,10 +167,12 @@ public class Kalman extends AbstractMatrixPredictor {
     private boolean predictedSinceUpdate = false;
 
     /**
-     * Default contructor used for a new timeline. 
-     * TODO Custom constructors to continue partly predicted timelines 
+     * Default constructor used for a new timeline. 
      */
     public Kalman() {
+        ProcessModel pm = new DefaultProcessModel(DEFAULT_A, DEFAULT_B, DEFAULT_Q, DEFAULT_X_VECTOR, DEFAULT_P);
+        MeasurementModel mm = new DefaultMeasurementModel(DEFAULT_H, DEFAULT_R);
+        filter = new KalmanFilter(pm, mm);
     }
 
     /**
@@ -290,14 +282,18 @@ public class Kalman extends AbstractMatrixPredictor {
     @Override
     protected Properties toProperties() {
         Properties result = new Properties();
-        result.put(KEY_MEASUREMENT_NOISE, String.valueOf(measurementNoise));
-        result.put(KEY_MATRIX_A, matrixToString(mA));
-        result.put(KEY_MATRIX_B, matrixToString(mB));
-        result.put(KEY_MATRIX_H, matrixToString(mH));
-        result.put(KEY_MATRIX_Q, matrixToString(mQ));
-        result.put(KEY_MATRIX_R, matrixToString(mR));
-        result.put(KEY_MATRIX_P, matrixToString(filter.getErrorCovarianceMatrix()));
-        result.put(KEY_VECTOR_X, vectorToString(filter.getStateEstimationVector()));
+
+        // currently constant - write/read for future extension
+        result.put(KEY_MEASUREMENT_NOISE, String.valueOf(DEFAULT_MEASUREMENT_NOISE));
+        result.put(KEY_MATRIX_A, matrixToString(DEFAULT_A));
+        result.put(KEY_MATRIX_B, matrixToString(DEFAULT_B));
+        result.put(KEY_MATRIX_H, matrixToString(DEFAULT_H));
+        result.put(KEY_MATRIX_Q, matrixToString(DEFAULT_Q));
+        result.put(KEY_MATRIX_R, matrixToString(DEFAULT_R));
+
+        // variable
+        result.put(KEY_MATRIX_P, matrixToString(getErrorCovarianceMatrix()));
+        result.put(KEY_VECTOR_X, vectorToString(getStateEstimationVector()));
         result.put(KEY_VECTOR_CONTROL, vectorToString(controlVector));
         result.put(KEY_LAST_UPDATED, String.valueOf(lastUpdated));
         result.put(KEY_LAST_UPDATE, String.valueOf(lastUpdate));
@@ -307,12 +303,21 @@ public class Kalman extends AbstractMatrixPredictor {
     }
 
     /**
-     * Update models and the Kalman-Filter after a change in the parameters / matrices.
+     * Returns the actual error covariance matrix.
+     * 
+     * @return the error covariance matrix
      */
-    private void reinitialize() {
-        pm = new DefaultProcessModel(mA, mB, mQ, xVector, mP); // xVector, mP
-        mm = new DefaultMeasurementModel(mH, mR);
-        filter = new KalmanFilter(pm, mm);
+    private RealMatrix getErrorCovarianceMatrix() {
+        return filter.getErrorCovarianceMatrix();
+    }
+
+    /**
+     * Returns the actual state estimation vector.
+     * 
+     * @return the state estimation vector
+     */
+    private RealVector getStateEstimationVector() {
+        return filter.getStateEstimationVector();
     }
 
     /**
@@ -352,84 +357,47 @@ public class Kalman extends AbstractMatrixPredictor {
     
     @Override
     protected void setProperties(Properties data) {
-        measurementNoise = Utils.getDouble(data, KEY_MEASUREMENT_NOISE, measurementNoise);
-        mA = getMatrix(data, KEY_MATRIX_A, mA);
-        mB = getMatrix(data, KEY_MATRIX_B, mB);
-        mH = getMatrix(data, KEY_MATRIX_H, mH);
-        mQ = getMatrix(data, KEY_MATRIX_Q, mQ);
-        mP = getMatrix(data, KEY_MATRIX_P, mP);
-        mR = getMatrix(data, KEY_MATRIX_R, mR);
-        xVector = getVector(data, KEY_VECTOR_X, xVector);
+        // currently constant - write/read for future extension
+        Utils.getDouble(data, KEY_MEASUREMENT_NOISE, DEFAULT_MEASUREMENT_NOISE); // ignore value
+        RealMatrix mA = getMatrix(data, KEY_MATRIX_A, DEFAULT_A);
+        RealMatrix mB = getMatrix(data, KEY_MATRIX_B, DEFAULT_B);
+        RealMatrix mH = getMatrix(data, KEY_MATRIX_H, DEFAULT_H);
+        RealMatrix mQ = getMatrix(data, KEY_MATRIX_Q, DEFAULT_Q);
+        RealMatrix mR = getMatrix(data, KEY_MATRIX_R, DEFAULT_R);
+
+        // variable
+        RealMatrix mP = getMatrix(data, KEY_MATRIX_P, DEFAULT_P);
+        RealVector xVector = getVector(data, KEY_VECTOR_X, DEFAULT_X_VECTOR);
         controlVector = getVector(data, KEY_VECTOR_CONTROL, controlVector);
         lastUpdated = Utils.getLong(data, KEY_LAST_UPDATED, lastUpdated);
         lastUpdate = Utils.getDouble(data, KEY_LAST_UPDATE, lastUpdate);
         allowedGap = Utils.getInt(data, KEY_ALLOWED_GAP, allowedGap);
         defaultMeasurement = Utils.getDouble(data, KEY_DEFAULT_MEASUREMENT, defaultMeasurement);
-        reinitialize();
+
+        ProcessModel pm = new DefaultProcessModel(mA, mB, mQ, xVector, mP); // xVector, mP
+        MeasurementModel mm = new DefaultMeasurementModel(mH, mR);
+        filter = new KalmanFilter(pm, mm);
     }
-    
+
     @Override
-    public boolean equals(Object obj) {
-        // for now we focus only on the values that are actually stored - to be checked
-        // double equality follows the implementation of Double.equals
+    public boolean equals(IAlgorithmProfilePredictor other, double diff) {
         boolean result = false;
-        if (obj instanceof Kalman) {
-            Kalman k = (Kalman) obj;
-            result = equals(measurementNoise, k.measurementNoise);
-            result &= mA.equals(k.mA);
-            result &= mB.equals(k.mB);
-            result &= mH.equals(k.mH);
-            result &= mQ.equals(k.mQ);
-            result &= mP.equals(k.mP);
-            result &= mR.equals(k.mR);
-            result &= xVector.equals(k.xVector);
-            result &= controlVector.equals(k.controlVector);
-            result &= equals(lastUpdated, k.lastUpdated);
-            result &= equals(lastUpdate, k.lastUpdate);
-            result &= allowedGap == k.allowedGap;
-            result &= equals(defaultMeasurement, k.defaultMeasurement);
+        if (other instanceof Kalman) {
+            Kalman o = (Kalman) other;
+            result = equalsMatrix(getErrorCovarianceMatrix(), o.getErrorCovarianceMatrix(), diff);
+            result &= equalsVector(getStateEstimationVector(), o.getStateEstimationVector(), diff);
+            result &= equalsVector(controlVector, o.controlVector, diff);
+            result &= lastUpdated == o.lastUpdated;
+            result &= equalsDouble(lastUpdate, o.lastUpdate, diff);
+            result &= allowedGap == o.allowedGap;
+            result &= equalsDouble(defaultMeasurement, o.defaultMeasurement, diff);
         }
         return result;
     }
-    
-    /**
-     * Compares two doubles using the same approach as <code>Double.equals</code>. 
-     * 
-     * @param d1 the first double value
-     * @param d2 the second double value
-     * @return <code>true</code> if <code>d1==d2</code>, <code>false</code> else
-     */ 
-    private static boolean equals(double d1, double d2) {
-        return Double.doubleToLongBits(d1) == Double.doubleToLongBits(d2);
-    }
-    
-    /**
-     * The hashcode method according to Double (Java 1.8).
-     * 
-     * @param value the double value
-     * @return the hash code
-     */
-    private static int hashCode(double value) {
-        long bits = Double.doubleToLongBits(value);
-        return (int) (bits ^ (bits >>> 32));        
-    }
-    
+
     @Override
-    public int hashCode() {
-        int result = hashCode(measurementNoise);
-        result ^= mA.hashCode();
-        result ^= mB.hashCode();
-        result ^= mH.hashCode();
-        result ^= mQ.hashCode();
-        result ^= mP.hashCode();
-        result ^= mR.hashCode();
-        result ^= xVector.hashCode();
-        result ^= controlVector.hashCode();
-        result ^= hashCode(lastUpdated);
-        result ^= hashCode(lastUpdate);
-        result ^= allowedGap;
-        result ^= hashCode(defaultMeasurement);
-        return result;
+    public long getLastUpdated() {
+        return lastUpdated;
     }
     
 }

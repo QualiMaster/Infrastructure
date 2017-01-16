@@ -21,6 +21,8 @@ import org.apache.commons.math3.linear.RealVector;
 import org.junit.Assert;
 import org.junit.Test;
 
+import eu.qualimaster.monitoring.profiling.predictors.Utils;
+
 import static eu.qualimaster.monitoring.profiling.predictors.Utils.*;
 
 /**
@@ -101,6 +103,52 @@ public class UtilsTest {
         System.out.println("Vector: " + s); 
         RealVector v = stringToVector(s);
         Assert.assertEquals(vec, v);
+    }
+
+    /**
+     * Tests for vector equality.
+     */
+    @Test
+    public void testEqualsVector() {
+        double[] data = new double[] {0, 0.1, -0.2, 10.5, 101203450.4, 1245};
+        RealVector v1 = MatrixUtils.createRealVector(data);
+        data = new double[] {0.3};
+        RealVector v2 = MatrixUtils.createRealVector(data);
+        data = new double[] {};
+        RealVector v3 = MatrixUtils.createRealVector(data);
+        
+        Assert.assertTrue(Utils.equalsVector(v1, v1, 0.005));
+        Assert.assertFalse(Utils.equalsVector(v1, v2, 0.005));
+        Assert.assertFalse(Utils.equalsVector(v1, v3, 0.005));
+        Assert.assertFalse(Utils.equalsVector(v2, v3, 0.005));
+    }
+
+    /**
+     * Tests for matrix equality.
+     */
+    @Test
+    public void testEqualsMatrix() {
+        double[][] data = new double[][] {
+            {1, 10.2, -8.2, 0.2, 2300410.1, 1243}, 
+            {0, 0.1, 0.2, -10.5, 101203450.4, -1245}};
+        RealMatrix m1 = MatrixUtils.createRealMatrix(data);
+        data = new double[][] {{1}, {0}};
+        RealMatrix m2 = MatrixUtils.createRealMatrix(data);
+        
+        Assert.assertTrue(Utils.equalsMatrix(m1, m1, 0.005));
+        Assert.assertFalse(Utils.equalsMatrix(m1, m2, 0.005));
+        Assert.assertFalse(Utils.equalsMatrix(m2, m1, 0.005));
+    }
+    
+    /**
+     * Test for double equality.
+     */
+    @Test
+    public void testEqualsDouble() {
+        Assert.assertTrue(Utils.equalsDouble(0.05, 0.05, 0.005));
+        Assert.assertTrue(Utils.equalsDouble(0.0005, 0.0004, 0.005));
+        Assert.assertFalse(Utils.equalsDouble(0, 0.2, 0.005));
+        Assert.assertFalse(Utils.equalsDouble(0, -0.2, 0.005));
     }
 
 }

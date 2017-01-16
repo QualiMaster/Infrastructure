@@ -166,4 +166,58 @@ public class Utils {
         return String.valueOf(value);
     }
 
+    /**
+     * Returns whether two vectors are considered equal with respect to a certain tolerance.
+     * 
+     * @param v1 the first vector
+     * @param v2 the second vector
+     * @param diff the tolerance
+     * @return <code>true</code> if considered equals, <code>false</code> else
+     */
+    public static boolean equalsVector(RealVector v1, RealVector v2, double diff) {
+        boolean equals = v1.getDimension() == v2.getDimension();
+        if (equals) {
+            int dim = v1.getDimension();
+            for (int i = 0; equals && i < dim; i++) {
+                equals &= Math.abs(v1.getEntry(i) - v2.getEntry(i)) < diff;
+            }
+        }
+        return equals;
+    }
+    
+    /**
+     * Returns whether two matrices are considered equal with respect to a certain tolerance.
+     * 
+     * @param m1 the first matrix
+     * @param m2 the second matrix
+     * @param diff the tolerance
+     * @return <code>true</code> if considered equals, <code>false</code> else
+     */
+    public static boolean equalsMatrix(RealMatrix m1, RealMatrix m2, double diff) {
+        boolean equals = m1.getRowDimension() == m2.getRowDimension();
+        equals &= m1.getColumnDimension() == m2.getColumnDimension();
+        if (equals) {
+            int cols = m1.getColumnDimension();
+            int rows = m1.getRowDimension();
+            for (int r = 0; equals && r < rows; r++) {
+                for (int c = 0; equals && c < cols; c++) {
+                    equals &= Math.abs(m1.getEntry(r, c) - m2.getEntry(r, c)) < diff;
+                }
+            }
+        }
+        return equals;
+    }
+    
+    /**
+     * Returns whether two doubles are considered equal with respect to a certain tolerance.
+     * 
+     * @param d1 the first double
+     * @param d2 the second double
+     * @param diff the tolerance
+     * @return <code>true</code> if considered equals, <code>false</code> else
+     */
+    public static boolean equalsDouble(double d1, double d2, double diff) {
+        return Math.abs(d1 - d2) < diff;
+    }
+
 }

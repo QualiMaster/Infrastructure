@@ -59,8 +59,7 @@ public class InstantiationTest {
     public void testEqualsKalmanInstance() {
         Kalman k1 = new Kalman();
         Kalman k2 = new Kalman();
-        Assert.assertEquals(k1, k2);
-        Assert.assertEquals(k1.hashCode(), k2.hashCode());
+        Assert.assertTrue(k1.equals(k2, 0.005));
         
         // just to be sure that it recognizes the update as a new value
         try {
@@ -68,7 +67,7 @@ public class InstantiationTest {
         } catch (InterruptedException e) {
         }
         k1.update(50); // shall update at least lastUpdate/lastUpdated
-        Assert.assertNotEquals(k1, k2);
+        Assert.assertFalse(k1.equals(k2, 0.005));
         // no statement about hashCodes possible!
     }
     
@@ -87,7 +86,7 @@ public class InstantiationTest {
         Kalman k2 = new Kalman();
         k2.load(f, "abba");
         
-        Assert.assertEquals(k1, k2);
+        Assert.assertTrue(k1.equals(k2, 0.005));
         f.delete();
     } // loading without storing makes only sense if we have a prepared Kalman instance and can compare its attributes
 
