@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.LogManager;
+
 import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.INameMapping.Algorithm;
 import eu.qualimaster.coordination.INameMapping.Component;
@@ -376,10 +378,14 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
             if (null == result) {
                 INameMapping mapping = getNameMapping();
                 if (elements.isEmpty()) {
+                    LogManager.getLogger(PipelineSystemPart.class).info("Initializing pipeline state for nodes " 
+                        + mapping.getPipelineNodeNames());
                     // pre-initialize top-level nodes to avoid sequence dependency of events
                     for (String node : mapping.getPipelineNodeNames()) {
                         obtainPipelineNode(mapping, node);
                     }
+                    LogManager.getLogger(PipelineSystemPart.class).info("Initialized pipeline state for nodes " 
+                            + mapping.getPipelineNodeNames());
                     result = getPipelineNodeImpl(nodeName);
                 } 
                 if (null == result) {
@@ -408,6 +414,8 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
             type = component.getType();
             useThrift = component.useThrift();
         }
+        LogManager.getLogger(PipelineSystemPart.class).info("Creating pipeline state node: " + nodeName + " type " 
+            + type + " useThrift " + useThrift + " component " + component + " from mapping " + mapping);
         PipelineNodeSystemPart result = new PipelineNodeSystemPart(nodeName, type, useThrift, this); 
         elements.put(nodeName, result);
         establishAlgNodesLinks(result);
