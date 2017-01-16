@@ -336,7 +336,8 @@ public class CoordinationManager {
                 File topologyJar = CoordinationUtils.obtainPipelineJar(pipelineName);
                 mapping = CoordinationUtils.createMapping(pipelineName, topologyJar);
             } catch (IOException e) {
-                LogManager.getLogger(CoordinationManager.class).info(e.getMessage());
+                LogManager.getLogger(CoordinationManager.class).error("While reading name mapping for " + pipelineName 
+                    + " (using identity mapping):" + e.getMessage());
             }                
             if (null == mapping) {
                 mapping = new IdentityMapping(pipelineName);
