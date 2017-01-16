@@ -19,6 +19,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.Properties;
 
+import eu.qualimaster.IOptionSetter;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 
 /**
@@ -146,15 +147,15 @@ public class AdaptationConfiguration extends MonitoringConfiguration {
     }
             
     /**
+    /**
      * Transfers relevant infrastructure configuration information from this configuration
-     * to a Storm configuration. 
+     * to an options object. 
      * 
-     * @param config the Storm configuration to be modified as a side effect
+     * @param options the options object to be modified as a side effect
      * @see #transferConfigurationFrom(Map)
      */
-    @SuppressWarnings("rawtypes")
-    public static void transferConfigurationTo(Map config) {
-        MonitoringConfiguration.transferConfigurationFrom(config);
+    public static void transferConfigurationTo(IOptionSetter options) {
+        MonitoringConfiguration.transferConfigurationTo(options);
     }
 
     /**

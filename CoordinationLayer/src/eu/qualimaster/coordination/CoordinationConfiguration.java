@@ -22,7 +22,7 @@ import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
 
-import backtype.storm.Config;
+import eu.qualimaster.IOptionSetter;
 import eu.qualimaster.PropertyReader;
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent.DetailMode;
 import eu.qualimaster.dataManagement.DataManagementConfiguration;
@@ -307,13 +307,13 @@ public class CoordinationConfiguration extends DataManagementConfiguration {
             
     /**
      * Transfers relevant infrastructure configuration information from this configuration
-     * to a Storm configuration. 
+     * to an options object. 
      * 
-     * @param config the Storm configuration to be modified as a side effect
+     * @param options the options object to be modified as a side effect
      * @see #transferConfigurationFrom(Map)
      */
-    public static void transferConfigurationTo(Config config) {
-        DataManagementConfiguration.transferConfigurationFrom(config);
+    public static void transferConfigurationTo(IOptionSetter options) {
+        DataManagementConfiguration.transferConfigurationTo(options);
     }
 
     /**

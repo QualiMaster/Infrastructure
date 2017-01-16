@@ -22,6 +22,7 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 
+import eu.qualimaster.IOptionSetter;
 import eu.qualimaster.coordination.CoordinationConfiguration;
 
 /**
@@ -267,14 +268,13 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
             
     /**
      * Transfers relevant infrastructure configuration information from this configuration
-     * to a Storm configuration. 
+     * to an options object. 
      * 
-     * @param config the Storm configuration to be modified as a side effect
+     * @param options the options object to be modified as a side effect
      * @see #transferConfigurationFrom(Map)
      */
-    @SuppressWarnings("rawtypes")
-    public static void transferConfigurationTo(Map config) {
-        CoordinationConfiguration.transferConfigurationFrom(config);
+    public static void transferConfigurationTo(IOptionSetter options) {
+        CoordinationConfiguration.transferConfigurationTo(options);
     }
 
     /**

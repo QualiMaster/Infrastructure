@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import eu.qualimaster.Configuration;
+import eu.qualimaster.IOptionSetter;
 
 /**
  * Specific configuration options introduced by the data management layer.
@@ -179,14 +180,14 @@ public class DataManagementConfiguration extends Configuration {
             
     /**
      * Transfers relevant infrastructure configuration information from this configuration
-     * to a Storm configuration. 
+     * to an options object. 
      * 
-     * @param config the Storm configuration to be modified as a side effect
+     * @param options the options object to be modified as a side effect
      * @see #transferConfigurationFrom(Map)
      */
-    @SuppressWarnings("rawtypes")
-    public static void transferConfigurationTo(Map config) {
-        Configuration.transferConfigurationFrom(config);
+    public static void transferConfigurationTo(IOptionSetter options) {
+        Configuration.transferConfigurationTo(options);
+        options.setOption(PATH_DFS, getDfsPath());
     }
 
     /**
@@ -197,7 +198,9 @@ public class DataManagementConfiguration extends Configuration {
      */
     @SuppressWarnings("rawtypes")
     public static void transferConfigurationFrom(Map conf) {
-        Configuration.transferConfigurationFrom(conf);
+        Properties prop = new Properties();
+        transfer(conf, prop, PATH_DFS, false);
+        transferConfigurationFrom(conf, prop);
     }
     
     /**
@@ -246,7 +249,6 @@ public class DataManagementConfiguration extends Configuration {
         }
         return path;
     }
-
     
     /**
      * Returns the pipeline startup delay from initialized to started.
@@ -283,5 +285,5 @@ public class DataManagementConfiguration extends Configuration {
     public static String getHdfsGroupMapping() {
         return hdfsGroupMapping.getValue();       //"storm=hdfs" 
     }
-
+  
 }

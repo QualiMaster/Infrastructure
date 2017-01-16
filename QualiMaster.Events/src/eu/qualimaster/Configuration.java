@@ -749,10 +749,24 @@ public class Configuration {
      * 
      * @param conf the storm configuration as map
      * @see #transferConfigurationTo(Map)
+     * @see #transferConfigurationFrom(Map, Properties)
      */
     @SuppressWarnings({ "rawtypes" })
     public static void transferConfigurationFrom(Map conf) {
         Properties prop = new Properties();
+        transferConfigurationFrom(conf, prop);
+    }
+
+    /**
+     * Transfers relevant parts of the Storm configuration back into the infrastructure configuration.
+     *
+     * @param conf the storm configuration as map
+     * @param prop the properties to transfer (may be initialized)
+     * @see #transferConfigurationTo(Map)
+     * @see #transferConfigurationFrom(Map)
+     */
+    @SuppressWarnings({ "rawtypes" })
+    protected static void transferConfigurationFrom(Map conf, Properties prop) {
         // transfer zookeeper information so that SignalMechanism can create Zookeeper frameworks
         if (null != conf.get(CONFIG_KEY_STORM_ZOOKEEPER_PORT)) {
             prop.put(PORT_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_PORT).toString());
@@ -810,7 +824,7 @@ public class Configuration {
      * @param toString apply <code>toString</code> to the value stored in <code>conf</code>
      */
     @SuppressWarnings({ "rawtypes" })
-    private static void transfer(Map conf, Properties prop, String key, boolean toString) {
+    protected static void transfer(Map conf, Properties prop, String key, boolean toString) {
         if (null != conf.get(key)) {
             Object val = conf.get(key);
             if (toString) {
