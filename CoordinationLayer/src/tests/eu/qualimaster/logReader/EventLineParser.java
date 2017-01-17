@@ -17,7 +17,9 @@ package tests.eu.qualimaster.logReader;
 
 import java.io.PrintStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import eu.qualimaster.events.AbstractEvent;
 import eu.qualimaster.monitoring.events.ComponentKey;
@@ -135,13 +137,26 @@ public class EventLineParser {
     }
     
     /**
-     * Parses the value of a string attribute.
+     * Parses the value of a string attribute until the next whitespace.
      * 
      * @param attribute the attribute name
      * @param curValue the default return value
      * @return the value or <code>curValue</code> if the value cannot be parsed
      */
     public String parseString(String attribute, String curValue) {
+        return parseString(attribute, curValue, null);
+    }    
+    
+    /**
+     * Parses the value of a string attribute until the next whitespace or stopword if given.
+     * 
+     * @param attribute the attribute name
+     * @param curValue the default return value
+     * @param stopwords optional stop words, if given allow parsing more than one whitespace separated attribute value 
+     *   as long as part of the value is not a stopword itself, <b>null</b> for no stopwords
+     * @return the value or <code>curValue</code> if the value cannot be parsed
+     */
+    public String parseString(String attribute, String curValue, Set<String> stopwords) {
         String result = curValue;
         if (isAttribute(attribute)) {
             consume(attribute.length() + 1);
@@ -151,6 +166,24 @@ public class EventLineParser {
                 pos = line.indexOf('\"', 1); // simplified
             } else {
                 pos = line.indexOf(' ', 0); // simplified
+            }
+            if (null != stopwords && pos < line.length()) {
+                do {
+                    int p = pos;
+                    while (p < line.length() && Character.isWhitespace(line.charAt(p))) {
+                        p++;
+                    }
+                    int start = pos;
+                    p = line.indexOf(' ', p); // simplified
+                    if (p > 0 && p < line.length()) {
+                        if (stopwords.contains(line.substring(start, p))) {
+                            break;
+                        }
+                        pos = p;
+                    } else {
+                        break;
+                    }
+                } while (pos < line.length());
             }
             if (pos < 0) {
                 result = line;
@@ -249,4 +282,20 @@ public class EventLineParser {
         return line;
     }
 
+    /**
+     * For testing.
+     * 
+     * @param args ignored
+     */
+    public static void main(String[] args) {
+        Set<String> stop = new HashSet<String>();
+        stop.add("algorithm");
+        stop.add("pipelineElement");
+        EventLineParser p = new EventLineParser("algorithm: Random Sink pipelineElement:", System.out);
+        System.out.println(p.parseString("algorithm", "", stop));
+
+        p = new EventLineParser("algorithm: Random pipelineElement:", System.out);
+        System.out.println(p.parseString("algorithm", "", stop));
+    }
+    
 }

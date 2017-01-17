@@ -15,7 +15,9 @@
  */
 package tests.eu.qualimaster.logReader;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import eu.qualimaster.monitoring.events.ComponentKey;
 import eu.qualimaster.monitoring.events.PipelineElementMultiObservationMonitoringEvent;
@@ -29,6 +31,14 @@ import eu.qualimaster.observables.IObservable;
 public class PipelineElementMultiObservationMonitoringEventReader 
     extends EventReader<PipelineElementMultiObservationMonitoringEvent> {
 
+    private static final Set<String> STOP = new HashSet<String>();
+    static {
+        STOP.add("observations");
+        STOP.add("pipelineElement");
+        STOP.add("key");
+        STOP.add("pipeline");
+    }
+    
     /**
      * Creates the reader.
      */
@@ -48,9 +58,9 @@ public class PipelineElementMultiObservationMonitoringEventReader
         do {
             startLineLength = line.length();
             observations = parser.parseObservations("observations");
-            pipelineElement = parser.parseString("pipelineElement", pipelineElement);
+            pipelineElement = parser.parseString("pipelineElement", pipelineElement, STOP);
             key = parser.parseComponentKey("key");
-            pipeline = parser.parseString("pipeline", pipeline);
+            pipeline = parser.parseString("pipeline", pipeline, STOP);
         } while (!parser.isEndOfLine(startLineLength));
         if (null != observations && null != pipelineElement && null != pipeline) { // key may be null
             result = new PipelineElementMultiObservationMonitoringEvent(pipeline, pipelineElement, key, observations);

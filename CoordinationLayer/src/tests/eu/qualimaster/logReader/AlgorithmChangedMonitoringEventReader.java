@@ -15,6 +15,9 @@
  */
 package tests.eu.qualimaster.logReader;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 
 /**
@@ -24,6 +27,15 @@ import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
  */
 public class AlgorithmChangedMonitoringEventReader extends EventReader<AlgorithmChangedMonitoringEvent> {
 
+    private static final Set<String> STOP = new HashSet<String>();
+    static {
+        STOP.add("algorithm");
+        STOP.add("pipelineElement");
+        STOP.add("key");
+        STOP.add("pipeline");
+        STOP.add("causeMsgId");
+    }
+    
     /**
      * Creates the reader.
      */
@@ -41,14 +53,16 @@ public class AlgorithmChangedMonitoringEventReader extends EventReader<Algorithm
         String algorithm = null;
         String pipelineElement = null;
         String pipeline = null;
+        int i = 0;
         do {
             startLineLength = line.length();
-            algorithm = parser.parseString("algorithm", algorithm);
-            pipelineElement = parser.parseString("pipelineElement", pipelineElement);
+            algorithm = parser.parseString("algorithm", algorithm, STOP);
+            pipelineElement = parser.parseString("pipelineElement", pipelineElement, STOP);
             parser.parseComponentKey("key"); // key may be null
-            pipeline = parser.parseString("pipeline", pipeline);
+            pipeline = parser.parseString("pipeline", pipeline, STOP);
             parser.parseString("causeMsgId", null); // ignore
-        } while (!parser.isEndOfLine(startLineLength));
+            i++;
+        } while (!parser.isEndOfLine(startLineLength) && i < 50);
         if (null != algorithm && null != pipelineElement && null != pipeline) { 
             result = new AlgorithmChangedMonitoringEvent(pipeline, pipelineElement, algorithm);
         }
