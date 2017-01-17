@@ -385,7 +385,6 @@ public class PipelineTopology {
      * @author Holger Eichelberger
      */
     public static class Stream extends TopologyElement {
-        private String name;
         private Processor origin;
         private Processor target;
 
@@ -428,7 +427,7 @@ public class PipelineTopology {
 
         @Override
         public String toString() {
-            return "Stream (" + name + " " + origin.getName() + " -> " + target.getName() + ")";
+            return "Stream (" + getName() + " " + origin.getName() + " -> " + target.getName() + ")";
         }
 
     }
