@@ -463,6 +463,7 @@ public class Utils {
                         }
                         // ensure external connectivity
                         createInvisibleBoundaryStreams(processor, algComponents, next, procs);
+                        createInvisibleOneSideSourceStreams(processor, algComponents, next, procs);
                     }
                 }
             }
@@ -597,6 +598,35 @@ public class Utils {
                 }
                 if (!intermediary.hasOutputTo(sink)) {
                     intermediary.addOutput(s);
+                }
+            }
+        }
+    }
+
+    /**
+     * Creates an invisible stream for tight integrations, where only sinks need a network connection.
+     * 
+     * @param algorithm the processor representing the algorithm (family)
+     * @param algComponents the algorithm components
+     * @param next the next components to connect to in the main pipeline (may be empty if unknown/inconsistent/legacy 
+     *   testing, but then resulting topology is probably wrong)
+     * @param procs already known processors
+     */
+    private static void createInvisibleOneSideSourceStreams(StormProcessor algorithm, List<Component> algComponents, 
+        Set<StormProcessor> next, Map<String, StormProcessor> procs) {
+        // tight one-side connection, intermediary spouts must be connected by network to the family
+        for (int c = 0; c < algComponents.size(); c++) {
+            StormProcessor algComponent = getProcessor(algComponents.get(c), procs);
+            if (null != algComponent) {
+                for (int i = 0; i < algComponent.getInputCount(); i++) {
+                    Processor predecessor = algComponent.getInput(i).getOrigin(); 
+                    if (predecessor.isSource() && !predecessor.hasInputFrom(algorithm) 
+                        && predecessor instanceof StormProcessor) {
+                        StormProcessor pred = (StormProcessor) predecessor;
+                        Stream s = new Stream("<b3>", algorithm, predecessor);
+                        algorithm.addOutput(s);
+                        pred.addInput(s);
+                    }
                 }
             }
         }
