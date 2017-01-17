@@ -253,6 +253,7 @@ public class ReplayMechanism implements IDataSource {
      */
     public void setParameterDataFile(String fileForData) {
         if (null != fileForData && fileForData.length() > 0) {
+            logger.info("Received Data file path " + fileForData);
             setSource(new FileSource(fileForData));
         }
     }
@@ -265,6 +266,7 @@ public class ReplayMechanism implements IDataSource {
      */
     public void setParameterHdfsDataFile(String hdfsPathToData) {
         if (null != hdfsPathToData && hdfsPathToData.length() > 0) {
+            logger.info("Received HDFS Data file path " + hdfsPathToData);
             setSource(new HdfsSource(hdfsPathToData));
         }
     }
