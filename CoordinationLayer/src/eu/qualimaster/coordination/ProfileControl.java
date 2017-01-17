@@ -215,6 +215,7 @@ public class ProfileControl implements IProfile {
             }
             //}
             dataPaths.add(dataPath);
+            getLogger().info("Stored data file " + dataFile + " to " + dataPath);
         }
         calcVariants();
         INSTANCES.put(data.getPipelineName(), this);
