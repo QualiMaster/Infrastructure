@@ -75,6 +75,7 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     private boolean collectVolume = Configuration.enableVolumeMonitoring();
     private boolean initialized = false;
     private int taskId;
+    private Map<IObservable, Double> recordOnce;
     
     /**
      * Creates a monitor and sends once the executors resource usage event. Call {@link #start(boolean)} as soon as the 
@@ -98,6 +99,35 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
         this.key.setThreadId(Thread.currentThread().getId());
         this.includeItems = includeItems;
     }
+
+    /**
+     * Records a specific observation once for sending it with the next message.
+     * 
+     * @param observable the observable to be recorded (ignored if <b>null</b>)
+     * @param value the observed value
+     */
+    public synchronized void recordOnce(IObservable observable, double value) {
+        if (null != observable) {
+            if (null == recordOnce) {
+                recordOnce = new HashMap<IObservable, Double>();
+            }
+            recordOnce.put(observable, value);
+        }
+    }
+
+    /**
+     * Records a set of observations once for sending them with the next message.
+     * 
+     * @param observations the observations to be recorded (ignored if <b>null</b>)
+     */
+    public synchronized void recordOnce(Map<IObservable, Double> observations) {
+        if (null != observations) {
+            if (null == recordOnce) {
+                recordOnce = new HashMap<IObservable, Double>();
+            }
+            recordOnce.putAll(observations);
+        }
+    }
     
     /**
      * Initializes monitoring.
@@ -109,6 +139,7 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
         if (!initialized) {
             initialized = true;
             Map<IObservable, Double> data = new HashMap<IObservable, Double>();
+            considerRecordedOnce(data);
             data.put(ResourceUsage.EXECUTORS, 1.0);
             data.put(ResourceUsage.TASKS, 1.0); // key is per task!
             if (sendRegular) {
@@ -125,6 +156,20 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
                 timerHandler = new TimerEventHandler();
                 EventManager.setTimerPeriod(sendInterval + 100); // allow for tolerances
                 EventManager.register(timerHandler);
+            }
+        }
+    }
+
+    /**
+     * Consider the recorded-once entries and adds them to <code>observations</code>. Clears the recorded-once entries.
+     * 
+     * @param observations the observations to add the recorded-once entries to
+     */
+    private void considerRecordedOnce(Map<IObservable, Double> observations) {
+        synchronized (this) {
+            if (null != recordOnce && !recordOnce.isEmpty()) {
+                observations.putAll(recordOnce);
+                recordOnce.clear();
             }
         }
     }
@@ -196,6 +241,7 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
         if (sendInterval > 0 && now - lastSend.get() > sendInterval) {
             if (includeItems) {
                 Map<IObservable, Double> data = new HashMap<IObservable, Double>();
+                considerRecordedOnce(data);
                 MonitoringPluginRegistry.collectObservations(data);
                 data.put(TimeBehavior.LATENCY, executionTime.getAverage());
                 data.put(TimeBehavior.THROUGHPUT_ITEMS, Double.valueOf(itemsSend.get()));
@@ -205,8 +251,13 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
                 }
                 EventManager.send(new PipelineElementMultiObservationMonitoringEvent(namespace, name, key, data));
             } else {
-                if (MonitoringPluginRegistry.getRegisteredPluginCount() > 0) {
+                boolean hasRecordOnce;
+                synchronized (this) {
+                    hasRecordOnce = null != recordOnce && !recordOnce.isEmpty();
+                }
+                if (MonitoringPluginRegistry.getRegisteredPluginCount() > 0 || hasRecordOnce) {
                     Map<IObservable, Double> data = new HashMap<IObservable, Double>();
+                    considerRecordedOnce(data);
                     MonitoringPluginRegistry.collectObservations(data);
                     data.put(TimeBehavior.LATENCY, executionTime.getAverage());
                     EventManager.send(new PipelineElementMultiObservationMonitoringEvent(namespace, name, key, data));

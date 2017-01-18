@@ -15,6 +15,7 @@ import eu.qualimaster.common.shedding.NoShedder;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.monitoring.events.ComponentKeyRegistry;
 import eu.qualimaster.monitoring.events.LoadSheddingChangedMonitoringEvent;
+import eu.qualimaster.observables.IObservable;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.base.BaseRichBolt;
@@ -236,6 +237,25 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
      */
     protected ThreadMonitor createThreadMonitor() {
         return monitor.createThreadMonitor();
+    }
+    
+    /**
+     * Records a specific observation once for sending it with the next monitoring message.
+     * 
+     * @param observable the observable to be recorded (ignored if <b>null</b>)
+     * @param value the observed value
+     */
+    public void recordOnce(IObservable observable, double value) {
+        monitor.recordOnce(observable, value);
+    }
+
+    /**
+     * Records a set of observations once for sending them with the next monitoring message.
+     * 
+     * @param observations the observations to be recorded (ignored if <b>null</b>)
+     */
+    public void recordOnce(Map<IObservable, Double> observations) {
+        monitor.recordOnce(observations);
     }
 
     /**
