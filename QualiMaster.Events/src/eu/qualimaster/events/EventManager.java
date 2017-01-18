@@ -619,9 +619,10 @@ public class EventManager {
                         isRunning = true;
                         startThread(new ServerRunnable());
                         register(new ForwardReceptionEventHandler());
-                        LOGGER.info(" Event manager started in server mode.");
+                        LOGGER.info("Event manager started in server mode on port " 
+                            + Configuration.getEventPort() + ".");
                     } catch (IOException e) {
-                        LOGGER.error(e.getMessage() + " - Event manager not started.");
+                        LOGGER.error(e.getMessage() + "Event manager not started.");
                     }
                 } else {
                     isRunning = true;
