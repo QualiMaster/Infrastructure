@@ -29,11 +29,11 @@ public class AlgorithmChangedMonitoringEventReader extends EventReader<Algorithm
 
     private static final Set<String> STOP = new HashSet<String>();
     static {
-        STOP.add("algorithm");
-        STOP.add("pipelineElement");
-        STOP.add("key");
-        STOP.add("pipeline");
-        STOP.add("causeMsgId");
+        STOP.add("algorithm:");
+        STOP.add("pipelineElement:");
+        STOP.add("key:");
+        STOP.add("pipeline:");
+        STOP.add("causeMsgId:");
     }
     
     /**
@@ -53,7 +53,6 @@ public class AlgorithmChangedMonitoringEventReader extends EventReader<Algorithm
         String algorithm = null;
         String pipelineElement = null;
         String pipeline = null;
-        int i = 0;
         do {
             startLineLength = line.length();
             algorithm = parser.parseString("algorithm", algorithm, STOP);
@@ -61,8 +60,7 @@ public class AlgorithmChangedMonitoringEventReader extends EventReader<Algorithm
             parser.parseComponentKey("key"); // key may be null
             pipeline = parser.parseString("pipeline", pipeline, STOP);
             parser.parseString("causeMsgId", null); // ignore
-            i++;
-        } while (!parser.isEndOfLine(startLineLength) && i < 50);
+        } while (!parser.isEndOfLine(startLineLength));
         if (null != algorithm && null != pipelineElement && null != pipeline) { 
             result = new AlgorithmChangedMonitoringEvent(pipeline, pipelineElement, algorithm);
         }

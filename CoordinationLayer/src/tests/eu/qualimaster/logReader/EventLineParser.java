@@ -167,7 +167,7 @@ public class EventLineParser {
             } else {
                 pos = line.indexOf(' ', 0); // simplified
             }
-            if (null != stopwords && pos < line.length()) {
+            if (null != stopwords && pos >= 0 && pos < line.length()) {
                 do {
                     int p = pos;
                     while (p < line.length() && Character.isWhitespace(line.charAt(p))) {
@@ -176,14 +176,14 @@ public class EventLineParser {
                     int start = pos;
                     p = line.indexOf(' ', p); // simplified
                     if (p > 0 && p < line.length()) {
-                        if (stopwords.contains(line.substring(start, p))) {
+                        if (stopwords.contains(line.substring(start, p).trim())) {
                             break;
                         }
                         pos = p;
                     } else {
                         break;
                     }
-                } while (pos < line.length());
+                } while (pos >= 0 && pos < line.length());
             }
             if (pos < 0) {
                 result = line;
@@ -296,6 +296,12 @@ public class EventLineParser {
 
         p = new EventLineParser("algorithm: Random pipelineElement:", System.out);
         System.out.println(p.parseString("algorithm", "", stop));
+        
+        stop.clear();
+        stop.add("observations");
+        stop.add("pipelineElement");
+        stop.add("key");
+        stop.add("pipeline");
     }
     
 }

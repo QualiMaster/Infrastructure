@@ -33,10 +33,10 @@ public class PipelineElementMultiObservationMonitoringEventReader
 
     private static final Set<String> STOP = new HashSet<String>();
     static {
-        STOP.add("observations");
-        STOP.add("pipelineElement");
-        STOP.add("key");
-        STOP.add("pipeline");
+        STOP.add("observations:");
+        STOP.add("pipelineElement:");
+        STOP.add("key:");
+        STOP.add("pipeline:");
     }
     
     /**
