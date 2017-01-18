@@ -886,8 +886,21 @@ public class SelectionTests {
      * @param weighting the weighting
      * @return the "best" solution
      */
-    private static String simpleWeighting(Map<String, Map<IObservable, Double>> predictions, 
+    public static String simpleWeighting(Map<String, Map<IObservable, Double>> predictions, 
         Map<IObservable, Double> weighting) {
+        return simpleWeighting(predictions, weighting, null);
+    }
+
+    /**
+     * Implements a simple weighting of mass predictions.
+     * 
+     * @param predictions the predictions
+     * @param weighting the weighting
+     * @param costs the parts to be considered as costs (negative)
+     * @return the "best" solution
+     */
+    public static String simpleWeighting(Map<String, Map<IObservable, Double>> predictions, 
+        Map<IObservable, Double> weighting, Set<IObservable> costs) {
         String best = null;
         double bestVal = 0;
         for (Map.Entry<String, Map<IObservable, Double>> pEnt : predictions.entrySet()) {
@@ -899,6 +912,9 @@ public class SelectionTests {
             for (Map.Entry<IObservable, Double> ent : weighting.entrySet()) {
                 IObservable obs = ent.getKey();
                 Double weight = ent.getValue();
+                if (null != costs && costs.contains(obs)) {
+                    weight *= -1;
+                }
                 if (null != obs && null != weight) {
                     Double predicted = algPredictions.get(obs);
                     if (null != predicted) {
@@ -918,6 +934,7 @@ public class SelectionTests {
         }
         return best;
     }
+
     
     /**
      * Tests the profile merger (we need a profile for that).
