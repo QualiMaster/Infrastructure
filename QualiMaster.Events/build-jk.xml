@@ -61,7 +61,7 @@
 	<target name="test" depends="compile">
 		<echoproperties/>  
 		<jacoco:coverage output="file" destfile="jacoco.exec">
-        <junit printsummary="withOutAndErr" dir="${build.base.dir}" fork="true" timeout="240000" forkmode="once">
+        <junit printsummary="withOutAndErr" dir="${build.base.dir}" fork="true" timeout="300000" forkmode="once">
         	<classpath path="${jacoco.path}/jacocoant.jar"/>  
         	<classpath>
                 <path refid="maven.compile.classpath" />
