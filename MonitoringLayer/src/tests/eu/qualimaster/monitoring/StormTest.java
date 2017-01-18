@@ -428,7 +428,7 @@ public class StormTest extends AbstractCoordinationTests {
         boolean localSer = IntSerializer.registerIfNeeded();
         LocalStormEnvironment env = new LocalStormEnvironment();
 
-        GenTopology topo = new GenTopology();
+        GenTopology topo = new GenTopology(30);
         @SuppressWarnings("rawtypes")
         Map topoCfg = createTopologyConfiguration();
         // different sequence due to test
@@ -447,8 +447,20 @@ public class StormTest extends AbstractCoordinationTests {
         
         // wait for shutdown through profiling
         getPipelineStatusTracker().waitFor(topo.getName(), Status.STOPPED, 30000);
-        sleep(2000); // allow profile to send end event and to react on it
-        
+        sleep(3000); // allow profile to send end event and to react on it
+
+        File[] pFiles = profileLocation.listFiles();
+        long logFileLength = -1;
+        if (null != pFiles) {
+            File f = null;
+            for (int i = 0; null == f && i < pFiles.length; i++) {
+                if (pFiles[i].isFile() && pFiles[i].getName().endsWith(".csv")) {
+                    f = pFiles[i];
+                }
+            }
+            logFileLength = null != f ? f.length() : -2;
+        }
+
         env.shutdown();
         StormUtils.forTesting(null, null);
         IntSerializer.unregisterIfNeeded(localSer);
@@ -458,16 +470,12 @@ public class StormTest extends AbstractCoordinationTests {
 
         // no system state as pipeline is already removed here
         // there must be the trace file
-        File[] pFiles = profileLocation.listFiles();
-        Assert.assertNotNull(pFiles);
-        Assert.assertTrue(1 == pFiles.length);
-        Assert.assertTrue(pFiles[0].exists());
-        Assert.assertTrue(pFiles[0].length() > 0);
 
         FileUtils.deleteQuietly(profileLocation);
         env.cleanup();
-    }
 
+        Assert.assertTrue("Profiling log problem " + logFileLength, logFileLength > 0);
+    }
     
     /**
      * Creates a profile data instance with simple profiling information.

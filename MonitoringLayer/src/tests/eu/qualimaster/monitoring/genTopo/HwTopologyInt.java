@@ -199,7 +199,7 @@ public class HwTopologyInt extends AbstractTopology {
     
     @Override
     public String getMappingFileName() {
-        return "testHwPipInt.xml"; 
+        return withSink ? "testHwPipIntSink.xml" : "testHwPipInt.xml"; 
     }
     
 }

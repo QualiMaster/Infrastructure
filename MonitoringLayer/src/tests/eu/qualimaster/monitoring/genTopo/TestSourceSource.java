@@ -26,6 +26,8 @@ import backtype.storm.utils.Utils;
 import eu.qualimaster.common.signal.AggregationKeyProvider;
 import eu.qualimaster.common.signal.BaseSignalSourceSpout;
 import eu.qualimaster.common.signal.SourceMonitor;
+import eu.qualimaster.events.EventManager;
+import eu.qualimaster.infrastructure.EndOfDataEvent;
 
 /**
  * Implements the test source.
@@ -39,6 +41,7 @@ public class TestSourceSource extends BaseSignalSourceSpout {
     private transient SpoutOutputCollector collector;
     private boolean sendMonitoringEvents;
     private int number;
+    private int maxNumber;
 
     /**
      * Creates the source.
@@ -50,6 +53,15 @@ public class TestSourceSource extends BaseSignalSourceSpout {
     public TestSourceSource(String name, String namespace, boolean sendMonitoringEvents) {
         super(name, namespace, true);
         this.sendMonitoringEvents = sendMonitoringEvents;
+    }
+    
+    /**
+     * Sets the maximum number of events to cause an {@link EndOfDataEvent}.
+     * 
+     * @param maxNumber the maximum number
+     */
+    public void maxNumEvents(int maxNumber) {
+        this.maxNumber = maxNumber;
     }
 
     @SuppressWarnings("rawtypes")
@@ -69,6 +81,9 @@ public class TestSourceSource extends BaseSignalSourceSpout {
             if (sendMonitoringEvents) {
                 endMonitoring();
             }
+        }
+        if (maxNumber > 0 && number > maxNumber) {
+            EventManager.send(new EndOfDataEvent(getPipeline(), getName()));
         }
     }
 

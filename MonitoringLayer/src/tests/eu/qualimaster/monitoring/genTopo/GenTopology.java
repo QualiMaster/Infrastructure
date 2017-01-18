@@ -13,6 +13,22 @@ public class GenTopology extends AbstractHyTopology {
     
     public static final String PIP = "testGenPip";
     private static final boolean SEND_EVENTS = true;
+    private int maxNumber;
+    
+    /**
+     * Creating the topology processing an unlimited stream.
+     */
+    public GenTopology() {
+    }
+    
+    /**
+     * Creates a topology processing a maximum number of input files.
+     * 
+     * @param maxNumber the maximum number
+     */
+    public GenTopology(int maxNumber) {
+        this.maxNumber = maxNumber;
+    }
     
     /**
      * Creates the testing topology.
@@ -22,8 +38,12 @@ public class GenTopology extends AbstractHyTopology {
      */
     @Override
     public SubTopologyMonitoringEvent createTopology(Config config, RecordingTopologyBuilder builder) {
+        TestSourceSource src = new TestSourceSource(getTestSourceName(), PIP, SEND_EVENTS);
+        if (maxNumber > 0) {
+            src.maxNumEvents(maxNumber);
+        }
         builder.setSpout(getTestSourceName(), 
-            new TestSourceSource(getTestSourceName(), PIP, SEND_EVENTS), 1)
+            src, 1)
             .setNumTasks(1);
         builder.setBolt(getTestFamilyName(), 
              new TestFamilyFamilyElement(getTestFamilyName(), PIP, SEND_EVENTS, getAlgorithmName(), true), 1)
