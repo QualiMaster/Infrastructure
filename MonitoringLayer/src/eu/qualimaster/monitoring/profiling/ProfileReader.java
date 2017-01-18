@@ -42,7 +42,7 @@ public class ProfileReader {
     public static class Meta {
         
         private Map<String, List<String>> predecessors;
-        private Map<String, Map<String, Serializable>> parameters;
+        private Map<String, Map<Object, Serializable>> parameters;
         private String algorithm;
         
         /**
@@ -53,7 +53,7 @@ public class ProfileReader {
          * @param parameters the parameters per pipeline element
          */
         public Meta(String algorithm, Map<String, List<String>> predecessors, Map<String, 
-            Map<String, Serializable>> parameters) {
+            Map<Object, Serializable>> parameters) {
             this.algorithm = algorithm;
             this.predecessors = predecessors;
             this.parameters = parameters;
@@ -75,7 +75,7 @@ public class ProfileReader {
          * @param name the name of the pipeline element
          * @return the parameters
          */
-        public Map<String, Serializable> getParameters(String name) {
+        public Map<Object, Serializable> getParameters(String name) {
             return parameters.get(name);
         }
         
@@ -101,16 +101,16 @@ public class ProfileReader {
      * @throws IOException in case of I/O problems
      */
     public static List<PipelineEntry> readBackProfile(File input, File outputFolder, String algorithm,
-        Map<String, Serializable> additionalParams) throws IOException {
+        Map<Object, Serializable> additionalParams) throws IOException {
         Map<String, List<String>> predecessors = new HashMap<String, List<String>>();
         List<String> pred = new ArrayList<String>();
         pred.add(AlgorithmProfileHelper.SRC_NAME);
         predecessors.put(AlgorithmProfileHelper.FAM_NAME, pred);
-        Map<String, Serializable> param = new HashMap<String, Serializable>();
+        Map<Object, Serializable> param = new HashMap<Object, Serializable>();
         if (null != additionalParams) {
             param.putAll(additionalParams);
         }
-        Map<String, Map<String, Serializable>> parameters = new HashMap<String, Map<String, Serializable>>();
+        Map<String, Map<Object, Serializable>> parameters = new HashMap<String, Map<Object, Serializable>>();
         parameters.put(AlgorithmProfileHelper.FAM_NAME, param);
         
         Meta meta = new Meta(algorithm, predecessors, parameters);

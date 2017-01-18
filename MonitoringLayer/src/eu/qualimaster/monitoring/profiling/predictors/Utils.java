@@ -22,6 +22,8 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.log4j.LogManager;
 
+import eu.qualimaster.monitoring.MonitoringConfiguration;
+
 /**
  * Some predictor utilites.
  * 
@@ -30,6 +32,8 @@ import org.apache.log4j.LogManager;
  */
 public class Utils {
 
+    private static final long PROFILE_TTL = MonitoringConfiguration.getProfileTtl();
+    
     /**
      * Parses a double value from text in math3 notation.
      * 
@@ -218,6 +222,17 @@ public class Utils {
      */
     public static boolean equalsDouble(double d1, double d2, double diff) {
         return Math.abs(d1 - d2) < diff;
+    }
+
+    /**
+     * Returns whether a profile updatable is outdated, i.e., the difference to the last update exceeds the 
+     * time-to-live.
+     * 
+     * @param updatable the updatable
+     * @return <code>true</code> if outdated, <code>false</code> else
+     */
+    public static boolean isOutdated(IUpdatable updatable) {
+        return PROFILE_TTL > 0 && System.currentTimeMillis() - updatable.getLastUpdated() > PROFILE_TTL;
     }
 
 }

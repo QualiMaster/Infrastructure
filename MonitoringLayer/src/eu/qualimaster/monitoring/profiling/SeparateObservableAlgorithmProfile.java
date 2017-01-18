@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +47,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
     
     private PipelineElement element;
     private Map<Object, Serializable> key;
+    private long lastUpdate;
     
     /**
      * Generates an empty {@link SeparateObservableAlgorithmProfile}.
@@ -56,6 +58,12 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
     public SeparateObservableAlgorithmProfile(PipelineElement element, Map<Object, Serializable> key) {
         this.element = element;
         this.key = key;
+        updated();
+    }
+
+    @Override
+    public long getLastUpdated() {
+        return lastUpdate;
     }
 
     /**
@@ -143,13 +151,15 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
     
     @Override
     public void store() {
-        for (Map.Entry<IObservable, IAlgorithmProfilePredictor> ent : predictors.entrySet()) {
-            try {
-                IObservable observable = ent.getKey();
-                // this is not really efficient
-                store(ent.getValue(), getFolder(observable), generateKey(observable));
-            } catch (IOException e) {
-                LOGGER.error("While writing profile: " + e.getMessage());
+        synchronized (predictors) {
+            for (Map.Entry<IObservable, IAlgorithmProfilePredictor> ent : predictors.entrySet()) {
+                try {
+                    IObservable observable = ent.getKey();
+                    // this is not really efficient
+                    store(ent.getValue(), getFolder(observable), generateKey(observable));
+                } catch (IOException e) {
+                    LOGGER.error("While writing profile: " + e.getMessage());
+                }
             }
         }
     }
@@ -218,7 +228,10 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
      * @return the predictor
      */
     private IAlgorithmProfilePredictor obtainPredictor(IObservable observable) {
-        IAlgorithmProfilePredictor predictor = predictors.get(observable);
+        IAlgorithmProfilePredictor predictor;
+        synchronized (predictors) {
+            predictor = predictors.get(observable);
+        }
         if (null == predictor && null != ProfilingRegistry.getQuantizer(observable, false)) {
             predictor = element.getProfileCreator().createPredictor();
             try {
@@ -226,7 +239,9 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
             } catch (IOException e) {
                 LOGGER.error("While reading predictor: " + e.getMessage());
             }
-            predictors.put(observable, predictor);
+            synchronized (predictors) {
+                predictors.put(observable, predictor);
+            }
         }
         return predictor;
     }
@@ -262,6 +277,30 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
                 }
             }
         }
+        clearOutdatedPredictors();
+        updated();
+    }
+    
+    /**
+     * Clears outdated profiles.
+     */
+    void clearOutdatedPredictors() {
+        synchronized (predictors) {
+            Iterator<Map.Entry<IObservable, IAlgorithmProfilePredictor>> iter = predictors.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry<IObservable, IAlgorithmProfilePredictor> ent = iter.next();
+                IAlgorithmProfilePredictor predictor = ent.getValue();
+                if (Utils.isOutdated(predictor)) {
+                    iter.remove();
+                    IObservable observable = ent.getKey();
+                    try {
+                        store(predictor, getFolder(observable), generateKey(observable));
+                    } catch (IOException e) {
+                        LogManager.getLogger(getClass()).error(e.getMessage());
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -272,6 +311,14 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
                 predictor.update(timestamp / 1000, entry.getObservation(obs));
             }
         }
+        updated();
+    }
+    
+    /**
+     * Records that this instance was updated.
+     */
+    private void updated() {
+        lastUpdate = System.currentTimeMillis();
     }
 
 }

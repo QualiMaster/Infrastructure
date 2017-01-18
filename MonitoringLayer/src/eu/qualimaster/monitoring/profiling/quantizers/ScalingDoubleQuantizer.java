@@ -20,7 +20,7 @@ package eu.qualimaster.monitoring.profiling.quantizers;
  * 
  * @author Holger Eichelberger
  */
-public class ScalingDoubleQuantizer extends Quantizer<Double> {
+public class ScalingDoubleQuantizer extends AbstractDoubleQuantizer {
 
     public static final ScalingDoubleQuantizer INSTANCE = new ScalingDoubleQuantizer();
     
@@ -28,7 +28,7 @@ public class ScalingDoubleQuantizer extends Quantizer<Double> {
      * Creates a double quantizer.
      */
     private ScalingDoubleQuantizer() {
-        super(Double.class);
+        super();
     }
 
     @Override

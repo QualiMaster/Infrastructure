@@ -136,17 +136,30 @@ public class MapFile {
         }
         return result;
     }
-    
+
     /**
      * Returns the keys/identifiers.
      * 
      * @return the keys/identifiers
      */
     public Set<String> keys() {
+        return keys(null);
+    }
+    
+    /**
+     * Returns the keys/identifiers.
+     * 
+     * @param selector substring of the keys to be returned, may be <b>null</b> for no selection
+     * @return the keys/identifiers
+     */
+    public Set<String> keys(String selector) {
         Set<String> result = new HashSet<String>();
         Enumeration<Object> e = mapData.keys();
         while (e.hasMoreElements()) {
-            result.add(e.nextElement().toString());
+            String key = e.nextElement().toString();
+            if (null == selector || key.contains(selector)) {
+                result.add(key);
+            }
         }
         return result;
     }

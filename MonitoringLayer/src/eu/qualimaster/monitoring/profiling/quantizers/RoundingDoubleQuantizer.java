@@ -20,7 +20,7 @@ package eu.qualimaster.monitoring.profiling.quantizers;
  * 
  * @author Holger Eichelberger
  */
-public class RoundingDoubleQuantizer extends Quantizer<Double> {
+public class RoundingDoubleQuantizer extends AbstractDoubleQuantizer {
 
     public static final RoundingDoubleQuantizer STEP_100 = new RoundingDoubleQuantizer(100);
     public static final RoundingDoubleQuantizer STEP_1000 = new RoundingDoubleQuantizer(1000);
@@ -33,7 +33,7 @@ public class RoundingDoubleQuantizer extends Quantizer<Double> {
      * @param step the quantization step
      */
     public RoundingDoubleQuantizer(int step) {
-        super(Double.class);
+        super();
         this.step = Math.max(1, step);
     }
 

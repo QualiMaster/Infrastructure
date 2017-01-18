@@ -20,7 +20,7 @@ package eu.qualimaster.monitoring.profiling.quantizers;
  * 
  * @author Holger Eichelberger
  */
-public class ScalingIntegerQuantizer extends Quantizer<Integer> {
+public class ScalingIntegerQuantizer extends AbstractIntegerQuantizer {
 
     public static final ScalingIntegerQuantizer INSTANCE = new ScalingIntegerQuantizer();
     
@@ -28,7 +28,7 @@ public class ScalingIntegerQuantizer extends Quantizer<Integer> {
      * Creates an integer quantizer.
      */
     private ScalingIntegerQuantizer() {
-        super(Integer.class);
+        super();
     }
 
     @Override

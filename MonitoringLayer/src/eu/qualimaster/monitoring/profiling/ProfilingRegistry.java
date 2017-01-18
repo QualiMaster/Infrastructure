@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import eu.qualimaster.coordination.ZkUtils;
 import eu.qualimaster.monitoring.profiling.approximation.IApproximatorCreator;
 import eu.qualimaster.monitoring.profiling.approximation.SplineInterpolationLinearExtrapolationApproximator;
 import eu.qualimaster.monitoring.profiling.quantizers.DoubleIntegerQuantizer;
@@ -46,6 +47,7 @@ public class ProfilingRegistry {
     private static final Map<IObservable, IValidator> VALIDATORS = new HashMap<>();
     private static final Map<IObservable, Double> APPROXIMATION_WEIGHTS = new HashMap<>();
     private static final Map<String, IApproximatorCreator> APPROXIMATION_CREATORS = new HashMap<>();
+    private static final Map<IObservable, Boolean> AS_PARAMETER = new HashMap<IObservable, Boolean>();
     
     static {
         // observable quantizers
@@ -73,6 +75,10 @@ public class ProfilingRegistry {
         // type quantizers for parameters
         registerQuantizer(IdentityIntegerQuantizer.INSTANCE, true);
         registerQuantizer(DoubleIntegerQuantizer.INSTANCE, true);
+        registerStoreAsParameter(ResourceUsage.EXECUTORS, !ZkUtils.isQmStormVersion()); // fix if not adjustable
+        registerStoreAsParameter(ResourceUsage.TASKS, false);
+        registerStoreAsParameter(ResourceUsage.USED_CPUS, true); // fix for now
+        registerStoreAsParameter(ResourceUsage.USED_DFES, true); // fix for now
     }
     
     /**
@@ -357,6 +363,65 @@ public class ProfilingRegistry {
         if (null != observable) {
             APPROXIMATION_WEIGHTS.put(observable, weight);
         }
+    }
+    
+    /**
+     * Indicates that the given parameter shall be stored as parameter.
+     * 
+     * @param observable the observable (ignored if <b>null</b>)
+     * @param fixAsParameter whether the observable shall be fixed/considered as parameter while multi-algorithm 
+     *     mass-prediction
+     */
+    public static void registerStoreAsParameter(IObservable observable, boolean fixAsParameter) {
+        if (null != observable) {
+            AS_PARAMETER.put(observable, fixAsParameter);
+        }
+    }
+    
+    /**
+     * Returns whether the given <code>observable</code> shall be fixed as parameter while multi-algorithm 
+     * mass-prediction.
+     * 
+     * @param observable the observable
+     * @return <code>true</code> if the related parameter shall be fixed, <code>false</code> else
+     */
+    public static boolean fixAsParameter(IObservable observable) {
+        boolean result = false;
+        if (null != observable) {
+            Boolean tmp = AS_PARAMETER.get(observable);
+            if (null != tmp) {
+                result = tmp.booleanValue();
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Indicates that the given parameter shall be stored as parameter.
+     * 
+     * @param observable the observable (ignored if <b>null</b>)
+     */
+    public static void unregisterStoreAsParameter(IObservable observable) {
+        if (null != observable) {
+            AS_PARAMETER.remove(observable);
+        }
+    }
+    
+    /**
+     * Returns whether an observable shall be stored as parameter.
+     * 
+     * @param observable the observable
+     * @return <code>true</code> if <code>observable</code> shall be stored as parameter, <code>false</code> else
+     *   (also if <code>observable=<b>null</b></code>
+     */
+    public static boolean storeAsParameter(IObservable observable) {
+        boolean result;
+        if (null == observable) {
+            result = false;
+        } else {
+            result = AS_PARAMETER.containsKey(observable);
+        }
+        return result;
     }
     
 }

@@ -13,27 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.qualimaster.monitoring.profiling.quantizers;
+package eu.qualimaster.monitoring.profiling.predictors;
 
 /**
- * An integer quantizer just returning the int value.
+ * Something that can be updated.
  * 
  * @author Holger Eichelberger
  */
-public class IdentityIntegerQuantizer extends AbstractIntegerQuantizer {
-
-    public static final IdentityIntegerQuantizer INSTANCE = new IdentityIntegerQuantizer();
+public interface IUpdatable {
     
     /**
-     * Creates an integer quantizer.
+     * Returns the timestamp of the last update.
+     * 
+     * @return the timestamp
      */
-    private IdentityIntegerQuantizer() {
-        super();
-    }
-
-    @Override
-    protected int quantizeImpl(Integer value) {
-        return value.intValue();
-    }
+    public long getLastUpdated();
 
 }

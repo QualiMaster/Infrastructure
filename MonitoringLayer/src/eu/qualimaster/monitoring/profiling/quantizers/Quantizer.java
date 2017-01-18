@@ -62,5 +62,13 @@ public abstract class Quantizer <T extends Serializable> {
     public Class<T> handles() {
         return type;
     }
+    
+    /**
+     * Parses text into the original type handled by this quantizer.
+     * 
+     * @param text the text
+     * @return the parsed object, may be <b>null</b> if parsing is not possible
+     */
+    public abstract Serializable parse(String text);
 
 }

@@ -47,7 +47,7 @@ public class AlgorithmProfilePredictionManager {
     
     private static String baseFolder = MonitoringConfiguration.getProfileLocation();
     private static IAlgorithmProfileCreator creator = new KalmanProfileCreator(); // currently fixed, may be replaced
-    private static boolean predict = true;
+    private static boolean predict = MonitoringConfiguration.enableProfile();
     private static Double testPrediction;
     private static MultiPredictionResult testPredictionsMulti;
     private static Map<String, Map<IObservable, Double>> testPredictions;
@@ -370,9 +370,14 @@ public class AlgorithmProfilePredictionManager {
             pip.enableProfilingMode();
             for (String node : entry.nodes()) {
                 PipelineElement elt = pip.obtainElement(node);
-                Map<String, Serializable> params = meta.getParameters(node);
+                for (IObservable obs : entry.observables()) {
+                    if (ProfilingRegistry.storeAsParameter(obs)) {
+                        elt.setParameter(obs, entry.getObservation(obs));
+                    }
+                }
+                Map<Object, Serializable> params = meta.getParameters(node);
                 if (null != params) {
-                    for (Map.Entry<String, Serializable> param : params.entrySet()) {
+                    for (Map.Entry<Object, Serializable> param : params.entrySet()) {
                         elt.setParameter(param.getKey(), param.getValue());
                     }
                 }

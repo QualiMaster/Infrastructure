@@ -18,10 +18,12 @@ package eu.qualimaster.monitoring.profiling;
 import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
 import eu.qualimaster.monitoring.profiling.approximation.IStorageStrategy;
+import eu.qualimaster.monitoring.profiling.quantizers.Quantizer;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.Observables;
 
@@ -135,17 +137,288 @@ public class DefaultStorageStrategy implements IStorageStrategy {
         if (includeParameters) {
             TreeMap<String, String> sorted = new TreeMap<>();
             for (Map.Entry<Object, Serializable> ent : key.entrySet()) {
-                String k = ent.getKey().toString();
+                String k = keyToString(ent.getKey());
                 if (!Constants.KEY_ALGORITHM.equals(k)) {
-                    sorted.put(k, ent.getValue().toString());
+                    sorted.put(k, valueToString(ent.getValue()));
                 }
             }
-            result += ";parameters=" + sorted;    
+            result += ";parameters=" + sorted;
         }
         return result;
     }
 
     // checkstyle: resume parameter number check
+
+    @Override
+    public ProfileKey parseKey(String key) {
+        ProfileKeyParser parser = new ProfileKeyParser();
+        return parser.parse(key);
+    }
+    
+    /**
+     * Implements a profile key parser.
+     * 
+     * @author Holger Eichelberger
+     */
+    private static class ProfileKeyParser {
+        
+        private String key;
+
+        /**
+         * Parses text back into a profile key.
+         * 
+         * @param text the text
+         * @return the profile key
+         */
+        private ProfileKey parse(String text) {
+            this.key = text;
+            int pos = key.lastIndexOf(";parameters=");
+            Map<Object, Serializable> parameters = null;
+            if (pos > 0) {
+                parameters = stringToParameters(key.substring(pos + 12));
+                key = key.substring(0, pos);
+            }
+            String pipeline = parseNextEntry("pipeline=");
+            String element = parseNextEntry("element=");
+            String algorithm = parseNextEntry("algorithm=");
+            String observed = parseNextEntry("predicted=");
+            return new ProfileKey(pipeline, element, algorithm, Observables.valueOf(observed), parameters);
+        }
+        
+        /**
+         * Parses the next entry.
+         * 
+         * @param prefix the next entry
+         * @return the entry value (<b>null</b> if parsing is not possible)
+         */
+        private String parseNextEntry(String prefix) {
+            String result = null;
+            if (key.startsWith(prefix)) {
+                int pos = key.indexOf("=");
+                int end = key.indexOf(":");
+                if (end < 0) {
+                    end = key.length();
+                }
+                if (pos > 0 && end > 0) {
+                    result = key.substring(pos + 1, end);
+                }
+                if (end + 1 > key.length()) {
+                    key = "";
+                } else {
+                    key = key.substring(end + 1);
+                }
+            }
+            return result;
+        }
+        
+    }
+    
+    /**
+     * Turns a parameters into a string.
+     * 
+     * @param key the parameters
+     * @return the string representation
+     */
+    public static String parametersToString(Map<Object, Serializable> key) {
+        String result = "{";
+        Iterator<Map.Entry<Object, Serializable>> iter = key.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<Object, Serializable> ent = iter.next();
+            result += keyValueToString(ent.getKey(), ent.getValue());
+            if (iter.hasNext()) {
+                result += ",";
+            }
+        }
+        return result + "}";
+    }
+    
+    /**
+     * Turns a key part into a string.
+     *  
+     * @param key the key
+     * @return the string
+     */
+    public static String keyToString(Object key) {
+        String k = key.toString();
+        if (needsQuotation(k)) {
+            k = quote(k);
+        }
+        return k;
+    }
+
+    /**
+     * Turns a value part into a string.
+     *  
+     * @param value the value
+     * @return the string
+     */
+    public static String valueToString(Object value) {
+        String v = value.toString();
+        if (value instanceof String || needsQuotation(v)) {
+            v = quote(v);
+        }
+        return v;
+    }
+    
+    /**
+     * Turns a key-value pair into a string.
+     *  
+     * @param key the key
+     * @param value the value
+     * @return the string
+     */
+    public static String keyValueToString(Object key, Serializable value) {
+        return keyToString(key) + "=" + valueToString(value);
+    }
+        
+    /**
+     * Turns a string into parameters.
+     * 
+     * @param text the text
+     * @return the parameters
+     */
+    public static Map<Object, Serializable> stringToParameters(String text) {
+        Map<Object, Serializable> result = new HashMap<Object, Serializable>();
+        String k = text.trim();
+        if (k.startsWith("{") && k.endsWith("}")) {
+            k = k.substring(1, k.length() - 1);
+            int pos = 0;
+            while (pos < k.length()) {
+                pos = consumeWhitespaces(k, pos);
+                int keyStart = pos;
+                pos = consumeString(k, pos, '=');
+                int keyEnd = pos;
+                if (pos < k.length() && '=' == k.charAt(pos)) {
+                    pos = consumeWhitespaces(k, pos + 1);
+                    int valueStart = pos;
+                    pos = consumeString(k, pos, ',');
+                    int valueEnd = pos;
+                    if (valueEnd > 0) {
+                        String keyString = unquote(k.substring(keyStart, keyEnd).trim());
+                        String valueString = unquote(k.substring(valueStart, valueEnd).trim());
+                        addKeyValue(keyString, valueString, result);
+                    }
+                    if (pos < k.length() && ',' == k.charAt(pos)) {
+                        pos++;
+                    }
+                }
+            }
+            // read until =
+            // if ""
+        }
+        return result;
+    }
+
+    /**
+     * Adds a key-value pair to <code>result</code> trying to parse back the serializables.
+     * 
+     * @param key the key
+     * @param value the value
+     * @param result the result to be modified as a side effect
+     */
+    private static void addKeyValue(String key, String value, Map<Object, Serializable> result) {
+        Object oKey = key;
+        IObservable obs = Observables.valueOf(key);
+        if (null != obs) {
+            oKey = obs;
+        }
+        Serializable oVal = null;
+        if (null != obs) {
+            Quantizer<?> quantizer = ProfilingRegistry.getQuantizer(obs, true);
+            oVal = quantizer.parse(value);
+        } else {
+            // fallback heuristics
+            try {
+                oVal = Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+            }
+            if (null == oVal) {
+                try {
+                    oVal = Double.parseDouble(value);
+                } catch (NumberFormatException e) {
+                }            
+            }
+        }
+        if (null == oVal) {
+            oVal = value;
+        }
+        result.put(oKey, oVal);
+    }
+
+    /**
+     * Returns whether a text needs quotation.
+     * 
+     * @param text the text
+     * @return <code>true</code> for quotation, <code>false</code> else
+     */
+    private static boolean needsQuotation(String text) {
+        return text.indexOf('=') >= 0 || text.indexOf('\"') >= 0 || text.indexOf(',') >= 0;
+    }
+    
+    /**
+     * Quotes a string.
+     * 
+     * @param text the text
+     * @return the quoted text
+     */
+    private static String quote(String text) {
+        return "\"" + text.replaceAll("\"", "#~") + "\"";
+    }
+
+    /**
+     * Unquotes a string.
+     * 
+     * @param text the text
+     * @return the unquoted text
+     */
+    private static String unquote(String text) {
+        String result = text;
+        if (text.startsWith("\"") && text.endsWith("\"")) {
+            result = result.substring(0, result.length() - 1);
+            result.replaceAll("#~", "\"");
+        }
+        return result;
+    }
+
+    /**
+     * Consumes text from pos until separator.
+     * 
+     * @param text the text
+     * @param pos the current position in text
+     * @param separator the separator until to consume
+     * @return the new position
+     */
+    private static int consumeString(String text, int pos, char separator) {
+        if (pos < text.length()) {
+            if ('"' == text.charAt(pos)) {
+                pos++;
+                while (pos < text.length() && text.charAt(pos) != '"') {
+                    pos++;
+                }
+                if ('"' == text.charAt(pos)) {
+                    pos++;
+                }
+            } 
+            while (pos < text.length() && text.charAt(pos) != separator) {
+                pos++;
+            }
+        }
+        return pos;
+    }
+
+    /**
+     * Consumes text from pos until end of next whitespaces.
+     * 
+     * @param text the text
+     * @param pos the current position in text
+     * @return the new position
+     */
+    private static int consumeWhitespaces(String text, int pos) {
+        while (pos < text.length() && Character.isWhitespace(text.charAt(pos))) {
+            pos++;
+        }
+        return pos;
+    }
 
     /**
      * Turns a key part into a string.
@@ -239,5 +512,5 @@ public class DefaultStorageStrategy implements IStorageStrategy {
         }
         return result;
     }
-
+    
 }

@@ -182,6 +182,26 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
      */
     public static final String DEFAULT_VOLUME_MODEL_LOCATION = FileUtils.getTempDirectoryPath();
 
+    /**
+     * Denotes the time to live for a profile without updates.
+     */
+    public static final String PROFILE_TTL = "profiling.ttl";
+    
+    /**
+     * The default time to live for a profile without updates ({@value}).
+     */
+    public static final int DEFAULT_PROFILE_TTL = 10 * 60 * 1000;
+
+    /**
+     * Denotes whether profiling is enabled at all.
+     */
+    public static final String PROFILE_ENABLED = "profiling.enabled";
+
+    /**
+     * The default value for {@link #PROFILE_APPROXIMATE} ({@value}).
+     */
+    public static final boolean DEFAULT_PROFILE_ENABLED = true;
+    
     private static ConfigurationOption<String> monitoringAnalysisDisabled
         = createStringOption(MONITORING_ANALYSIS_DISABLED, DEFAULT_MONITORING_ANALYSIS_DISABLED);
     private static ConfigurationOption<Integer> monitoringAnalysisMinDevDifference
@@ -210,6 +230,10 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
         = createStringOption(VOLUME_MODEL_LOCATION, DEFAULT_VOLUME_MODEL_LOCATION);
     private static ConfigurationOption<Boolean> profileApproximate
         = createBooleanOption(PROFILE_APPROXIMATE, DEFAULT_PROFILE_APPROXIMATE);
+    private static ConfigurationOption<Boolean> profileEnable
+        = createBooleanOption(PROFILE_ENABLED, DEFAULT_PROFILE_ENABLED);
+    private static ConfigurationOption<Integer> profileTtl
+        = createIntegerOption(PROFILE_TTL, DEFAULT_PROFILE_TTL);
     
     /**
      * Reads the configuration settings from the file.
@@ -440,6 +464,24 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
      */
     public static boolean enableProfileApproximate() {
         return profileApproximate.getValue();
+    }
+
+    /**
+     * Returns whether profile prediction shall be enabled enable.
+     * 
+     * @return <code>true</code> for enabled, <code>false</code> else
+     */
+    public static boolean enableProfile() {
+        return profileEnable.getValue();
+    }
+
+    /**
+     * Returns the time-to-live for a profile without update.
+     * 
+     * @return the time to live in milliseconds
+     */
+    public static int getProfileTtl() {
+        return profileTtl.getValue();
     }
 
 }

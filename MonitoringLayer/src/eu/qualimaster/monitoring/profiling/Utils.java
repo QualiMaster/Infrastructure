@@ -21,6 +21,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
 
+import eu.qualimaster.monitoring.profiling.predictors.IUpdatable;
+
 /**
  * Some utilities.
  * 
@@ -140,5 +142,16 @@ public class Utils {
         }
         return result;
     }
-
+    
+    /**
+     * Returns whether a profile updatable is outdated, i.e., the difference to the last update exceeds the 
+     * time-to-live.
+     * 
+     * @param updatable the updatable
+     * @return <code>true</code> if outdated, <code>false</code> else
+     */
+    public static boolean isOutdated(IUpdatable updatable) {
+        return eu.qualimaster.monitoring.profiling.predictors.Utils.isOutdated(updatable);
+    }
+    
 }

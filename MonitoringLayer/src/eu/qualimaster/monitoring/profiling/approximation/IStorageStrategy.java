@@ -84,6 +84,92 @@ public interface IStorageStrategy {
      */
     public String generateKey(PipelineElement element, Map<Object, Serializable> key, IObservable observable, 
         boolean includeParameters);
+    
+    /**
+     * Represents a complete (parsed) profile key.
+     * 
+     * @author Holger Eichelberger
+     */
+    public static class ProfileKey {
+        
+        private String pipeline;
+        private String element;
+        private String algorithm;
+        private IObservable observable;
+        private Map<Object, Serializable> parameter;
+
+        /**
+         * Creates the key.
+         * 
+         * @param pipeline the pipeline name
+         * @param element the pipeline element name
+         * @param algorithm the algorithm name
+         * @param observable the observable
+         * @param parameter the parameters (may be <b>null</b>)
+         */
+        public ProfileKey(String pipeline, String element, String algorithm, IObservable observable, 
+            Map<Object, Serializable> parameter) {
+            this.pipeline = pipeline;
+            this.element = element;
+            this.algorithm = algorithm;
+            this.observable = observable;
+            this.parameter = parameter;
+        }
+        
+        /**
+         * Returns the pipeline name.
+         * 
+         * @return the pipeline name
+         */
+        public String getPipeline() {
+            return pipeline;
+        }
+
+        /**
+         * Returns the pipeline element name.
+         * 
+         * @return the pipeline element name
+         */
+        public String getElement() {
+            return element;
+        }
+        
+        /**
+         * Returns the algorithm name.
+         * 
+         * @return the algorithm name
+         */
+        public String getAlgorithm() {
+            return algorithm;
+        }
+        
+        /**
+         * Returns the observable.
+         * 
+         * @return the observable
+         */
+        public IObservable getObservable() {
+            return observable;
+        }
+        
+        /**
+         * Returns the parameters.
+         * 
+         * @return the parameters (may be <b>null</b>)
+         */
+        public Map<Object, Serializable> getParameter() {
+            return parameter;
+        }
+        
+    }
+    
+    /**
+     * Parses a string representation of a profile key back.
+     * 
+     * @param key the string representation
+     * @return the parsed key
+     */
+    public ProfileKey parseKey(String key);
 
     /**
      * Returns whether <code>folder</code> is an approximators folder.

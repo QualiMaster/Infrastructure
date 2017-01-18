@@ -15,12 +15,14 @@
  */
 package eu.qualimaster.monitoring.profiling.quantizers;
 
+import java.io.Serializable;
+
 /**
  * A quantizer turning double values into ints.
  * 
  * @author Holger Eichelberger
  */
-public class DoubleIntegerQuantizer extends Quantizer<Double> {
+public class DoubleIntegerQuantizer extends AbstractDoubleQuantizer {
 
     public static final DoubleIntegerQuantizer INSTANCE = new DoubleIntegerQuantizer();
     
@@ -28,12 +30,35 @@ public class DoubleIntegerQuantizer extends Quantizer<Double> {
      * Creates a double quantizer.
      */
     private DoubleIntegerQuantizer() {
-        super(Double.class);
+        super();
+    }
+
+    @Override
+    public int quantize(Serializable value) {
+        int result;
+        if (value instanceof Integer) {
+            result = (Integer) value;
+        } else {
+            result = super.quantize(value);
+        }
+        return result;
     }
 
     @Override
     protected int quantizeImpl(Double value) {
         return (int) Math.round(value);
+    }
+    
+    @Override
+    public Serializable parse(String text) {
+        Serializable result;
+        try {
+            // this is a to-int quantizer!
+            result = Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            result = super.parse(text);
+        }
+        return result;
     }
 
 }

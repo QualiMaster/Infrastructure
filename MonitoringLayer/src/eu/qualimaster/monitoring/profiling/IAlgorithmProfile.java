@@ -17,6 +17,7 @@ package eu.qualimaster.monitoring.profiling;
 
 import java.io.File;
 
+import eu.qualimaster.monitoring.profiling.predictors.IUpdatable;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.tracing.TraceReader.Entry;
 import eu.qualimaster.observables.IObservable;
@@ -26,7 +27,7 @@ import eu.qualimaster.observables.IObservable;
  * 
  * @author Holger Eichelberger
  */
-public interface IAlgorithmProfile {
+public interface IAlgorithmProfile extends IUpdatable {
     
     /**
      * Stores this instance.

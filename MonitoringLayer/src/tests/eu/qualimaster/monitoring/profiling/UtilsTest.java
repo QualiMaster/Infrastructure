@@ -21,9 +21,23 @@ import org.apache.commons.math3.linear.RealVector;
 import org.junit.Assert;
 import org.junit.Test;
 
+import eu.qualimaster.monitoring.profiling.AlgorithmProfilePredictionManager;
+import eu.qualimaster.monitoring.profiling.Constants;
+import eu.qualimaster.monitoring.profiling.DefaultStorageStrategy;
+import eu.qualimaster.monitoring.profiling.Pipeline;
+import eu.qualimaster.monitoring.profiling.PipelineElement;
+import eu.qualimaster.monitoring.profiling.approximation.IStorageStrategy;
+import eu.qualimaster.monitoring.profiling.approximation.IStorageStrategy.ProfileKey;
 import eu.qualimaster.monitoring.profiling.predictors.Utils;
+import eu.qualimaster.observables.IObservable;
+import eu.qualimaster.observables.ResourceUsage;
+import eu.qualimaster.observables.TimeBehavior;
 
 import static eu.qualimaster.monitoring.profiling.predictors.Utils.*;
+
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Tests the utility methods.
@@ -149,6 +163,26 @@ public class UtilsTest {
         Assert.assertTrue(Utils.equalsDouble(0.0005, 0.0004, 0.005));
         Assert.assertFalse(Utils.equalsDouble(0, 0.2, 0.005));
         Assert.assertFalse(Utils.equalsDouble(0, -0.2, 0.005));
+    }
+    
+    /**
+     * Tests string-to-key and back functionality.
+     */
+    @Test
+    public void testStorage() {
+        IStorageStrategy strategy = DefaultStorageStrategy.INSTANCE;
+        Pipeline pip = AlgorithmProfilePredictionManager.obtainPipeline("pip");
+        PipelineElement elt = pip.obtainElement("elt");
+        IObservable obs = TimeBehavior.LATENCY;
+        Map<Object, Serializable> key = new HashMap<Object, Serializable>();
+        key.put(Constants.KEY_INPUT_RATE, 100);
+        key.put(ResourceUsage.EXECUTORS, 5);
+        String k = strategy.generateKey(elt, key, obs, true);
+        ProfileKey pKey = strategy.parseKey(k);
+        Assert.assertEquals(pip.getName(), pKey.getPipeline());
+        Assert.assertEquals(elt.getName(), pKey.getElement());
+        Assert.assertEquals(obs, pKey.getObservable());
+        Assert.assertEquals(key, pKey.getParameter());
     }
 
 }

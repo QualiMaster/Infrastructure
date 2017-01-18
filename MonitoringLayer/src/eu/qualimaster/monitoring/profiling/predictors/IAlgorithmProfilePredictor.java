@@ -24,7 +24,7 @@ import java.io.IOException;
  * @author Christopher Voges
  *
  */
-public interface IAlgorithmProfilePredictor extends Cloneable {
+public interface IAlgorithmProfilePredictor extends Cloneable, IUpdatable {
 
     /**
      * Predict the state of the monitored value for one time step ahead.
@@ -86,12 +86,5 @@ public interface IAlgorithmProfilePredictor extends Cloneable {
      * @return <code>true</code> if considered equal, <code>false</code> else
      */
     public boolean equals(IAlgorithmProfilePredictor other, double diff);
-
-    /**
-     * Returns the timestamp of the last update.
-     * 
-     * @return the timestamp
-     */
-    public long getLastUpdated();
     
 }

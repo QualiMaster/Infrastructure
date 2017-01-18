@@ -15,33 +15,31 @@
  */
 package eu.qualimaster.monitoring.profiling.quantizers;
 
+import java.io.Serializable;
+
 /**
- * An integer quantizer.
+ * A base implementation for integer quantizers.
  * 
  * @author Holger Eichelberger
  */
-public class RoundingIntegerQuantizer extends AbstractIntegerQuantizer {
+public abstract class AbstractIntegerQuantizer extends Quantizer<Integer> {
 
-    public static final RoundingIntegerQuantizer STEP_100 = new RoundingIntegerQuantizer(100);
-    public static final RoundingIntegerQuantizer STEP_1000 = new RoundingIntegerQuantizer(1000);
-    
-    private int step;
-    
     /**
-     * Creates an integer quantizer.
-     * 
-     * @param step the quantization step (null or negative is ignored)
+     * Creates an instance.
      */
-    public RoundingIntegerQuantizer(int step) {
-        super();
-        this.step = Math.max(1, step);
+    protected AbstractIntegerQuantizer() {
+        super(Integer.class);
     }
-
+    
     @Override
-    protected int quantizeImpl(Integer value) {
-        int v = value.intValue();
-        int sgn = v < 0 ? -1 : 1;
-        return (int) ((v / (double) step) + sgn * 0.5) * step;
+    public Serializable parse(String text) {
+        Serializable result;
+        try {
+            result = Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            result = null;
+        }
+        return result;
     }
 
 }
