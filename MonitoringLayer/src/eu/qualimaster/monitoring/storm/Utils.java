@@ -726,7 +726,7 @@ public class Utils {
                 count++;
             }
         }
-        if (0 == count && targets.contains(node.getName())) { // node is the only one
+        if (0 == count && 0 == targets.size() && targets.contains(node.getName())) { // node is the only one
             count++;
         }
         return count;
