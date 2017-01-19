@@ -262,6 +262,29 @@ public class ConfigurationTests {
             return createUrlOption(key, dflt);
         }
         
+        /**
+         * Tests the (double) creation of configuration options.
+         */
+        private void testOpts() {
+            ConfigurationOption<Boolean> opt = createBooleanOption("myKey", false);
+            opt.toString();
+            try {
+                createBooleanOption("myKey", false);
+                Assert.fail("No exception for double option creation");
+            } catch (IllegalArgumentException e) {
+                // fine
+            }
+        }
+        
+    }
+
+    /**
+     * Tests the (double) creation of configuration options.
+     */
+    @Test
+    public void testConfigurationOption() {
+        MyCfg cfg = new MyCfg();
+        cfg.testOpts();
     }
     
 }
