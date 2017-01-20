@@ -212,6 +212,8 @@ public class DataManagementConfiguration extends Configuration {
     public static void transferConfigurationTo(IOptionSetter options) {
         Configuration.transferConfigurationTo(options);
         options.setOption(PATH_DFS, getDfsPath());
+        options.setOption(SIMULATION_LOCAL_PATH, getSimulationLocalPath());
+        options.setOption(SIMULATION_USE_HDFS, useSimulationHdfs());
     }
 
     /**
@@ -224,6 +226,8 @@ public class DataManagementConfiguration extends Configuration {
     public static void transferConfigurationFrom(Map conf) {
         Properties prop = new Properties();
         transfer(conf, prop, PATH_DFS, false);
+        transfer(conf, prop, SIMULATION_USE_HDFS, false);
+        transfer(conf, prop, SIMULATION_LOCAL_PATH, false);
         transferConfigurationFrom(conf, prop);
     }
     
