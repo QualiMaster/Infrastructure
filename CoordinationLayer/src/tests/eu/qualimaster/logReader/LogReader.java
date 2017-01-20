@@ -48,6 +48,7 @@ public class LogReader {
     private PrintStream out = System.out;
     private PrintStream err = System.err;
     private int maxEventCount;
+    private int maxLineCount;
     private int eventCount;
     private boolean considerTime = false;
     private long currentTime; 
@@ -185,6 +186,15 @@ public class LogReader {
      */
     public void setMaxEventCount(int maxEventCount) {
         this.maxEventCount = maxEventCount;
+    }
+    
+    /**
+     * Defines the maximum number of lines to process.
+     * 
+     * @param maxLineCount the maximum number of lines
+     */
+    public void setMaxLineCount(int maxLineCount) {
+        this.maxLineCount = maxLineCount;
     }
     
     /**
@@ -408,7 +418,8 @@ public class LogReader {
                     if (entry.isValid()) {
                         IEvent event = entry.getEvent();
                         if (null != out) {
-                            out.printf("%1$tH:%1$tM:%1$tS:%1$tL %2$s\n", entry.getTimestamp(), event);
+                            out.printf("%3$d %1$tH:%1$tM:%1$tS:%1$tL %2$s\n", entry.getTimestamp(), event, 
+                                reader.getLineNumber());
                         }
                         handleTime(entry);
                         if (null != processor) {
@@ -416,6 +427,9 @@ public class LogReader {
                         }
                     }
                 }
+            }
+            if (maxLineCount > 0) {
+                stop |= reader.getLineNumber() >= maxLineCount;
             }
         } while (null != line && !stop);
     }
