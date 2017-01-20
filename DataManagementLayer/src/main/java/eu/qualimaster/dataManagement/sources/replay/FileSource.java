@@ -52,4 +52,9 @@ public class FileSource implements IReplaySource {
         return new BufferedReader(new FileReader(fileForData));
     }
     
+    @Override
+    public String toString() {
+        return "FileReplaySource " + fileForData.getAbsolutePath();
+    }
+    
 }

@@ -83,5 +83,10 @@ public class HdfsSource implements IReplaySource{
         FileSystem fs = HdfsUtils.getFilesystem(defaultFs);
         return new BufferedReader(new InputStreamReader(fs.open(hdfsPathToData)));
     }
+    
+    @Override
+    public String toString() {
+        return "HdfsReplaySource " + defaultFs + " " + hdfsPathToData;
+    }
 
 }
