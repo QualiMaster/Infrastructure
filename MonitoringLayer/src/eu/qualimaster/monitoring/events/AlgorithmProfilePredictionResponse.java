@@ -35,6 +35,7 @@ import eu.qualimaster.observables.IObservable;
 public class AlgorithmProfilePredictionResponse extends AbstractResponseEvent<AlgorithmProfilePredictionRequest> {
 
     private static final long serialVersionUID = 3749223586800239726L;
+    private static final String IDENTIFIER_SEPARATOR = "-";
 
     private double prediction;
     @Deprecated
@@ -95,11 +96,25 @@ public class AlgorithmProfilePredictionResponse extends AbstractResponseEvent<Al
             List<Prediction> predictions = result.getPredictions(alg);
             for (int i = 0; i < predictions.size(); i++) {
                 Prediction pred = predictions.get(i);
-                String identifier = alg + "-" + i;
+                String identifier = getAlgorithmIdentifier(alg, i);
                 massPrediction.put(identifier, pred.getResult());
+                if (null == parameters) {
+                    parameters = new HashMap<>();
+                }
                 parameters.put(identifier, pred.getParameters());
             }
         }
+    }
+    
+    /**
+     * Returns an algorithm identifier.
+     * 
+     * @param algorithmName the algorithm name
+     * @param index an index value indicating different predictions for the same name
+     * @return the algorithm identifier
+     */
+    public static String getAlgorithmIdentifier(String algorithmName, int index) {
+        return algorithmName + IDENTIFIER_SEPARATOR + index;
     }
     
     /**
@@ -110,7 +125,7 @@ public class AlgorithmProfilePredictionResponse extends AbstractResponseEvent<Al
      */
     public static String getAlgorithmName(String identifier) {
         String result = identifier;
-        int pos = result.lastIndexOf('-');
+        int pos = result.lastIndexOf(IDENTIFIER_SEPARATOR);
         if (pos > 0) {
             result = result.substring(0, pos);
         }

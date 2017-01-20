@@ -36,6 +36,7 @@ import tests.eu.qualimaster.monitoring.ProfileReaderTest;
     ManagerTest.class, 
     SelectionTests.class, 
     ApproximatorTest.class, 
-    ProfileReaderTest.class})
+    ProfileReaderTest.class, 
+    EventTests.class})
 public class ProfilingTests {
 }
