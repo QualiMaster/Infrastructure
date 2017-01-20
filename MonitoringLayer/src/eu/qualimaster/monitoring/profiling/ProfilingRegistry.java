@@ -49,6 +49,51 @@ public class ProfilingRegistry {
     private static final Map<String, IApproximatorCreator> APPROXIMATION_CREATORS = new HashMap<>();
     private static final Map<IObservable, Boolean> AS_PARAMETER = new HashMap<IObservable, Boolean>();
     
+    /**
+     * Defines a quantizer (usage) mode.
+     * 
+     * @author Holger Eichelberger
+     */
+    public enum QuantizerMode {
+        
+        KEY_CREATION (true, false),
+        PROFILE_CREATION (false, true),
+        ALL (true, true);
+        
+        private boolean keyCreation;
+        private boolean profileCreation;
+        
+        /**
+         * Creates a quantizer mode.
+         * 
+         * @param keyCreation supports key creation
+         * @param profileCreation supports profile creation
+         */
+        private QuantizerMode(boolean keyCreation, boolean profileCreation) {
+            this.keyCreation = keyCreation;
+            this.profileCreation = profileCreation;
+        }
+        
+        /**
+         * Whether this mode supports key creation.
+         * 
+         * @return <code>true</code> for key creation, <code>false</code> else
+         */
+        public boolean supportsKeyCreation() {
+            return keyCreation;
+        }
+        
+        /**
+         * Whether this mode supports profile creation.
+         * 
+         * @return <code>true</code> for profile creation, <code>false</code> else
+         */
+        public boolean forProfileCreation() {
+            return profileCreation;
+        }
+        
+    }
+    
     static {
         // observable quantizers
         registerQuantizer(TimeBehavior.LATENCY, ScalingDoubleQuantizer.INSTANCE, true); // ms
@@ -67,6 +112,10 @@ public class ProfilingRegistry {
         registerValidator(ResourceUsage.EXECUTORS, MinValidator.MIN_0_VALIDATOR);
         registerQuantizer(ResourceUsage.TASKS, DoubleIntegerQuantizer.INSTANCE, true);
         registerValidator(ResourceUsage.TASKS, MinValidator.MIN_0_VALIDATOR);
+        registerQuantizer(ResourceUsage.USED_CPUS, DoubleIntegerQuantizer.INSTANCE, true);
+        registerValidator(ResourceUsage.USED_CPUS, MinValidator.MIN_0_VALIDATOR);
+        registerQuantizer(ResourceUsage.USED_DFES, DoubleIntegerQuantizer.INSTANCE, true);
+        registerValidator(ResourceUsage.USED_DFES, MinValidator.MIN_0_VALIDATOR);
         registerQuantizer(ResourceUsage.CAPACITY, ScalingDoubleQuantizer.INSTANCE, false);
         registerValidator(ResourceUsage.CAPACITY, MinMaxValidator.MIN_0_MAX_1_VALIDATOR);
         registerApproximationCreator(ResourceUsage.CAPACITY, 

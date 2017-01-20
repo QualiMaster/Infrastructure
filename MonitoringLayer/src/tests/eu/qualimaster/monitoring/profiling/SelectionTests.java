@@ -884,7 +884,7 @@ public class SelectionTests {
      * 
      * @param predictions the predictions
      * @param weighting the weighting
-     * @return the "best" solution
+     * @return the "best" solution based on the maximized weighted average sum
      */
     public static String simpleWeighting(Map<String, Map<IObservable, Double>> predictions, 
         Map<IObservable, Double> weighting) {
@@ -897,7 +897,8 @@ public class SelectionTests {
      * @param predictions the predictions
      * @param weighting the weighting
      * @param costs the parts to be considered as costs (negative)
-     * @return the "best" solution
+     * @return the "best" solution based on the maximized weighted average sum if no costs and the maximum weighted sum
+     *   if costs
      */
     public static String simpleWeighting(Map<String, Map<IObservable, Double>> predictions, 
         Map<IObservable, Double> weighting, Set<IObservable> costs) {
@@ -923,10 +924,12 @@ public class SelectionTests {
                     weights += weight;
                 }
             }
-            if (weights != 0) {
-                algVal = sum / weights;
-            } else {
-                algVal = 0;
+            if (null == costs) {
+                if (weights != 0) {
+                    algVal = sum / weights;
+                } else {
+                    algVal = 0;
+                }
             }
             if (null == best || algVal > bestVal) {
                 best = algorithm;

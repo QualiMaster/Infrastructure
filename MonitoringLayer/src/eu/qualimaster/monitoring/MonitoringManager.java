@@ -1089,7 +1089,8 @@ public class MonitoringManager {
      * @return <code>true</code> if it has access to the adaptation model, <code>false</code> else
      */
     public static boolean hasAdaptationModel() {
-        return null != RepositoryConnector.getModels(Phase.ADAPTATION);
+        // was started and has model
+        return null != timer && null != RepositoryConnector.getModels(Phase.ADAPTATION);
     }
     
     /**

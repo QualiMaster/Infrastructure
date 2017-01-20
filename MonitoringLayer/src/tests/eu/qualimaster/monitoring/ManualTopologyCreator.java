@@ -252,8 +252,8 @@ public class ManualTopologyCreator {
      */
     public static void main(String[] args) throws MalformedURLException, ClassNotFoundException, 
         IllegalAccessException, InstantiationException, IOException, NoSuchFieldException {
-        //createTightTopology();
-        createHwProfilingTopology();
+        createTightTopology();
+        //createHwProfilingTopology();
     }
     
     /**
@@ -382,6 +382,7 @@ public class ManualTopologyCreator {
         PipelineOptions mainTopoOptions = new PipelineOptions();
         TopologyDescriptor mainTopoD = loadTopology(file, mainTopoName, mainTopoOptions);
         Map<String, List<String>> structure = new HashMap<String, List<String>>();
+        
         structure.put("RandomProcessor2", split(
             //"RandomProcessor2Intermediary;eu.qualimaster.RandomPip.topology.RandomProcessor2Intermediary, "
             //+ "RandomProcessor2processor2;eu.qualimaster.algorithms.Process2Bolt, "

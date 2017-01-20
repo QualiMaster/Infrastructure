@@ -17,7 +17,6 @@ package eu.qualimaster.monitoring.systemState;
 
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.ResourceUsage;
-import eu.qualimaster.observables.Scalability;
 import eu.qualimaster.observables.TimeBehavior;
 
 /**
@@ -92,9 +91,9 @@ public class StateUtils {
      */
     public static void setValue(SystemPart part, IObservable observable, double observation, Object key) {
         part.setValue(observable, observation, key);
-        if (TimeBehavior.THROUGHPUT_ITEMS == observable) {
+        /*if (TimeBehavior.THROUGHPUT_ITEMS == observable) {
             part.setValue(Scalability.ITEMS, observation, key);
-        }
+        }*/
     }
 
     /**

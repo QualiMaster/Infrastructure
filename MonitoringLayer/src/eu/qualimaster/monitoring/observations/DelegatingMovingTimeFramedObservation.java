@@ -23,7 +23,7 @@ package eu.qualimaster.monitoring.observations;
  * 
  * @author Holger Eichelberger
  */
-public class DelegatingTimeFramedObservation extends AbstractDelegatingObservation {
+public class DelegatingMovingTimeFramedObservation extends AbstractDelegatingObservation {
 
     private static final long serialVersionUID = 5671311309699530270L;
     private long timeFrame;
@@ -40,7 +40,7 @@ public class DelegatingTimeFramedObservation extends AbstractDelegatingObservati
      * @param observation the observation to delegate to
      * @param timeFrame the time frame to relate the measurement data to (at least 1)
      */
-    public DelegatingTimeFramedObservation(IObservation observation, long timeFrame) {
+    public DelegatingMovingTimeFramedObservation(IObservation observation, long timeFrame) {
         this(observation, timeFrame, 0);
     }
     
@@ -52,7 +52,7 @@ public class DelegatingTimeFramedObservation extends AbstractDelegatingObservati
      * @param maxTimeBaseDiff the maximum difference between now and the actual time base causing a shift of the time 
      *     base (moving aggregation, aggregation to initial time base if not positive)
      */
-    public DelegatingTimeFramedObservation(IObservation observation, long timeFrame, long maxTimeBaseDiff) {
+    public DelegatingMovingTimeFramedObservation(IObservation observation, long timeFrame, long maxTimeBaseDiff) {
         super(observation);
         this.timeFrame = Math.max(1,  timeFrame);
         this.maxTimeBaseDiff = maxTimeBaseDiff;
@@ -64,7 +64,7 @@ public class DelegatingTimeFramedObservation extends AbstractDelegatingObservati
      * @param source the source to copy from
      * @param provider the parent observation provider
      */
-    protected DelegatingTimeFramedObservation(DelegatingTimeFramedObservation source, 
+    protected DelegatingMovingTimeFramedObservation(DelegatingMovingTimeFramedObservation source, 
         IObservationProvider provider) {
         super(source, provider);
         this.timeFrame = source.timeFrame;
@@ -141,7 +141,7 @@ public class DelegatingTimeFramedObservation extends AbstractDelegatingObservati
 
     @Override
     public IObservation copy(IObservationProvider provider) {
-        return new DelegatingTimeFramedObservation(this, provider);
+        return new DelegatingMovingTimeFramedObservation(this, provider);
     }
     
     @Override

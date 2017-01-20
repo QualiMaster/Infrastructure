@@ -29,6 +29,8 @@ import eu.qualimaster.observables.IObservable;
  */
 public class ObservationFactory {
 
+    public static final long MAX_TIMEBASE_DIFF = 0; // moving aggregation for time-based aggregations
+    
     static {
         registerPipelineObservationAggregator(TimeBehavior.LATENCY, IAggregationFunction.SUM, false, 
             IAggregationFunction.MAX);
@@ -158,7 +160,7 @@ public class ObservationFactory {
         @Override
         public IObservation create(IObservable observable, IPartType type, IObservationProvider observationProvider) {
             return new DelegatingStatisticsObservation(new DelegatingTimeFramedObservation(
-                createAggregationCompoundObservation(observable), 1000)); 
+                createAggregationCompoundObservation(observable), 1000, MAX_TIMEBASE_DIFF)); 
         }
     };
 
@@ -183,7 +185,7 @@ public class ObservationFactory {
                 IObservation result = createSinkAggregation(base, observable, type, observationProvider, 
                     IAggregationFunction.SUM);
                 if (CREATOR_NULL != base) { // otherwise already time framed
-                    result = new DelegatingTimeFramedObservation(result, 1000);
+                    result = new DelegatingTimeFramedObservation(result, 1000, MAX_TIMEBASE_DIFF);
                 }
                 
                 return /*new DelegatingStatisticsObservation(*/result/*)*/;
@@ -224,7 +226,7 @@ public class ObservationFactory {
         public IObservation create(IObservable observable, IPartType type, IObservationProvider observationProvider) {
             IObservation result = new ReferencingObservation(observationProvider, reference, enableValueChange);
             if (timeFrame > 0) {
-                result = new DelegatingTimeFramedObservation(result, timeFrame);
+                result = new DelegatingTimeFramedObservation(result, timeFrame, MAX_TIMEBASE_DIFF);
             }
             return result;
         }
@@ -469,6 +471,8 @@ public class ObservationFactory {
         registerCreator(ResourceUsage.CAPACITY, null, CREATOR_TOPOLOGY_COMPOUND); 
         registerCreator(ResourceUsage.EXECUTORS, null, CREATOR_SUM_COMPOUND); 
         registerCreator(ResourceUsage.TASKS, null, CREATOR_SUM_COMPOUND);
+        registerCreator(ResourceUsage.USED_CPUS, null, CREATOR_SUM_COMPOUND); 
+        registerCreator(ResourceUsage.USED_DFES, null, CREATOR_SUM_COMPOUND);
         registerCreator(ResourceUsage.AVAILABLE, null, CREATOR_SINGLE);
         registerCreator(ResourceUsage.HOSTS, null, HostsObservation.CREATOR);
         
@@ -492,14 +496,15 @@ public class ObservationFactory {
         registerPart(PartType.PIPELINE, 
             TimeBehavior.LATENCY, TimeBehavior.THROUGHPUT_ITEMS, TimeBehavior.THROUGHPUT_VOLUME, 
             FunctionalSuitability.ACCURACY_CONFIDENCE, FunctionalSuitability.ACCURACY_ERROR_RATE, 
-            ResourceUsage.CAPACITY, ResourceUsage.EXECUTORS, ResourceUsage.TASKS, ResourceUsage.HOSTS,
+            ResourceUsage.CAPACITY, ResourceUsage.EXECUTORS, ResourceUsage.TASKS, ResourceUsage.HOSTS, 
+                ResourceUsage.USED_DFES, ResourceUsage.USED_CPUS,
             Scalability.VOLUME, Scalability.VELOCITY, Scalability.VOLATILITY, Scalability.VARIETY, Scalability.ITEMS,
             AnalysisObservables.IS_VALID, AnalysisObservables.IS_ENACTING);
         registerPart(PartType.PIPELINE_NODE, 
             TimeBehavior.LATENCY, TimeBehavior.ENACTMENT_DELAY, TimeBehavior.THROUGHPUT_ITEMS, 
                 TimeBehavior.THROUGHPUT_VOLUME, 
             ResourceUsage.USED_MEMORY, ResourceUsage.CAPACITY, ResourceUsage.EXECUTORS, ResourceUsage.TASKS, 
-                ResourceUsage.HOSTS,
+                ResourceUsage.HOSTS, ResourceUsage.USED_CPUS, ResourceUsage.USED_DFES,
             FunctionalSuitability.ACCURACY_CONFIDENCE, FunctionalSuitability.COMPLETENESS,
                 FunctionalSuitability.BELIEVABILITY, FunctionalSuitability.RELEVANCY,
             Scalability.VOLUME, Scalability.VELOCITY, Scalability.VOLATILITY, Scalability.VARIETY, Scalability.ITEMS,

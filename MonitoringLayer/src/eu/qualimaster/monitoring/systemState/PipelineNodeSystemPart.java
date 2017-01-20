@@ -45,7 +45,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
 
     private static final long serialVersionUID = -2401755797978421980L;
     private static final Set<IObservable> VALIDATE = SystemState.createSet(IObservable.class, 
-        ResourceUsage.EXECUTORS, ResourceUsage.TASKS);
+        ResourceUsage.EXECUTORS, ResourceUsage.TASKS, ResourceUsage.USED_DFES, ResourceUsage.USED_CPUS);
     private NodeImplementationSystemPart current;
     private boolean useThrift;
     private PipelineSystemPart pipeline;
