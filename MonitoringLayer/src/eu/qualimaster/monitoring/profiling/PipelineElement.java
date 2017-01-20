@@ -28,6 +28,8 @@ import java.util.Set;
 
 import org.apache.log4j.LogManager;
 
+import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.monitoring.MonitoringManager;
 import eu.qualimaster.monitoring.profiling.approximation.IApproximator;
 import eu.qualimaster.monitoring.profiling.approximation.IApproximatorCreator;
 import eu.qualimaster.monitoring.profiling.approximation.IStorageStrategy;
@@ -522,7 +524,7 @@ public class PipelineElement {
         IAlgorithmProfileCreator creator = getProfileCreator();
         IStorageStrategy strategy = creator.getStorageStrategy();
         Map<Map<Object, Serializable>, Map<IObservable, Double>> algResults = new HashMap<>();
-        Map<Object, Serializable> filter = getFilterParameters();
+        Map<Object, Serializable> filter = getFilterParameters(algorithm);
         for (IObservable obs : observables) {
             File path = strategy.getPredictorPath(getPipeline().getName(), getName(), algorithm, getPath(), 
                 obs, creator);
@@ -583,11 +585,12 @@ public class PipelineElement {
     /**
      * Returns the filter parameters. Loosely integrated algorithms shall have less filter entries and more freedom.
      * 
+     * @param algorithm the name of the algorithm (take the active one if <b>null</b>)
      * @return the filter parameters, values in the mapping are not <b>null</b>
      */
-    private Map<Object, Serializable> getFilterParameters() {
+    private Map<Object, Serializable> getFilterParameters(String algorithm) {
         Map<Object, Serializable> result = new HashMap<Object, Serializable>();
-        boolean fixToParameter = fixToParameter();
+        boolean fixToParameter = fixToParameter(algorithm);
         for (Map.Entry<Object, Serializable> ent : parameters.entrySet()) {
             Object name = ent.getKey();
             Serializable value = ent.getValue();
@@ -622,10 +625,17 @@ public class PipelineElement {
     /**
      * Fixes the filter for this element to parameters.
      * 
+     * @param algorithm the name of the algorithm (take the active one if <b>null</b>)
      * @return <code>true</code> if fix to parameters, <code>false</code> if more flexibility in prediction is allowed
      */
-    private boolean fixToParameter() {
-        return false; // TODO if !loosely integrated
+    private boolean fixToParameter(String algorithm) {
+        boolean result = true;
+        INameMapping mapping = MonitoringManager.getNameMapping(getPipeline().getName());
+        String alg = null != algorithm ? algorithm : this.activeAlgorithm;
+        if (null != mapping && null != alg) {
+            result = null == mapping.getSubPipelineByAlgorithmName(alg); // do not fix in case of sub-topology
+        }
+        return result;
     }
     
     /**
