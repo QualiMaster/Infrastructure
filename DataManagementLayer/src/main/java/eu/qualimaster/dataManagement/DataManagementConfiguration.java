@@ -110,7 +110,27 @@ public class DataManagementConfiguration extends Configuration {
      */
     public static final boolean DEFAULT_PIPELINE_START_SOURCE_AUTOCONNECT = false;
 
+    /**
+     * Whether simulated data shall use HDFS for reading input. If false, consider first {@link #SIMULATION_LOCAL_PATH},
+     * if not given {@link #PATH_DFS}.
+     */
+    public static final String SIMULATION_USE_HDFS = "simulation.useHdfs";
+    
+    /**
+     * The default value for {@link #SIMULATION_USE_HDFS}, {@value}.
+     */
+    public static final boolean DEFAULT_SIMULATION_USE_HDFS = true;
 
+    /**
+     * The local path containing simulated data. If not given, consider {@link #PATH_DFS}.
+     */
+    public static final String SIMULATION_LOCAL_PATH = "simulation.localPath";
+
+    /**
+     * The default value for {@link #SIMULATION_LOCAL_PATH}, {@value}.
+     */
+    public static final String DEFAULT_SIMULATION_LOCAL_PATH = "";
+    
     private static ConfigurationOption<String> hdfsUrl = createStringOption(URL_HDFS, DEFAULT_URL_HDFS);
     private static ConfigurationOption<String> hdfsUser = createStringOption(URL_HDFS_USER, DEFAULT_URL_HDFS_USER);
     private static ConfigurationOption<String> hdfsGroupMapping = createStringOption(URL_HDFS_GROUPMAPPING, 
@@ -122,7 +142,11 @@ public class DataManagementConfiguration extends Configuration {
         PIPELINE_START_SOURCE_AUTOCONNECT, DEFAULT_PIPELINE_START_SOURCE_AUTOCONNECT);
     private static ConfigurationOption<Integer> pipelineStartDelay 
         = createIntegerOption(PIPELINE_START_DELAY, DEFAULT_PIPELINE_START_DELAY);
-
+    private static ConfigurationOption<Boolean> simulationHdfs 
+        = createBooleanOption(SIMULATION_USE_HDFS, DEFAULT_SIMULATION_USE_HDFS);
+    private static ConfigurationOption<String> simulationLocalPath 
+        = createStringOption(SIMULATION_LOCAL_PATH, DEFAULT_SIMULATION_LOCAL_PATH);
+    
     /**
      * Reads the configuration settings from the file.
      * 
@@ -285,5 +309,27 @@ public class DataManagementConfiguration extends Configuration {
     public static String getHdfsGroupMapping() {
         return hdfsGroupMapping.getValue();       //"storm=hdfs" 
     }
-  
+
+    /**
+     * In data simulations, use HDFS or {@link #getSimulationLocalPath()}.
+     * 
+     * @return <code>true</code> for HDFS, <code>false</code> for simulation
+     */
+    public static boolean useSimulationHdfs() {
+        return simulationHdfs.getValue();
+    }
+    
+    /**
+     * Returns the local path for data simulations. Defaults to {@link #getDfsPath()} if not defined.
+     * 
+     * @return the local path for data simulations
+     */
+    public static String getSimulationLocalPath() {
+        String result = simulationLocalPath.getValue();
+        if (isEmpty(result)) {
+            result = getDfsPath();
+        }
+        return result;
+    }
+    
 }

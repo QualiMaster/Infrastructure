@@ -38,6 +38,10 @@ public class DataManagementConfigurationTests extends ConfigurationTests {
             DataManagementConfiguration.getPipelineStartSourceAutoconnect());
         Assert.assertEquals("storm", DataManagementConfiguration.getHdfsUser());
         Assert.assertEquals("storm=hdfs", DataManagementConfiguration.getHdfsGroupMapping());
+        Assert.assertEquals(DataManagementConfiguration.DEFAULT_SIMULATION_USE_HDFS, 
+            DataManagementConfiguration.useSimulationHdfs());
+        Assert.assertEquals(DataManagementConfiguration.getDfsPath(), 
+            DataManagementConfiguration.getSimulationLocalPath());
     }
 
     @Override
