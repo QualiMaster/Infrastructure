@@ -532,6 +532,24 @@ public class PipelineTopology {
         result += "]";
         return result;
     }
+
+    /**
+     * Returns the names of the processors.
+     * 
+     * @return the names of the processors
+     */
+    public Collection<String> processorNames() {
+        return processors.keySet();
+    }
+    
+    /**
+     * Returns the processors.
+     * 
+     * @return the processors
+     */
+    public Collection<Processor> processors() {
+        return processors.values();
+    }
     
     @Override
     public String toString() {

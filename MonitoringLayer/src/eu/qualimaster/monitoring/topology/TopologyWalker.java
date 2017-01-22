@@ -45,15 +45,15 @@ public class TopologyWalker {
                 isEnd = !foundEdge;
             }
             boolean isLoop = isMarked(node);
-            visitor.enter(node, isEnd, isLoop);
-            if (!isMarked(node) && !isEnd) {
+            boolean stop = visitor.enter(node, isEnd, isLoop);
+            if (!stop && !isMarked(node) && !isEnd) {
                 mark(node);
-                for (int o = 0; o < node.getOutputCount(); o++) {
+                for (int o = 0; !stop && o < node.getOutputCount(); o++) {
                     Stream out = node.getOutput(o);
                     Processor next = projection.getNext(out);
                     if (null != next && !isMarked(next)) {
                         if (next.equals(out.getTarget())) {
-                            visitor.visit(out);
+                            stop = visitor.visit(out);
                         }
                         visit(next, projection, visitor);
                     }
@@ -123,4 +123,23 @@ public class TopologyWalker {
         strategy.clear();
     }
     
+    /**
+     * Calculates the topology specified by <code>provider</code>. This method is not reentrant, i.e., this
+     * instance is allocated during the visit by {@link #provider}.
+     * 
+     * @param provider the topology provider
+     * @param strategy the visiting strategy
+     * @param visitor the topology visitor to apply
+     */
+    public static void visit(ITopologyProvider provider, ITopologyVisitingStrategy strategy, ITopologyVisitor visitor) {
+        PipelineTopology topology = provider.getTopology();
+        ITopologyProjection projection = provider.getTopologyProjection();
+        TopologyWalker walker = new TopologyWalker(strategy, visitor);
+        if (null == projection) {
+            walker.visit(topology);
+        } else {
+            walker.visit(projection);
+        }
+    }
+
 }

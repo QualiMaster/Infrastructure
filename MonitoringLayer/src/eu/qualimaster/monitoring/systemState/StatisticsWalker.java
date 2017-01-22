@@ -97,7 +97,7 @@ public class StatisticsWalker implements ITopologyVisitor {
     }
 
     @Override
-    public void enter(Processor node, boolean isEnd, boolean isLoop) {
+    public boolean enter(Processor node, boolean isEnd, boolean isLoop) {
         boolean complete = false;
         if (!isLoop) {
             PipelineNodeSystemPart nodePart = aggregate(node, true);
@@ -119,11 +119,13 @@ public class StatisticsWalker implements ITopologyVisitor {
                 aggregators[a].pathCompleted();
             }
         }
+        return false;
     }
 
     @Override
-    public void visit(Stream stream) {
+    public boolean visit(Stream stream) {
         // not needed
+        return false;
     }
 
     @Override

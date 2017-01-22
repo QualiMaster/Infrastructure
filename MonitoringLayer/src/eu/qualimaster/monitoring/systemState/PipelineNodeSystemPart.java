@@ -409,8 +409,16 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
                 List<Processor> start = new ArrayList<Processor>();
                 List<Processor> end = new ArrayList<Processor>();
                 Map<Stream, Processor> next = new HashMap<Stream, Processor>();
-                start.add(proc);
                 List<Processor> enableNext = current.projectTopologyNodes(true);
+                boolean connected = false;
+                for (int o = 0; !connected && o < proc.getOutputCount(); o++) {
+                    connected |= enableNext.contains(proc.getOutput(o));
+                }
+                if (!connected) { // we have a fam-interm-algNode integration, start with the algorithm (sources)
+                    start.addAll(enableNext);
+                } else {
+                    start.add(proc);
+                }
                 for (int o = 0; o < proc.getOutputCount(); o++) {
                     Stream out = proc.getOutput(o);
                     Processor target = out.getTarget();

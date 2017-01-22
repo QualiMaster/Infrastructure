@@ -90,7 +90,8 @@ public class DelegatingTopologySinkAggregatorObservation extends AbstractTopolog
         }
         
         @Override
-        public void visit(Stream stream) {
+        public boolean visit(Stream stream) {
+            return false;
         }
         
         @Override
@@ -98,10 +99,11 @@ public class DelegatingTopologySinkAggregatorObservation extends AbstractTopolog
         }
         
         @Override
-        public void enter(Processor node, boolean isEnd, boolean isLoop) {
+        public boolean enter(Processor node, boolean isEnd, boolean isLoop) {
             if (isEnd) {
                 result = aggregate(result, node, aggregator);
             }
+            return false;
         }
         
     }

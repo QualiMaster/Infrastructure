@@ -74,7 +74,6 @@ public class DelegatingTopologyPredecessorAggregatorObservation extends Abstract
                 }
             }
         }
-
         return result;
     }
 
@@ -95,6 +94,11 @@ public class DelegatingTopologyPredecessorAggregatorObservation extends Abstract
             setFirstUpdate(nodePart.getFirstUpdate(getObservable()));
         }
         return result;
+    }
+
+    @Override
+    protected boolean isSimpleTopoplogy() {
+        return false; // force calculation
     }
 
     @Override

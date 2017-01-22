@@ -88,6 +88,7 @@ public class DelegatingTimeFramedObservation extends AbstractDelegatingObservati
      * Updates the time-frame observation.
      */
     private synchronized void update() {
+        double value = super.getValue();
         if (maxTimeBaseDiff > 0) {
             boolean update = false;
             if (lastUpdate > 0) {
@@ -101,7 +102,6 @@ public class DelegatingTimeFramedObservation extends AbstractDelegatingObservati
                 long now = System.currentTimeMillis();
                 long timeDiff = now - timeBase;
                 if (timeDiff > 0 && timeDiff >= timeFrame) {
-                    double value = super.getValue();
                     result = (value - valueAtTimeBase) / (now - timeBase) * timeFrame;
                     if (Double.isNaN(result) || Double.isInfinite(result)) {
                         result = 0;
@@ -117,14 +117,21 @@ public class DelegatingTimeFramedObservation extends AbstractDelegatingObservati
             long firstUpdate = super.getFirstUpdate();
             if (firstUpdate > 0) {
                 long now = System.currentTimeMillis();
-                double value = super.getValue();
                 result = value / (now - firstUpdate) * timeFrame;
                 if (Double.isNaN(result) || Double.isInfinite(result)) {
                     result = 0;
                 }
+                lastUpdate = now;
             }            
         }
-        
+    }
+    
+    @Override
+    public void switchedTo(boolean direct) {
+        //switchedTo causes reset of underlying observation and, thus, a change of the timeBase in both cases
+        //keep result for now to avoid disruptive changes
+        super.switchedTo(direct);
+        lastUpdate = -1;
     }
     
     @Override
@@ -151,7 +158,7 @@ public class DelegatingTimeFramedObservation extends AbstractDelegatingObservati
     
     @Override
     protected String toStringShortcut() {
-        return "TimeM";
+        return "Time";
     }
 
 }

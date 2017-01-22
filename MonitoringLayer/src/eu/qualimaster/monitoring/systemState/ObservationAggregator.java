@@ -108,7 +108,7 @@ public class ObservationAggregator {
      * @param part the part to take the observed value from
      * @param localValue the local value or the aggregated value
      */
-    void push(PipelineNodeSystemPart part, boolean localValue) {
+    public void push(PipelineNodeSystemPart part, boolean localValue) {
         Double value;
         if (part.hasValue(observable)) {
             value = part.getObservedValue(observable, localValue);
@@ -138,7 +138,7 @@ public class ObservationAggregator {
     /**
      * Removes the last value added by {@link #push(PipelineNodeSystemPart)}.
      */
-    void pop() {
+    public void pop() {
         int pos = path.size() - 1;
         if (pos > 0) {
             path.remove(pos);

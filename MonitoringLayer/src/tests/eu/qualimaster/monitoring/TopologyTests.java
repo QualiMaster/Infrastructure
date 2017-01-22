@@ -85,6 +85,11 @@ public class TopologyTests {
             return part.getObservedValue(observable);
         }
         
+        @Override
+        public String toString() {
+            return "VALUE";
+        }
+        
     };
 
     private static final IValueProjector LOCAL_VALUE = new IValueProjector() {
@@ -93,7 +98,12 @@ public class TopologyTests {
         public double getValue(SystemPart part, IObservable observable) {
             return part.getObservedValue(observable, true);
         }
-        
+
+        @Override
+        public String toString() {
+            return "LOCAL_VALUE";
+        }
+
     };
     
     /**
@@ -128,14 +138,23 @@ public class TopologyTests {
         public double aggregate(IObservable observable, boolean pathAverage, IValueProjector projector, 
             SystemPart... parts) {
             double result = 0;
+            int count = 0;
             for (SystemPart part : parts) {
-                double obs = projector.getValue(part, observable);
-                result += obs;
+                if (VALUE == projector || part.getComponentCount(observable) > 0) {
+                    double obs = projector.getValue(part, observable);
+                    result += obs;
+                    count++;
+                }
             }
-            if (pathAverage) {
-                result /= parts.length;
+            if (pathAverage && count > 0) {
+                result /= count;
             }
             return result;
+        }
+        
+        @Override
+        public String toString() {
+            return "SUM";
         }
         
     };
@@ -149,8 +168,10 @@ public class TopologyTests {
             if (parts.length > 0) {
                 result = Double.MAX_VALUE;
                 for (SystemPart part : parts) {
-                    double obs = projector.getValue(part, observable);
-                    result = Math.min(result, obs);
+                    if (part.getComponentCount(observable) > 0) {
+                        double obs = projector.getValue(part, observable);
+                        result = Math.min(result, obs);
+                    }
                 }
                 if (pathAverage) {
                     result /= parts.length;
@@ -160,7 +181,12 @@ public class TopologyTests {
             }
             return result;
         }
-        
+
+        @Override
+        public String toString() {
+            return "MIN";
+        }
+
     };
 
     private static final IPathAggregator MAX = new IPathAggregator() {
@@ -172,8 +198,10 @@ public class TopologyTests {
             if (parts.length > 0) {
                 result = Double.MIN_VALUE;
                 for (SystemPart part : parts) {
-                    double obs = projector.getValue(part, observable);
-                    result = Math.max(result, obs);
+                    if (part.getComponentCount(observable) > 0) {
+                        double obs = projector.getValue(part, observable);
+                        result = Math.max(result, obs);
+                    }
                 }
                 if (pathAverage) {
                     result /= parts.length;
@@ -182,6 +210,11 @@ public class TopologyTests {
                 result = 0;
             }
             return result;
+        }
+        
+        @Override
+        public String toString() {
+            return "MAX";
         }
         
     };
@@ -426,7 +459,7 @@ public class TopologyTests {
         }
         
         @Override
-        public void enter(Processor node, boolean isEnd, boolean isLoop) {
+        public boolean enter(Processor node, boolean isEnd, boolean isLoop) {
             if (!isLoop) {
                 enterVisitSequence.add(node);
                 if (!visitedNodes.contains(node)) {
@@ -440,11 +473,13 @@ public class TopologyTests {
                 endNodes.add(node);
             }
             visitedNodes.add(node);
+            return false;
         }
 
         @Override
-        public void visit(Stream stream) {
+        public boolean visit(Stream stream) {
             visitedStreams.add(stream);
+            return false;
         }
 
     }
@@ -619,9 +654,27 @@ public class TopologyTests {
      */
     private static void assertEquals(SystemPart[] expected, ObservationAggregator actual, IValueProjector projector) {
         IPathAggregator pAgg = getPathElementAggregator(actual);
-        Assert.assertEquals(actual.getObservable() + " ", 
+        Assert.assertEquals(actual.getObservable() + " " + toString(expected, actual.getObservable()) + " ", 
             pAgg.aggregate(actual.getObservable(), actual.doPathAverage(), projector, expected), 
                 actual.getValue(), ASSERT_DELTA);
+    }
+    
+    /**
+     * Turns the values of <code>observable</code> for the given <code>parts</code> into text.
+     * 
+     * @param parts the parts
+     * @param observable the observable
+     * @return the text representation
+     */
+    private static String toString(SystemPart[] parts, IObservable observable) {
+        String result = "";
+        for (SystemPart p : parts) {
+            if (result.length() > 0) {
+                result += " ";
+            }
+            result += p.getName() + " " + p.getObservedValue(observable);
+        }
+        return result;
     }
     
     /**

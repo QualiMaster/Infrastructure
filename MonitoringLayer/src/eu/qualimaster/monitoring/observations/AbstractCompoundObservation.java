@@ -414,6 +414,11 @@ public abstract class AbstractCompoundObservation implements IObservation {
     public void switchedTo(boolean direct) {
         if (!direct) {
             clear();
+            if (null != links) {
+                for (int l = 0; l < links.size(); l++) {
+                    links.get(l).clear();
+                }
+            }
         }
     }
 

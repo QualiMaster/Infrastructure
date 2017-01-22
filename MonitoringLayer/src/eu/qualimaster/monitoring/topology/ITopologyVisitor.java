@@ -33,15 +33,17 @@ public interface ITopologyVisitor {
      * @param isEnd whether <code>node</code> is an end of the visit (either a sink or as requested by
      *   the visit strategy)
      * @param isLoop whether <code>node</code> is part of a loop
+     * @return <code>true</code> for stop, <code>false</code> else
      */
-    public void enter(Processor node, boolean isEnd, boolean isLoop);
+    public boolean enter(Processor node, boolean isEnd, boolean isLoop);
 
     /**
      * Visits a stream (only if the stream is not bypassed by a topology projection).
      * 
      * @param stream the stream to be visited
+     * @return <code>true</code> for stop, <code>false</code> else
      */
-    public void visit(Stream stream);
+    public boolean visit(Stream stream);
     
     /**
      * Ends visiting a processor.

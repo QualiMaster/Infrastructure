@@ -47,6 +47,10 @@ public class ObservationFactory {
         registerPipelineObservationAggregator(ResourceUsage.CAPACITY, IAggregationFunction.SUM, true, 
             IAggregationFunction.MAX);
         registerConstantPipelineNodeAggregator(ResourceUsage.CAPACITY, IAggregationFunction.AVG);
+
+        registerPipelineObservationAggregator(ResourceUsage.USED_MEMORY, IAggregationFunction.SUM, false, 
+            IAggregationFunction.SUM);
+        registerConstantPipelineNodeAggregator(ResourceUsage.USED_MEMORY, IAggregationFunction.SUM);
     }
     
     /**
@@ -147,7 +151,7 @@ public class ObservationFactory {
         @Override
         public IObservation create(IObservable observable, IPartType type, IObservationProvider observationProvider) {
             return new DelegatingTopologyAggregatorObservation(createAggregationCompoundObservation(observable), 
-                observable, getTopologyProvider(observationProvider));
+                observable, getTopologyProvider(observationProvider), true);
         }
     };
     
@@ -245,6 +249,16 @@ public class ObservationFactory {
         
     };
 
+    public static final IObservationCreator PREDECESSOR_ITEMS_1S = new IObservationCreator() {
+        
+        @Override
+        public IObservation create(IObservable observable, IPartType type, IObservationProvider observationProvider) {
+            // we summarize here over items/s!
+            return new DelegatingTopologyPredecessorAggregatorObservation(new SingleObservation(), 
+                Scalability.ITEMS, observationProvider.getTopologyProvider(), IAggregationFunction.SUM);
+        }
+    };
+    
     /**
      * Creates a sum-based topology aggregator for sinks only based on compound observations.
      */
@@ -457,7 +471,7 @@ public class ObservationFactory {
         registerCreator(FunctionalSuitability.RELEVANCY, null, CREATOR_SINGLE);
         registerCreator(FunctionalSuitability.MP_VOLATILITY, null, CREATOR_SINGLE);
 
-        registerCreator(ResourceUsage.USED_MEMORY, null, CREATOR_SINGLE);
+        registerCreator(ResourceUsage.USED_MEMORY, null, CREATOR_TOPOLOGY_COMPOUND);
         registerCreator(ResourceUsage.LOAD, null, CREATOR_SINGLE);
         registerCreator(ResourceUsage.AVAILABLE_FREQUENCY, null, CREATOR_SINGLE);
         registerCreator(ResourceUsage.AVAILABLE_MEMORY, null, CREATOR_SINGLE);
@@ -482,6 +496,7 @@ public class ObservationFactory {
         registerCreator(Scalability.VOLUME, null, CREATOR_COMPOUND_STATISTICS_1S_ABS);
         // CREATOR_COMPOUND_STATISTICS_1S_ABS ; CREATOR_TOPOLOGY_SINK_SUM_STATISTICS_1S
         registerCreator(Scalability.ITEMS, null, ITEMS_1S); 
+        registerCreator(Scalability.PREDECESSOR_ITEMS, null, PREDECESSOR_ITEMS_1S);
         //registerCreator(Scalability.ITEMS, PartType.PIPELINE, CREATOR_COMPOUND_TOPOLOGY_SINK_SUM_STATISTICS_1S);
         
         registerCreator(CloudResourceUsage.BANDWIDTH, null, CREATOR_SINGLE);
@@ -507,7 +522,8 @@ public class ObservationFactory {
                 ResourceUsage.HOSTS, ResourceUsage.USED_CPUS, ResourceUsage.USED_DFES,
             FunctionalSuitability.ACCURACY_CONFIDENCE, FunctionalSuitability.COMPLETENESS,
                 FunctionalSuitability.BELIEVABILITY, FunctionalSuitability.RELEVANCY,
-            Scalability.VOLUME, Scalability.VELOCITY, Scalability.VOLATILITY, Scalability.VARIETY, Scalability.ITEMS,
+            Scalability.VOLUME, Scalability.VELOCITY, Scalability.VOLATILITY, Scalability.VARIETY, Scalability.ITEMS, 
+                Scalability.PREDECESSOR_ITEMS,
             AnalysisObservables.IS_VALID, AnalysisObservables.IS_ENACTING);
         registerPart(PartType.ALGORITHM, 
             TimeBehavior.LATENCY, TimeBehavior.THROUGHPUT_ITEMS, 

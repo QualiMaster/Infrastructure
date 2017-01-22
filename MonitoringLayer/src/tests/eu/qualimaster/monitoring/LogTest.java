@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -34,12 +35,14 @@ import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.coordination.NameMapping;
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent.DetailMode;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
+import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.MonitoringManager;
 import eu.qualimaster.monitoring.events.MonitoringEvent;
 import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 import eu.qualimaster.monitoring.storm.PipelineStatistics;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
 import eu.qualimaster.monitoring.systemState.PipelineSystemPart;
+import eu.qualimaster.monitoring.systemState.PlatformSystemPart;
 import eu.qualimaster.monitoring.systemState.SystemState;
 import eu.qualimaster.monitoring.topology.PipelineTopology;
 import eu.qualimaster.monitoring.topology.PipelineTopology.Processor;
@@ -278,8 +281,11 @@ public class LogTest {
      */
     public static void testRandomPip() throws IOException {
         final String pipName = "RandomPip";
-        final int maxEventCount = 250; // 0 = all, 40 = initial testing
+        final int maxEventCount = 0; // 0 = all, 40 = initial testing
         File folder = new File(Utils.getTestdataDir(), "test");
+        Properties prop = new Properties();
+        prop.put(MonitoringConfiguration.MONITORING_LOG_INFRA_LOCATION, folder.getAbsolutePath());
+        MonitoringConfiguration.configure(prop, false);
         FileInputStream mappingFile = new FileInputStream(new File(folder, "mapping.xml"));
         final NameMapping nameMapping = new NameMapping(pipName, mappingFile);
         CoordinationManager.registerTestMapping(nameMapping);
@@ -298,18 +304,28 @@ public class LogTest {
             "RandomProcessor1processor1;eu.qualimaster.algorithms.Process1Bolt"
             ));
         nameMapping.considerSubStructures(new SubTopologyMonitoringEvent(pipName, structure, null));
-        
         // fake the start
         SystemState state = MonitoringManager.getSystemState();
         final PipelineSystemPart pipeline = state.obtainPipeline(pipName);
-        PipelineTopology topo = createRandomPipTopo();
+        final PipelineTopology topo = AggregationTest.createOneSideRandomPipTopo();
         System.out.println("TOPOLOGY " + topo);
         pipeline.setTopology(topo);
         pipeline.changeStatus(PipelineLifecycleEvent.Status.STARTING, false, null);
         Timer timer = new Timer();
-        Tracing.test(pipName, "TestFamily", "CorrelationSW", System.err, DetailMode.ALGORITHMS);
-        
-        LogReader reader = new LogReader(new File(folder, "infra.log"), 
+        final TracingTask ttask = new TracingTask(null);
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                PipelineStatistics pStat = new PipelineStatistics(pipeline);
+                for (Processor p : topo.processors()) {
+                    PipelineNodeSystemPart nodePart = SystemState.getNodePart(nameMapping, pipeline, p.getName());
+                    pStat.collect(nodePart);
+                }
+                pStat.commit();
+                ttask.run();
+            }
+        }, 0, 1000);
+        LogReader reader = new LogReader(new File(folder, "log_infrastructure_20012017.log"), 
             new EventProcessor<MonitoringEvent>(MonitoringEvent.class) {
 
                 @Override
@@ -329,52 +345,9 @@ public class LogTest {
             pipStat.collect(node);
         }
         pipStat.commit();
-        
+        PlatformSystemPart.closeTrace();
+        Tracing.close();
         System.out.println(state.getPipeline(pipName).format(""));
-    }
-
-    /**
-     * Creates a monitoring topology.
-     * 
-     * @return the topology
-     */
-    private static PipelineTopology createRandomPipTopo() {
-        final List<Processor> processors = new ArrayList<Processor>();
-        Proc src = new Proc("src", 1, new int[]{4}, processors);
-        Proc proc = new Proc("processor", 1, new int[]{3}, processors);
-        Proc p1i = new Proc("RandomProcessor1Intermediary", 1, new int[]{1}, processors);
-        Proc p1p = new Proc("RandomProcessor1processor1", 1, new int[]{2}, processors);
-        Proc p1e = new Proc("RandomProcessor1EndBolt", 1, new int[]{2}, processors);
-        Proc p2i = new Proc("RandomProcessor2Intermediary", 1, new int[]{1}, processors);
-        Proc p2p = new Proc("RandomProcessor2processor1", 1, new int[]{2}, processors);
-        Proc p2e = new Proc("RandomProcessor2EndBolt", 1, new int[]{2}, processors);
-        Proc snk = new Proc("snk", 1, new int[]{4}, processors);
-        Stream srcproc = new Stream("", src, proc);
-        Stream procp1i = new Stream("", proc, p1i);
-        Stream p1ip1p = new Stream("", p1i, p1p);
-        Stream p1pp1e = new Stream("", p1p, p1e);
-        Stream procp2i = new Stream("", proc, p2i);
-        Stream p2ip2p = new Stream("", p2i, p2p);
-        Stream p2pp2e = new Stream("", p2p, p2e);        
-        Stream p1esnk = new Stream("", p1e, snk);
-        Stream p2esnk = new Stream("", p1e, snk);
-        src.setOutputs(srcproc);
-        proc.setInputs(srcproc);
-        proc.setOutputs(procp1i, procp2i);
-        p1i.setInputs(procp1i);
-        p2i.setInputs(procp2i);
-        p1i.setOutputs(p1ip1p);
-        p2i.setOutputs(p2ip2p);
-        p1p.setInputs(p1ip1p);
-        p2p.setInputs(p2ip2p);
-        p1p.setOutputs(p1pp1e);
-        p2p.setOutputs(p2pp2e);        
-        p1e.setInputs(p1pp1e);
-        p2e.setInputs(p2pp2e);
-        p1e.setOutputs(p1esnk);
-        p2e.setOutputs(p2esnk);
-        snk.setInputs(p1esnk, p2esnk);
-        return new PipelineTopology(processors);
     }
 
     /**
@@ -474,7 +447,8 @@ public class LogTest {
      * @throws IOException in case of I/O problems
      */
     public static void main(String[] args) throws IOException {
-        testHYPip();
+        //testHYPip();
+        testRandomPip();
     }
     
 }
