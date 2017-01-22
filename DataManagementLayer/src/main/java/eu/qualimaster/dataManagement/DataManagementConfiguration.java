@@ -212,6 +212,8 @@ public class DataManagementConfiguration extends Configuration {
     public static void transferConfigurationTo(IOptionSetter options) {
         Configuration.transferConfigurationTo(options);
         options.setOption(PATH_DFS, getDfsPath());
+        options.setOption(URL_HDFS, getHdfsUrl());
+        options.setOption(PATH_HDFS, getHdfsPath());
         options.setOption(SIMULATION_LOCAL_PATH, getSimulationLocalPath());
         options.setOption(SIMULATION_USE_HDFS, useSimulationHdfs());
     }
@@ -228,6 +230,8 @@ public class DataManagementConfiguration extends Configuration {
         transfer(conf, prop, PATH_DFS, false);
         transfer(conf, prop, SIMULATION_USE_HDFS, false);
         transfer(conf, prop, SIMULATION_LOCAL_PATH, false);
+        transfer(conf, prop, URL_HDFS, false);
+        transfer(conf, prop, PATH_HDFS, false);
         transferConfigurationFrom(conf, prop);
     }
     
