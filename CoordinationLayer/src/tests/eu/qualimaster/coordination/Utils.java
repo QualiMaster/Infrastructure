@@ -3,6 +3,8 @@ package tests.eu.qualimaster.coordination;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -26,6 +28,7 @@ public class Utils {
     public static class ModelProvider implements IModelProvider {
         private final String rootFolder;
         private File tmp;
+        private List<File> oldTmps = new ArrayList<File>();
         
         /**
          * sole constructor for this class.
@@ -39,6 +42,9 @@ public class Utils {
         @Override
         public void provideModel(Properties properties) {
             try {
+                if (null != tmp) {
+                    oldTmps.add(tmp);
+                }
                 tmp = File.createTempFile("qmModelArtifact", ".jar");
                 tmp.deleteOnExit();
                 URL tmpUrl = tmp.toURI().toURL();
@@ -59,8 +65,13 @@ public class Utils {
         @Override
         public void dispose() {
             ArtifactRegistry.undefineArtifact(MODEL_ARTIFACTSPEC);
-            boolean success = tmp.delete();
-            System.out.println("deleting " + tmp + " " + success);
+            oldTmps.add(tmp);
+            for (File f : oldTmps) {
+                if (null != f) {
+                    boolean success = f.delete();
+                    System.out.println("deleting " + f + " " + success);
+                }
+            }
         }
         
     }

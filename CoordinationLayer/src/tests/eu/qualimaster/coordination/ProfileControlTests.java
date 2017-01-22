@@ -290,7 +290,6 @@ public class ProfileControlTests {
         ArtifactRegistry.undefineArtifact(artifactSpec);
         FileUtils.deleteQuietly(tmp);
     }
-
     
     /**
      * Asserts the contents of <code>actual</code> and <code>expected</code>.

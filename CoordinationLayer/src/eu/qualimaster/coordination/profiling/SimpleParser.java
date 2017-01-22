@@ -25,6 +25,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.Serializable;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,6 +79,8 @@ class SimpleParser implements IProfileControlParser {
      * @throws IOException if loading/parsing the control file fails
      */
     private ParseResult parseControlFile(File file, boolean considerImport, IProfile profile) throws IOException {
+        File base = Files.createTempDirectory("qmProfiling").toFile();
+        FileUtils.cleanDirectory(base);
         ParseResult result = new ParseResult();
         List<Integer> tmpTasks = new ArrayList<Integer>();
         List<Integer> tmpExecutors = new ArrayList<Integer>();
@@ -113,31 +116,6 @@ class SimpleParser implements IProfileControlParser {
     }
 
     /**
-     * Trys creating a temp folder with given <code>name</code> (deleting an existing one) or, if this fails, a 
-     * temp folder with unique name. 
-     * 
-     * @param name the desired name
-     * @return the created folder
-     * @throws IOException if creation is not possible at all
-     */
-    private static File createTempFolderWithFallback(String name) throws IOException {
-        File folder = new File(FileUtils.getTempDirectory(), name);
-        if (folder.exists()) {
-            try {
-                FileUtils.deleteDirectory(folder);
-            } catch (IOException e) {
-                folder = null;
-            }
-        } else {
-            folder = null;
-        }
-        if (null == folder) {
-            folder = File.createTempFile(name, ".tmp");
-        }
-        return folder;
-    }
-
-    /**
      * Handles an import command.
      * 
      * @param line the line to be parsed
@@ -152,7 +130,7 @@ class SimpleParser implements IProfileControlParser {
             dataOnly = true;
             artifact = artifact.substring(DATA.length(), artifact.length()).trim();
         }
-        File base = createTempFolderWithFallback("qmProfiling");
+        File base = Files.createTempDirectory("qmProfiling").toFile();
         try {
             AlgorithmProfileHelper.extractProfilingArtifact(artifact, profile.getAlgorithmName(), base);
             File cf = AlgorithmProfileHelper.getControlFile(base);
