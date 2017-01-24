@@ -216,6 +216,7 @@ public class DataManagementConfiguration extends Configuration {
         options.setOption(PATH_HDFS, getHdfsPath());
         options.setOption(SIMULATION_LOCAL_PATH, getSimulationLocalPath());
         options.setOption(SIMULATION_USE_HDFS, useSimulationHdfs());
+        options.setOption(PATH_ACCOUNTS, getAccountsPath());
     }
 
     /**
@@ -232,6 +233,7 @@ public class DataManagementConfiguration extends Configuration {
         transfer(conf, prop, SIMULATION_LOCAL_PATH, false);
         transfer(conf, prop, URL_HDFS, false);
         transfer(conf, prop, PATH_HDFS, false);
+        transfer(conf, prop, PATH_ACCOUNTS, false);
         transferConfigurationFrom(conf, prop);
     }
     
