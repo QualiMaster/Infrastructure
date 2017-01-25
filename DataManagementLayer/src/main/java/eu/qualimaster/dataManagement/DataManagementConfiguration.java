@@ -131,6 +131,16 @@ public class DataManagementConfiguration extends Configuration {
      */
     public static final String DEFAULT_SIMULATION_LOCAL_PATH = "";
     
+    /**
+     * The local path containing simulated data. If not given, consider {@link #PATH_DFS}.
+     */
+    public static final String EXTERNAL_SERVICE_PATH = "externalService.path";
+
+    /**
+     * The default value for {@link #EXTERNAL_SERVICE_PATH}, {@value}.
+     */
+    public static final String DEFAULT_EXTERNAL_SERVICE_PATH = "";
+    
     private static ConfigurationOption<String> hdfsUrl = createStringOption(URL_HDFS, DEFAULT_URL_HDFS);
     private static ConfigurationOption<String> hdfsUser = createStringOption(URL_HDFS_USER, DEFAULT_URL_HDFS_USER);
     private static ConfigurationOption<String> hdfsGroupMapping = createStringOption(URL_HDFS_GROUPMAPPING, 
@@ -146,6 +156,8 @@ public class DataManagementConfiguration extends Configuration {
         = createBooleanOption(SIMULATION_USE_HDFS, DEFAULT_SIMULATION_USE_HDFS);
     private static ConfigurationOption<String> simulationLocalPath 
         = createStringOption(SIMULATION_LOCAL_PATH, DEFAULT_SIMULATION_LOCAL_PATH);
+    private static ConfigurationOption<String> externalServicePath 
+        = createStringOption(EXTERNAL_SERVICE_PATH, DEFAULT_EXTERNAL_SERVICE_PATH);
     
     /**
      * Reads the configuration settings from the file.
@@ -217,6 +229,7 @@ public class DataManagementConfiguration extends Configuration {
         options.setOption(SIMULATION_LOCAL_PATH, getSimulationLocalPath());
         options.setOption(SIMULATION_USE_HDFS, useSimulationHdfs());
         options.setOption(PATH_ACCOUNTS, getAccountsPath());
+        options.setOption(EXTERNAL_SERVICE_PATH, getExternalServicePath());
     }
 
     /**
@@ -234,6 +247,7 @@ public class DataManagementConfiguration extends Configuration {
         transfer(conf, prop, URL_HDFS, false);
         transfer(conf, prop, PATH_HDFS, false);
         transfer(conf, prop, PATH_ACCOUNTS, false);
+        transfer(conf, prop, EXTERNAL_SERVICE_PATH, false);
         transferConfigurationFrom(conf, prop);
     }
     
@@ -336,6 +350,20 @@ public class DataManagementConfiguration extends Configuration {
      */
     public static String getSimulationLocalPath() {
         String result = simulationLocalPath.getValue();
+        if (isEmpty(result)) {
+            result = getDfsPath();
+        }
+        return result;
+    }
+
+    /**
+     * Returns the path to files used by the external service performing communication with data consuming applications.
+     * Defaults to {@link #getDfsPath()} if not defined.
+     * 
+     * @return the path to the external service files
+     */
+    public static String getExternalServicePath() {
+        String result = externalServicePath.getValue();
         if (isEmpty(result)) {
             result = getDfsPath();
         }

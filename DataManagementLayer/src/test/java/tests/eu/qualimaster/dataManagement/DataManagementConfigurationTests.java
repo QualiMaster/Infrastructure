@@ -42,6 +42,8 @@ public class DataManagementConfigurationTests extends ConfigurationTests {
             DataManagementConfiguration.useSimulationHdfs());
         Assert.assertEquals(DataManagementConfiguration.getDfsPath(), 
             DataManagementConfiguration.getSimulationLocalPath());
+        Assert.assertEquals(DataManagementConfiguration.getDfsPath(), 
+            DataManagementConfiguration.getExternalServicePath());
     }
 
     @Override
