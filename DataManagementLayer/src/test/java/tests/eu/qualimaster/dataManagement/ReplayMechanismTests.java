@@ -209,7 +209,7 @@ public class ReplayMechanismTests {
         long start = System.currentTimeMillis();
         String expectedPayload = data.getExpectedPayload();
         do {
-            String payload = replay.getNext();
+            String payload = replay.getNext(true);
             if (null != payload) {
                 if (null != expectedPayload) {
                     Assert.assertEquals(expectedPayload, payload);

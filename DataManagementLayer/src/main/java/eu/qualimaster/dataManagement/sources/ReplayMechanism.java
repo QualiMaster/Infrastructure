@@ -15,8 +15,10 @@ import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.text.ParseException;
+import java.util.ArrayDeque;
 import java.util.Date;
 import java.util.Map;
+import java.util.Queue;
 
 /**
  * A generic data replay mechanism. For using HSDFS, please set {@link DataManagementConfiguration#URL_HDFS} properly.
@@ -50,6 +52,10 @@ public class ReplayMechanism implements IDataSource {
     private long monitoringTimestamp;
     private long throughput;
     private int measurementDuration; // seconds
+    
+    private long record = 0;
+    private boolean init = false;
+    private int timeInterval = 1000; //1s    
 
     /**
      * Creates a new replay mechanism without explicit source, manipulator and default timestamp parser.
@@ -141,6 +147,19 @@ public class ReplayMechanism implements IDataSource {
     }
     
     /**
+     * Adjusts the timestamp based on the current time.
+     * @param timestamp the timestamp in the dataset
+     * @return the new timestamp
+     */
+    private long newTimestamp(long timestamp) {
+        return timestamp + offsetInMillis;
+    }
+    
+    private void updateOffset(long timestamp) {
+        offsetInMillis = System.currentTimeMillis() - timestamp;
+    }
+    
+    /**
      * Reads out the next line and adjusts the date.
      * 
      * @param line the actual input line
@@ -202,36 +221,156 @@ public class ReplayMechanism implements IDataSource {
     public boolean isEOD() {
         return endOfData;
     }
-
+    
+    /**
+     * Creates an item containing the timestamp and a list of data item instances in the profiling queue.
+     * @author Cui Qin
+     *
+     * @param <T> the target class type of the data item
+     */
+    public class ProfilingQueueItem<T> {
+        long timestamp;
+        T item;
+        
+        /**
+         * Creates an item for the profiling queue.
+         * @param timestamp the timestamp
+         * @param item the data item
+         */
+        public ProfilingQueueItem(long timestamp, T item) {
+            this.timestamp = timestamp;
+            this.item = item;
+        }
+        /**
+         * Returns the timestamp.
+         * @return the timestamp
+         */
+        public long getTimestamp() {
+            return timestamp;
+        }
+        /**
+         * Returns a list of data items.
+         * @return a list of data items
+         */
+        public T getItem() {
+            return item;
+        }        
+        
+    }
+    /**
+     * Reads profiling data into a queue with a specific size.
+     * @param id the tuple id
+     * @param cls the target class type
+     * @param handler the source handler
+     * @param size the queue size 
+     * @return the queue containing a certain number of profiling data items
+     * @throws IOException IO Exception
+     */
+    public <T> Queue<ProfilingQueueItem<T>> readProfilingData(String id, Class<T> cls, GenericMultiSourceHandler handler, int size) throws IOException {
+        Queue<ProfilingQueueItem<T>> queue = new ArrayDeque<ProfilingQueueItem<T>>();
+        
+        int queueCounter = 0;
+        long timestamp = 0;
+        while (!isEOD() && queueCounter < size) {
+            String genericInput = getNext(false);
+            if (null != genericInput) {
+                char separator = getSeparator();
+                //parse the data input to instance
+                T item = handler.next(id, cls, genericInput, separator, false, true);
+                
+                //get the corresponding timestamp
+                timestamp = handler.nextTimestamp(genericInput, separator, false);
+                queue.add(new ProfilingQueueItem<T>(timestamp, item));
+            }
+            
+            queueCounter++;
+        }
+        return queue;
+    }
+    
+    /**
+     * Returns the next item considering the time interval based on the timestamp.
+     * @param queue the queue to read data
+     * @return the next item
+     * @throws InterruptedException the interrupted exception
+     */
+    public <T> T getNextItem(Queue<ProfilingQueueItem<T>> queue) throws InterruptedException {
+        T item = null;              
+      
+        long newTimestamp = 0;        
+        ProfilingQueueItem<T> queueItem = queue.poll();
+        long timestamp = queueItem.getTimestamp();       
+        if(!init) {
+            init = true;
+            record = newTimestamp;
+            updateOffset(timestamp);
+        } 
+        newTimestamp = newTimestamp(timestamp);
+        long now = System.currentTimeMillis();
+        while (newTimestamp > now) {//correct the timestamp 
+            Thread.sleep(1);
+            now = System.currentTimeMillis();
+        }
+        if(newTimestamp - now <= timeInterval) {//1s
+            if(record == newTimestamp) {
+                item = queueItem.getItem();
+            } else {
+                //wait until it reaches 1s
+                Thread.sleep(now-newTimestamp);
+                item = queueItem.getItem();
+                record = newTimestamp;
+            }
+        } else {
+            now = System.currentTimeMillis();
+        }
+       
+        return item;
+    }
     /**
      * Returns the next line payload considering the timestamp.
      * 
+     * @param control <b>true</b> consider the timestamp, otherwise return the next line immediately
      * @return the next line, <b>null</b> if there is none
      * @throws DefaultModeException in case of illegal data switching the calling pipeline into default mode
      */
-    public String getNext() throws DefaultModeException {
+    public String getNext(boolean control) throws DefaultModeException {
         String line = null;
         try {
             if (null != brForData && (line = brForData.readLine()) != null) {
-                if (timestampParser.skipParsing(line)) {
-                    return null;
-                }
-                String newline = newlineWithDateToNow(line, false);
-                try {
-                    DateTime now = new DateTime();
-                    while (prevTimeStampNow > now.getMillis()) {
-                        // TODO this is original code, increases the response time and capacity. Better return null
-                        Thread.sleep(1);
-                        now = new DateTime();
+                if(control) {
+                    if (timestampParser.skipParsing(line)) {
+                        return null;
                     }
-                    // Thread.sleep(diff > 0 ? diff : 0);git
-                } catch (InterruptedException e) {
-                    logger.error("Simulator Error : " + e.getMessage());
+                    String newline = newlineWithDateToNow(line, false);
+                    try {
+                        DateTime now = new DateTime();
+                        while (prevTimeStampNow > now.getMillis()) {
+                            // TODO this is original code, increases the response time and capacity. Better return null
+                            Thread.sleep(1);
+                            now = new DateTime();
+                        }
+                        // Thread.sleep(diff > 0 ? diff : 0);git
+                    } catch (InterruptedException e) {
+                        logger.error("Simulator Error : " + e.getMessage());
+                    }
+    
+                    // Throughput measurement
+                    monitorMe();
+                    return newline;
+                } else {
+                    /*
+                     * return payload only
+                    String payload = null;
+                    int timestampEnd = timestampParser.consumeTimestamp(line);
+                    int separatorPos = consumeWhitespace(line, timestampEnd);
+                    int payloadStartPos = consumeWhitespace(line, separatorPos + 1);
+                    if (separatorPos < payloadStartPos && payloadStartPos < line.length()) {                        
+                        payload = line.substring(payloadStartPos);
+                    }
+                    return payload;
+                    */
+                    return line;
                 }
-
-                // Throughput measurement
-                monitorMe();
-                return newline;
             } else {
                 if (selfConnect || null != brForData) {
                     // self connect and no data *or* not auto-connect and connected but no data

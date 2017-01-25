@@ -103,14 +103,18 @@ public class GenericMultiSourceHandler {
      * @param tupleId the tuple id handled by the caller
      * @param cls the target class type
      * @param in the actual input data
+     * @param fullLine whether the input data is the full line including the timestamp
      * @return the data tuple object
      * @throws IOException in case that the object cannot be created
      */
-    public <T> T next(String tupleId, Class<T> cls, IDataInput in) throws IOException {
+    public <T> T next(String tupleId, Class<T> cls, IDataInput in, boolean fullLine) throws IOException {
         T result;
         if (handlesMultiTupleTypes()) {
             // if multiple tuple types are defined on this source, queue the input data into the
             // queue given as first entry and obtain the next result for tupleId
+            if (fullLine) {//if it's the full line, skip the timestamp
+                in.nextString();
+            }
             String id = in.nextString();
             queue(id, in);
             result = poll(tupleId, cls);
@@ -149,7 +153,7 @@ public class GenericMultiSourceHandler {
      * @return the data tuple object (<b>null</b> if no object can be created)
      */
     public <T> T next(String tupleId, Class<T> cls, String data, char separator) {
-        return next(tupleId, cls, data, separator, false);
+        return next(tupleId, cls, data, separator, false, false);
     }
     
     /**
@@ -162,23 +166,51 @@ public class GenericMultiSourceHandler {
      * @param separator the element separator within <code>data</code>
      * @param restAsString passes the rest of <code>data</code> except for the tuple identifier
      *   in case of multiple tuple to the first call (nextString expected)  
+     * @param fullLine whether the input data is the full line including the timestamp
      * @return the data tuple object (<b>null</b> if no object can be created)
      */
-    public <T> T next(String tupleId, Class<T> cls, String data, char separator, boolean restAsString) {
+    public <T> T next(String tupleId, Class<T> cls, String data, char separator, boolean restAsString, boolean fullLine) {
         T result;
-        IDataInput in;
-        if (restAsString) {
-            in = new RestStringDataInput(data, separator, handlesMultiTupleTypes());
-        } else {
-            in = new StringDataInput(data, separator);
-        }
+        IDataInput in = nextDataInput(data, separator, restAsString);
         try {
-            result = next(tupleId, cls, in);
+            result = next(tupleId, cls, in, fullLine);
         } catch (IOException e) {
             Logger.getLogger(getClass()).error(e.getMessage() + " on input " + data);
             result = null;
         }
         return result;
+    }
+    
+    /**
+     * Creates a string data input.
+     * @param data the data
+     * @param separator the element separator within <code>data</code>
+     * @param restAsString passes the rest of <code>data</code> except for the tuple identifier
+     *   in case of multiple tuple to the first call (nextString expected) 
+     * @return the string data input
+     */
+    public IDataInput nextDataInput(String data, char separator, boolean restAsString) {
+        IDataInput in = null;
+        if (restAsString) {
+            in = new RestStringDataInput(data, separator, handlesMultiTupleTypes());
+        } else {
+            in = new StringDataInput(data, separator);
+        }
+        return in;
+    }
+    
+    /**
+     * Returns the timestamp in the data.
+     * @param data the data
+     * @param separator the element separator within <code>data</code>
+     * @param restAsString passes the rest of <code>data</code> except for the tuple identifier
+     *   in case of multiple tuple to the first call (nextString expected) 
+     * @return the timestamp
+     * @throws IOException the IO exception
+     */
+    public long nextTimestamp(String data, char separator, boolean restAsString) throws IOException {
+        IDataInput in = nextDataInput(data, separator, restAsString);
+        return in.nextLong();
     }
     
     /**
