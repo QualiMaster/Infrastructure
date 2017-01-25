@@ -12,6 +12,7 @@ import org.apache.storm.curator.retry.RetryNTimes;
 import backtype.storm.utils.Utils;
 import eu.qualimaster.Configuration;
 import eu.qualimaster.common.logging.QmLogging;
+import eu.qualimaster.dataManagement.DataManagementConfiguration;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 
 /**
@@ -117,7 +118,7 @@ public class StormSignalConnection extends AbstractSignalConnection {
      */
     @SuppressWarnings({ "rawtypes" })
     public static void configureEventBus(Map conf) {
-        Configuration.transferConfigurationFrom(conf);
+        DataManagementConfiguration.transferConfigurationFrom(conf);
         Object tmp = conf.get(QmLogging.ENABLING_PROPERTY);
         boolean enableLogging = false;
         if (tmp instanceof Boolean) {
