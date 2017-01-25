@@ -17,10 +17,12 @@ import tests.eu.qualimaster.coordination.IntSerializer;
 import tests.eu.qualimaster.coordination.LocalStormEnvironment;
 import tests.eu.qualimaster.coordination.Utils;
 import tests.eu.qualimaster.monitoring.genTopo.AbstractTopology;
+import tests.eu.qualimaster.monitoring.genTopo.EndOfDataEventHandler;
 import tests.eu.qualimaster.monitoring.genTopo.GenTopology;
 import tests.eu.qualimaster.monitoring.genTopo.HwTopology;
 import tests.eu.qualimaster.monitoring.genTopo.HwTopologyInt;
 import tests.eu.qualimaster.monitoring.genTopo.ManTopology;
+import tests.eu.qualimaster.monitoring.genTopo.ProfilingSourceTopology;
 import tests.eu.qualimaster.monitoring.genTopo.SubTopology;
 import tests.eu.qualimaster.monitoring.genTopo.SwitchTopology;
 import tests.eu.qualimaster.storm.Naming;
@@ -131,7 +133,7 @@ public class StormTest extends AbstractCoordinationTests {
             PipelineLifecycleEvent.Status.CHECKED, null)); // fake as we have no adaptation layer started
         getPipelineStatusTracker().waitFor(Naming.PIPELINE_NAME, Status.STARTED, 30000);
 
-        sleep(5000);
+        sleep(10000);
         
         EventManager.cleanup();
         // get system state here as otherwise stopping the pipeline may accidentally clear the dynamic part
@@ -304,6 +306,7 @@ public class StormTest extends AbstractCoordinationTests {
     private void testTopology(AbstractTopology topo) {
         final String mappingFile = topo.getMappingFileName();
         LocalStormEnvironment env = new LocalStormEnvironment();
+        EndOfDataEventHandler eodHandler = installEodHandler(topo);
 
         @SuppressWarnings("rawtypes")
         Map topoCfg = createTopologyConfiguration();
@@ -316,6 +319,7 @@ public class StormTest extends AbstractCoordinationTests {
         
         Map<String, TopologyTestInfo> topologies = new HashMap<String, TopologyTestInfo>();
         topo.registerSubTopologies(topologies);
+        topo.handleOptions(topoCfg, opt);
         TopologyTestInfo ti = new TopologyTestInfo(topology, new File(Utils.getTestdataDir(), mappingFile), topoCfg);
         ti.setSubTopologyEvent(evt);
         topologies.put(topo.getName(), ti);
@@ -339,10 +343,10 @@ public class StormTest extends AbstractCoordinationTests {
         INameMapping mapping = MonitoringManager.getNameMapping(topo.getName()); // preserve
 
         pipRunTime = System.currentTimeMillis() - pipRunTime;
-        new PipelineCommand(topo.getName(), PipelineCommand.Status.STOP).execute();
-        sleep(2000);
+        stopPipeline(topo, eodHandler);
         env.shutdown();
         StormUtils.forTesting(null, null);
+        uninstallEodHandler(eodHandler);
 
         SystemPart platform = state.getPlatform();
         Assert.assertNotNull(platform);
@@ -351,6 +355,46 @@ public class StormTest extends AbstractCoordinationTests {
         
         if (!isJenkins()) { // for now, copy seems to cause problems
             topo.assertState(state, mapping, pipRunTime);
+        }
+    }
+    
+    /**
+     * Creates, installs and returns and end-of-data event handler if requested by <code>topo</code>.
+     * 
+     * @param topo the topology to query for the installation
+     * @return the created handler, may be <b>null</b> if none was installed
+     */
+    private static EndOfDataEventHandler installEodHandler(AbstractTopology topo) {
+        EndOfDataEventHandler result = null;
+        if (null != topo && topo.installGenericEoDEventHandler()) {
+            result = new EndOfDataEventHandler();
+            EventManager.register(result);
+        }
+        return result;
+    }
+    
+    /**
+     * Uninstalls a potential end-of-data event handler.
+     * 
+     * @param handler the handler (may be <b>null</b>, call is ignored then)
+     */
+    private static void uninstallEodHandler(EndOfDataEventHandler handler) {
+        if (null != handler) {
+            EventManager.unregister(handler);
+        }
+    }
+
+    /**
+     * Stops the pipeline described by <code>topo</code> if there is no <code>handler</code> or the <code>handler</code>
+     * did not receive an end-of-data event.
+     * 
+     * @param topo the topology
+     * @param handler the end-of-data event handler (may be <b>null</b>)
+     */
+    private static void stopPipeline(AbstractTopology topo, EndOfDataEventHandler handler) {
+        if (null == handler || !handler.wasReceived()) {
+            new PipelineCommand(topo.getName(), PipelineCommand.Status.STOP).execute();
+            sleep(2000);
         }
     }
 
@@ -539,6 +583,14 @@ public class StormTest extends AbstractCoordinationTests {
     @Test
     public void testSubTopology() {
         testTopology(new SubTopology());
+    }
+    
+    /**
+     * Tests just the speed of a profiling source.
+     */
+    @Test
+    public void testProfilingSource() {
+        testTopology(new ProfilingSourceTopology());
     }
 
 }

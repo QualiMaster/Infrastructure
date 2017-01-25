@@ -1,0 +1,9 @@
+<mapping>
+  <pipeline name="TestPip" class="tests.eu.qualimaster.monitoring.genTopo.ProfilingSourceTopology">
+      <node name="TestSource" type="source">
+          <component name="TestSource" container="TestPip" class="tests.eu.qualimaster.monitoring.genTopo.profiling.TestSourceSource" receiver="true" thrift="false" tasks="1"/>
+      </node>
+      <algorithm name="TestSourceProfilingProfiling" implName="TestSourceProfilingProfiling" class="tests.eu.qualimaster.monitoring.genTopo.profiling.TestSourceProfilingProfiling"/>
+  </pipeline>
+
+</mapping>

@@ -274,5 +274,25 @@ public abstract class AbstractTopology {
         }
         return node;
     }
+    
+    /**
+     * Cares for the pipeline options.
+     * 
+     * @param conf the Storm configuration options to be passed to the topology
+     * @param opt the pipeline options
+     */
+    @SuppressWarnings("rawtypes")
+    public void handleOptions(Map conf, PipelineOptions opt) {
+        // typically empty
+    }
+    
+    /**
+     * Returns whether the generic end-of-data event handler shall be installed.
+     * 
+     * @return <code>true</code> for installing, <code>false<</code> else (default)
+     */
+    public boolean installGenericEoDEventHandler() {
+        return false;
+    }
 
 }
