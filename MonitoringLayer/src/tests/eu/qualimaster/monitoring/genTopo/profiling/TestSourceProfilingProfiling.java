@@ -1,6 +1,9 @@
 package tests.eu.qualimaster.monitoring.genTopo.profiling;
 
 import java.io.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 
 import javax.annotation.Generated;
@@ -9,6 +12,7 @@ import eu.qualimaster.dataManagement.serialization.*;
 import eu.qualimaster.observables.*;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.EndOfDataEvent;
+import eu.qualimaster.dataManagement.sources.DataQueueDescriptor;
 import eu.qualimaster.dataManagement.sources.GenericMultiSourceHandler;
 import eu.qualimaster.dataManagement.sources.ReplayMechanism;
 import eu.qualimaster.dataManagement.sources.ReplayMechanism.ProfilingQueueItem;
@@ -26,9 +30,11 @@ public class TestSourceProfilingProfiling extends TestSourceProfiling {
     private boolean eodSent = false;
     private boolean isConnected = false;
     
-    private transient Queue<ProfilingQueueItem<TestSourceProfilingPreprocessedStreamOutput>> streamProQueue = null;
-    private transient Queue<ProfilingQueueItem<TestSourceProfilingSymbolListOutput>> symbolProQueue = null;
-    
+    private transient Queue<ProfilingQueueItem<TestSourceProfilingPreprocessedStreamOutput>> streamProQueue = 
+            new ArrayDeque<ProfilingQueueItem<TestSourceProfilingPreprocessedStreamOutput>>();
+    private transient Queue<ProfilingQueueItem<TestSourceProfilingSymbolListOutput>> symbolProQueue = 
+            new ArrayDeque<ProfilingQueueItem<TestSourceProfilingSymbolListOutput>>();
+    private transient List<DataQueueDescriptor<?>> queueList = new ArrayList<DataQueueDescriptor<?>>();
     /**
     * Provides a serializer for the test data.
     */
@@ -213,12 +219,13 @@ public class TestSourceProfilingProfiling extends TestSourceProfiling {
         SerializerRegistry.register(TestSourceProfilingSymbolListOutput.class, 
             TestSourceProfilingSymbolListOutputSerializer.class);
         replay.connect();
+        queueList.add(new DataQueueDescriptor<TestSourceProfilingSymbolListOutput>("symbolList", symbolProQueue, 
+                TestSourceProfilingSymbolListOutput.class));
+        queueList.add(new DataQueueDescriptor<TestSourceProfilingPreprocessedStreamOutput>("preprocessedStream", 
+                streamProQueue, TestSourceProfilingPreprocessedStreamOutput.class));
         //read profiling data in advance
         try {
-            symbolProQueue = replay.readProfilingData("symbolList", TestSourceProfilingSymbolListOutput.class, 
-                    handler, 1);
-            streamProQueue = replay.readProfilingData("preprocessedStream", 
-                    TestSourceProfilingPreprocessedStreamOutput.class, handler, MAXIMUM_DATA_ENTRIES);
+            replay.readProfilingData(handler, MAXIMUM_DATA_ENTRIES, queueList);
             System.err.println("symbolProQueue: " + symbolProQueue.size() + ", streamProQueue: " 
                     + streamProQueue.size());
         } catch (IOException e) {

@@ -113,7 +113,7 @@ public class GenericMultiSourceHandler {
             // if multiple tuple types are defined on this source, queue the input data into the
             // queue given as first entry and obtain the next result for tupleId
             if (fullLine) {//if it's the full line, skip the timestamp
-                in.nextString();
+                in.nextLong();
             }
             String id = in.nextString();
             queue(id, in);
@@ -211,6 +211,21 @@ public class GenericMultiSourceHandler {
     public long nextTimestamp(String data, char separator, boolean restAsString) throws IOException {
         IDataInput in = nextDataInput(data, separator, restAsString);
         return in.nextLong();
+    }
+    
+    /**
+     * Returns the tuple id in the data.
+     * @param data the data 
+     * @param separator the element separator within <code>data</code>
+     * @param restAsString passes the rest of <code>data</code> except for the tuple identifier
+     *   in case of multiple tuple to the first call (nextString expected)
+     * @return the tuple id
+     * @throws IOException the IO exception
+     */
+    public String nextId(String data, char separator, boolean restAsString) throws IOException {
+        IDataInput in = nextDataInput(data, separator, restAsString);
+        in.nextLong();
+        return in.nextString();
     }
     
     /**

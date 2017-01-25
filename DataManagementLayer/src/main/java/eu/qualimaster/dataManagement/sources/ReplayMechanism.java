@@ -15,8 +15,8 @@ import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.text.ParseException;
-import java.util.ArrayDeque;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
@@ -228,7 +228,7 @@ public class ReplayMechanism implements IDataSource {
      *
      * @param <T> the target class type of the data item
      */
-    public class ProfilingQueueItem<T> {
+    public static class ProfilingQueueItem<T> {
         long timestamp;
         T item;
         
@@ -258,34 +258,53 @@ public class ReplayMechanism implements IDataSource {
         
     }
     /**
-     * Reads profiling data into a queue with a specific size.
-     * @param id the tuple id
-     * @param cls the target class type
+     * Reads profiling data into queues.
      * @param handler the source handler
      * @param size the queue size 
-     * @return the queue containing a certain number of profiling data items
+     * @return queueList the queue list
      * @throws IOException IO Exception
-     */
-    public <T> Queue<ProfilingQueueItem<T>> readProfilingData(String id, Class<T> cls, GenericMultiSourceHandler handler, int size) throws IOException {
-        Queue<ProfilingQueueItem<T>> queue = new ArrayDeque<ProfilingQueueItem<T>>();
-        
+     */    
+    public void readProfilingData(GenericMultiSourceHandler handler, int size, List<DataQueueDescriptor<?>> queueList) throws IOException {
+        DataQueueDescriptor<?> queueDes;
         int queueCounter = 0;
         long timestamp = 0;
         while (!isEOD() && queueCounter < size) {
             String genericInput = getNext(false);
             if (null != genericInput) {
                 char separator = getSeparator();
+                String tupleId = handler.nextId(genericInput, separator, false);
+                queueDes = getQueueDescriptor(tupleId, queueList);
+                
                 //parse the data input to instance
-                T item = handler.next(id, cls, genericInput, separator, false, true);
+                Object item = handler.next(tupleId, queueDes.getCls(), genericInput, separator, false, true);
                 
                 //get the corresponding timestamp
                 timestamp = handler.nextTimestamp(genericInput, separator, false);
-                queue.add(new ProfilingQueueItem<T>(timestamp, item));
+                queueDes.add(timestamp, item);
             }
             
             queueCounter++;
         }
-        return queue;
+    }
+    /**
+     * Returns the queue descriptor based on the given id.
+     * @param id the given id
+     * @param queueList the queue list
+     * @return the queue descriptor
+     */
+    public DataQueueDescriptor<?> getQueueDescriptor(String id, List<DataQueueDescriptor<?>> queueList) {
+        DataQueueDescriptor<?> result = null;
+        java.util.Iterator<DataQueueDescriptor<?>> it = queueList.iterator();
+        DataQueueDescriptor<?> des;
+        while(it.hasNext()) {
+            des = it.next();
+            if (id.equals(des.getId())) {
+                //
+                result = des;
+                break;
+            }
+        }
+        return result;
     }
     
     /**
