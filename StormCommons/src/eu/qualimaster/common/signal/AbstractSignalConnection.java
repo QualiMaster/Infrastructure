@@ -91,7 +91,7 @@ public abstract class AbstractSignalConnection implements Watcher {
             }*/
             SignalMechanism.createWithParents(client, path);
             Stat stat = client.checkExists().usingWatcher(this).forPath(path);
-            Utils.sleep(100);
+            Utils.sleep(Configuration.getWatcherWaitingTime());
             LogManager.getLogger(getClass()).info("Initialized watcher on " + path + " " + stat);
         }
     }
