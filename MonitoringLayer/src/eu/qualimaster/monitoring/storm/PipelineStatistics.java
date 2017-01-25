@@ -104,14 +104,18 @@ public class PipelineStatistics {
      * @param nodePart the node part
      */
     public void collect(PipelineNodeSystemPart nodePart) {
-        needInitialization.add(nodePart.getName());
+        String name = nodePart.getName();
+        boolean isInternal = Utils.isInternal(name);
+        if (!isInternal) {
+            needInitialization.add(name);
+        }
         //topologyThroughputItems += nodePart.getObservedValue(TimeBehavior.THROUGHPUT_ITEMS);
         ////topologyThroughputVolume += executorThroughputVolume;
         //topologyLatency += nodePart.getObservedValue(TimeBehavior.LATENCY);
         topologyCapacity += nodePart.getObservedValue(ResourceUsage.CAPACITY);
         // assuming latency is an aggregating obs
         // do not summarize the executors, they are set implicitly
-        if (!isStarted() && nodePart.isInitialized()) {
+        if (!isStarted() && nodePart.isInitialized() && !isInternal) {
             initialized.add(nodePart.getName());
         }
     }
