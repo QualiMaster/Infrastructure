@@ -57,6 +57,17 @@ public class Configuration {
     public static final int DEFAULT_EVENT_RESPONSE_TIMEOUT = 5 * 60 * 1000; // 5 minutes due to startup/longer enacts
 
     /**
+     * Denotes the time to wait (in ms) by default until a (worker) curator watcher has been set up. Might be higher on
+     * slower clusters.
+     */
+    public static final String WATCHER_WAITING_TIME = "watcher.waiting.time";
+
+    /**
+     * The default value for {@link #WATCHER_WAITING_TIME}.
+     */
+    public static final int DEFAULT_WATCHER_WAITING_TIME = 100; 
+    
+    /**
      * Denotes the event bus host setting (String).
      */
     public static final String HOST_EVENT = "eventBus.host";
@@ -350,6 +361,8 @@ public class Configuration {
         = new ConfigurationOption<InitializationMode>(INIT_MODE, DEFAULT_INIT_MODE, INIT_MODE_READER);
     private static ConfigurationOption<Boolean> enableVolumeMonitoring
         = createBooleanOption(MONITORING_VOLUME_ENABLED, DEFAULT_MONITORING_VOLUME_ENABLED);
+    private static ConfigurationOption<Integer> watcherWaitingTime
+        = createIntegerOption(WATCHER_WAITING_TIME, DEFAULT_WATCHER_WAITING_TIME);
     
     /**
      * Prevents external creation / static class.
@@ -742,6 +755,7 @@ public class Configuration {
         options.setOption(MONITORING_VOLUME_ENABLED, enableVolumeMonitoring());
         options.setOption(RETRY_INTERVAL_ZOOKEEPER, getZookeeperRetryInterval());
         options.setOption(RETRY_TIMES_ZOOKEEPER, getZookeeperRetryTimes());
+        options.setOption(WATCHER_WAITING_TIME, getWatcherWaitingTime());
     }
 
     /**
@@ -808,6 +822,7 @@ public class Configuration {
         }
         // TODO use transfer above
         transfer(conf, prop, MONITORING_VOLUME_ENABLED, false);
+        transfer(conf, prop, WATCHER_WAITING_TIME, false);
         if (prop.size() > 0) {
             System.out.println("Reconfiguring infrastructure settings: " + prop + " from " + conf);
             configure(prop, false);
@@ -871,6 +886,15 @@ public class Configuration {
      */
     public static boolean enableVolumeMonitoring() {
         return enableVolumeMonitoring.getValue();
+    }
+
+    /**
+     * Returns the watcher waiting time.
+     * 
+     * @return the watcher waiting time in milliseconds
+     */
+    public static int getWatcherWaitingTime() {
+        return watcherWaitingTime.getValue();        
     }
 
 }
