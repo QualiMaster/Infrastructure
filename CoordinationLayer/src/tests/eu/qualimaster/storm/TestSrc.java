@@ -75,10 +75,10 @@ public class TestSrc implements ISrc {
                 eodSent = true;
             }
         } else {
-            String genericInput = replay.getNext();
+            String genericInput = replay.getNext(true);
             if (null != genericInput) {
                 char separator = replay.getSeparator();
-                result = handler.next("data", Integer.class, genericInput, separator, false);
+                result = handler.next("data", Integer.class, genericInput, separator, false, false);
             }
         }
         return result;
