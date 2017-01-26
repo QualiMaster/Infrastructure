@@ -73,6 +73,10 @@ public class Utils {
      */
     public static void store(File file, Properties data, String comment) throws IOException {
         FileWriter fw = null;
+        File parent = file.getParentFile();
+        if (!parent.exists()) {
+            eu.qualimaster.file.Utils.mkdirs(parent);
+        }
         try {
             fw = eu.qualimaster.file.Utils.createFileWriter(file);
             data.store(fw, comment);

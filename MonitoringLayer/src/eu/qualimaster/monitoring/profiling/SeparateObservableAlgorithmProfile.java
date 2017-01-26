@@ -180,7 +180,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
     private void store(IAlgorithmProfilePredictor predictor, File folder, String identifier) throws IOException {
         // Create folders, if needed
         if (!folder.exists()) {
-            folder.mkdirs();
+            eu.qualimaster.file.Utils.mkdirs(folder);
         }
         // load map-file
         MapFile mapFile = new MapFile(folder);
@@ -296,7 +296,7 @@ class SeparateObservableAlgorithmProfile implements IAlgorithmProfile {
                     try {
                         store(predictor, getFolder(observable), generateKey(observable));
                     } catch (IOException e) {
-                        LogManager.getLogger(getClass()).error(e.getMessage());
+                        LogManager.getLogger(getClass()).error("While writing predictor: " + e.getMessage());
                     }
                 }
             }
