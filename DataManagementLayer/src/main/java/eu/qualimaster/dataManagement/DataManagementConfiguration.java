@@ -141,6 +141,26 @@ public class DataManagementConfiguration extends Configuration {
      */
     public static final String DEFAULT_EXTERNAL_SERVICE_PATH = "";
     
+    /**
+     * Defines the quorum zookeepers for hbase (comma-separated network names).
+     */
+    public static final String HBASE_ZOOKEEPER_QUORUM = "hbase.zookeeper.quorum";
+
+    /**
+     * The default value for {@link #HBASE_ZOOKEEPER_QUORUM}, {@value}.
+     */
+    public static final String DEFAULT_HBASE_ZOOKEEPER_QUORUM = "";
+    
+    /**
+     * Defines the parent path for hbase on the quorum servers.
+     */
+    public static final String HBASE_ZNODE_PARENT = "hbase.znode.parent";
+
+    /**
+     * The default value for {@link #HBASE_ZNODE_PARENT}, {@value}.
+     */
+    public static final String DEFAULT_HBASE_ZNODE_PARENT = "";
+    
     private static ConfigurationOption<String> hdfsUrl = createStringOption(URL_HDFS, DEFAULT_URL_HDFS);
     private static ConfigurationOption<String> hdfsUser = createStringOption(URL_HDFS_USER, DEFAULT_URL_HDFS_USER);
     private static ConfigurationOption<String> hdfsGroupMapping = createStringOption(URL_HDFS_GROUPMAPPING, 
@@ -158,6 +178,10 @@ public class DataManagementConfiguration extends Configuration {
         = createStringOption(SIMULATION_LOCAL_PATH, DEFAULT_SIMULATION_LOCAL_PATH);
     private static ConfigurationOption<String> externalServicePath 
         = createStringOption(EXTERNAL_SERVICE_PATH, DEFAULT_EXTERNAL_SERVICE_PATH);
+    private static ConfigurationOption<String> hbaseZkeeperQuorum 
+        = createStringOption(HBASE_ZOOKEEPER_QUORUM, DEFAULT_HBASE_ZOOKEEPER_QUORUM);
+    private static ConfigurationOption<String> hbaseZnodeParent
+        = createStringOption(HBASE_ZNODE_PARENT, DEFAULT_HBASE_ZNODE_PARENT);
     
     /**
      * Reads the configuration settings from the file.
@@ -230,6 +254,8 @@ public class DataManagementConfiguration extends Configuration {
         options.setOption(SIMULATION_USE_HDFS, useSimulationHdfs());
         options.setOption(PATH_ACCOUNTS, getAccountsPath());
         options.setOption(EXTERNAL_SERVICE_PATH, getExternalServicePath());
+        options.setOption(HBASE_ZNODE_PARENT, getHbaseZnodeParent());
+        options.setOption(HBASE_ZOOKEEPER_QUORUM, getHbaseZkeeperQuorum());
     }
 
     /**
@@ -248,6 +274,8 @@ public class DataManagementConfiguration extends Configuration {
         transfer(conf, prop, PATH_HDFS, false);
         transfer(conf, prop, PATH_ACCOUNTS, false);
         transfer(conf, prop, EXTERNAL_SERVICE_PATH, false);
+        transfer(conf, prop, HBASE_ZNODE_PARENT, false);
+        transfer(conf, prop, HBASE_ZOOKEEPER_QUORUM, false);
         transferConfigurationFrom(conf, prop);
     }
     
@@ -369,5 +397,23 @@ public class DataManagementConfiguration extends Configuration {
         }
         return result;
     }
-    
+
+    /**
+     * Returns the Zookeeper quorum for HBase.
+     * 
+     * @return the Zookeeper quorum as comma separated network names/ips (may be empty if not configured)
+     */
+    public static String getHbaseZkeeperQuorum() {
+        return hbaseZkeeperQuorum.getValue();
+    }
+
+    /**
+     * Returns the Znode parent for HBase.
+     * 
+     * @return the Znode parent as path (may be empty if not configured)
+     */
+    public static String getHbaseZnodeParent() {
+        return hbaseZnodeParent.getValue();
+    }
+
 }
