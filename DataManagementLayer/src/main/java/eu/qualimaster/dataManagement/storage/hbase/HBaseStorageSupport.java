@@ -29,15 +29,14 @@ public class HBaseStorageSupport extends HBaseStorageTable implements IStorageSu
 		super(tableName);
 
 		config = HBaseConfiguration.create();
-		config.set("zookeeper.znode.parent", "/hbase-unsecure");
-		config.set("hbase.zookeeper.quorum", "snf-618466.vm.okeanos.grnet.gr");
+		// config.set("zookeeper.znode.parent", "/hbase-unsecure");
+		// config.set("hbase.zookeeper.quorum", "snf-618466.vm.okeanos.grnet.gr");
 
 		// config for cluster at l3s
-		// config.set("zookeeper.znode.parent", "/hbase");
-		// config.set("hbase.zookeeper.quorum",
-		// "node19.ib,node04.ib,node15.ib");
+		config.set("zookeeper.znode.parent", "/hbase");
+		config.set("hbase.zookeeper.quorum", "node19.ib,node23.ib,master.ib,master03.ib,node15.ib");
 		System.out.println(
-				"creating table with name " + tableName + " in server " + config.get("hbase.zookeeper.quorum"));
+				"creating table with name " + tableName + " in servers " + config.get("hbase.zookeeper.quorum"));
 		HBaseAdmin admin;
 
 		try {
