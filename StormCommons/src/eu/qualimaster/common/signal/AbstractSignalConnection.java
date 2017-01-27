@@ -3,6 +3,9 @@ package eu.qualimaster.common.signal;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.storm.curator.framework.CuratorFramework;
+import org.apache.storm.curator.framework.api.CuratorEvent;
+import org.apache.storm.curator.framework.api.CuratorEventType;
+import org.apache.storm.curator.framework.api.CuratorListener;
 import org.apache.storm.curator.framework.imps.CuratorFrameworkState;
 import org.apache.storm.zookeeper.WatchedEvent;
 import org.apache.storm.zookeeper.Watcher;
@@ -26,6 +29,7 @@ public abstract class AbstractSignalConnection implements Watcher {
     private CuratorFramework client;
     private SignalListener listener;
     private EventManager eventManager;
+    private boolean watcherEnabled = false;
 
     /**
      * Creates a signal connection.
@@ -59,10 +63,37 @@ public abstract class AbstractSignalConnection implements Watcher {
     /**
      * Returns the maximum waiting time for obtaining a connection.
      * 
-     * @return the maximum waiting time in ms
+     * @return the maximum waiting time in ms (default is <code>3000</code>)
      */
     protected long maxWaitingTime() {
         return 3000;
+    }
+
+    /**
+     * Returns the maximum waiting time for enabling a watcher (in addition to 
+     * {@link Configuration#getWatcherWaitingTime()}.
+     * 
+     * @return the maximum waiting time in ms (default is <code>1500</code>)
+     */
+    protected long maxWatcherEnabledTime() {
+        return 1500;
+    }
+
+    /**
+     * Watches the curator and records that a watcher event occurs. Idea is to enable waiting until the first 
+     * (initial connect) watcher event occurs.
+     * 
+     * @author Holger Eichelberger
+     */
+    private class CuratorWatcherListener implements CuratorListener {
+
+        @Override
+        public void eventReceived(CuratorFramework client, CuratorEvent event) throws Exception {
+            if (CuratorEventType.WATCHED == event.getType()) {
+                watcherEnabled = true;
+            }
+        }
+        
     }
     
     // checkstyle: stop exception type check
@@ -74,7 +105,7 @@ public abstract class AbstractSignalConnection implements Watcher {
      */
     protected void initWatcher() throws Exception {
         if (Configuration.getPipelineSignalsCurator()) {
-            final long maxWaitingTime = maxWaitingTime();
+            final long maxWaitingTime = Math.max(10, maxWaitingTime());
             long now = System.currentTimeMillis();
             // block until connected, having the watcher initialized is important for lifecycle
             while (!isConnected() && System.currentTimeMillis() - now < maxWaitingTime) { 
@@ -84,15 +115,23 @@ public abstract class AbstractSignalConnection implements Watcher {
                 LogManager.getLogger(getClass()).warn("Curator connection not connected after waiting time " 
                     + maxWaitingTime + "ms");
             }
+
+            // trying to force the watcher creation into a synchronous call with fallback waiting time
             String path = getWatchedPath();
-            /*Stat stat = client.checkExists().forPath(path);
-            if (stat == null) {
-                client.create().creatingParentsIfNeeded().forPath(path);
-            }*/
+            CuratorWatcherListener cwl = new CuratorWatcherListener();
+            client.getCuratorListenable().addListener(cwl);
             SignalMechanism.createWithParents(client, path);
             Stat stat = client.checkExists().usingWatcher(this).forPath(path);
+            LogManager.getLogger(getClass()).info("Created watcher on " + path + " " + stat);
+            final long maxWatcherWaitingTime = Math.max(0, maxWatcherEnabledTime());
+            now = System.currentTimeMillis();
+            while (!watcherEnabled && System.currentTimeMillis() - now < maxWatcherWaitingTime) {
+                Utils.sleep(50);
+            }
+            client.getCuratorListenable().removeListener(cwl);
             Utils.sleep(Configuration.getWatcherWaitingTime());
-            LogManager.getLogger(getClass()).info("Initialized watcher on " + path + " " + stat);
+            LogManager.getLogger(getClass()).info("Initialized watcher on " + path + " " + stat + " enabled " 
+                + watcherEnabled);
         }
     }
     

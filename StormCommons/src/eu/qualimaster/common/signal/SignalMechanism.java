@@ -485,6 +485,27 @@ public class SignalMechanism {
     }
     
     /**
+     * Returns the parent path of <code>path</code>.
+     * 
+     * @param path the path
+     * @return the parent path
+     */
+    public static String getParentPath(String path) {
+        String result;
+        int pos = path.lastIndexOf(PATH_SEPARATOR);
+        int lastChar = path.length() - 1;
+        if (lastChar == pos && lastChar > 0) { // just to be safe
+            pos = path.lastIndexOf(PATH_SEPARATOR, lastChar - 1);
+        }
+        if (pos > 0) {
+            result = path.substring(0, pos);
+        } else {
+            result = PATH_SEPARATOR; // shall not occur
+        }
+        return result;
+    }
+    
+    /**
      * Returns the logger for this class.
      * 
      * @return the logger
