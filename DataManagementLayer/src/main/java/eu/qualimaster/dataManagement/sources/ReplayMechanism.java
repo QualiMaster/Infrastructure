@@ -53,6 +53,7 @@ public class ReplayMechanism implements IDataSource {
     private long throughput;
     private int measurementDuration; // seconds
     
+    private long start = 0;
     private long record = 0;
     private boolean init = false;
     private int timeInterval = 1000; //1s    
@@ -318,31 +319,43 @@ public class ReplayMechanism implements IDataSource {
       
         long newTimestamp = 0;        
         ProfilingQueueItem<T> queueItem = queue.poll();
-        long timestamp = queueItem.getTimestamp();       
+        long timestamp = queueItem.getTimestamp(); 
+        long now = System.currentTimeMillis();
         if(!init) {
             init = true;
             record = newTimestamp;
+            start = now;
             updateOffset(timestamp);
         } 
         newTimestamp = newTimestamp(timestamp);
-        long now = System.currentTimeMillis();
-        while (newTimestamp > now) {//correct the timestamp 
-            Thread.sleep(1);
-            now = System.currentTimeMillis();
-        }
-        if(newTimestamp - now <= timeInterval) {//1s
-            if(record == newTimestamp) {
+        
+        if (record == newTimestamp) {//within the same batch
+            if (now - start <= timeInterval) {
                 item = queueItem.getItem();
             } else {
-                //wait until it reaches 1s
-                Thread.sleep(now-newTimestamp);
-                item = queueItem.getItem();
+                while (newTimestamp == record) {//skip rest of data with old timestamp
+                    queueItem = queue.poll();
+                    item = queueItem.getItem();
+                    timestamp = queueItem.getTimestamp();
+                    newTimestamp = newTimestamp(timestamp);
+                    now = System.currentTimeMillis();
+                }
+                start = now;
                 record = newTimestamp;
             }
-        } else {
-            now = System.currentTimeMillis();
+        } else {//next batch starts
+            if (now - start <= timeInterval) {
+                //wait until it reaches 1s
+                while (now - start <= timeInterval) {
+                    Thread.sleep(1);
+                    now = System.currentTimeMillis();
+                }
+            }
+            item = queueItem.getItem();
+            record = newTimestamp;
+            start = now;
         }
-       
+
         return item;
     }
     /**
