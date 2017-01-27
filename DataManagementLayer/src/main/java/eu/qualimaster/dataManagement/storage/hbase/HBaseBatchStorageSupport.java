@@ -30,8 +30,8 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 	private HTableInterface table;
 
 	/** Default: TSI HBase cluster */
-	private static final String HBASE_NODE = "/hbase-unsecure";
-	private static final String HBASE_QUORUM = "snf-618466.vm.okeanos.grnet.gr";
+	// private static final String HBASE_NODE = "/hbase";
+	// private static final String HBASE_QUORUM = "node19.ib,node23.ib,master.ib,master03.ib,node15.ib";
 
 	private static final String COLUMN_FAMILY = "cf";
 	public static final byte[] COLUMN_FAMILY_BYTES = Bytes.toBytes(COLUMN_FAMILY);
@@ -47,8 +47,8 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 		log.info("Replay: constructing HBaseBatchStorageSupport");
 		// Configuration config = HBaseConfiguration.create();
 		config = HBaseConfiguration.create();
-		config.set("zookeeper.znode.parent", HBASE_NODE);
-		config.set("hbase.zookeeper.quorum", HBASE_QUORUM);
+		// config.set("zookeeper.znode.parent", HBASE_NODE);
+		// config.set("hbase.zookeeper.quorum", HBASE_QUORUM);
 
 		// All tables in the replay store have only one column family, with
 		// column qualifiers
@@ -112,7 +112,7 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 			table.setAutoFlush(false, false);
 			counter = 0;
 		} catch (IOException e) {
-			log.error("Canot establish the connection to " + HBASE_QUORUM, e);
+			log.error("Canot establish the connection to the default quorum "); // + HBASE_QUORUM, e);
 			// e.printStackTrace();
 		}
 	}
