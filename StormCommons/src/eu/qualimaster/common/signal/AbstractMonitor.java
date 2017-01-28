@@ -38,6 +38,7 @@ public abstract class AbstractMonitor {
      */
     public void endMonitoring() {
         aggregateExecutionTime(startTime, count);
+        startTime = -1;
     }
 
     /**
@@ -60,10 +61,20 @@ public abstract class AbstractMonitor {
      * Aggregate the execution time and sends the recorded value to the monitoring layer if the send interval
      * is outdated. Shall be used only in combination with a corresponding start time measurement.
      *
-     * @param start the start execution time
+     * @param start the start execution time (may be negative if not {@link #startMonitoring()} was called before
      * @param itemsCount the number of items emitted since <code>start</code>, (negative is turned to <code>0</code>)
      */
     public abstract void aggregateExecutionTime(long start, int itemsCount);
+    
+    /**
+     * Returns whether this monitor is actually monitoring, i.e., within a bracket of {@link #startMonitoring()} and 
+     * {@link #endMonitoring()}.
+     * 
+     * @return <code>true</code> if is monitoring, <code>false</code> else
+     */
+    protected boolean isMonitoring() {
+        return startTime > 0;
+    }
     
     /**
      * Ends monitoring with emitting <code>tuple</code>.

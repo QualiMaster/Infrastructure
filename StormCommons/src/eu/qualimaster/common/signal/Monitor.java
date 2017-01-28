@@ -217,19 +217,15 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     public void aggregateExecutionTime(long start) {
         aggregateExecutionTime(start, 1);
     }
-    
-    /**
-     * Aggregate the execution time and sends the recorded value to the monitoring layer if the send interval
-     * is outdated. Shall be used only in combination with a corresponding start time measurement.
-     *
-     * @param start the start execution time
-     * @param itemsCount the number of items emitted since <code>start</code>, (negative is turned to <code>0</code>)
-     */
+
+    @Override
     public void aggregateExecutionTime(long start, int itemsCount) {
-        long now = System.currentTimeMillis();
-        executionTime.addValue(now - start);
-        itemsSend.addAndGet(Math.max(0, itemsCount));
-        checkSend(now);
+        if (start > 0) {
+            long now = System.currentTimeMillis();
+            executionTime.addValue(now - start);
+            itemsSend.addAndGet(Math.max(0, itemsCount));
+            checkSend(now);
+        }
     }
 
     /**
@@ -335,11 +331,14 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     @Override
     public void emit(EmitInfo info) {
         if (null != info && null != info.values && info.taskId == taskId) {
-            itemsSend.addAndGet(info.values.size());
-            if (collectVolume) {
-                itemsVolume.addAndGet(MEMGATHERER.getObjectSize(info.values));
+            String stream = info.stream;
+            if (null != stream && !isInternalStream(stream)) { // ignore the internal streams
+                itemsSend.addAndGet(info.values.size());
+                if (collectVolume) {
+                    itemsVolume.addAndGet(MEMGATHERER.getObjectSize(info.values));
+                }
+                MonitoringPluginRegistry.emitted(info);
             }
-            MonitoringPluginRegistry.emitted(info);
         }
     }
 
@@ -354,8 +353,10 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     @Override
     public void boltExecute(BoltExecuteInfo info) {
         if (null != info && null != info.executeLatencyMs && info.executingTaskId == taskId) {
-            executionTime.addValue(info.executeLatencyMs);
-            checkSend(System.currentTimeMillis());
+            if (!isMonitoring()) { // if we are within start/endMonitoring, we already have the time
+                executionTime.addValue(info.executeLatencyMs);
+                checkSend(System.currentTimeMillis());
+            }
         }
     }
 
@@ -391,4 +392,24 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
         return new ThreadMonitor(this);
     }
     
+    /**
+     * Returns whether an executor name is considered to be Storm internal.
+     * 
+     * @param name the executor name
+     * @return <code>true</code> if internal, <code>false</code> else
+     */
+    public static boolean isInternalExecutor(String name) {
+        return name.startsWith("__"); // internal: ackers, system etc.
+    }
+
+    /**
+     * Returns whether a stream name is considered to be Storm internal.
+     * 
+     * @param name the executor name
+     * @return <code>true</code> if internal, <code>false</code> else
+     */
+    public static boolean isInternalStream(String name) {
+        return name.startsWith("__"); // internal: ackers, system etc.
+    }
+
 }
