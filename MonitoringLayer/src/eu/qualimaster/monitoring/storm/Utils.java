@@ -25,6 +25,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import eu.qualimaster.common.signal.Monitor;
 import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.RepositoryConnector;
 import eu.qualimaster.coordination.INameMapping.Algorithm;
@@ -129,17 +130,7 @@ public class Utils {
      * @return <code>true</code> if internal, <code>false</code> else
      */
     public static boolean isInternal(ExecutorSummary executor) {
-        return isInternal(executor.get_component_id());
-    }
-
-    /**
-     * Returns whether an executor name is considered to be Storm internal.
-     * 
-     * @param name the executor name
-     * @return <code>true</code> if internal, <code>false</code> else
-     */
-    public static boolean isInternal(String name) {
-        return name.startsWith("__"); // internal: ackers, system etc.
+        return Monitor.isInternalExecutor(executor.get_component_id());
     }
     
     /**
@@ -265,7 +256,7 @@ public class Utils {
      */
     private static StormProcessor getProcessor(Map<String, StormProcessor> procs, String processorName) {
         StormProcessor result = procs.get(processorName);
-        if (null == result && !isInternal(processorName)) {
+        if (null == result && !Monitor.isInternalExecutor(processorName)) {
             getLogger().error("No component found for '" + processorName + "'. Topology is inconsistent. Ignoring.");
         }
         return result;

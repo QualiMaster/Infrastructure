@@ -18,6 +18,7 @@ package eu.qualimaster.monitoring.storm;
 import java.util.ArrayList;
 import java.util.List;
 
+import eu.qualimaster.common.signal.Monitor;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent.Status;
 import eu.qualimaster.monitoring.MonitoringManager;
 import eu.qualimaster.monitoring.systemState.PipelineNodeSystemPart;
@@ -105,7 +106,7 @@ public class PipelineStatistics {
      */
     public void collect(PipelineNodeSystemPart nodePart) {
         String name = nodePart.getName();
-        boolean isInternal = Utils.isInternal(name);
+        boolean isInternal = Monitor.isInternalExecutor(name);
         if (!isInternal) {
             needInitialization.add(name);
         }
