@@ -220,10 +220,10 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
 
     @Override
     public void aggregateExecutionTime(long start, int itemsCount) {
-        if (start > 0) {
+        if (start > 0 && itemsCount > 0) {
             long now = System.currentTimeMillis();
             executionTime.addValue(now - start);
-            itemsSend.addAndGet(Math.max(0, itemsCount));
+            itemsSend.addAndGet(itemsCount);
             checkSend(now);
         }
     }
