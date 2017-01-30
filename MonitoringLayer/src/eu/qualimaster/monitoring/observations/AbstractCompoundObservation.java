@@ -214,9 +214,18 @@ public abstract class AbstractCompoundObservation implements IObservation {
         return result;
     }
     
+    /**
+     * Returns the value to be printed.
+     * 
+     * @return the value
+     */
+    protected String toStringValue() {
+        return "";
+    }
+    
     @Override
     public String toString() {
-        String result = "{";
+        String result = "{" + toStringValue();
         Set<Object> done = new HashSet<Object>();
         synchronized (components) {
             Iterator<Map.Entry<Object, AtomicDouble>> iter = components.entrySet().iterator(); 

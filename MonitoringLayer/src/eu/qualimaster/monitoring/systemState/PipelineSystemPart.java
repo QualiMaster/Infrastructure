@@ -127,6 +127,8 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
         synchronized (elements) {
             for (Map.Entry<String, PipelineNodeSystemPart> entry : source.elements.entrySet()) {
                 getNode(entry.getKey()).adjustCurrent(entry.getValue());
+            }
+            for (Map.Entry<String, PipelineNodeSystemPart> entry : elements.entrySet()) {
                 establishAlgNodesLinks(entry.getValue());
             }
         }

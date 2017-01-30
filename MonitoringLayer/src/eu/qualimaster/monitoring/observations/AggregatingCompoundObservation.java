@@ -64,4 +64,9 @@ public class AggregatingCompoundObservation extends AbstractCompoundObservation 
         return new AggregatingCompoundObservation(this);
     }
 
+    @Override
+    protected String toStringValue() {
+        return aggregator.getName() + " " + getValue() + ";";
+    }
+
 }
