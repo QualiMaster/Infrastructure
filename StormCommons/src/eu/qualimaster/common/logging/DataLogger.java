@@ -50,7 +50,7 @@ public class DataLogger {
             }
             File logFile = new File(file, fileName);
             logFile.setReadable(true, false);
-            logFile.setExecutable(true, false);
+            logFile.setWritable(true, false);
             fileOut = Utils.createFileOutputStream(logFile, false);
             writer = new PrintWriter(fileOut);
         } catch (FileNotFoundException e) {
