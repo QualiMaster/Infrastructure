@@ -162,6 +162,11 @@ class HostsObservation implements IObservation {
     public Set<Object> getComponentKeys() {
         return null;
     }
+    
+    @Override
+    public void replaceComponentKeys(Object oldKey, Object newKey) {
+        // nothing to do
+    }
 
     @Override
     public void link(IObservation observation) {

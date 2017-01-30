@@ -138,6 +138,11 @@ public class ReferencingObservation implements IObservation {
     public Set<Object> getComponentKeys() {
         return provider.getComponentKeys(observable);
     }
+    
+    @Override
+    public void replaceComponentKeys(Object oldKey, Object newKey) {
+        // causes loop
+    }
 
     @Override
     public void link(IObservation observation) {

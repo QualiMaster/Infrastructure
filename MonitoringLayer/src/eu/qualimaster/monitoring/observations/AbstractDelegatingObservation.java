@@ -146,6 +146,11 @@ public abstract class AbstractDelegatingObservation implements IObservation {
     public Set<Object> getComponentKeys() {
         return observation.getComponentKeys();
     }
+    
+    @Override
+    public void replaceComponentKeys(Object oldKey, Object newKey) {
+        observation.replaceComponentKeys(oldKey, newKey);
+    }
 
     @Override
     public void link(IObservation observation) {

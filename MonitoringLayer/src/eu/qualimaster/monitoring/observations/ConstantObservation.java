@@ -115,11 +115,17 @@ public class ConstantObservation implements IObservation {
 
     @Override
     public void clearComponents(Collection<Object> keys) {
+        // nothing to do
     }
 
     @Override
     public Set<Object> getComponentKeys() {
         return null;
+    }
+    
+    @Override
+    public void replaceComponentKeys(Object oldKey, Object newKey) {
+        // nothing to do
     }
 
     @Override

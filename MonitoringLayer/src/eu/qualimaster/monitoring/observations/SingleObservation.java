@@ -174,6 +174,11 @@ public class SingleObservation implements IObservation {
     }
     
     @Override
+    public void replaceComponentKeys(Object oldKey, Object newKey) {
+        // nothing to do
+    }
+    
+    @Override
     public Set<Object> getComponentKeys() {
         return KEYS;
     }

@@ -147,6 +147,14 @@ public interface IObservationProvider {
     public Set<Object> getComponentKeys(IObservable observable);
 
     /**
+     * Replaces a component key. Observations remain.
+     * 
+     * @param oldKey the old component key
+     * @param newKey the new component key
+     */
+    public void replaceComponentKeys(Object oldKey, Object newKey);
+    
+    /**
      * Provides access to the topology of this observation.
      * 
      * @return the topology provider or <b>null</b> if there is none

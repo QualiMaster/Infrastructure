@@ -536,19 +536,6 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
         return result;
     }
     
-    /**
-     * Returns whether the tasks of <code>key1</code> and <code>key2</code> are the same (except for 
-     * threads).
-     * 
-     * @param key1 the first key
-     * @param key2 the second key
-     * @return <code>true</code> if both keys are equal (potentially except for threads), <code>false</code> else
-     */
-    private boolean tasksSame(ComponentKey key1, ComponentKey key2) {
-        return key1.getHostName().equals(key2.getHostName()) && key1.getPort() == key2.getPort() 
-            && key1.getTaskId() == key2.getTaskId();
-    }
-
     /** 
      * Validates the given key with the given observable and value and adjusts the internal structures if needed.
      * 
@@ -572,7 +559,7 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
                 ComponentKey exKey = (ComponentKey) k;
                 if (exKey.getTaskId() == key.getTaskId()) {
                     found = true;
-                    if (tasksSame(exKey, key)) { // no migration
+                    if (ComponentKey.tasksSame(exKey, key)) { // no migration
                         if (considerThreads && threadsValidAndNotSame(exKey, key)) { // splitted, merged
                             result = null == result ? value : result; // only if not done by considerThreads
                             removeKey = exKey;

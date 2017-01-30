@@ -349,6 +349,25 @@ public abstract class AbstractCompoundObservation implements IObservation {
             }
         }
     }
+    
+    @Override
+    public void replaceComponentKeys(Object oldKey, Object newKey) {
+        if (null != oldKey && null != newKey) { 
+            synchronized (components) {
+                AtomicDouble value = components.get(oldKey);
+                if (null != value) {
+                    components.put(newKey, value);
+                } else {
+                    components.remove(oldKey);
+                }
+            }
+        }
+        if (null != links) {
+            for (int l = 0; l < links.size(); l++) {
+                links.get(l).replaceComponentKeys(oldKey, newKey);
+            }
+        }
+    }
 
     @Override
     public Set<Object> getComponentKeys() {

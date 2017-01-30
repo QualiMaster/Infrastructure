@@ -145,6 +145,14 @@ public interface IObservation extends Serializable {
      * @return the actually used component keys (always a copy, an unmodifiable set or <b>null</b>)
      */
     public Set<Object> getComponentKeys();
+    
+    /**
+     * Replaces a component key. Observations remain.
+     * 
+     * @param oldKey the old component key
+     * @param newKey the new component key
+     */
+    public void replaceComponentKeys(Object oldKey, Object newKey);
 
     /**
      * Links the (compounds of the) given observation into this observation. Changes
