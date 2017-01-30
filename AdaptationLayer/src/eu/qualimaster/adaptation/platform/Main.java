@@ -69,7 +69,7 @@ public class Main extends ToolBase implements IShutdownListener {
         EventManager.disableLoggingFor(MonitoringInformationEvent.class);
         LOGGER.info("Starting data manager ...");
         DataManager.start();
-        LOGGER.info("Starting coordination manager ... (task reallocation" + ZkUtils.isQmStormVersion() + ")");
+        LOGGER.info("Starting coordination manager ... (task reallocation " + ZkUtils.isQmStormVersion() + ")");
         CoordinationManager.start();
         LOGGER.info("Starting monitoring manager ...");
         MonitoringManager.start();
