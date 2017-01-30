@@ -99,7 +99,7 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
         this.key.setThreadId(Thread.currentThread().getId());
         this.includeItems = includeItems;
     }
-
+    
     /**
      * Records a specific observation once for sending it with the next message.
      * 
@@ -220,7 +220,7 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
 
     @Override
     public void aggregateExecutionTime(long start, int itemsCount) {
-        if (start > 0 && itemsCount > 0) {
+        if (start > 0) {
             long now = System.currentTimeMillis();
             executionTime.addValue(now - start);
             itemsSend.addAndGet(itemsCount);
