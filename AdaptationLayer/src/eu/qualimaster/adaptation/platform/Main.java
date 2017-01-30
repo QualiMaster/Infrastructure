@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 import eu.qualimaster.adaptation.AdaptationConfiguration;
 import eu.qualimaster.adaptation.AdaptationManager;
 import eu.qualimaster.coordination.CoordinationManager;
+import eu.qualimaster.coordination.ZkUtils;
 import eu.qualimaster.dataManagement.DataManager;
 import eu.qualimaster.dataManagement.events.IShutdownListener;
 import eu.qualimaster.dataManagement.events.ShutdownEvent;
@@ -68,7 +69,7 @@ public class Main extends ToolBase implements IShutdownListener {
         EventManager.disableLoggingFor(MonitoringInformationEvent.class);
         LOGGER.info("Starting data manager ...");
         DataManager.start();
-        LOGGER.info("Starting coordination manager ...");
+        LOGGER.info("Starting coordination manager ... (task reallocation" + ZkUtils.isQmStormVersion() + ")");
         CoordinationManager.start();
         LOGGER.info("Starting monitoring manager ...");
         MonitoringManager.start();
