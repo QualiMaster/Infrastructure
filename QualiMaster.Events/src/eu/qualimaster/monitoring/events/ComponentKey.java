@@ -190,6 +190,30 @@ public class ComponentKey implements Serializable, IRemovalSelector {
     }
     
     /**
+     * Returns whether the tasks of this key and <code>key</code> are the same (except for 
+     * threads).
+     * 
+     * @param key the key to compare
+     * @return <code>true</code> if both keys are equal (potentially except for threads), <code>false</code> else
+     */
+    public boolean tasksSame(ComponentKey key) {
+        return tasksSame(this, key);
+    }
+    
+    /**
+     * Returns whether the tasks of <code>key1</code> and <code>key2</code> are the same (except for 
+     * threads).
+     * 
+     * @param key1 the first key
+     * @param key2 the second key
+     * @return <code>true</code> if both keys are equal (potentially except for threads), <code>false</code> else
+     */
+    public static boolean tasksSame(ComponentKey key1, ComponentKey key2) {
+        return key1.getHostName().equals(key2.getHostName()) && key1.getPort() == key2.getPort() 
+            && key1.getTaskId() == key2.getTaskId();
+    }
+    
+    /**
      * Parses the optional thread part of a textual representation produced by {@link #toString()}.
      * 
      * @param text the text
