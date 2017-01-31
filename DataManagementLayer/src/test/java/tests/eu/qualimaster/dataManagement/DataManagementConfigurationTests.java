@@ -44,6 +44,8 @@ public class DataManagementConfigurationTests extends ConfigurationTests {
             DataManagementConfiguration.getSimulationLocalPath());
         Assert.assertEquals(DataManagementConfiguration.getDfsPath(), 
             DataManagementConfiguration.getExternalServicePath());
+        Assert.assertEquals(DataManagementConfiguration.DEFAULT_EXTERNAL_SERVICE_TUNNELING, 
+            DataManagementConfiguration.getExternalServiceTunneling());
         Assert.assertEquals(DataManagementConfiguration.DEFAULT_HBASE_ZNODE_PARENT, 
             DataManagementConfiguration.getHbaseZnodeParent());
         Assert.assertEquals(DataManagementConfiguration.DEFAULT_HBASE_ZOOKEEPER_QUORUM, 

@@ -132,7 +132,7 @@ public class DataManagementConfiguration extends Configuration {
     public static final String DEFAULT_SIMULATION_LOCAL_PATH = "";
     
     /**
-     * The local path containing simulated data. If not given, consider {@link #PATH_DFS}.
+     * The local path containing information about the external service. If not given, consider {@link #PATH_DFS}.
      */
     public static final String EXTERNAL_SERVICE_PATH = "externalService.path";
 
@@ -140,6 +140,16 @@ public class DataManagementConfiguration extends Configuration {
      * The default value for {@link #EXTERNAL_SERVICE_PATH}, {@value}.
      */
     public static final String DEFAULT_EXTERNAL_SERVICE_PATH = "";
+    
+    /**
+     * Whether the external service is reachable only via tunneling.
+     */
+    public static final String EXTERNAL_SERVICE_TUNNELING = "externalService.tunneling";
+
+    /**
+     * The default value for {@link #EXTERNAL_SERVICE_PATH}, {@value}.
+     */
+    public static final boolean DEFAULT_EXTERNAL_SERVICE_TUNNELING = false;
     
     /**
      * Defines the quorum zookeepers for hbase (comma-separated network names).
@@ -178,6 +188,8 @@ public class DataManagementConfiguration extends Configuration {
         = createStringOption(SIMULATION_LOCAL_PATH, DEFAULT_SIMULATION_LOCAL_PATH);
     private static ConfigurationOption<String> externalServicePath 
         = createStringOption(EXTERNAL_SERVICE_PATH, DEFAULT_EXTERNAL_SERVICE_PATH);
+    private static ConfigurationOption<Boolean> externalServiceTunneling 
+        = createBooleanOption(EXTERNAL_SERVICE_TUNNELING, DEFAULT_EXTERNAL_SERVICE_TUNNELING);
     private static ConfigurationOption<String> hbaseZkeeperQuorum 
         = createStringOption(HBASE_ZOOKEEPER_QUORUM, DEFAULT_HBASE_ZOOKEEPER_QUORUM);
     private static ConfigurationOption<String> hbaseZnodeParent
@@ -254,6 +266,7 @@ public class DataManagementConfiguration extends Configuration {
         options.setOption(SIMULATION_USE_HDFS, useSimulationHdfs());
         options.setOption(PATH_ACCOUNTS, getAccountsPath());
         options.setOption(EXTERNAL_SERVICE_PATH, getExternalServicePath());
+        options.setOption(EXTERNAL_SERVICE_TUNNELING, getExternalServicePath());
         options.setOption(HBASE_ZNODE_PARENT, getHbaseZnodeParent());
         options.setOption(HBASE_ZOOKEEPER_QUORUM, getHbaseZkeeperQuorum());
     }
@@ -274,6 +287,7 @@ public class DataManagementConfiguration extends Configuration {
         transfer(conf, prop, PATH_HDFS, false);
         transfer(conf, prop, PATH_ACCOUNTS, false);
         transfer(conf, prop, EXTERNAL_SERVICE_PATH, false);
+        transfer(conf, prop, EXTERNAL_SERVICE_TUNNELING, false);
         transfer(conf, prop, HBASE_ZNODE_PARENT, false);
         transfer(conf, prop, HBASE_ZOOKEEPER_QUORUM, false);
         transferConfigurationFrom(conf, prop);
@@ -396,6 +410,15 @@ public class DataManagementConfiguration extends Configuration {
             result = getDfsPath();
         }
         return result;
+    }
+    
+    /**
+     * Returns whether the external service(s) of a pipeline are reachable by tunneling only.
+     * 
+     * @return <code>true</code> for tunneling, <code>false</code> else
+     */
+    public static boolean getExternalServiceTunneling() {
+        return externalServiceTunneling.getValue();
     }
 
     /**
