@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import eu.qualimaster.dataManagement.DataManagementConfiguration;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -47,6 +48,8 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 		log.info("Replay: constructing HBaseBatchStorageSupport");
 		// Configuration config = HBaseConfiguration.create();
 		config = HBaseConfiguration.create();
+		config.set("zookeeper.znode.parent", DataManagementConfiguration.getHbaseZnodeParent());
+		config.set("hbase.zookeeper.quorum", DataManagementConfiguration.getHbaseZkeeperQuorum());
 		// config.set("zookeeper.znode.parent", HBASE_NODE);
 		// config.set("hbase.zookeeper.quorum", HBASE_QUORUM);
 
