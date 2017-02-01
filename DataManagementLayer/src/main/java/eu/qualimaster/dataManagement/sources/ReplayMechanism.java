@@ -320,41 +320,43 @@ public class ReplayMechanism implements IDataSource {
         long newTimestamp = 0;    
         if(!queue.isEmpty()) {
             ProfilingQueueItem<T> queueItem = queue.poll();
-            long timestamp = queueItem.getTimestamp(); 
-            long now = System.currentTimeMillis();
-            if(!init) {
-                init = true;
-                record = newTimestamp;
-                start = now;
-                updateOffset(timestamp);
-            } 
-            newTimestamp = newTimestamp(timestamp);
-            
-            if (record == newTimestamp) {//within the same batch
-                if (now - start <= timeInterval) {
-                    item = queueItem.getItem();
-                } else {
-                    while (newTimestamp == record) {//skip rest of data with old timestamp
-                        queueItem = queue.poll();
-                        item = queueItem.getItem();
-                        timestamp = queueItem.getTimestamp();
-                        newTimestamp = newTimestamp(timestamp);
-                        now = System.currentTimeMillis();
-                    }
-                    start = now;
+            if(queueItem != null) {
+                long timestamp = queueItem.getTimestamp(); 
+                long now = System.currentTimeMillis();
+                if(!init) {
+                    init = true;
                     record = newTimestamp;
-                }
-            } else {//next batch starts
-                if (now - start <= timeInterval) {
-                    //wait until it reaches 1s
-                    while (now - start <= timeInterval) {
-                        Thread.sleep(1);
-                        now = System.currentTimeMillis();
+                    start = now;
+                    updateOffset(timestamp);
+                } 
+                newTimestamp = newTimestamp(timestamp);
+                
+                if (record == newTimestamp) {//within the same batch
+                    if (now - start <= timeInterval) {
+                        item = queueItem.getItem();
+                    } else {
+                        while (newTimestamp == record) {//skip rest of data with old timestamp
+                            queueItem = queue.poll();
+                            item = queueItem.getItem();
+                            timestamp = queueItem.getTimestamp();
+                            newTimestamp = newTimestamp(timestamp);
+                            now = System.currentTimeMillis();
+                        }
+                        start = now;
+                        record = newTimestamp;
                     }
+                } else {//next batch starts
+                    if (now - start <= timeInterval) {
+                        //wait until it reaches 1s
+                        while (now - start <= timeInterval) {
+                            Thread.sleep(1);
+                            now = System.currentTimeMillis();
+                        }
+                    }
+                    item = queueItem.getItem();
+                    record = newTimestamp;
+                    start = now;
                 }
-                item = queueItem.getItem();
-                record = newTimestamp;
-                start = now;
             }
         }
         return item;
