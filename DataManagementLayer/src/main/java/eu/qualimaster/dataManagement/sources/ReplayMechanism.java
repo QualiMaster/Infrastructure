@@ -318,9 +318,9 @@ public class ReplayMechanism implements IDataSource {
         T item = null;              
       
         long newTimestamp = 0;    
-        if(!queue.isEmpty()) {
+        if (!queue.isEmpty()) {
             ProfilingQueueItem<T> queueItem = queue.poll();
-            if(queueItem != null) {
+            if (queueItem != null) {
                 long timestamp = queueItem.getTimestamp(); 
                 long now = System.currentTimeMillis();
                 if(!init) {
@@ -336,10 +336,14 @@ public class ReplayMechanism implements IDataSource {
                         item = queueItem.getItem();
                     } else {
                         while (newTimestamp == record) {//skip rest of data with old timestamp
-                            queueItem = queue.poll();
-                            item = queueItem.getItem();
-                            timestamp = queueItem.getTimestamp();
-                            newTimestamp = newTimestamp(timestamp);
+                            if (!queue.isEmpty()) {
+                                queueItem = queue.poll();
+                                if (queueItem != null) {
+                                    item = queueItem.getItem();
+                                    timestamp = queueItem.getTimestamp();
+                                    newTimestamp = newTimestamp(timestamp);
+                                }
+                            }
                             now = System.currentTimeMillis();
                         }
                         start = now;
