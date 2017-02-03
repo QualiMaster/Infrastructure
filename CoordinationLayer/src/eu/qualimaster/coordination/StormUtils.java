@@ -1,7 +1,9 @@
 package eu.qualimaster.coordination;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -13,6 +15,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.log4j.LogManager;
@@ -364,13 +367,33 @@ public class StormUtils {
      * Does common configuration steps for local cluster and distributed cluster startup. Sets <code>stormConf</code>
      * on <code>options</code>.
      * 
+     * @param jarPath the path to the pipeline Jar
      * @param stormConf the storm configuration map
      * @param options the startup pipeline options
      */
-    @SuppressWarnings({ "rawtypes" })
-    private static void doCommonConfiguration(Map stormConf, StormPipelineOptionsSetter options) {
+    @SuppressWarnings("rawtypes")
+    private static void doCommonConfiguration(String jarPath, Map stormConf, StormPipelineOptionsSetter options) {
         options.setConfig(stormConf);
         doCommonConfiguration(options);
+        
+        File experimentalOverrideProperties = new File(jarPath + ".properties");
+        if (experimentalOverrideProperties.exists()) {
+            LOGGER.info("Found experimental pipeline override file " 
+                + experimentalOverrideProperties.getAbsolutePath());
+            Properties prop = new Properties();
+            try {
+                FileInputStream fis = new FileInputStream(experimentalOverrideProperties);
+                prop.load(fis);
+                fis.close();
+                for (Map.Entry<Object, Object> ent : prop.entrySet()) {
+                    if (ent.getValue() instanceof Serializable) {
+                        options.setOption(ent.getKey().toString(), (Serializable) ent.getValue());
+                    }
+                }
+            } catch (IOException e) {
+                LOGGER.info("Ignored experimental pipeline override file " + e.getMessage());
+            }
+        }
     }
     
     /**
@@ -414,7 +437,7 @@ public class StormUtils {
             if (null == topology) {
                 throw new IOException("topology '" + topologyName + "' not found");
             }
-            doCommonConfiguration(stormConf, optSetter);
+            doCommonConfiguration(jarPath, stormConf, optSetter);
             try {
                 localCluster.submitTopology(topologyName, optSetter.getConfig(), topology);
             } catch (InvalidTopologyException e) {
@@ -425,7 +448,7 @@ public class StormUtils {
         } else {
             Map stormConf = Utils.readStormConfig();
             stormConf.put(Config.NIMBUS_HOST, host);
-            doCommonConfiguration(stormConf, optSetter);
+            doCommonConfiguration(jarPath, stormConf, optSetter);
             PluginRegistry.executeUnpackingPlugins(new File(jarPath), mapping);
             try {
                 // upload topology jar to Cluster using StormSubmitter
