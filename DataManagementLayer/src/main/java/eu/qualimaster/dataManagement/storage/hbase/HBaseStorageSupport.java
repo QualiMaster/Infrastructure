@@ -40,6 +40,7 @@ public class HBaseStorageSupport extends HBaseStorageTable implements IStorageSu
 		HBaseAdmin admin;
 
 		try {
+
 			admin = new HBaseAdmin(config);
 			HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(tableName));
 			tableDescriptor.addFamily(new HColumnDescriptor("GenericObject"));

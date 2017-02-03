@@ -196,10 +196,13 @@ public class VolumePredictor {
      * @param filePath the path of a temporary file used to store and read data.
      */
     public void initialize(String filePath) {
+        System.out.println("TMP FILE: " + filePath);
+        
         // check if the historical data provider has been set
         if (this.historyProvider == null) {
             System.out
                     .println("ERROR: no historical data provider has been set.");
+           System.out.println("Ignoring Volume Prediction...");
             return;
         }
 
@@ -398,7 +401,9 @@ public class VolumePredictor {
     
     private double estimateDuration(double[] predictions, double threshold, double current){
         
-        // TODO try considering: time of the day of the increase, relative/absolute increase
+        // TODO try considering: time of the day of the increase, relative/absolute increase (similar to the decrease computation),
+        //      number of points in the increase that have high values.
+        
         
         double probability = 0;
         

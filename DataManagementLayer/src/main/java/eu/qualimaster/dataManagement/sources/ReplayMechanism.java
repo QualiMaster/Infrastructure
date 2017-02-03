@@ -299,10 +299,11 @@ public class ReplayMechanism implements IDataSource {
         DataQueueDescriptor<?> des;
         while(it.hasNext()) {
             des = it.next();
-            if (id.equals(des.getId())) {
-                //
-                result = des;
-                break;
+            if(des != null) {
+                if (id.equals(des.getId())) {
+                    result = des;
+                    break;
+                }
             }
         }
         return result;
@@ -317,45 +318,52 @@ public class ReplayMechanism implements IDataSource {
     public <T> T getNextItem(Queue<ProfilingQueueItem<T>> queue) throws InterruptedException {
         T item = null;              
       
-        long newTimestamp = 0;        
-        ProfilingQueueItem<T> queueItem = queue.poll();
-        long timestamp = queueItem.getTimestamp(); 
-        long now = System.currentTimeMillis();
-        if(!init) {
-            init = true;
-            record = newTimestamp;
-            start = now;
-            updateOffset(timestamp);
-        } 
-        newTimestamp = newTimestamp(timestamp);
-        
-        if (record == newTimestamp) {//within the same batch
-            if (now - start <= timeInterval) {
-                item = queueItem.getItem();
-            } else {
-                while (newTimestamp == record) {//skip rest of data with old timestamp
-                    queueItem = queue.poll();
+        long newTimestamp = 0;    
+        if (!queue.isEmpty()) {
+            ProfilingQueueItem<T> queueItem = queue.poll();
+            if (queueItem != null) {
+                long timestamp = queueItem.getTimestamp(); 
+                long now = System.currentTimeMillis();
+                if(!init) {
+                    init = true;
+                    record = newTimestamp;
+                    start = now;
+                    updateOffset(timestamp);
+                } 
+                newTimestamp = newTimestamp(timestamp);
+                
+                if (record == newTimestamp) {//within the same batch
+                    if (now - start <= timeInterval) {
+                        item = queueItem.getItem();
+                    } else {
+                        while (newTimestamp == record) {//skip rest of data with old timestamp
+                            if (!queue.isEmpty()) {
+                                queueItem = queue.poll();
+                                if (queueItem != null) {
+                                    item = queueItem.getItem();
+                                    timestamp = queueItem.getTimestamp();
+                                    newTimestamp = newTimestamp(timestamp);
+                                }
+                            }
+                            now = System.currentTimeMillis();
+                        }
+                        start = now;
+                        record = newTimestamp;
+                    }
+                } else {//next batch starts
+                    if (now - start <= timeInterval) {
+                        //wait until it reaches 1s
+                        while (now - start <= timeInterval) {
+                            Thread.sleep(1);
+                            now = System.currentTimeMillis();
+                        }
+                    }
                     item = queueItem.getItem();
-                    timestamp = queueItem.getTimestamp();
-                    newTimestamp = newTimestamp(timestamp);
-                    now = System.currentTimeMillis();
-                }
-                start = now;
-                record = newTimestamp;
-            }
-        } else {//next batch starts
-            if (now - start <= timeInterval) {
-                //wait until it reaches 1s
-                while (now - start <= timeInterval) {
-                    Thread.sleep(1);
-                    now = System.currentTimeMillis();
+                    record = newTimestamp;
+                    start = now;
                 }
             }
-            item = queueItem.getItem();
-            record = newTimestamp;
-            start = now;
         }
-
         return item;
     }
     /**
