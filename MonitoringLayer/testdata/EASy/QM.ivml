@@ -72,6 +72,7 @@ project QM {
           Integer executors;
           Boolean isValid = true;
           
+          capacity > 0.10;
           capacity < 0.85;
         }
     }

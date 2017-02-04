@@ -98,6 +98,7 @@ public class ReasoningTask extends TimerTask {
     private RuntimeVariableMapping variableMapping;
     private Map<String, Deviation> activeDeviations = new HashMap<String, Deviation>();
     private transient Set<String> currentDeviations = new HashSet<String>();
+    private transient Set<String> clearDeviations = new HashSet<String>();
     private IReasoningListener listener;
     private IReasoningModelProvider provider;
     private double minDevDifference = MonitoringConfiguration.getAnalysisMinDeviationDifference() / 100.0;
@@ -508,6 +509,7 @@ public class ReasoningTask extends TimerTask {
      * @return the adaptation event or <b>null</b> if no violating clauses were detected
      */
     public AdaptationEvent reason(boolean send) {
+        doClearDeviations();
         checkProviderUpdate();
         provider.startUsing();
         AdaptationEvent resultEvent = null;
@@ -953,6 +955,36 @@ public class ReasoningTask extends TimerTask {
      */
     private static Logger getLogger() {
         return LogManager.getLogger(ReasoningTask.class);
+    }
+
+    /**
+     * Performs clearing the deviations for the marked pipelines.
+     */
+    void doClearDeviations() {
+        synchronized (clearDeviations) {
+            for (String pip : clearDeviations) {
+                pip = pip + FrozenSystemState.SEPARATOR;
+                Iterator<Map.Entry<String, Deviation>> iter = activeDeviations.entrySet().iterator();
+                while (iter.hasNext()) {
+                    Map.Entry<String, Deviation> entry = iter.next();
+                    if (entry.getKey().startsWith(pip)) {
+                        iter.remove();
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Clears stored deviations. Marks a pipeline for clearing so that this can be done with the next
+     * reasoning step (or the task will be cancelled anyway).
+     * 
+     * @param pipelineName the name of the pipeline to clear the deviations for
+     */
+    void clearDeviations(String pipelineName) {
+        synchronized (clearDeviations) {
+            clearDeviations.add(pipelineName);
+        }
     }
     
 }

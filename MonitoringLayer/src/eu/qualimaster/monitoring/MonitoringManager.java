@@ -561,6 +561,7 @@ public class MonitoringManager {
                 case STARTING:
                     pipelines.put(pipelineName, new PipelineInfo(pipelineName, status, event.getOptions()));
                     handleStarting(event);
+                    clearDeviations(pipelineName);
                     break;
                 case STOPPING:
                     Tracing.logMonitoringData(state, pipelineName);
@@ -574,6 +575,7 @@ public class MonitoringManager {
                     pipeline = state.obtainPipeline(pipelineName);
                     pipeline.changeStatus(status, false, null);
                     state.removePipeline(pipelineName); // get rid of old state in any case
+                    clearDeviations(pipelineName);
                     break;
                 case INITIALIZED:
                     PipelineInfo info = pipelines.get(pipelineName);
@@ -611,6 +613,17 @@ public class MonitoringManager {
             VolumePredictionManager.notifyPipelineLifecycleChange(event);
         }
         
+    }
+
+    /**
+     * Clears stored deviations.
+     * 
+     * @param pipelineName the name of the pipeline to clear the deviations for
+     */
+    private static void clearDeviations(String pipelineName) {
+        if (null != reasoningTask) {
+            reasoningTask.clearDeviations(pipelineName);
+        }
     }
     
     /**

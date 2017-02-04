@@ -114,7 +114,7 @@ public class ReasoningTaskTests {
         FrozenSystemState frozenState = cEvent.getState();  // state visible to adaptation
         assertAlgorithmIsValid(TRUE, frozenState, alg1);
         assertAlgorithmIsValid(FALSE, frozenState, alg2);
-        Assert.assertEquals(1, cEvent.getViolatingClauseCount());
+        Assert.assertEquals(2, cEvent.getViolatingClauseCount());
         Assert.assertEquals(AnalysisObservables.IS_VALID, cEvent.getViolatingClause(0).getObservable());
         
         event = task.reason(false);
@@ -199,6 +199,50 @@ public class ReasoningTaskTests {
         Assert.assertEquals(1, cEvent.getViolatingClauseCount());
         Assert.assertEquals(ResourceUsage.CAPACITY, cEvent.getViolatingClause(0).getObservable());
         Assert.assertTrue(cEvent.getViolatingClause(0).isCleared());
+        
+        task.dispose();
+    }
+
+    /**
+     * Tests whether a deviation is caused if the sign of the deviation changes.
+     */
+    @Test
+    public void testChangingDeviationSign() {
+        IReasoningModelProvider provider = new PhaseReasoningModelProvider(Phase.MONITORING);
+        ReasoningTask task = new ReasoningTask(provider);
+        // prepare the system state
+        SystemState state = MonitoringManager.getSystemState();
+        PipelineSystemPart pip = state.obtainPipeline("pipeline");
+        pip.changeStatus(PipelineLifecycleEvent.Status.STARTED, false, null);
+
+        double capacity = 0.03;
+        pip.setValue(ResourceUsage.CAPACITY, capacity, null);
+        pip.setValue(ResourceUsage.EXECUTORS, 2, null);
+        AdaptationEvent event = task.reason(false);
+        Assert.assertNotNull(event);
+        Assert.assertTrue(event instanceof ConstraintViolationAdaptationEvent);
+        ConstraintViolationAdaptationEvent cEvent = (ConstraintViolationAdaptationEvent) event;
+        Assert.assertEquals(1, cEvent.getViolatingClauseCount());
+        ViolatingClause cl = cEvent.getViolatingClause(0);
+        Assert.assertEquals(ResourceUsage.CAPACITY, cl.getObservable());
+        Assert.assertFalse(cl.isCleared());
+        double limit = 0.10;
+        double deviation = limit - capacity;
+        Assert.assertEquals(deviation, cl.getDeviation(), 0.005);
+
+        capacity = 0.9;
+        pip.setValue(ResourceUsage.CAPACITY, capacity, null);
+        event = task.reason(false);
+        Assert.assertNotNull(event);
+        Assert.assertTrue(event instanceof ConstraintViolationAdaptationEvent);
+        cEvent = (ConstraintViolationAdaptationEvent) event;
+        Assert.assertEquals(1, cEvent.getViolatingClauseCount());
+        cl = cEvent.getViolatingClause(0);
+        Assert.assertEquals(ResourceUsage.CAPACITY, cl.getObservable());
+        Assert.assertFalse(cl.isCleared());
+        limit = 0.85;
+        deviation = limit - capacity;
+        Assert.assertEquals(deviation, cl.getDeviation(), 0.005);
         
         task.dispose();
     }
