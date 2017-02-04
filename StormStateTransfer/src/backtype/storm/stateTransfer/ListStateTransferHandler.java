@@ -75,7 +75,7 @@ public class ListStateTransferHandler extends StateTransferHandler<List> {
         } else {
             field.set(target, revisedNewValue);
         }
-        return recurse;
+        return false; // there is a filled instance or it has been created
     }
 
 }

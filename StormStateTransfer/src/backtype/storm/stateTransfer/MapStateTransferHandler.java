@@ -75,7 +75,7 @@ public class MapStateTransferHandler extends StateTransferHandler<Map> {
         } else {
             field.set(target, revisedNewValue);
         }
-        return recurse;
+        return false; // there is a filled instance or it has been created
     }
 
 }

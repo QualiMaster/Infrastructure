@@ -63,7 +63,7 @@ public class SetStateTransferHandler extends StateTransferHandler<Set> {
         } else {
             field.set(target, revisedNewValue);
         }
-        return recurse;
+        return false; // there is a filled instance or it has been created
     }
 
 }
