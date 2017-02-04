@@ -593,7 +593,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
             if (null != command.getIncrementalChanges()) {
                 Map<String, ParallelismChangeRequest> changeMapping 
                     = mapChanges(mapping, command.getIncrementalChanges());
-                String cmd = "Changing parallism of " + pipelineName + ":";
+                String cmd = "Changing parallelism of " + pipelineName + ":";
                 for (Map.Entry<String, ParallelismChangeRequest> entry : changeMapping.entrySet()) {
                     cmd += " " + entry.getKey() + "=" + entry.getValue();
                 }
@@ -642,6 +642,21 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
             Component comp = mapping.getPipelineNodeComponent(entry.getKey());
             if (null != comp) {
                 result.put(comp.getName(), entry.getValue());
+            } else {
+                // sub-topology algorithms...
+                boolean found = false;
+                for (Algorithm alg : mapping.getAlgorithms()) {
+                    for (Component cmp : alg.getComponents()) {
+                        if (cmp.getName().equals(entry.getKey())) {
+                            result.put(cmp.getName(), entry.getValue());
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found) {
+                        break;
+                    }
+                }
             }
         }
         return result;

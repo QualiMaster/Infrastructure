@@ -1064,6 +1064,7 @@ public class StormUtils {
         }
         if (purgeTaskChanges(changes)) {
             try {
+                String origRequest = changes.toString();
                 ThriftConnection connection = new ThriftConnection();
                 connection.open();
                 TopologyInfo tInfo = connection.getTopologyInfoByName(topology);
@@ -1077,7 +1078,7 @@ public class StormUtils {
                 if (null != stormAssng) {
                     Assignment newAssng = changeParallelism(stormAssng, changes, taskComponents, tData);
                     if (null != newAssng) {
-                        LOGGER.info("Parallelism change request: " + changes);
+                        LOGGER.info("Parallelism change request: " + origRequest + " remaining " + changes);
                         LOGGER.info("Old assignment: " + ZkUtils.toString(stormAssng));
                         LOGGER.info("New assignment: " + ZkUtils.toString(newAssng));
                         ZkUtils.setAssignment(framework, tInfo, newAssng);
