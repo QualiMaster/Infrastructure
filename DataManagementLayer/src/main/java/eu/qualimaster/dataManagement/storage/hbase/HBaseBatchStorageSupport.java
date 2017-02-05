@@ -48,6 +48,12 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 		log.info("Replay: constructing HBaseBatchStorageSupport");
 		// Configuration config = HBaseConfiguration.create();
 		config = HBaseConfiguration.create();
+		config.set("fs.hdfs.impl",
+				org.apache.hadoop.hdfs.DistributedFileSystem.class.getName()
+		);
+		config.set("fs.file.impl",
+				org.apache.hadoop.fs.LocalFileSystem.class.getName()
+		);
 		config.set("zookeeper.znode.parent", DataManagementConfiguration.getHbaseZnodeParent());
 		config.set("hbase.zookeeper.quorum", DataManagementConfiguration.getHbaseZkeeperQuorum());
 
@@ -64,7 +70,7 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 		batchSize = size;
 	}
 
-	/**
+	/** nfs
 	 * Declare an HBase table based on a given schema
 	 */
 	private void createIfNotExist() {
