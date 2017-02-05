@@ -86,6 +86,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
     static {
         // later, all command shall be deferred and report about the actual completion
         DEFER_SUCCESSFUL_EXECUTION.add(PipelineCommand.class);
+        DEFER_SUCCESSFUL_EXECUTION.add(ParallelismChangeCommand.class);
     }
     
     /**
@@ -538,16 +539,9 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
         return writeCoordinationLog(command, null);
     }
 
-    /**
-     * Pops the actual command from the stack and in case of a failure, writes the message to logging
-     * and the whole information to the coordination log if on top level.
-     * 
-     * @param command the current command being executed
-     * @param failing the failing command (may be <b>null</b> if no execution failure)
-     * @return <code>failing</code>
-     */
+    @Override
     protected CoordinationExecutionResult writeCoordinationLog(CoordinationCommand command, 
-        CoordinationExecutionResult failing) {
+        CoordinationExecutionResult failing, boolean forceSend) {
         endingCommand(command);
         if (null != failing) {
             getLogger().error("enactment failed: " + failing.getMessage());
@@ -561,7 +555,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
                 cmd = command;
                 message = "";
                 code = CoordinationExecutionCode.SUCCESSFUL;
-                sendEvent = !DEFER_SUCCESSFUL_EXECUTION.contains(command.getClass());
+                sendEvent = forceSend || !DEFER_SUCCESSFUL_EXECUTION.contains(command.getClass());
             } else {
                 cmd = failing.getCommand();
                 message = failing.getMessage();
@@ -589,6 +583,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
         String pipelineName = command.getPipeline();
         INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
         String errorMsg = null;
+        boolean forceSend = false;
         if (!mapping.isIdentity()) { // testing, unknown pipeline
             if (null != command.getIncrementalChanges()) {
                 Map<String, ParallelismChangeRequest> changeMapping 
@@ -599,7 +594,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
                 }
                 getLogger().info(cmd);
                 try {
-                    StormUtils.changeParallelism(pipelineName, changeMapping);
+                    StormUtils.changeParallelism(pipelineName, changeMapping, command);
                 } catch (IOException e) {
                     errorMsg = "While changing pipeline parallelism of '" + pipelineName + "': " +  e.getMessage();
                 }
@@ -616,6 +611,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
                 } catch (IOException e) {
                     errorMsg = "while rebalancing pipeline '" + pipelineName + "': " +  e.getMessage();
                 }
+                forceSend = true;
             } // no changes given, no failure
         } // ignore for testing, no failure
         if (null != errorMsg) {
@@ -625,7 +621,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
         if (null != getTracer()) {
             getTracer().executedParallelismChangeCommand(command, failing);
         }
-        return writeCoordinationLog(command, failing);
+        return writeCoordinationLog(command, failing, forceSend);
     }
     
     /**

@@ -243,7 +243,7 @@ public class EnactingPipelineElements {
 
             @Override
             public CoordinationExecutionResult visitParallelismChangeCommand(ParallelismChangeCommand command) {
-                return null; // TODO unclear
+                return markAsEnacting(command, mark);
             }
 
             @Override
@@ -279,4 +279,26 @@ public class EnactingPipelineElements {
             }
         };
     }
+
+    /**
+     * Marks the executors given in <code>command</code> as enacting.
+     * 
+     * @param command the command
+     * @param mark or unmark the pipeline / pipeline elements
+     * @return <b>null</b>
+     */
+    private CoordinationExecutionResult markAsEnacting(ParallelismChangeCommand command, boolean mark) {
+        String pipeline = command.getPipeline();
+        if (null != command.getExecutors()) {
+            for (String exec : command.getExecutors().keySet()) {
+                markAsEnacting(pipeline, exec, mark);
+            }
+        } else if (null != command.getIncrementalChanges()) {
+            for (String exec : command.getIncrementalChanges().keySet()) {
+                markAsEnacting(pipeline, exec, mark);
+            }
+        }
+        return null;
+    }
+    
 }

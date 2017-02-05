@@ -26,7 +26,10 @@ import org.apache.thrift7.TException;
 import eu.qualimaster.base.algorithm.IMainTopologyCreate;
 import eu.qualimaster.base.algorithm.TopologyOutput;
 import eu.qualimaster.common.signal.ThriftConnection;
+import eu.qualimaster.coordination.commands.CoordinationCommand;
+import eu.qualimaster.coordination.events.CoordinationCommandExecutionEvent;
 import eu.qualimaster.easy.extension.internal.AlgorithmProfileHelper.ProfileData;
+import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineOptions;
 import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
 import backtype.storm.Config;
@@ -1055,10 +1058,12 @@ public class StormUtils {
      *   parallelized (positive) or run in sequence (negative). Will be modified as a side
      *   effect in order to indicate requests that were not fulfilled based on the current 
      *   assignment.
+     * @param cmd the causing command, if given, send a {@link CoordinationCommandExecutionEvent} if done, just
+     *   return if <b>null</b> for 
      * @throws IOException if the execution fails for some communication or I/O reason
      */
-    public static void changeParallelism(String topology, Map<String, ParallelismChangeRequest> changes) 
-        throws IOException {
+    public static void changeParallelism(String topology, Map<String, ParallelismChangeRequest> changes, 
+        CoordinationCommand cmd) throws IOException {
         if (!ZkUtils.isQmStormVersion()) {
             throw new IOException("Only the QM-specific version of Storm supports this kind of change");
         }
@@ -1075,6 +1080,7 @@ public class StormUtils {
                 if (ZkUtils.getWorkerDependenciesCount(stormAssng) > 0) {
                     throw new IOException("Reconfiguring " + topology + ". Change not possible at the moment.");
                 }
+                boolean isWaiting = false;
                 if (null != stormAssng) {
                     Assignment newAssng = changeParallelism(stormAssng, changes, taskComponents, tData);
                     if (null != newAssng) {
@@ -1082,9 +1088,19 @@ public class StormUtils {
                         LOGGER.info("Old assignment: " + ZkUtils.toString(stormAssng));
                         LOGGER.info("New assignment: " + ZkUtils.toString(newAssng));
                         ZkUtils.setAssignment(framework, tInfo, newAssng);
+                        if (null != cmd) {
+                            isWaiting = true;
+                            new Thread(new ParallelismChangeWaiter(framework, tInfo, cmd)).start();
+                        }
                     }
                 }
-                ZkUtils.close(framework);
+                if (!isWaiting) {
+                    ZkUtils.close(framework);
+                    if (null != cmd) {
+                        EventManager.send(new CoordinationCommandExecutionEvent(cmd, null, 
+                            CoordinationExecutionCode.SUCCESSFUL, null));
+                    }
+                }
                 connection.close();
             } catch (Exception e) {
                 throw new IOException(e.getMessage(), e);
@@ -1093,8 +1109,61 @@ public class StormUtils {
             LOGGER.info("No actual changes to the parallelism requested: " + changes);
         }
     }
-
+    
     // checkstyle: resume exception type check
+    
+    /**
+     * Waits for completing a parallelism change. A Curator watcher may also do the job but setting it up does
+     * typically not happen immediately, i.e., more event handling.
+     * 
+     * @author Holger Eichelberger
+     */
+    private static class ParallelismChangeWaiter implements Runnable {
+
+        private CuratorFramework framework;
+        private TopologyInfo tInfo;
+        private CoordinationCommand cmd;
+        
+        /**
+         * Creates a parallelism change waiter.
+         * 
+         * @param framework the curator framework to ask and close
+         * @param tInfo the topology information object
+         * @param cmd the originating command to confirm for execution
+         */
+        private ParallelismChangeWaiter(CuratorFramework framework, TopologyInfo tInfo, CoordinationCommand cmd) {
+            this.framework = framework;
+            this.tInfo = tInfo;
+            this.cmd = cmd;
+        }
+        
+        @Override
+        public void run() {
+            long start = System.currentTimeMillis();
+            long timeout = Math.max(2000, CoordinationConfiguration.getEventResponseTimeout());
+            boolean completed = false;
+            do {
+                Utils.sleep(200);
+                try {
+                    Assignment stormAssng = ZkUtils.getAssignment(framework, tInfo);
+                    completed = 0 == ZkUtils.getWorkerDependenciesCount(stormAssng);
+                } catch (IOException e) {
+                }
+            } while (!completed && System.currentTimeMillis() - start <= timeout);
+            ZkUtils.close(framework);
+            int code;
+            String msg;
+            if (completed) {
+                code = CoordinationExecutionCode.SUCCESSFUL;
+                msg = null;
+            } else {
+                code = CoordinationExecutionCode.CHANGING_PARALLELISM;
+                msg = "timeout exceeded";
+            }
+            EventManager.send(new CoordinationCommandExecutionEvent(cmd, null, code, msg));
+        }
+        
+    }
 
     /**
      * Changes the given assignment. This method is public for testing.

@@ -174,14 +174,29 @@ public abstract class AbstractCoordinationCommandExecutionVisitor implements ICo
 
     /**
      * Pops the actual command from the stack and in case of a failure, writes the message to logging
-     * and the whole information to the coordination log if on top level.
+     * and the whole information to the coordination log if on top level. Does not force sending.
      * 
      * @param command the current command being executed
      * @param failing the failing command (may be <b>null</b> if no execution failure)
      * @return <code>failing</code>
+     * @see #writeCoordinationLog(CoordinationCommand, CoordinationExecutionResult, boolean)
      */
     protected CoordinationExecutionResult writeCoordinationLog(CoordinationCommand command, 
         CoordinationExecutionResult failing) {
+        return writeCoordinationLog(command, failing, false);
+    }
+    
+    /**
+     * Pops the actual command from the stack and in case of a failure, writes the message to logging
+     * and the whole information to the coordination log if on top level.
+     * 
+     * @param command the current command being executed
+     * @param failing the failing command (may be <b>null</b> if no execution failure)
+     * @param forceSend send anyway regardless of {@link #DEFER_SUCCESSFUL_EXECUTION}
+     * @return <code>failing</code>
+     */
+    protected CoordinationExecutionResult writeCoordinationLog(CoordinationCommand command, 
+        CoordinationExecutionResult failing, boolean forceSend) {
         endingCommand(command);
         return failing;
     }

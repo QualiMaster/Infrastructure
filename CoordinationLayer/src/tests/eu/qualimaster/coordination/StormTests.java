@@ -34,6 +34,7 @@ import eu.qualimaster.coordination.ZkUtils;
 import eu.qualimaster.coordination.commands.AlgorithmChangeCommand;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.coordination.commands.LoadSheddingCommand;
+import eu.qualimaster.coordination.commands.ParallelismChangeCommand;
 import eu.qualimaster.coordination.commands.ParameterChangeCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand;
 import eu.qualimaster.coordination.commands.ProfileAlgorithmCommand;
@@ -299,7 +300,8 @@ public class StormTests extends AbstractCoordinationTests {
                     // test with StormUtils.ParallelismChangeRequest(1, host, 1)
                     taskChanges.put(Naming.NODE_PROCESS, new ParallelismChangeRequest(0, host, true));
                 }
-                StormUtils.changeParallelism(Naming.PIPELINE_NAME, taskChanges);
+                StormUtils.changeParallelism(Naming.PIPELINE_NAME, taskChanges, 
+                    new ParallelismChangeCommand(Naming.PIPELINE_NAME, taskChanges)); // command just for testing
                 sleep(8000); // let Storm run for a while
             } else { // revert the changes
                 Map<String, ParallelismChangeRequest> taskChanges = new HashMap<String, ParallelismChangeRequest>();
@@ -310,7 +312,8 @@ public class StormTests extends AbstractCoordinationTests {
                     String host = InetAddress.getLocalHost().getCanonicalHostName();
                     taskChanges.put(Naming.NODE_PROCESS, new ParallelismChangeRequest(0, host, true));
                 }
-                StormUtils.changeParallelism(Naming.PIPELINE_NAME, taskChanges);
+                StormUtils.changeParallelism(Naming.PIPELINE_NAME, taskChanges, 
+                    new ParallelismChangeCommand(Naming.PIPELINE_NAME, taskChanges)); // command just for testing
                 sleep(10000); // let Storm run for a while
             }
         } else if (TestExecutionMode.LOAD_SHEDDING_SOURCE == mode) {
