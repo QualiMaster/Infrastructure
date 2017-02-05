@@ -257,6 +257,9 @@ public class VolumePredictionManager {
             // name will occur
             System.out
                     .println("HistoricalDataProviderRegistrationEvent received...");
+            
+            printForDebug(event);
+            
             status = "initializing";
             VolumePredictor predictor = new VolumePredictor(
                     event.getPipeline(), event.getSource(),
@@ -463,5 +466,29 @@ public class VolumePredictionManager {
     public static void setBlindTestPredictions(
             Map<String, Map<String, Double>> predictions) {
         testBlindPredictions = predictions;
+    }
+    
+    private static void printForDebug(HistoricalDataProviderRegistrationEvent event){
+        System.out.println("TEST MODE = " + test);
+        System.out.println("PIPELINE: " + event.getPipeline());
+        System.out.println("SOURCE: " + event.getSource());
+        if(event.getIdsNamesMap() != null){
+            System.out.println("IDS-NAME MAP:");
+            Map<String, String> map = event.getIdsNamesMap();
+            for(String key : map.keySet())
+                System.out.println("\tkey = " + key + ", value = " + map.get(key));
+        }
+        else System.out.println("IDS-NAME MAP = null");
+        if(event.getProvider() != null){
+            System.out.print("DEFAULT BLIND TERMS: ");
+            for(String s : event.getProvider().getDefaultBlindTerms())
+                System.out.print(s + ", ");
+            System.out.println();
+            System.out.print("DEFAULT MONITORING TERMS: ");
+            for(String s : event.getProvider().getDefaultMonitoredTerms())
+                System.out.print(s + ", ");
+            System.out.println();
+        }
+        else System.out.println("HISTORICAL DATA PROVIDER = null");  
     }
 }

@@ -532,7 +532,7 @@ public class PipelineOptions implements Serializable, IOptionSetter {
      * @param executor the name of the executor
      * @return the option key
      */
-    private static String getTaskParallelismKey(String executor) {
+    public static String getTaskParallelismKey(String executor) {
         return PREFIX_EXECUTOR + executor + SUFFIX_TASKS;
     }
     

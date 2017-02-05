@@ -299,10 +299,11 @@ public class ReplayMechanism implements IDataSource {
         DataQueueDescriptor<?> des;
         while(it.hasNext()) {
             des = it.next();
-            if (id.equals(des.getId())) {
-                //
-                result = des;
-                break;
+            if(des != null) {
+                if (id.equals(des.getId())) {
+                    result = des;
+                    break;
+                }
             }
         }
         return result;

@@ -16,8 +16,15 @@
 package backtype.storm.stateTransfer;
 
 import java.lang.reflect.Field;
+import java.text.DateFormat;
+import java.text.DateFormatSymbols;
+import java.text.Format;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * A registry for {@link StateTransferHandler state transfer handlers}.
@@ -55,7 +62,7 @@ public class StateTransferHandlerRegistry {
                 if (null != newValue) { // cannot be, just be sure
                     field.set(target, newValue);
                 }
-                return true;
+                return false;
             }
         };
         
@@ -69,6 +76,38 @@ public class StateTransferHandlerRegistry {
         registerHandler(new ListStateTransferHandler());
         registerHandler(new SetStateTransferHandler());
         registerHandler(new MapStateTransferHandler());
+        registerHandler(new ObjectValueStateTransferHandler<String>(String.class));
+        registerHandler(new ObjectValueStateTransferHandler<Double>(Double.class));
+        registerHandler(new ObjectValueStateTransferHandler<Float>(Float.class));
+        registerHandler(new ObjectValueStateTransferHandler<Integer>(Integer.class));
+        registerHandler(new ObjectValueStateTransferHandler<Long>(Long.class));
+        registerHandler(new ObjectValueStateTransferHandler<Short>(Short.class));
+        registerHandler(new ObjectValueStateTransferHandler<Character>(Character.class));
+        registerHandler(new ObjectValueStateTransferHandler<Boolean>(Boolean.class));
+        registerHandler(new ObjectValueStateTransferHandler<Byte>(Byte.class));
+        registerHandler(new ObjectValueStateTransferHandler<Logger>(Logger.class, false));
+        registerHandler(new ObjectValueStateTransferHandler<Format>(Format.class, false));
+        registerHandler(new ObjectValueStateTransferHandler<DateFormat>(DateFormat.class, false)); 
+        registerHandler(new ObjectValueStateTransferHandler<SimpleDateFormat>(SimpleDateFormat.class, false)); 
+        registerHandler(new ObjectValueStateTransferHandler<DateFormatSymbols>(DateFormatSymbols.class, false)); 
+        registerHandler(new ObjectValueStateTransferHandler<Date>(Date.class, false)); 
+        registerHandler(new ObjectValueStateTransferHandler<Locale>(Locale.class, false)); // rec. problems with Locale!
+        registerObjectValueStateTransferHandler("org.slf4j.Logger"); // as also used by Storm
+        registerObjectValueStateTransferHandler("org.apache.log4j.Logger"); // as also used by Storm
+    }
+    
+    /**
+     * Register for a class that we do not have directly in the dependencies.
+     * 
+     * @param clsName the class names
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private static void registerObjectValueStateTransferHandler(String clsName) {
+        try {
+            Class<?> cls = Class.forName(clsName);
+            registerHandler(new ObjectValueStateTransferHandler(cls, false)); // rec. problems with Locale!
+        } catch (ClassNotFoundException e) {
+        }
     }
     
     /**
@@ -110,29 +149,54 @@ public class StateTransferHandlerRegistry {
     }
     
     /**
-     * Returns the state transfer handler responsible for the given class and field.
+     * Returns the state transfer handler responsible for the given class and field. Falls back to default handlers.
      * 
      * @param targetType the target type (may be a subclass of field's declaring class)
      * @param field the field to transfer the state into
      * @return the state handler (may be {{@link #DEFAULT_HANDLER} if no more specific one was found)
      */
     public static StateTransferHandler<?> getHandler(Class<?> targetType, Field field) {
-        StateTransferHandler<?> result = null;
-        Map<Class<?>, StateTransferHandler<?>> handlers = globalHandlers;
-        if (null != targetType) {
-            handlers = typeHandlers.get(targetType);
-            if (null != handlers) {
-                result = handlers.get(field.getType());
-            }
-        }
-        if (null == result) {
-            result = globalHandlers.get(field.getType());
-        }
+        StateTransferHandler<?> result = getHandler(targetType, field.getType());
         if (null == result) {
             if (field.getType().isPrimitive()) {
                 result = DEFAULT_PRIMITIVE_HANDLER;
             } else {
                 result = DEFAULT_OBJECT_HANDLER;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns the state transfer handler responsible for the given class and field also considering super-classes and
+     * super-interfaces.
+     * 
+     * @param targetType the target type (may be a subclass of field's declaring class)
+     * @param fieldType the type of the field to transfer the state into
+     * @return the state handler or <b>null</b> if none was found
+     */
+    private static StateTransferHandler<?> getHandler(Class<?> targetType, Class<?> fieldType) {
+        StateTransferHandler<?> result = null;
+        if (null != targetType) {
+            Map<Class<?>, StateTransferHandler<?>> handlers = typeHandlers.get(targetType);
+            if (null != handlers) {
+                result = handlers.get(fieldType);
+            }
+        }
+        if (null == result) {
+            result = globalHandlers.get(fieldType);
+        }
+        if (null == result) {
+            if (null != fieldType.getSuperclass()) {
+                result = getHandler(targetType, fieldType.getSuperclass());
+            }
+            if (null == result) {
+                Class<?>[] ifaces = fieldType.getInterfaces();
+                if (null != ifaces) {
+                    for (int i = 0; null == result && i < ifaces.length; i++) {
+                        result = getHandler(targetType, ifaces[i]);
+                    }
+                }
             }
         }
         return result;
