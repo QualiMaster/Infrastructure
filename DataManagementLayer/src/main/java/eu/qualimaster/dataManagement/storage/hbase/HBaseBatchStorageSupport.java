@@ -48,11 +48,17 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 		log.info("Replay: constructing HBaseBatchStorageSupport");
 		// Configuration config = HBaseConfiguration.create();
 		config = HBaseConfiguration.create();
-		// config.set("zookeeper.znode.parent", DataManagementConfiguration.getHbaseZnodeParent());
-		// config.set("hbase.zookeeper.quorum", DataManagementConfiguration.getHbaseZkeeperQuorum());
+		config.set("fs.hdfs.impl",
+				org.apache.hadoop.hdfs.DistributedFileSystem.class.getName()
+		);
+		config.set("fs.file.impl",
+				org.apache.hadoop.fs.LocalFileSystem.class.getName()
+		);
+		config.set("zookeeper.znode.parent", DataManagementConfiguration.getHbaseZnodeParent());
+		config.set("hbase.zookeeper.quorum", DataManagementConfiguration.getHbaseZkeeperQuorum());
 
-		config.set("zookeeper.znode.parent", HBASE_NODE);
-		config.set("hbase.zookeeper.quorum", HBASE_QUORUM);
+		// config.set("zookeeper.znode.parent", HBASE_NODE);
+		// config.set("hbase.zookeeper.quorum", HBASE_QUORUM);
 
 		// All tables in the replay store have only one column family, with
 		// column qualifiers
@@ -64,14 +70,17 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 		batchSize = size;
 	}
 
-	/**
+	/** nfs
 	 * Declare an HBase table based on a given schema
 	 */
 	private void createIfNotExist() {
 		log.info("Replay: createIfNotExist");
 
-		config.set("zookeeper.znode.parent", "/hbase");
-		config.set("hbase.zookeeper.quorum", "node19.ib,node23.ib,master.ib,master03.ib,node15.ib");
+		config.set("zookeeper.znode.parent", DataManagementConfiguration.getHbaseZnodeParent());
+		config.set("hbase.zookeeper.quorum", DataManagementConfiguration.getHbaseZkeeperQuorum());
+
+		// config.set("zookeeper.znode.parent", HBASE_NODE);
+		// config.set("hbase.zookeeper.quorum", HBASE_QUORUM);
 
 		try (HBaseAdmin admin = new HBaseAdmin(config)) {
 			HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(getTableName()));
@@ -113,8 +122,11 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 		super.connect();
 		log.info("Replay: connect");
 		try {
-			config.set("zookeeper.znode.parent", "/hbase");
-			config.set("hbase.zookeeper.quorum", "node19.ib,node23.ib,master.ib,master03.ib,node15.ib");
+			// config.set("zookeeper.znode.parent", "/hbase");
+			// config.set("hbase.zookeeper.quorum", "node19.ib,node23.ib,master.ib,master03.ib,node15.ib");
+
+			config.set("zookeeper.znode.parent", DataManagementConfiguration.getHbaseZnodeParent());
+			config.set("hbase.zookeeper.quorum", DataManagementConfiguration.getHbaseZkeeperQuorum());
 
 			conn = HConnectionManager.createConnection(config);
 			table = conn.getTable(getTableName());
