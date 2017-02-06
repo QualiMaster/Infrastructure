@@ -213,7 +213,7 @@ public class FeatureExtractor {
         else
             nodesFeatures.add(1.0);
         
-        // difference of THROUGHPUT_VOLUME
+        // difference of THROUGHPUT_ITEMS
         int itemsIndex = getMeasureIndex("pipeline node", "THROUGHPUT_ITEMS");
         double itemsNode1 = node1.getMeasures().get(itemsIndex);
         difference = itemsNode1 - node2.getMeasures().get(itemsIndex);
@@ -457,6 +457,22 @@ public class FeatureExtractor {
         return line;
     }
     
+    public ArrayList<Double> patternToArray(Pattern p){
+        ArrayList<Double> values = new ArrayList<>();
+        Features f = p.getFeatures();
+        
+        values.add(Double.valueOf(p.getId()));
+        for(Double feature : f.getLastMonitoring()){
+            values.add(feature);
+        }
+        for(Double feature : f.getAggregateMonitoring()){
+            values.add(feature);
+        }
+        values.add(p.getLabel());
+        
+        return values;
+    }
+    
     private int getMeasureIndex(String component, String measure){
         ArrayList<String> header = this.headers.get(component);
         for(int i = 0; i < header.size(); i++){
@@ -467,7 +483,7 @@ public class FeatureExtractor {
         return -1;
     }
     
-    private ArrayList<Pattern> postProcess(ArrayList<Pattern> patterns){
+    public ArrayList<Pattern> postProcess(ArrayList<Pattern> patterns){
         
         // replace the absolute THROUGHPUT_ITEMS and THROUGHPUT_VOLUME with the difference wrt the previous values
         int platformMeasures = this.headers.get("platform").size();

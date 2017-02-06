@@ -53,6 +53,9 @@ public abstract class AbstractFileTrace implements ITrace {
     protected List<PipelineTraceInfo> pipelines; 
     protected Map<String, Serializable> settings;
     protected DetailMode mode = DetailMode.FALSE;
+    // for reflective adaptation
+    protected String latestMonitoring;
+    protected Map<String, ArrayList<String>> headers;
     
     /**
      * Information about an already traced pipeline.
@@ -232,6 +235,7 @@ public abstract class AbstractFileTrace implements ITrace {
     protected void print(long value) {
         if (null != out) {
             out.print(value);
+            this.latestMonitoring += value;
         }
     }
 
@@ -260,6 +264,7 @@ public abstract class AbstractFileTrace implements ITrace {
             String tmp = String.format("%.15f", value);
             tmp = tmp.replace(".", ","); // for excel
             out.print(tmp);
+            this.latestMonitoring += tmp;
         }
     }
 
@@ -271,6 +276,7 @@ public abstract class AbstractFileTrace implements ITrace {
     protected void print(String text) {
         if (null != out) {
             out.print(text);
+            this.latestMonitoring += text;
         }
     }
 
@@ -280,6 +286,7 @@ public abstract class AbstractFileTrace implements ITrace {
     protected void printSeparator() {
         if (null != out) {
             out.print("\t");
+            this.latestMonitoring += "\t";
         }
     }
     
@@ -325,6 +332,7 @@ public abstract class AbstractFileTrace implements ITrace {
      * @param text headline text
      */
     protected void printFormat(Class<?> cls, IPartType type, String text) {
+        ArrayList<String> observables = new ArrayList<>();
         IObservable[] sequence = Tracing.getObservableSequence(cls, SystemPart.getObservables(type));
         print(text);
         for (int s = 0; s < sequence.length; s++) {
@@ -332,8 +340,10 @@ public abstract class AbstractFileTrace implements ITrace {
                 printSeparator();
             }
             print(sequence[s].name());
+            observables.add(sequence[s].name());
         }
         println();
+        this.headers.put(text, observables);
     }
     
     @Override

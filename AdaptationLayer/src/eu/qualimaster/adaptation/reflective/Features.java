@@ -38,6 +38,19 @@ public class Features {
         this.aggregateMonitoring = aggregateMonitoring;
         this.adaptation = adaptation;
     }
+    
+    /**
+     * Copy constructor.
+     * @param f the features to be copied.
+     */
+    public Features(Features f){
+        this.lastMonitoring = new ArrayList<>();
+        for(double d : f.getLastMonitoring()) this.lastMonitoring.add(d);
+        this.aggregateMonitoring = new ArrayList<>();
+        for(double d : f.getAggregateMonitoring()) this.aggregateMonitoring.add(d);
+        this.adaptation = new ArrayList<>();
+        for(double d : f.getAdaptation()) this.adaptation.add(d);
+    }
 
     /**
      * @return the lastMonitoring

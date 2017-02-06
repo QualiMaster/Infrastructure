@@ -3,7 +3,9 @@ package eu.qualimaster.monitoring.tracing;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import eu.qualimaster.monitoring.parts.PartType;
@@ -97,6 +99,7 @@ public class ReflectiveFileTrace extends AbstractFileTrace {
         
         if (!isInitialized() && null == pipelines) {
             pipelines = new ArrayList<PipelineTraceInfo>(); 
+            super.headers = new HashMap<String, ArrayList<String>>();
             
             printFormat(PlatformSystemPart.class, PartType.PLATFORM, "platform format:\t");
             printFormat(PipelineSystemPart.class, PartType.PIPELINE, "pipeline format:\t");
@@ -104,6 +107,8 @@ public class ReflectiveFileTrace extends AbstractFileTrace {
             println();
             initialized = true;
         }
+        
+        super.latestMonitoring = "";
         
         print(copy.getTimestamp());
         printSeparator();
@@ -123,5 +128,13 @@ public class ReflectiveFileTrace extends AbstractFileTrace {
             }
         }
         println();
+    }
+    
+    public String getLatestMonitoring(){
+        return super.latestMonitoring;
+    }
+    
+    public Map<String, ArrayList<String>> getHeaders(){
+        return super.headers;
     }
 }

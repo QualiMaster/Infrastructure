@@ -35,6 +35,16 @@ public class Pattern {
         this.features = features;
         this.label = label;
     }
+    
+    /**
+     * Copy constructor.
+     * @param p the pattern to be copied.
+     */
+    public Pattern (Pattern p){
+        this.id = p.getId();
+        this.features = new Features(p.getFeatures());
+        this.label = p.getLabel();
+    }
 
     /**
      * @return the features

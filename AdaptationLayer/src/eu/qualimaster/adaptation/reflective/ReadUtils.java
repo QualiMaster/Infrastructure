@@ -35,9 +35,9 @@ public class ReadUtils {
             new HashMap<String, HashSet<String>>() {{
                 put("platform", new HashSet<String>(Arrays.asList("AVAILABLE_DFES", "BANDWIDTH", "USED_DFES")));
                 put("pipeline", new HashSet<String>(Arrays.asList("ACCURACY_CONFIDENCE", "ACCURACY_ERROR_RATE", 
-                        "IS_ENACTING", "IS_VALID", "VARIETY", "VELOCITY", "VOLATILITY", "VOLUME")));
+                        "IS_ENACTING", "IS_VALID", "USED_CPUS", "USED_DFES", "VARIETY", "VELOCITY", "VOLATILITY", "VOLUME")));
                 put("pipeline node", new HashSet<String>(Arrays.asList("ACCURACY_CONFIDENCE", "BELIEVABILITY", 
-                        "COMPLETENESS", "IS_ENACTING", "IS_VALID", "RELEVANCY", "USED_MEMORY", "VARIETY", 
+                        "COMPLETENESS", "IS_ENACTING", "IS_VALID", "USED_CPUS", "USED_DFES", "RELEVANCY", "USED_MEMORY", "VARIETY", 
                         "VELOCITY", "VOLATILITY", "VOLUME")));
             }});
     
@@ -66,6 +66,30 @@ public class ReadUtils {
      */
     public ReadUtils() {
         this(DEFAULT_NUMBER_FORMAT, DEFAULT_MEASURES_TO_IGNORE);
+    }
+    
+    /**
+     * Constructor
+     * 
+     * @param numberFormat the format used to read numbers
+     * @param measuresToIgnore the sets of measures to ignore (one set for each component)
+     * @param headers the headers indicating the observable for each component
+     */
+    public ReadUtils(NumberFormat numberFormat, Map<String, HashSet<String>> measuresToIgnore, Map<String, ArrayList<String>> headers) {
+        this.counter = 0;
+        this.numberFormat = numberFormat;
+        this.originalHeader = readHeader(headers);
+        this.filteredHeader = readFilteredHeader(headers);
+        this.measuresToIgnore = measuresToIgnore;
+    }
+    
+    /**
+     * Constructor
+     * 
+     * @param headers the headers indicating the observable for each component
+     */
+    public ReadUtils(Map<String, ArrayList<String>> headers) {
+        this(DEFAULT_NUMBER_FORMAT, DEFAULT_MEASURES_TO_IGNORE, headers);
     }
     
     /**
@@ -203,6 +227,19 @@ public class ReadUtils {
         return header;
     }
     
+    private HashMap<String, ArrayList<String>> readHeader(Map<String, ArrayList<String>> headerLines){
+        HashMap<String, ArrayList<String>> header = new HashMap<>();
+        
+        for(String headerName : headerLines.keySet()){
+            String[] fields = headerName.split("format:");
+            String componentName = fields[0].trim();
+            
+            header.put(componentName, headerLines.get(headerName));
+        }
+        
+        return header;
+    }
+    
     private HashMap<String, ArrayList<String>> readFilteredHeader(ArrayList<String> headerLines){
         HashMap<String, ArrayList<String>> header = new HashMap<>();
         
@@ -215,6 +252,25 @@ public class ReadUtils {
             ArrayList<String> valueNames = new ArrayList<>();
             for(int i = 1; i < valueNamesFields.length; i++){
                 if(!toIgnore.contains(valueNamesFields[i])) valueNames.add(valueNamesFields[i]);
+            }
+            
+            header.put(componentName, valueNames);
+        }
+        
+        return header;
+    }
+    
+    private HashMap<String, ArrayList<String>> readFilteredHeader(Map<String, ArrayList<String>> headerLines){
+        HashMap<String, ArrayList<String>> header = new HashMap<>();
+        
+        for(String headerName : headerLines.keySet()){
+            String[] fields = headerName.split("format:");
+            String componentName = fields[0].trim();
+            
+            HashSet<String> toIgnore = this.measuresToIgnore.get(componentName);
+            ArrayList<String> valueNames = new ArrayList<>();
+            for(int i = 1; i < headerLines.get(headerName).size(); i++){
+                if(!toIgnore.contains(headerLines.get(headerName).get(i))) valueNames.add(headerLines.get(headerName).get(i));
             }
             
             header.put(componentName, valueNames);
