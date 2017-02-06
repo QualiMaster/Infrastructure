@@ -61,7 +61,6 @@ import eu.qualimaster.observables.TimeBehavior;
  */
 public class Monitor extends AbstractMonitor implements IMonitoringChangeListener, ITaskHook {
     
-    private static final IMemoryDataGatherer MEMGATHERER = GathererFactory.getMemoryDataGatherer();
     private String namespace;
     private String name;
     private IncrementalAverage executionTime;
@@ -72,7 +71,7 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     private AtomicLong itemsVolume = new AtomicLong(-1);
     private boolean includeItems;
     private TimerEventHandler timerHandler;
-    private boolean collectVolume = Configuration.enableVolumeMonitoring();
+    private IMemoryDataGatherer memGatherer;
     private boolean initialized = false;
     private int taskId;
     private Map<IObservable, Double> recordOnce;
@@ -98,6 +97,20 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
         this.key = new ComponentKey(context.getThisWorkerPort(), taskId);
         this.key.setThreadId(Thread.currentThread().getId());
         this.includeItems = includeItems;
+        setMemGatherer(Configuration.enableVolumeMonitoring());
+    }
+
+    /**
+     * Sets the memory data gatherer.
+     * 
+     * @param enable enables the data gatherer or not
+     */
+    private void setMemGatherer(boolean enable) {
+        if (enable) {
+            memGatherer = GathererFactory.getMemoryDataGatherer();
+        } else {
+            memGatherer = null;
+        }
     }
     
     /**
@@ -242,7 +255,7 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
                 data.put(TimeBehavior.LATENCY, executionTime.getAverage());
                 data.put(TimeBehavior.THROUGHPUT_ITEMS, Double.valueOf(itemsSend.get()));
                 long itemsTmp = itemsVolume.get();
-                if (collectVolume && itemsTmp > 0) {
+                if (null != memGatherer && itemsTmp > 0) {
                     data.put(TimeBehavior.THROUGHPUT_VOLUME, Double.valueOf(itemsTmp));
                 }
                 EventManager.send(new PipelineElementMultiObservationMonitoringEvent(namespace, name, key, data));
@@ -313,7 +326,7 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
         }
         Boolean b = signal.getEnabled(TimeBehavior.THROUGHPUT_VOLUME);
         if (null != b) {
-            collectVolume = b;
+            setMemGatherer(b);
         }
     }
     
@@ -334,8 +347,8 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
             String stream = info.stream;
             if (null != stream && !isInternalStream(stream)) { // ignore the internal streams
                 itemsSend.addAndGet(info.values.size());
-                if (collectVolume) {
-                    itemsVolume.addAndGet(MEMGATHERER.getObjectSize(info.values));
+                if (null != memGatherer) {
+                    itemsVolume.addAndGet(memGatherer.getObjectSize(info.values));
                 }
                 MonitoringPluginRegistry.emitted(info);
             }
@@ -376,8 +389,8 @@ public class Monitor extends AbstractMonitor implements IMonitoringChangeListene
     public void emitted(Object tuple) {
         if (null != tuple) {
             itemsSend.incrementAndGet();
-            if (collectVolume) {
-                itemsVolume.addAndGet(MEMGATHERER.getObjectSize(tuple));
+            if (null != memGatherer) {
+                itemsVolume.addAndGet(memGatherer.getObjectSize(tuple));
             }
             MonitoringPluginRegistry.emitted(tuple);
         }

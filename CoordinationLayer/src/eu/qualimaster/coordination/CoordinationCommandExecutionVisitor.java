@@ -613,7 +613,9 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
                 }
                 forceSend = true;
             } // no changes given, no failure
-        } // ignore for testing, no failure
+        } else { // ignore for testing, no failure
+            forceSend = true; 
+        }
         if (null != errorMsg) {
             failing = new CoordinationExecutionResult(command, errorMsg,
                 CoordinationExecutionCode.CHANGING_PARALLELISM);
