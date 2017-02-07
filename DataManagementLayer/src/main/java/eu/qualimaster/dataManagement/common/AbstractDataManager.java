@@ -127,10 +127,10 @@ public abstract class AbstractDataManager <E extends IDataElement> {
         S result = null;
 
         // 2017-02-07 Tuan: Debug the creation of data source
-        System.out.println("Factories: ");
+        LOGGER.info("Factories: ");
         Iterator<IDataElementFactory<E>> iter = factories.iterator();
         while (iter.hasNext()) {
-            System.out.println("DEF: " + iter.next().getClass().getName());
+            LOGGER.info("DEF: " + iter.next().getClass().getName());
         }
         if (null != cls) {
             for (int c = 0; null == result && c < factories.size(); c++) {
