@@ -6,6 +6,7 @@ import java.util.List;
 
 import eu.qualimaster.dataManagement.DataManagementConfiguration;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -13,6 +14,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.regionserver.BloomType;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,11 +50,8 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 		log.info("Replay: constructing HBaseBatchStorageSupport");
 		// Configuration config = HBaseConfiguration.create();
 		config = HBaseConfiguration.create();
-		config.set("fs.hdfs.impl",
-				org.apache.hadoop.hdfs.DistributedFileSystem.class.getName()
-		);
-		config.set("fs.file.impl",
-				org.apache.hadoop.fs.LocalFileSystem.class.getName()
+		config.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
+		config.set("fs.file.impl", LocalFileSystem.class.getName()
 		);
 		config.set("zookeeper.znode.parent", DataManagementConfiguration.getHbaseZnodeParent());
 		config.set("hbase.zookeeper.quorum", DataManagementConfiguration.getHbaseZkeeperQuorum());
