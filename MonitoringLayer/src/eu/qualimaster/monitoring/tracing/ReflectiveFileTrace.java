@@ -130,11 +130,22 @@ public class ReflectiveFileTrace extends AbstractFileTrace {
         println();
     }
     
-    public String getLatestMonitoring(){
+    /**
+     * Returns the latest monitoring.
+     * 
+     * @return the latest monitoring
+     */
+    public String getLatestMonitoring() {
         return super.latestMonitoring;
     }
     
-    public Map<String, ArrayList<String>> getHeaders(){
+    /**
+     * Returns the headers.
+     * 
+     * @return the headers
+     */
+    public Map<String, ArrayList<String>> getHeaders() {
         return super.headers;
     }
+    
 }
