@@ -1,11 +1,7 @@
 package eu.qualimaster.dataManagement.common;
 
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -129,6 +125,13 @@ public abstract class AbstractDataManager <E extends IDataElement> {
      */
     protected <S extends E> S create(String unit, Class<S> cls, IStorageStrategyDescriptor strategy) {
         S result = null;
+
+        // 2017-02-07 Tuan: Debug the creation of data source
+        System.out.println("Factories: ");
+        Iterator<IDataElementFactory<E>> iter = factories.iterator();
+        while (iter.hasNext()) {
+            System.out.println("DEF: " + iter.next().getClass().getName());
+        }
         if (null != cls) {
             for (int c = 0; null == result && c < factories.size(); c++) {
                 result = factories.get(c).create(cls);
