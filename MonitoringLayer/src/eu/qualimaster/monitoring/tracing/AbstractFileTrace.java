@@ -328,7 +328,7 @@ public abstract class AbstractFileTrace implements ITrace {
      * Prints a format line.
      * 
      * @param cls the class
-     * @param type the correspoinding part type
+     * @param type the corresponding part type
      * @param text headline text
      */
     protected void printFormat(Class<?> cls, IPartType type, String text) {
@@ -343,7 +343,9 @@ public abstract class AbstractFileTrace implements ITrace {
             observables.add(sequence[s].name());
         }
         println();
-        this.headers.put(text, observables);
+        if (null != headers) {
+            headers.put(text, observables);
+        }
     }
     
     @Override
