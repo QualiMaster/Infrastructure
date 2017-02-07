@@ -61,7 +61,7 @@ public class ObservationTests {
         base.setValue(500, null); // 500 over 1 s -> 500
 
         double v2 = obs.getValue();
-        Assert.assertEquals(500, v2, 5); // time diffs
+        Assert.assertEquals(500, v2, 25); // time diffs
         base.setValue(1000, null); // reset to 1000 over 1 s -> 1000
         sleep(1000);
         long diff = System.currentTimeMillis() - start;

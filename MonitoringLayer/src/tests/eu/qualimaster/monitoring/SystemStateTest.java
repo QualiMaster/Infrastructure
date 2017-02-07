@@ -25,12 +25,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import eu.qualimaster.common.signal.ConnectTaskMonitoringEvent;
 import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.IdentityMapping;
 import eu.qualimaster.monitoring.MonitoringConfiguration;
 import eu.qualimaster.monitoring.events.ComponentKey;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
+import eu.qualimaster.monitoring.handlers.ConnectTaskMonitoringEventHandler;
 import eu.qualimaster.monitoring.parts.PartType;
 import eu.qualimaster.monitoring.systemState.AlgorithmParameter;
 import eu.qualimaster.monitoring.systemState.NodeImplementationSystemPart;
@@ -435,6 +437,44 @@ public class SystemStateTest {
         node.setValue(TimeBehavior.THROUGHPUT_ITEMS, 1000, null);
         Thread.sleep(3000);
         Assert.assertEquals(1000 / 3, node.getObservedValue(Scalability.ITEMS), 5);
+    }
+    
+    /**
+     * Tests a re-connect and the cleanup of existing component keys.
+     */
+    @Test
+    public void reconnectTest() {
+        final String algName = "myAlg";
+        final String algNodeName = "myAlgNode";
+        NodeImplementationSystemPart alg = pip.getAlgorithm(algName);
+        PipelineNodeSystemPart algNode = alg.obtainPipelineNode(algNodeName);
+
+        ComponentKey key = new ComponentKey("MyHost", 1202, 1);
+        key.setThreadId(20);
+        node.setValue(ResourceUsage.EXECUTORS, 1, key);
+        node.setValue(ResourceUsage.TASKS, 1, key);
+        key = new ComponentKey("MyHost", 1205, 1);
+        key.setThreadId(25);
+        algNode.setValue(ResourceUsage.EXECUTORS, 1, key);
+        algNode.setValue(ResourceUsage.TASKS, 1, key);
+        assertEquals(1, node, ResourceUsage.EXECUTORS);
+        assertEquals(1, node, ResourceUsage.TASKS);
+        assertEquals(1, algNode, ResourceUsage.EXECUTORS);
+        assertEquals(1, algNode, ResourceUsage.TASKS);
+
+        key = new ComponentKey("MyHost", 1203, 1);
+        key.setThreadId(21);
+        ConnectTaskMonitoringEvent event = new ConnectTaskMonitoringEvent(PIPELINE_NAME, PROCESSOR_NODE_NAME, key);
+        ConnectTaskMonitoringEventHandler.INSTANCE.doHandle(event, state);
+
+        node.setValue(ResourceUsage.EXECUTORS, 1, key);
+        node.setValue(ResourceUsage.TASKS, 1, key);
+        assertEquals(1, node, ResourceUsage.EXECUTORS);
+        assertEquals(1, node, ResourceUsage.TASKS);
+        assertEquals(1, algNode, ResourceUsage.EXECUTORS);
+        assertEquals(1, algNode, ResourceUsage.TASKS);
+        
+        state.clear();
     }
 
 }

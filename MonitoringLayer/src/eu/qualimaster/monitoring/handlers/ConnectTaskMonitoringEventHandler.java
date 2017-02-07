@@ -70,7 +70,7 @@ public class ConnectTaskMonitoringEventHandler extends MonitoringEventHandler<Co
                 for (Object k : keys) {
                     if (k instanceof ComponentKey) {
                         ComponentKey knownKey = (ComponentKey) k;
-                        if (ComponentKey.tasksSame(knownKey, eventKey)) {
+                        if (knownKey.getTaskId() == eventKey.getTaskId() && !knownKey.equals(eventKey)) {
                             found = knownKey;
                             break;
                         }
@@ -91,7 +91,7 @@ public class ConnectTaskMonitoringEventHandler extends MonitoringEventHandler<Co
      * @param target the target system part to aggregate for
      */
     private void handleRestartedWorker(ComponentKey found, ConnectTaskMonitoringEvent event, SystemPart target) {
-        getLogger().info("Detected worker restart for " + found + " -> " + event.getKey());
+        getLogger().info("Detected worker restart/migration for " + found + " -> " + event.getKey());
         target.replaceComponentKeys(found, event.getKey());
         if (target instanceof PipelineNodeSystemPart) {
             PipelineNodeSystemPart node = (PipelineNodeSystemPart) target;

@@ -269,6 +269,17 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
         }            
     }
     
+    @Override
+    public void replaceComponentKeys(Object oldKey, Object newKey) {
+        super.replaceComponentKeys(oldKey, newKey);
+        if (null != current) {
+            current.replaceComponentKeys(oldKey, newKey);
+        }
+        if (null != parent) {
+            parent.replaceComponentKeys(oldKey, newKey);
+        }
+    }
+    
     /**
      * Sets the value of the given <code>observable</code> by replacing the existing one.
      * 

@@ -255,4 +255,13 @@ public class NodeImplementationSystemPart extends SystemPart implements ITopolog
         }
         return result;
     }
+    
+    @Override
+    public void replaceComponentKeys(Object oldKey, Object newKey) {
+        super.replaceComponentKeys(oldKey, newKey);
+        for (PipelineNodeSystemPart node : elements.values()) {
+            node.replaceComponentKeys(oldKey, newKey);
+        }
+    }
+    
 }

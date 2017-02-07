@@ -366,9 +366,8 @@ public abstract class AbstractCompoundObservation implements IObservation {
                 AtomicDouble value = components.get(oldKey);
                 if (null != value) {
                     components.put(newKey, value);
-                } else {
-                    components.remove(oldKey);
                 }
+                components.remove(oldKey);
             }
         }
         if (null != links) {
