@@ -51,6 +51,8 @@ public class ReflectiveAdaptationRequest extends AbstractReturnableEvent {
     }
 
     /**
+     * Returns the setup.
+     * 
      * @return the setup
      */
     public Setup getSetup() {
@@ -58,6 +60,8 @@ public class ReflectiveAdaptationRequest extends AbstractReturnableEvent {
     }
 
     /**
+     * Returns the headers.
+     * 
      * @return the headers
      */
     public Map<String, ArrayList<String>> getHeaders() {
@@ -65,6 +69,8 @@ public class ReflectiveAdaptationRequest extends AbstractReturnableEvent {
     }
 
     /**
+     * Returns the latest monitoring.
+     * 
      * @return the latestMonitoring
      */
     public String getLatestMonitoring() {

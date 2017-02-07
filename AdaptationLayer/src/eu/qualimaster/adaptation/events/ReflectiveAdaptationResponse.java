@@ -41,6 +41,8 @@ public class ReflectiveAdaptationResponse extends AbstractResponseEvent<Reflecti
     }
 
     /**
+     * Returns the prediction.
+     * 
      * @return the prediction
      */
     public double getPrediction() {

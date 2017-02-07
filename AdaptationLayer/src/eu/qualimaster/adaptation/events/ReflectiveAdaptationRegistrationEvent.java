@@ -54,6 +54,8 @@ public class ReflectiveAdaptationRegistrationEvent extends AdaptationEvent {
     }
 
     /**
+     * Returns the setups path.
+     * 
      * @return the setupsPath
      */
     public String getSetupsPath() {
@@ -61,6 +63,8 @@ public class ReflectiveAdaptationRegistrationEvent extends AdaptationEvent {
     }
 
     /**
+     * Returns the keep-avail models.
+     * 
      * @return the keepAvailableModels
      */
     public boolean isKeepAvailableModels() {
