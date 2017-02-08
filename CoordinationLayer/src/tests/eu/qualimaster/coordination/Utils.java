@@ -10,6 +10,7 @@ import java.util.Set;
 
 import eu.qualimaster.coordination.ArtifactRegistry;
 import eu.qualimaster.coordination.CoordinationConfiguration;
+import eu.qualimaster.coordination.RepositoryConnector;
 import tests.eu.qualimaster.TestHelper;
 
 /**
@@ -149,6 +150,7 @@ public class Utils {
             modelProvider.provideModel(prop);
         }
         CoordinationConfiguration.configure(prop);
+        RepositoryConnector.clearModels(true);
     }
     
     /**
