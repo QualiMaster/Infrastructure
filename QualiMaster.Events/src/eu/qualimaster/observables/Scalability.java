@@ -14,7 +14,8 @@ public enum Scalability implements IObservable {
     VOLATILITY,
     VARIETY,
     ITEMS,
-    PREDECESSOR_ITEMS;
+    PREDECESSOR_ITEMS,
+    PREDICTED_ITEMS_THRESHOLD;
 
     @QMInternal
     @Override
