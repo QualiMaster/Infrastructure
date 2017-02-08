@@ -39,7 +39,7 @@ public class VolumePredictionManager {
     /**
      * Indicates whether the prediction is running in "test" mode or not.
      */
-    private static boolean test = false;
+    private static boolean test = true;
 
     private static Map<String, Map<String, Double>> testBlindPredictions;
 
@@ -335,6 +335,11 @@ public class VolumePredictionManager {
 
         // use the right predictor (based on the source) to handle the
         // prediction for the incoming terms
+        
+        System.out.println("Received monitoring for prediction:");
+        for(String key : event.getObservations().keySet())
+            System.out.println("key = " + key + ", value = " + event.getObservations().get(key));
+        
         status = "monitoring";
         VolumePredictor predictor = volumePredictors.get(event
                 .getPipelineElement());
@@ -489,6 +494,8 @@ public class VolumePredictionManager {
                 System.out.print(s + ", ");
             System.out.println();
         }
-        else System.out.println("HISTORICAL DATA PROVIDER = null");  
+        else System.out.println("HISTORICAL DATA PROVIDER = null");
+        
+        System.out.println("MAIN FOLDER = " + MonitoringConfiguration.getVolumeModelLocation());
     }
 }
