@@ -74,6 +74,7 @@ public class ReasoningTaskTests {
      */
     @After
     public void tearDown() {
+        MonitoringManager.getSystemState().clear();
         CoordinationManager.stop();
         EventManager.stop();
         Utils.dispose();
