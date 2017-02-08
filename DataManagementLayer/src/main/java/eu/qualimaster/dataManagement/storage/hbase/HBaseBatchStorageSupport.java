@@ -62,7 +62,7 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 		// All tables in the replay store have only one column family, with
 		// column qualifiers
 		// being the field keys pushed by the replay recorder at run time
-		createIfNotExist();
+		// createIfNotExist();
 	}
 
 	public void setBatchSize(int size) {

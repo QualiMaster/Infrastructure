@@ -172,7 +172,9 @@ public class Prediction {
             // forecaster.getTSLagMaker().setAddQuarterOfYear(true);
 
             // build the model
+            System.out.println("Training forecaster");
             forecaster.buildForecaster(instances, System.out);
+            System.out.println("Training done.");
 
             return forecaster;
         } catch (Exception e) {
