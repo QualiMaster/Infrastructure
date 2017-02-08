@@ -33,6 +33,7 @@ import eu.qualimaster.observables.ResourceUsage;
  */
 class HostsObservation implements IObservation {
 
+    @SuppressWarnings("serial")
     static final IObservationCreator CREATOR = new IObservationCreator() {
         
         @Override

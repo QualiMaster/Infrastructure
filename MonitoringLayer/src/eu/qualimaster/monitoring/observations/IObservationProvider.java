@@ -303,4 +303,10 @@ public interface IObservationProvider {
      */
     public AtomicDouble getValue(IObservable observable, Object key);
     
+    /**
+     * Returns the parent observation provider if there is one.
+     * 
+     * @return the parent observation provider
+     */
+    public IObservationProvider getParent();
 }

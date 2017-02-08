@@ -13,6 +13,7 @@ project QM {
         setOf(Constraint) constraints;
         assign (bindingTime = BindingTime.runtime) to {
           Boolean isValid = true;
+          Real predictedItemsThreshold;
         }
     }
     
@@ -127,7 +128,8 @@ project QM {
     FamilyElement famElt1 = {
         name = "process",
         family = refBy(fam1), 
-        output = {refBy(snk)}
+        output = {refBy(snk)},
+        predictedItemsThreshold = 500 // default value
     };
     
     Source src = {

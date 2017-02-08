@@ -1,5 +1,6 @@
 package eu.qualimaster.monitoring.observations;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,7 +59,7 @@ public class ObservationFactory {
      * 
      * @author Holger Eichelberger
      */
-    public interface IObservationCreator {
+    public interface IObservationCreator extends Serializable {
 
         /**
          * Creates an observation for the given observable and type.
@@ -79,6 +80,7 @@ public class ObservationFactory {
      * 
      * @author Holger Eichelberger
      */
+    @SuppressWarnings("serial")
     private static class SingleObservationCreator implements IObservationCreator {
 
         private Double init;
@@ -111,6 +113,7 @@ public class ObservationFactory {
     /**
      * Creates a single value statistics observation.
      */
+    @SuppressWarnings("serial")
     public static final IObservationCreator CREATOR_SINGLE_STATISTICS = new IObservationCreator() {
         
         @Override
@@ -122,6 +125,7 @@ public class ObservationFactory {
     /**
      * Creates a summarizing compound observation.
      */
+    @SuppressWarnings("serial")
     public static final IObservationCreator CREATOR_SUM_COMPOUND = new IObservationCreator() {
         
         @Override
@@ -134,6 +138,7 @@ public class ObservationFactory {
      * Creates a compound observation with aggregation for the given observable via 
      * {@link ObservationAggregatorFactory}.
      */
+    @SuppressWarnings("serial")
     public static final IObservationCreator CREATOR_COMPOUND = new IObservationCreator() {
         
         @Override
@@ -146,6 +151,7 @@ public class ObservationFactory {
      * Creates a topology compound observation matching the given observable via {@link ObservationAggregatorFactory}
      * and the topology provider of the given observation provider.
      */
+    @SuppressWarnings("serial")
     public static final IObservationCreator CREATOR_TOPOLOGY_COMPOUND = new IObservationCreator() {
       
         @Override
@@ -159,6 +165,7 @@ public class ObservationFactory {
      * Creates a compound observation with 1 second statistics and absolute aggregation matching the given observable 
      * via {@link ObservationAggregatorFactory}.
      */
+    @SuppressWarnings("serial")
     public static final IObservationCreator CREATOR_COMPOUND_STATISTICS_1S_ABS = new IObservationCreator() {
 
         @Override
@@ -172,6 +179,7 @@ public class ObservationFactory {
      * Creates a compound observation with 1 second statistics and absolute aggregation matching the given observable 
      * via {@link ObservationAggregatorFactory}.
      */
+    @SuppressWarnings("serial")
     public static final IObservationCreator CREATOR_COMPOUND_TOPOLOGY_SINK_SUM_STATISTICS_1S 
         = new IObservationCreator() {
 
@@ -203,6 +211,7 @@ public class ObservationFactory {
      * 
      * @author Holger Eichelberger
      */
+    @SuppressWarnings("serial")
     public static class TimeFramedReferencingObservationCreator implements IObservationCreator {
 
         private int timeFrame;
@@ -240,6 +249,19 @@ public class ObservationFactory {
     public static final IObservationCreator ITEMS_1S 
         = new TimeFramedReferencingObservationCreator(TimeBehavior.THROUGHPUT_ITEMS, 1000, false);
     
+    @SuppressWarnings("serial")
+    public static final IObservationCreator PREDICTED_ITEMS = new IObservationCreator() {
+
+        @Override
+        public IObservation create(IObservable observable, IPartType type, IObservationProvider observationProvider) {
+            return new FallbackObservation(CREATOR_SINGLE, 
+                new ConfigurationConstantObservation(observationProvider, observable, 0), observable, type, 
+                    observationProvider);
+        }
+        
+    };
+    
+    @SuppressWarnings("serial")
     public static final IObservationCreator CREATOR_NULL = new IObservationCreator() {
 
         @Override
@@ -249,6 +271,7 @@ public class ObservationFactory {
         
     };
 
+    @SuppressWarnings("serial")
     public static final IObservationCreator PREDECESSOR_ITEMS_1S = new IObservationCreator() {
         
         @Override
@@ -262,6 +285,7 @@ public class ObservationFactory {
     /**
      * Creates a sum-based topology aggregator for sinks only based on compound observations.
      */
+    @SuppressWarnings("serial")
     public static final IObservationCreator CREATOR_COMPOUND_TOPOLOGY_SINK_SUM = new IObservationCreator() {
         
         @Override
@@ -494,10 +518,9 @@ public class ObservationFactory {
         registerCreator(Scalability.VELOCITY, null, CREATOR_COMPOUND_STATISTICS_1S_ABS);
         registerCreator(Scalability.VOLATILITY, null, CREATOR_COMPOUND_STATISTICS_1S_ABS);
         registerCreator(Scalability.VOLUME, null, CREATOR_COMPOUND_STATISTICS_1S_ABS);
-        // CREATOR_COMPOUND_STATISTICS_1S_ABS ; CREATOR_TOPOLOGY_SINK_SUM_STATISTICS_1S
         registerCreator(Scalability.ITEMS, null, ITEMS_1S); 
         registerCreator(Scalability.PREDECESSOR_ITEMS, null, PREDECESSOR_ITEMS_1S);
-        //registerCreator(Scalability.ITEMS, PartType.PIPELINE, CREATOR_COMPOUND_TOPOLOGY_SINK_SUM_STATISTICS_1S);
+        registerCreator(Scalability.PREDICTED_ITEMS_THRESHOLD, null, PREDICTED_ITEMS);
         
         registerCreator(CloudResourceUsage.BANDWIDTH, null, CREATOR_SINGLE);
         registerCreator(CloudResourceUsage.PING, null, CREATOR_SINGLE);
@@ -523,7 +546,7 @@ public class ObservationFactory {
             FunctionalSuitability.ACCURACY_CONFIDENCE, FunctionalSuitability.COMPLETENESS,
                 FunctionalSuitability.BELIEVABILITY, FunctionalSuitability.RELEVANCY,
             Scalability.VOLUME, Scalability.VELOCITY, Scalability.VOLATILITY, Scalability.VARIETY, Scalability.ITEMS, 
-                Scalability.PREDECESSOR_ITEMS,
+                Scalability.PREDECESSOR_ITEMS, Scalability.PREDICTED_ITEMS_THRESHOLD,
             AnalysisObservables.IS_VALID, AnalysisObservables.IS_ENACTING);
         registerPart(PartType.ALGORITHM, 
             TimeBehavior.LATENCY, TimeBehavior.THROUGHPUT_ITEMS, 

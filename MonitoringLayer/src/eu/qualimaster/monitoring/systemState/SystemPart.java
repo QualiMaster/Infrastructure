@@ -77,12 +77,7 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
         this.type = type;
         this.name = name;
         this.componentType = componentType;
-        synchronized (parameterValues) {
-            addObservables(ObservationFactory.getObservations(type));
-            if (null != SystemState.getConfigurer()) {
-                addObservables(SystemState.getConfigurer().additionalObservables(type));
-            }
-        }
+        initObservables();
     }
 
     /**
@@ -104,7 +99,19 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
             // don't copy the links
         }
     }
-    
+
+    /**
+     * Initializes the observables. Allows overriding/super call if needed.
+     */
+    protected void initObservables() {
+        synchronized (parameterValues) {
+            addObservables(ObservationFactory.getObservations(type));
+            if (null != SystemState.getConfigurer()) {
+                addObservables(SystemState.getConfigurer().additionalObservables(type));
+            }
+        }
+    }
+
     /**
      * Returns all observables for a type.
      * 
@@ -707,6 +714,11 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
     @Override
     public Type getComponentType() {
         return componentType;
+    }
+
+    @Override
+    public IObservationProvider getParent() {
+        return null;
     }
 
 }
