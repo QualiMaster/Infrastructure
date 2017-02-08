@@ -32,6 +32,7 @@ import eu.qualimaster.monitoring.topology.PipelineTopology.Processor;
 import eu.qualimaster.monitoring.topology.ITopologyProjection;
 import eu.qualimaster.monitoring.topology.TopologyProjection;
 import eu.qualimaster.monitoring.tracing.ITrace;
+import eu.qualimaster.observables.IObservable;
 
 /**
  * Represents an implementation of a pipeline node as a system part. An implementation may be an algorithm, a source or 
@@ -257,10 +258,10 @@ public class NodeImplementationSystemPart extends SystemPart implements ITopolog
     }
     
     @Override
-    public void replaceComponentKeys(Object oldKey, Object newKey) {
-        super.replaceComponentKeys(oldKey, newKey);
+    public void replaceComponentKeys(Object oldKey, Object newKey, IObservable... observables) {
+        super.replaceComponentKeys(oldKey, newKey, observables);
         for (PipelineNodeSystemPart node : elements.values()) {
-            node.replaceComponentKeys(oldKey, newKey);
+            node.replaceComponentKeys(oldKey, newKey, observables);
         }
     }
     

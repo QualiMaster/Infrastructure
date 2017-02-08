@@ -334,16 +334,20 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
         return result;
     }
     
-    /**
-     * Replaces a known component key on all observations.
-     * 
-     * @param oldKey the old component key
-     * @param newKey the new component key
-     */
-    public void replaceComponentKeys(Object oldKey, Object newKey) {
+    @Override
+    public void replaceComponentKeys(Object oldKey, Object newKey, IObservable... observables) {
         synchronized (parameterValues) {
-            for (IObservation obs : parameterValues.values()) {
-                obs.replaceComponentKeys(oldKey, newKey);
+            if (null == observables || 0 == observables.length) {
+                for (IObservable obs : observables) {
+                    IObservation o = parameterValues.get(obs);
+                    if (null != o) {
+                        o.replaceComponentKeys(oldKey, newKey);
+                    }
+                }
+            } else {
+                for (IObservation obs : parameterValues.values()) {
+                    obs.replaceComponentKeys(oldKey, newKey);
+                }
             }
         }
     }

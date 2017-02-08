@@ -270,13 +270,13 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
     }
     
     @Override
-    public void replaceComponentKeys(Object oldKey, Object newKey) {
-        super.replaceComponentKeys(oldKey, newKey);
+    public void replaceComponentKeys(Object oldKey, Object newKey, IObservable... observables) {
+        super.replaceComponentKeys(oldKey, newKey, observables);
         if (null != current) {
-            current.replaceComponentKeys(oldKey, newKey);
+            current.replaceComponentKeys(oldKey, newKey, observables);
         }
         if (null != parent) {
-            parent.replaceComponentKeys(oldKey, newKey);
+            parent.replaceComponentKeys(oldKey, newKey, observables);
         }
     }
     

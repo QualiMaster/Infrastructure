@@ -151,8 +151,9 @@ public interface IObservationProvider {
      * 
      * @param oldKey the old component key
      * @param newKey the new component key
+     * @param observables the observables to apply the replacement to, apply to all if not given
      */
-    public void replaceComponentKeys(Object oldKey, Object newKey);
+    public void replaceComponentKeys(Object oldKey, Object newKey, IObservable... observables);
     
     /**
      * Provides access to the topology of this observation.

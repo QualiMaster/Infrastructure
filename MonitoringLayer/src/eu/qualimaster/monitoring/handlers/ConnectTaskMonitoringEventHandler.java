@@ -92,7 +92,7 @@ public class ConnectTaskMonitoringEventHandler extends MonitoringEventHandler<Co
      */
     private void handleRestartedWorker(ComponentKey found, ConnectTaskMonitoringEvent event, SystemPart target) {
         getLogger().info("Detected worker restart/migration for " + found + " -> " + event.getKey());
-        target.replaceComponentKeys(found, event.getKey());
+        target.replaceComponentKeys(found, event.getKey(), ResourceUsage.EXECUTORS, ResourceUsage.TASKS);
         if (target instanceof PipelineNodeSystemPart) {
             PipelineNodeSystemPart node = (PipelineNodeSystemPart) target;
             NodeImplementationSystemPart alg = node.getCurrent();
