@@ -196,7 +196,7 @@ public class VolumePredictor {
      * @param filePath the path of a temporary file used to store and read data.
      */
     public void initialize(String filePath) {
-        System.out.println("TMP FILE: " + filePath);
+        System.out.println("TMP FILE FOR HISTORICAL DATA: " + filePath);
         
         // check if the historical data provider has been set
         if (this.historyProvider == null) {
@@ -211,6 +211,8 @@ public class VolumePredictor {
         HashSet<String> blindTerms = this.historyProvider
                 .getDefaultBlindTerms();
         initialize(monitoredTerms, blindTerms, filePath);
+        
+        System.out.println("Volume Prediction model for source " + this.source + "initialized.");
     }
 
     /**
