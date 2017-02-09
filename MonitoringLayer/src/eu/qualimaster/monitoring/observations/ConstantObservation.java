@@ -42,6 +42,16 @@ public class ConstantObservation implements IObservation {
     public boolean isComposite() {
         return false;
     }
+    
+    /**
+     * Changes the "constant" in case that a subclass needs to re-defined the value. Don't use the official setters
+     * for this in order to avoid official changes of the "constant".
+     * 
+     * @param value the value
+     */
+    protected void setValue(double value) {
+        this.value = value;
+    }
 
     @Override
     public void setValue(double value, Object key) {

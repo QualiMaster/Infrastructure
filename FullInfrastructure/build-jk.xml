@@ -95,6 +95,7 @@
         <copy file="${org.eclipse.equinox:preferences:jar}" todir="build/base/qm-libs"/>
     	<copy file="${org.apache.commons:commons-math3:jar}" todir="build/base/qm-libs"/>
     	<copy file="${pentaho.weka:pdm-timeseriesforecasting-ce:jar}" todir="build/base/qm-libs"/>
+        <copy file="${org.pentaho.pentaho-commons:pentaho-package-manager:jar}" todir="build/base/qm-libs"/>
     	<copy file="${nz.ac.waikato.cms.weka:weka-dev:jar}" todir="build/base/qm-libs"/>
     	<copy file="${jfree:jcommon:jar}" todir="build/base/qm-libs"/>
 

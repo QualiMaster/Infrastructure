@@ -28,6 +28,7 @@ import tests.eu.qualimaster.monitoring.profiling.ProfilingTests;
     ObservationTests.class, 
     CloudEnvironmentTests.class,
     ValueBindingTest.class,
+    ConfigurationObservationTest.class,
     ProfilingTests.class,
     ResourceUnpackingTests.class,
     TracingTest.class,

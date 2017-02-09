@@ -25,6 +25,7 @@ import java.util.Set;
 import eu.qualimaster.coordination.INameMapping.Component.Type;
 import eu.qualimaster.monitoring.events.ComponentKey;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
+import eu.qualimaster.monitoring.observations.IObservationProvider;
 import eu.qualimaster.monitoring.parts.PartType;
 import eu.qualimaster.monitoring.topology.ITopologyProvider;
 import eu.qualimaster.monitoring.topology.PipelineTopology;
@@ -65,6 +66,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
         super(PartType.PIPELINE_NODE, type, name);
         this.pipeline = pipeline;
         this.useThrift = useThrift;
+        super.initObservables();
         pipeline.registerNode(this);
     }
     
@@ -81,6 +83,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
         super(PartType.PIPELINE_NODE, type, name);
         this.parent = parent;
         this.useThrift = useThrift;
+        super.initObservables();
         if (null != parent) {
             parent.getPipeline().registerNode(this);
         }
@@ -99,6 +102,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
         this.pipeline = pipeline;
         this.useThrift = source.useThrift;
         this.internal = source.internal;
+        super.initObservables();
         pipeline.registerNode(this);
     }
     
@@ -116,9 +120,17 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
         this.parent = algorithm;
         this.useThrift = source.useThrift;
         this.internal = source.internal;
+        super.initObservables();
         algorithm.getPipeline().registerNode(this);
     }
-    
+
+    /**
+     * Initializes the observables.
+     */
+    protected void initObservables() {
+        // defer observable, call super.initObservables() in constructors
+    }
+
     /**
      * Adjusts the current node after copying.
      * 
@@ -468,5 +480,10 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
     public boolean isInternal() {
         return internal;
     }
-    
+ 
+    @Override
+    public IObservationProvider getParent() {
+        return null != parent ? parent : pipeline;
+    }
+
 }
