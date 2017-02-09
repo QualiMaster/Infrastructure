@@ -61,7 +61,6 @@ public class LoadSheddingCommand extends AbstractPipelineElementCommand {
      * 
      * @param param the parameter identifier
      * @param value the value
-     * @throws IllegalArgumentException in case that the parameter does not accept an integer (or a string as fallback)
      */
     public void setIntParameter(ILoadSheddingParameter param, int value) {
         setIntParameter(param.name(), value);
@@ -72,9 +71,30 @@ public class LoadSheddingCommand extends AbstractPipelineElementCommand {
      * 
      * @param param the parameter identifier
      * @param value the value
-     * @throws IllegalArgumentException in case that the parameter does not accept an integer (or a string as fallback)
      */
     public void setIntParameter(String param, int value) {
+        if (null != param) {
+            parameter.put(param, value);
+        }
+    }
+    
+    /**
+     * Sets an integer parameter.
+     * 
+     * @param param the parameter identifier
+     * @param value the value
+     */
+    public void setDoubleParameter(ILoadSheddingParameter param, double value) {
+        setDoubleParameter(param.name(), value);
+    }
+
+    /**
+     * Sets an double parameter.
+     * 
+     * @param param the parameter identifier
+     * @param value the value
+     */
+    public void setDoubleParameter(String param, double value) {
         if (null != param) {
             parameter.put(param, value);
         }
