@@ -51,8 +51,7 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 		// Configuration config = HBaseConfiguration.create();
 		config = HBaseConfiguration.create();
 		config.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
-		config.set("fs.file.impl", LocalFileSystem.class.getName()
-		);
+		config.set("fs.file.impl", LocalFileSystem.class.getName());
 		config.set("zookeeper.znode.parent", DataManagementConfiguration.getHbaseZnodeParent());
 		config.set("hbase.zookeeper.quorum", DataManagementConfiguration.getHbaseZkeeperQuorum());
 
@@ -126,6 +125,8 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 
 			config.set("zookeeper.znode.parent", DataManagementConfiguration.getHbaseZnodeParent());
 			config.set("hbase.zookeeper.quorum", DataManagementConfiguration.getHbaseZkeeperQuorum());
+			config.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
+			config.set("fs.file.impl", LocalFileSystem.class.getName());
 
 			conn = HConnectionManager.createConnection(config);
 			table = conn.getTable(getTableName());
