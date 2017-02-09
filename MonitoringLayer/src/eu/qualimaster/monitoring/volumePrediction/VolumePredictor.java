@@ -258,6 +258,7 @@ public class VolumePredictor {
         HashMap<String, Double> normalizedAlarms = new HashMap<>();
         HashMap<String, Double> durations = new HashMap<>();
         ArrayList<String> unknownTerms = new ArrayList<>();
+        String toPrint = "";
         for (String termId : observations.keySet()) {
             // get the name of the source term from its id
             String termName;
@@ -267,7 +268,7 @@ public class VolumePredictor {
                 termName = termId;
 
             long currVolume = (long) observations.get(termId);
-            System.out.print(currVolume + "\t");
+            toPrint += "current = " + currVolume + "\t";
             Prediction model = this.models.get(termName);
 
             // add the current observation to the recent volumes for the current
@@ -289,7 +290,7 @@ public class VolumePredictor {
 
                 // predict the volume within the next time step
                 double[] predictions = model.predict(POINTS_TO_FORECAST);
-                System.out.print((int) predictions[0] + "\t");
+                toPrint += "predicted = " + (int) predictions[0] + "\t";
 
                 // check whether the predicted volume is critical and, if so,
                 // include the term when raising the alarm
@@ -299,7 +300,8 @@ public class VolumePredictor {
                     normalizedAlarms.put(termId, alarm[0] / currVolume);
                     durations.put(termId, alarm[1]);
                 }
-                System.out.print(alarm[0] + "\t" + alarm[1] + "\t" + "|" + "\t");
+                toPrint += "alarms = " + alarm[0] + "\t" + alarm[1] + "\t" + "|" + "\t";
+                System.out.println(toPrint);
             } else {
                 if (!this.monitoredTerms.contains(termName))
                     unknownTerms.add(termName);
@@ -378,7 +380,7 @@ public class VolumePredictor {
         double threshold = stats[0] + 2 * stats[1];
         // System.out.print((int)stats[0] + "\t");
         // System.out.print((int)stats[1] + "\t");
-        System.out.print((int) threshold + "\t");
+        System.out.println("threshold = " + (int) threshold + "\t");
         if (predictions[0] > threshold) {
             Long current = recentVolumesForTerm
                     .get(recentVolumesForTerm.size() - 1);
