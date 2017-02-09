@@ -253,7 +253,9 @@ public class VolumePredictor {
      *        for each term
      */
     public void handlePredictionStep(Map<String, Integer> observations) {
+        String toPrint = "";
         String timestamp = getTimestamp();
+        toPrint += "measured timestamp = " + timestamp + "\t";
         HashMap<String, Double> alarms = new HashMap<>();
         HashMap<String, Double> normalizedAlarms = new HashMap<>();
         HashMap<String, Double> durations = new HashMap<>();
@@ -267,7 +269,7 @@ public class VolumePredictor {
                 termName = termId;
 
             long currVolume = (long) observations.get(termId);
-            System.out.print(currVolume + "\t");
+            toPrint += "current volume = " + currVolume + "\t";
             Prediction model = this.models.get(termName);
 
             // add the current observation to the recent volumes for the current
@@ -278,18 +280,21 @@ public class VolumePredictor {
                 // for test cases, derive the current date by incrementing the
                 // date of the last observation by the desired granularity
                 if (this.test) {
-                    long lastTime = (long) model.getRecentVolumes()
-                            .instance(model.getRecentVolumes().size() - 1)
-                            .value(0);
-                    timestamp = getTimestamp(lastTime + 30000);
+                    if(model.getRecentVolumes().size() > 0){
+                        long lastTime = (long) model.getRecentVolumes()
+                                .instance(model.getRecentVolumes().size() - 1)
+                                .value(0);
+                        timestamp = getTimestamp(lastTime + 30000);
+                    }
                 }
+                toPrint += "model timestamp = " + timestamp + "\t";
 
                 // update the recent values within the model
                 model.updateRecentVolumes(timestamp, currVolume);
 
                 // predict the volume within the next time step
                 double[] predictions = model.predict(POINTS_TO_FORECAST);
-                System.out.print((int) predictions[0] + "\t");
+                toPrint += "predicted volume = " + (int) predictions[0] + "\t";
 
                 // check whether the predicted volume is critical and, if so,
                 // include the term when raising the alarm
@@ -299,7 +304,8 @@ public class VolumePredictor {
                     normalizedAlarms.put(termId, alarm[0] / currVolume);
                     durations.put(termId, alarm[1]);
                 }
-                System.out.print(alarm[0] + "\t" + alarm[1] + "\t" + "|" + "\t");
+                toPrint += "alarms = " + alarm[0] + "\t" + alarm[1] + "\t" + "|" + "\t";
+                System.out.println(toPrint);
             } else {
                 if (!this.monitoredTerms.contains(termName))
                     unknownTerms.add(termName);
@@ -378,7 +384,7 @@ public class VolumePredictor {
         double threshold = stats[0] + 2 * stats[1];
         // System.out.print((int)stats[0] + "\t");
         // System.out.print((int)stats[1] + "\t");
-        System.out.print((int) threshold + "\t");
+        System.out.println("threshold = " + (int) threshold + "\t");
         if (predictions[0] > threshold) {
             Long current = recentVolumesForTerm
                     .get(recentVolumesForTerm.size() - 1);
