@@ -134,11 +134,12 @@ public class Source<S extends ISrc> extends BaseSignalSourceSpout {
     @Override
     public void configure(SourceMonitor monitor) {
         monitor.setAggregationInterval(1000);
-        monitor.registerAggregationKeyProvider(new AggregationKeyProvider<Integer>(Integer.class) {
+        // go for direct superclass for testing
+        monitor.registerAggregationKeyProvider(new AggregationKeyProvider<Number>(Number.class) {
 
             @Override
-            public String getAggregationKey(Integer tuple) {
-                return String.valueOf(tuple % 5); // % 5 force some source volume aggregation
+            public String getAggregationKey(Number tuple) {
+                return String.valueOf(tuple.intValue() % 5); // % 5 force some source volume aggregation
             }
         });
     }
