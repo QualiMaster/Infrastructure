@@ -16,6 +16,7 @@
 package eu.qualimaster.common.signal;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -75,6 +76,13 @@ public class SourceMonitor extends Monitor {
     public void unregisterAggregationKeyProvider(AggregationKeyProvider<?> provider) {
         if (null != provider) {
             providers.remove(provider.handles());
+            // clean up lazy inits
+            Iterator<Map.Entry<Class<?>, AggregationKeyProvider<?>>> iter = providers.entrySet().iterator();
+            while (iter.hasNext()) {
+                if (iter.next().getValue() == provider) {
+                    iter.remove();
+                }
+            }
         }
     }
     
@@ -110,11 +118,40 @@ public class SourceMonitor extends Monitor {
      */
     private void aggregate(Object tuple) {
         if (null != tuple) {
-            AggregationKeyProvider<?> provider = providers.get(tuple.getClass());
+            AggregationKeyProvider<?> provider = getAggregationKeyProvider(tuple.getClass());
             if (null != provider) {
                 aggregateKey(provider.getKey(tuple));
             }
         }
+    }
+    
+    /**
+     * Returns the aggregation key provider for <code>cls</code> and also considers direct super-interfaces and the
+     * direct superclass if not found. If found on super types, register the new mapping lazily.
+     * 
+     * @param cls the class to return the provider for
+     * @return the aggregation provider, <b>null</b> if there is none
+     */
+    private AggregationKeyProvider<?> getAggregationKeyProvider(Class<?> cls) {
+        AggregationKeyProvider<?> result = providers.get(cls);
+        if (null == result) {
+            Class<?>[] ifaces = cls.getInterfaces();
+            if (null != ifaces) {
+                for (int i = 0; null == result && i < ifaces.length; i++) {
+                    result = providers.get(ifaces[i]);
+                }
+            }
+            if (null == result) {
+                Class<?> su = cls.getSuperclass();
+                if (null != su) {
+                    result = providers.get(su);
+                }
+            }
+            if (null != result) { // lazy registration for speedup
+                providers.put(cls, result);
+            }
+        }
+        return result;
     }
     
     /**
