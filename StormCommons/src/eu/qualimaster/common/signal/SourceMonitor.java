@@ -127,7 +127,7 @@ public class SourceMonitor extends Monitor {
             synchronized (occurrences) {
                 Integer count = occurrences.get(key);
                 if (null == count) {
-                    occurrences.put(key, 0);
+                    occurrences.put(key, 1); // the first one has been seen
                 } else {
                     occurrences.put(key, count + 1);
                 }
