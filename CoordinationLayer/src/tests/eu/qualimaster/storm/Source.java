@@ -138,7 +138,7 @@ public class Source<S extends ISrc> extends BaseSignalSourceSpout {
 
             @Override
             public String getAggregationKey(Integer tuple) {
-                return String.valueOf(tuple);
+                return String.valueOf(tuple % 5); // % 5 force some source volume aggregation
             }
         });
     }
