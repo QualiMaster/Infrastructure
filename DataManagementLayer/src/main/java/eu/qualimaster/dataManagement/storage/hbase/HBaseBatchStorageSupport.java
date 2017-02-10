@@ -76,6 +76,9 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 
 		config.set("zookeeper.znode.parent", DataManagementConfiguration.getHbaseZnodeParent());
 		config.set("hbase.zookeeper.quorum", DataManagementConfiguration.getHbaseZkeeperQuorum());
+		log.info("parent: " + DataManagementConfiguration.getHbaseZnodeParent());
+		log.info("quorum: " + DataManagementConfiguration.getHbaseZkeeperQuorum());
+
 
 		// config.set("zookeeper.znode.parent", HBASE_NODE);
 		// config.set("hbase.zookeeper.quorum", HBASE_QUORUM);
