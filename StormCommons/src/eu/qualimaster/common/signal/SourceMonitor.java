@@ -134,7 +134,7 @@ public class SourceMonitor extends Monitor {
      */
     private AggregationKeyProvider<?> getAggregationKeyProvider(Class<?> cls) {
         AggregationKeyProvider<?> result = providers.get(cls);
-        if (null == result) {
+        if (null == result && !providers.isEmpty()) {
             Class<?>[] ifaces = cls.getInterfaces();
             if (null != ifaces) {
                 for (int i = 0; null == result && i < ifaces.length; i++) {
