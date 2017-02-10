@@ -358,6 +358,8 @@ public class VolumePredictionManager {
 
     /**
      * Called upon startup of the infrastructure.
+     * 
+     * @param scheduler a scheduler instance for regular tasks
      */
     public static void start(IScheduler scheduler) {
         EventManager.register(HISTORICAL_DATA_REGISTRATION_EVENT_HANDLER);

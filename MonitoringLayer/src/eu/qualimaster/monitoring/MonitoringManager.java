@@ -107,7 +107,9 @@ public class MonitoringManager {
         
         @Override
         public void schedule(TimerTask task, Date firstTime, long period) {
-            timer.schedule(task, firstTime, period);
+            if (null != timer) {
+                timer.schedule(task, firstTime, period);
+            }
         }
 
     };
