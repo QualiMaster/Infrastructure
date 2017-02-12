@@ -176,12 +176,12 @@ public class SourceMonitor extends Monitor {
     protected void checkSend(long now) {
         super.checkSend(now);
         if (occurrences.size() > 0 && aggregationInterval > 0 && now - lastAggregation.get() > aggregationInterval) {
-            Map<String, Integer> oldOcc = occurrences;
-            Map<String, Integer> newOcc = new HashMap<String, Integer>();
+            Map<String, Integer> occ = new HashMap<String, Integer>();
             synchronized (occurrences) {
-                occurrences = newOcc;
+                occ.putAll(occurrences);
+                occurrences.clear();
             }
-            SourceVolumeMonitoringEvent evt = new SourceVolumeMonitoringEvent(getNamespace(), getName(), oldOcc);
+            SourceVolumeMonitoringEvent evt = new SourceVolumeMonitoringEvent(getNamespace(), getName(), occ);
             EventManager.send(evt);
             lastAggregation.set(now);
         }
