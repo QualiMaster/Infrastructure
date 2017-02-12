@@ -1156,6 +1156,7 @@ public class StormUtils {
             if (completed) {
                 code = CoordinationExecutionCode.SUCCESSFUL;
                 msg = null;
+                Utils.sleep(1500); // TODO workaround, wait for all related nodes to update, currently fixed
             } else {
                 code = CoordinationExecutionCode.CHANGING_PARALLELISM;
                 msg = "timeout exceeded";
