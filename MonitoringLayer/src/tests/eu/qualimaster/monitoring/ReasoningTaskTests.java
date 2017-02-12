@@ -107,7 +107,6 @@ public class ReasoningTaskTests {
         // ----------------- force alg 1 -----------------------
         alg1.setValue(TimeBehavior.THROUGHPUT_ITEMS, 22, null);
         alg2.setValue(TimeBehavior.THROUGHPUT_ITEMS, 22, null);
-        
         AdaptationEvent event = task.reason(false);
         Assert.assertNotNull(event);
         Assert.assertTrue(event instanceof ConstraintViolationAdaptationEvent);
@@ -116,7 +115,8 @@ public class ReasoningTaskTests {
         assertAlgorithmIsValid(TRUE, frozenState, alg1);
         assertAlgorithmIsValid(FALSE, frozenState, alg2);
         Assert.assertEquals(2, cEvent.getViolatingClauseCount());
-        Assert.assertEquals(AnalysisObservables.IS_VALID, cEvent.getViolatingClause(0).getObservable());
+        Assert.assertTrue(AnalysisObservables.IS_VALID == cEvent.getViolatingClause(0).getObservable() 
+            || AnalysisObservables.IS_VALID == cEvent.getViolatingClause(1).getObservable());
         
         event = task.reason(false);
         frozenState = state.freeze();  // state visible to adaptation (also in event)
