@@ -287,8 +287,8 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
         if (null != current) {
             current.replaceComponentKeys(oldKey, newKey, observables);
         }
-        if (null != parent) {
-            parent.replaceComponentKeys(oldKey, newKey, observables);
+        if (null != pipeline) { // don't go for parent, assumption that this happens through current
+            pipeline.replaceComponentKeys(oldKey, newKey, observables);
         }
     }
     
