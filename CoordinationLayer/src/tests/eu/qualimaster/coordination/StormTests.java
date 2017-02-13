@@ -127,11 +127,12 @@ public class StormTests extends AbstractCoordinationTests {
         Map<String, TopologyTestInfo> topologies = new HashMap<String, TopologyTestInfo>();
         @SuppressWarnings("rawtypes")
         Map topoCfg = createTopologyConfiguration();
+        //topoCfg.put(Config.TOPOLOGY_WORKERS, 3);
         topologies.put(Naming.PIPELINE_NAME, new TopologyTestInfo(topology, 
             new File(Utils.getTestdataDir(), "pipeline.xml"), topoCfg));
         env.setTopologies(topologies);
         clear();
-        
+
         PipelineCommand cmd = new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.START);
         cmd.execute();
         fakeCheckedPipeline(Naming.PIPELINE_NAME);
