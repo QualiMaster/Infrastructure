@@ -253,6 +253,7 @@ public class VolumePredictor {
      *        for each term
      */
     public void handlePredictionStep(Map<String, Integer> observations) {
+        System.out.println("Handling prediction step...");
         String toPrint = "";
         String timestamp = getTimestamp();
         toPrint += "measured timestamp = " + timestamp + "\t";
@@ -261,14 +262,24 @@ public class VolumePredictor {
         HashMap<String, Double> durations = new HashMap<>();
         ArrayList<String> unknownTerms = new ArrayList<>();
         for (String termId : observations.keySet()) {
+            System.out.println("Term id = " + termId);
             // get the name of the source term from its id
             String termName;
             if (!this.idsToNamesMap.isEmpty())
                 termName = this.idsToNamesMap.get(termId);
             else
                 termName = termId;
+            
+            System.out.println("Term name = " + termName);
 
             long currVolume = (long) observations.get(termId);
+            
+            // ignore first monitoring (= 1)
+            if(currVolume == 1){
+                System.out.println("First monitoring, it will be ignored.");
+                continue;
+            }
+            
             toPrint += "current volume = " + currVolume + "\t";
             Prediction model = this.models.get(termName);
 
@@ -307,6 +318,7 @@ public class VolumePredictor {
                 toPrint += "alarms = " + alarm[0] + "\t" + alarm[1] + "\t" + "|" + "\t";
                 System.out.println(toPrint);
             } else {
+                System.out.println("No predictors available for term " + termName);
                 if (!this.monitoredTerms.contains(termName))
                     unknownTerms.add(termName);
             }
@@ -570,9 +582,12 @@ public class VolumePredictor {
                     .println("Predictor not in test mode, warm up is not allowed.");
             return;
         }
-
+        
+        System.out.println("Warming up predictor for source" + this.getSourceName());
+        
         File directory = new File(dataFolder);
         for (String term : this.monitoredTerms) {
+            System.out.println("Warming up model for term " + term);
             File file = null;
             for (File f : directory.listFiles()) {
                 if (f.getName().contains(term)) {
@@ -597,8 +612,12 @@ public class VolumePredictor {
                 // feed the recent history within the predictor (for computing
                 // the volume threshold)
                 addRecentVolume(term, data.get(timestamp));
+                
+                System.out.println("Warmed up with data: [" + timestamp + ", " + data.get(timestamp) + "]");
             }
         }
+        
+        System.out.println("Predictor warmed up" + this.getSourceName());
     }
 
     private void storeInHistoricalData(String term, String timestamp, Long value) {
@@ -689,11 +708,14 @@ public class VolumePredictor {
         
         for (String id : inputMap.keySet()) {
             String name = inputMap.get(id);
-            String[] fields = name.split("ï¿½");
+            System.out.println("Name before formatting = " + name);
+            //String[] fields = name.split("ï¿½");
+            String[] fields = name.split("-");
             if (fields.length > 1)
                 name = fields[0] + "·" + fields[1];
             else
                 name = fields[0];
+            System.out.println("Name after formatting = " + name);
             newMap.put(id, name);
         }
         return newMap;
