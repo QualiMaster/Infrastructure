@@ -288,6 +288,9 @@ public class VolumePredictionManager {
                 System.out.println();
             }
             System.out.println();
+            
+            //warmup
+            warmUp(MonitoringConfiguration.getVolumeModelLocation() + "/warmupData/");
         }
     }
 

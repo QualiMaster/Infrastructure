@@ -273,6 +273,13 @@ public class VolumePredictor {
             System.out.println("Term name = " + termName);
 
             long currVolume = (long) observations.get(termId);
+            
+            // ignore first monitoring (= 1)
+            if(currVolume == 1){
+                System.out.println("First monitoring, it will be ignored.");
+                continue;
+            }
+            
             toPrint += "current volume = " + currVolume + "\t";
             Prediction model = this.models.get(termName);
 
@@ -575,9 +582,12 @@ public class VolumePredictor {
                     .println("Predictor not in test mode, warm up is not allowed.");
             return;
         }
-
+        
+        System.out.println("Warming up predictor for source" + this.getSourceName());
+        
         File directory = new File(dataFolder);
         for (String term : this.monitoredTerms) {
+            System.out.println("Warming up model for term " + term);
             File file = null;
             for (File f : directory.listFiles()) {
                 if (f.getName().contains(term)) {
@@ -602,8 +612,12 @@ public class VolumePredictor {
                 // feed the recent history within the predictor (for computing
                 // the volume threshold)
                 addRecentVolume(term, data.get(timestamp));
+                
+                System.out.println("Warmed up with data: [" + timestamp + ", " + data.get(timestamp) + "]");
             }
         }
+        
+        System.out.println("Predictor warmed up" + this.getSourceName());
     }
 
     private void storeInHistoricalData(String term, String timestamp, Long value) {
