@@ -12,6 +12,7 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
+import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,12 +65,14 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
     private ClientEndpoint endpoint;
     @SuppressWarnings("unused")
     private String authMsgId;
+    private File profiles;
     
     /**
      * Executed before a single test.
      */
     @Before
     public void setUp() {
+        profiles = configureProfilesFolder();
         Utils.setModelProvider(Utils.INFRASTRUCTURE_TEST_MODEL_PROVIDER);
         Utils.configure();
         super.setUp();
@@ -88,6 +91,7 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
         stopEndpoint();
         super.tearDown();
         Utils.dispose();
+        FileUtils.deleteQuietly(profiles);
     }
     
     /**
@@ -315,6 +319,21 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
     }
 
     /**
+     * Configures the profiles folder (for cleanup).
+     * 
+     * @return the created temporary profiles folder
+     */
+    private static File configureProfilesFolder() {
+        File profiles = new File(FileUtils.getTempDirectory(), "profiles");
+        FileUtils.deleteQuietly(profiles);
+        profiles.mkdirs();
+        Properties prop = new Properties();
+        prop.put(AdaptationConfiguration.PROFILE_LOCATION, profiles.getAbsolutePath());
+        AdaptationConfiguration.configure(prop);
+        return profiles;
+    }
+
+    /**
      * Tests the entire stack. Please note that the test fails, if the initial enactment is not working
      * correctly, e.g., due to the Reasoner.
      * 
@@ -386,7 +405,6 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
         StormUtils.forTesting(null, null);
         EventManager.cleanup();
         env.cleanup();
-        
         asserts(dispatcher);
         //Assert.assertTrue(adaptationEventHandler.recordedConstraintViolations());
         MonitoringManager.setDemoMessageState(demo);
