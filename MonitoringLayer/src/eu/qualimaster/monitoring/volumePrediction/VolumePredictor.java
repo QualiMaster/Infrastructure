@@ -253,6 +253,7 @@ public class VolumePredictor {
      *        for each term
      */
     public void handlePredictionStep(Map<String, Integer> observations) {
+        System.out.println("Handling prediction step...");
         String toPrint = "";
         String timestamp = getTimestamp();
         toPrint += "measured timestamp = " + timestamp + "\t";
@@ -261,12 +262,15 @@ public class VolumePredictor {
         HashMap<String, Double> durations = new HashMap<>();
         ArrayList<String> unknownTerms = new ArrayList<>();
         for (String termId : observations.keySet()) {
+            System.out.println("Term id = " + termId);
             // get the name of the source term from its id
             String termName;
             if (!this.idsToNamesMap.isEmpty())
                 termName = this.idsToNamesMap.get(termId);
             else
                 termName = termId;
+            
+            System.out.println("Term name = " + termName);
 
             long currVolume = (long) observations.get(termId);
             toPrint += "current volume = " + currVolume + "\t";
@@ -307,6 +311,7 @@ public class VolumePredictor {
                 toPrint += "alarms = " + alarm[0] + "\t" + alarm[1] + "\t" + "|" + "\t";
                 System.out.println(toPrint);
             } else {
+                System.out.println("No predictors available for term " + termName);
                 if (!this.monitoredTerms.contains(termName))
                     unknownTerms.add(termName);
             }
@@ -689,11 +694,13 @@ public class VolumePredictor {
         
         for (String id : inputMap.keySet()) {
             String name = inputMap.get(id);
+            System.out.println("Name before formatting = " + name);
             String[] fields = name.split("ï¿½");
             if (fields.length > 1)
                 name = fields[0] + "·" + fields[1];
             else
                 name = fields[0];
+            System.out.println("Name after formatting = " + name);
             newMap.put(id, name);
         }
         return newMap;
