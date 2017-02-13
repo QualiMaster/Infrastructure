@@ -147,6 +147,7 @@ public class Kalman extends AbstractMatrixPredictor {
      * The point in time this Kalman-Instance was last updated as seconds since midnight, January 1, 1970 UTC.
      */
     private long lastUpdated = Long.MIN_VALUE;
+    private long lastMemUpdated; // this is just temporary for the memory instance
     
     /**
      * The latest value used to update the Kalman-Instance.
@@ -174,6 +175,14 @@ public class Kalman extends AbstractMatrixPredictor {
         ProcessModel pm = new DefaultProcessModel(DEFAULT_A, DEFAULT_B, DEFAULT_Q, DEFAULT_X_VECTOR, DEFAULT_P);
         MeasurementModel mm = new DefaultMeasurementModel(DEFAULT_H, DEFAULT_R);
         filter = new KalmanFilter(pm, mm);
+        lastMemUpdated();
+    }
+    
+    /**
+     * Indicates a change of the mem updated timestamp.
+     */
+    private void lastMemUpdated() {
+        lastMemUpdated = System.currentTimeMillis();
     }
 
     /**
@@ -212,6 +221,7 @@ public class Kalman extends AbstractMatrixPredictor {
             }
             success = true;
             predictedSinceUpdate = false;
+            lastMemUpdated();
         } catch (NullArgumentException | DimensionMismatchException | SingularMatrixException e) {
             LogManager.getLogger(Kalman.class).error(e.getMessage(), e);
         }
@@ -258,6 +268,7 @@ public class Kalman extends AbstractMatrixPredictor {
                 filter.predict(controlVector);
                 prediction = filter.getStateEstimation()[2];
                 predictedSinceUpdate = true;
+                lastMemUpdated();
             } catch (DimensionMismatchException e) {
                 LogManager.getLogger(Kalman.class).error(e.getMessage(), e);
                 prediction = Constants.NO_PREDICTION;
@@ -402,7 +413,7 @@ public class Kalman extends AbstractMatrixPredictor {
 
     @Override
     public long getLastUpdated() {
-        return lastUpdated;
+        return lastMemUpdated;
     }
     
 }

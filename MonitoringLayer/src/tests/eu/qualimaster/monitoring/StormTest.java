@@ -65,6 +65,8 @@ import backtype.storm.generated.StormTopology;
  */
 public class StormTest extends AbstractCoordinationTests {
 
+    private File profiles;
+    
     /**
      * Executed before a single test.
      */
@@ -73,7 +75,15 @@ public class StormTest extends AbstractCoordinationTests {
         Utils.setModelProvider(Utils.INFRASTRUCTURE_TEST_MODEL_PROVIDER);
         Utils.configure();
         super.setUp();
-        //CoordinationManager.registerTestMapping(TestNameMapping.INSTANCE);
+
+        profiles = new File(FileUtils.getTempDirectory(), "profiles");
+        FileUtils.deleteQuietly(profiles);
+        profiles.mkdirs();
+        Properties prop = new Properties();
+        prop.put(MonitoringConfiguration.PROFILE_LOCATION, profiles.getAbsolutePath());
+        MonitoringConfiguration.configure(prop);
+        
+    //CoordinationManager.registerTestMapping(TestNameMapping.INSTANCE);
         //Properties prop = new Properties();
         //prop.put(MonitoringConfiguration.THRIFT_MONITORING_DEBUG, true);
         //MonitoringConfiguration.configure(prop, false);
@@ -104,6 +114,7 @@ public class StormTest extends AbstractCoordinationTests {
         MonitoringManager.clearState();
         super.tearDown();
         Utils.dispose();
+        FileUtils.deleteQuietly(profiles);
     }
     
     /**

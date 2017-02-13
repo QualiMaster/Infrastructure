@@ -45,7 +45,7 @@ import eu.qualimaster.observables.IObservable;
  */
 public class AlgorithmProfilePredictionManager {
     
-    private static String baseFolder = MonitoringConfiguration.getProfileLocation();
+    private static String baseFolder;
     private static IAlgorithmProfileCreator creator = new KalmanProfileCreator(); // currently fixed, may be replaced
     private static boolean predict = MonitoringConfiguration.enableProfile();
     private static Double testPrediction;
@@ -55,6 +55,15 @@ public class AlgorithmProfilePredictionManager {
  
     static {
         EventManager.register(new AlgorithmProfilePredictionRequestHandler());
+    }
+    
+    /**
+     * Access to the base folder.
+     * 
+     * @return the base folder
+     */
+    private static String getBaseFolder() {
+        return null == baseFolder ? MonitoringConfiguration.getProfileLocation() : baseFolder;
     }
     
     /**
@@ -88,7 +97,7 @@ public class AlgorithmProfilePredictionManager {
         
         switch (status) {
         case STARTING:
-            obtainPipeline(pipeline).setPath(baseFolder);
+            obtainPipeline(pipeline).setPath(getBaseFolder());
             break;
         case STOPPED:
             Pipelines.releasePipeline(pipeline);
@@ -366,7 +375,7 @@ public class AlgorithmProfilePredictionManager {
     public static void fill(List<PipelineEntry> entries, Meta meta) {
         for (PipelineEntry entry : entries) {
             Pipeline pip = Pipelines.obtainPipeline(entry.getName(), creator);
-            pip.setPath(baseFolder);
+            pip.setPath(getBaseFolder());
             pip.enableProfilingMode();
             for (String node : entry.nodes()) {
                 PipelineElement elt = pip.obtainElement(node);

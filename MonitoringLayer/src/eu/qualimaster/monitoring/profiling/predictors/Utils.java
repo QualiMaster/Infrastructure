@@ -32,8 +32,6 @@ import eu.qualimaster.monitoring.MonitoringConfiguration;
  */
 public class Utils {
 
-    private static final long PROFILE_TTL = MonitoringConfiguration.getProfileTtl();
-    
     /**
      * Parses a double value from text in math3 notation.
      * 
@@ -232,7 +230,8 @@ public class Utils {
      * @return <code>true</code> if outdated, <code>false</code> else
      */
     public static boolean isOutdated(IUpdatable updatable) {
-        return PROFILE_TTL > 0 && System.currentTimeMillis() - updatable.getLastUpdated() > PROFILE_TTL;
+        long ttl = MonitoringConfiguration.getProfileTtl();
+        return ttl > 0 && System.currentTimeMillis() - updatable.getLastUpdated() > ttl;
     }
 
 }
