@@ -695,7 +695,8 @@ public class VolumePredictor {
         for (String id : inputMap.keySet()) {
             String name = inputMap.get(id);
             System.out.println("Name before formatting = " + name);
-            String[] fields = name.split("ï¿½");
+            //String[] fields = name.split("ï¿½");
+            String[] fields = name.split("-");
             if (fields.length > 1)
                 name = fields[0] + "·" + fields[1];
             else
