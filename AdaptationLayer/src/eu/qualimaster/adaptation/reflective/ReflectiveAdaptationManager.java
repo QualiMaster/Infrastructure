@@ -18,6 +18,7 @@ import eu.qualimaster.adaptation.events.ReflectiveAdaptationResponse;
 import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
+import eu.qualimaster.monitoring.utils.IScheduler;
 
 
 /**
@@ -225,8 +226,10 @@ public class ReflectiveAdaptationManager {
 
     /**
      * Called upon startup of the infrastructure.
+     * 
+     * @param scheduler a scheduler instance for regular tasks
      */
-    public static void start() {
+    public static void start(IScheduler scheduler) {
         EventManager.register(REFLECTIVE_ADAPTATION_REGISTRATION_EVENT_HANDLER);
         EventManager.register(REFLECTIVE_ADAPTATION_REQUEST_HANDLER);
     }

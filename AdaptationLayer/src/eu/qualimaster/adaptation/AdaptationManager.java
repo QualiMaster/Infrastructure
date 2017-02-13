@@ -1,8 +1,11 @@
 package eu.qualimaster.adaptation;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.RtVILMemoryStorage;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.RtVilStorage;
@@ -39,6 +42,7 @@ import eu.qualimaster.adaptation.internal.AdaptationLoggerFactory;
 import eu.qualimaster.adaptation.internal.HilariousAuthenticationProvider;
 import eu.qualimaster.adaptation.internal.IAuthenticationProvider;
 import eu.qualimaster.adaptation.internal.ServerEndpoint;
+import eu.qualimaster.adaptation.reflective.ReflectiveAdaptationManager;
 import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
@@ -56,6 +60,7 @@ import eu.qualimaster.monitoring.events.CloudResourceMonitoringEvent;
 import eu.qualimaster.monitoring.events.HardwareAliveEvent;
 import eu.qualimaster.monitoring.events.MonitoringEvent;
 import eu.qualimaster.monitoring.events.MonitoringInformationEvent;
+import eu.qualimaster.monitoring.utils.IScheduler;
 
 /**
  * Realizes the external interface of the adaptation manager.
@@ -71,7 +76,19 @@ public class AdaptationManager {
         = new CoordinationCommandExecutionHandler();
     private static Set<String> activePipelines = new HashSet<String>();
     private static IShutdownListener shutdownListener = null;
-    
+    private static Timer timer;
+   
+    private static IScheduler scheduler = new IScheduler() {
+        
+        @Override
+        public void schedule(TimerTask task, Date firstTime, long period) {
+            if (null != timer) {
+                timer.schedule(task, firstTime, period);
+            }
+        }
+
+    };
+
     /**
      * The handler for adaptation events.
      * 
@@ -474,17 +491,24 @@ public class AdaptationManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        timer = new Timer();
         AdaptationEventQueue.start();
+        ReflectiveAdaptationManager.start(scheduler);
     }
     
     /**
      * May be an event.
      */
     public static void stop() {
+        ReflectiveAdaptationManager.stop();
         AdaptationEventQueue.stop();
         AdaptationLoggerFactory.closeLogger();
         if (null != endpoint) {
             endpoint.stop();
+        }
+        if (null != timer)  {
+            timer.cancel();
+            timer = null;
         }
     }
     

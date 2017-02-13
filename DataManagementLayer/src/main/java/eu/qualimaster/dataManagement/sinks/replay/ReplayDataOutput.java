@@ -290,7 +290,12 @@ public class ReplayDataOutput implements IDataOutput, Closeable {
 			if (fields[idx].isKey()) {
 				appendToKey(value);
 			} else if (fields[idx].isTimesamp()) {
-				timestamp = ReplayUtils.getTimestamp(fields[idx], value);
+				try {
+					timestamp = ReplayUtils.getTimestamp(fields[idx], value);
+				} catch (Exception e) {
+					log.warn("Error in converting timestamp: " + value + ". Ignore");
+					hasNull = true;
+				}
 			} else {
 				row.addValue(bytes);
 			}

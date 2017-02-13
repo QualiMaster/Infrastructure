@@ -16,6 +16,7 @@
 package eu.qualimaster.common.signal;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -75,6 +76,13 @@ public class SourceMonitor extends Monitor {
     public void unregisterAggregationKeyProvider(AggregationKeyProvider<?> provider) {
         if (null != provider) {
             providers.remove(provider.handles());
+            // clean up lazy inits
+            Iterator<Map.Entry<Class<?>, AggregationKeyProvider<?>>> iter = providers.entrySet().iterator();
+            while (iter.hasNext()) {
+                if (iter.next().getValue() == provider) {
+                    iter.remove();
+                }
+            }
         }
     }
     
@@ -110,11 +118,40 @@ public class SourceMonitor extends Monitor {
      */
     private void aggregate(Object tuple) {
         if (null != tuple) {
-            AggregationKeyProvider<?> provider = providers.get(tuple.getClass());
+            AggregationKeyProvider<?> provider = getAggregationKeyProvider(tuple.getClass());
             if (null != provider) {
                 aggregateKey(provider.getKey(tuple));
             }
         }
+    }
+    
+    /**
+     * Returns the aggregation key provider for <code>cls</code> and also considers direct super-interfaces and the
+     * direct superclass if not found. If found on super types, register the new mapping lazily.
+     * 
+     * @param cls the class to return the provider for
+     * @return the aggregation provider, <b>null</b> if there is none
+     */
+    private AggregationKeyProvider<?> getAggregationKeyProvider(Class<?> cls) {
+        AggregationKeyProvider<?> result = providers.get(cls);
+        if (null == result && !providers.isEmpty()) {
+            Class<?>[] ifaces = cls.getInterfaces();
+            if (null != ifaces) {
+                for (int i = 0; null == result && i < ifaces.length; i++) {
+                    result = providers.get(ifaces[i]);
+                }
+            }
+            if (null == result) {
+                Class<?> su = cls.getSuperclass();
+                if (null != su) {
+                    result = providers.get(su);
+                }
+            }
+            if (null != result) { // lazy registration for speedup
+                providers.put(cls, result);
+            }
+        }
+        return result;
     }
     
     /**
@@ -127,7 +164,7 @@ public class SourceMonitor extends Monitor {
             synchronized (occurrences) {
                 Integer count = occurrences.get(key);
                 if (null == count) {
-                    occurrences.put(key, 0);
+                    occurrences.put(key, 1); // the first one has been seen
                 } else {
                     occurrences.put(key, count + 1);
                 }
@@ -139,12 +176,12 @@ public class SourceMonitor extends Monitor {
     protected void checkSend(long now) {
         super.checkSend(now);
         if (occurrences.size() > 0 && aggregationInterval > 0 && now - lastAggregation.get() > aggregationInterval) {
-            Map<String, Integer> oldOcc = occurrences;
-            Map<String, Integer> newOcc = new HashMap<String, Integer>();
+            Map<String, Integer> occ = new HashMap<String, Integer>();
             synchronized (occurrences) {
-                occurrences = newOcc;
+                occ.putAll(occurrences);
+                occurrences.clear();
             }
-            SourceVolumeMonitoringEvent evt = new SourceVolumeMonitoringEvent(getNamespace(), getName(), oldOcc);
+            SourceVolumeMonitoringEvent evt = new SourceVolumeMonitoringEvent(getNamespace(), getName(), occ);
             EventManager.send(evt);
             lastAggregation.set(now);
         }
