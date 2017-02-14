@@ -11,6 +11,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -1278,7 +1279,7 @@ public class StormUtils {
      * @param free the hostname-free mapping used for sorting
      */
     private static final void sortByFreeWorkers(List<String> hosts, final Map<String, Integer> free) {
-        hosts.sort(new Comparator<String>() {
+        Collections.sort(hosts, new Comparator<String>() {
 
             @Override
             public int compare(String h1, String h2) {
