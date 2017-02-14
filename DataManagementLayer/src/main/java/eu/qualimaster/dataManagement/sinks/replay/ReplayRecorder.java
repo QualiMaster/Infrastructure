@@ -96,7 +96,6 @@ public class ReplayRecorder<T> {
 	 * replay store
 	 */
 	public void store(T data) throws IOException {
-		//log.info("storing data = " + data.toString());
 		if(serializer == null){
 			//log.info("serializer is null");
 			serializer = getSerializer(cls);
