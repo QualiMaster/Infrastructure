@@ -449,11 +449,14 @@ public class ReplayDataInput implements IDataInput, Closeable {
         }
     }
 
+    /** Silently iterate and aggregate the items */
     private void _advance() {
+        Result lastRow = null; // Keep the last raw item to emit in case aggregation does not go the full cycle
         while (iter.hasNext()) {
             Result r = iter.next();
-            String[] rKey = (peekedRow != null) ? new String(r.getRow(), Charset.forName("UTF-8")).split("-") : null;
-            LOG.info("Get data " + StringUtils.join("-", rKey));
+            String[] rKey = new String(r.getRow(), Charset.forName("UTF-8")).split("-");
+            LOG.info("Get data: " + StringUtils.join("-", rKey));
+            lastRow = r;
             Result aggregatedRow = aggregator.aggregate(rKey, r);
             if (aggregatedRow != null) {
                 peekedRow = aggregatedRow;
@@ -462,9 +465,9 @@ public class ReplayDataInput implements IDataInput, Closeable {
                 return;
             }
         }
-        LOG.info("The iterator is empty or exhausted. Return null");
-        peekedRow = null;
-        eod = true;
+        LOG.info("The iterator is empty or exhausted. Return the last item if any");
+        peekedRow = lastRow;
+        eod = (lastRow == null);
     }
 
     @Override
