@@ -158,7 +158,8 @@ public class ReplayDataInput implements IDataInput, Closeable {
         }
     }
     */
-    private void parseQuery(String query, Date startDate, Date endDate) {
+
+    /* private void parseQuery(String query, Date startDate, Date endDate) {
         long begin = ReplayUtils.getTimestamp(startDate);
         long end = ReplayUtils.getTimestamp(endDate);
         if (query.indexOf(' ') >= 0) {
@@ -174,6 +175,15 @@ public class ReplayDataInput implements IDataInput, Closeable {
         } catch (UnsupportedEncodingException e) {
             LOG.error("Error processing query: " + query);
             throw new RuntimeException(e);
+        }
+    } */
+
+    /** 2017-02-14: parse the query involving multiple market players using both queries */
+    private void parseQuery(String query, Date startDate, Date endDate) {
+        long begin = ReplayUtils.getTimestamp(startDate);
+        long end = ReplayUtils.getTimestamp(endDate);
+        if (query.indexOf(' ') < 0) {
+            queryStr = query;
         }
     }
 
@@ -451,7 +461,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
 
     /** Silently iterate and aggregate the items */
     private void _advance() {
-        Result lastRow = null; // Keep the last raw item to emit in case aggregation does not go the full cycle
+        Result lastRow = null; // Keep the last raw item to emit in case the aggregation does not go the full cycle
         while (iter.hasNext()) {
             Result r = iter.next();
             String[] rKey = new String(r.getRow(), Charset.forName("UTF-8")).split("-");
