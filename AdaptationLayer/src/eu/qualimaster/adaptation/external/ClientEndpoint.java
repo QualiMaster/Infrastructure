@@ -28,6 +28,7 @@ public class ClientEndpoint extends Endpoint {
      */
     public ClientEndpoint(IDispatcher dispatcher, InetAddress address, int port) throws IOException {
         super(dispatcher);
+        System.out.println("Connecting " + address + ":" + port);
         Socket s = new Socket(address, port);
         s.setKeepAlive(true);
         s.setSoTimeout(SO_TIMEOUT); // enable non-blocking communication, also for properly ending threads

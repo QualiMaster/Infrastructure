@@ -12,6 +12,7 @@ import eu.qualimaster.dataManagement.storage.support.IStorageSupport;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -452,6 +453,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
         while (iter.hasNext()) {
             Result r = iter.next();
             String[] rKey = (peekedRow != null) ? new String(r.getRow(), Charset.forName("UTF-8")).split("-") : null;
+            LOG.info("Get data " + StringUtils.join("-", rKey));
             Result aggregatedRow = aggregator.aggregate(rKey, r);
             if (aggregatedRow != null) {
                 peekedRow = aggregatedRow;
@@ -460,7 +462,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
                 return;
             }
         }
-        LOG.info("The iterator is empty exhausted. Return null");
+        LOG.info("The iterator is empty or exhausted. Return null");
         peekedRow = null;
         eod = true;
     }
