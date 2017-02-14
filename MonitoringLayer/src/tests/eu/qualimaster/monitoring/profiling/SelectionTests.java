@@ -673,6 +673,7 @@ public class SelectionTests {
         AlgorithmProfilePredictionManager.clear();
         FileUtils.deleteQuietly(testDataFolder);
         testDataFolder.mkdirs();
+        
         AlgorithmProfilePredictionManager.useTestData(testDataFolder.getAbsolutePath());
         AlgorithmProfilePredictionManager.notifyPipelineLifecycleChange(new PipelineLifecycleEvent(PIP_NAME, 
             PipelineLifecycleEvent.Status.STARTING, null));
@@ -693,6 +694,7 @@ public class SelectionTests {
         for (AlgorithmDescriptor alg : algorithms.values()) {
             simulateProfile(alg, LAST_TIME, INPUT_RATE);
         }
+        AlgorithmProfilePredictionManager.store();
     }
 
     /**

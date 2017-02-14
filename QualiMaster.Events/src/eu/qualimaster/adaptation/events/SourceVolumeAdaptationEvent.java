@@ -18,6 +18,7 @@ package eu.qualimaster.adaptation.events;
 import java.util.HashMap;
 import java.util.Map;
 
+import eu.qualimaster.common.QMGenerics;
 import eu.qualimaster.common.QMInternal;
 
 /**
@@ -153,6 +154,7 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
      * 
      * @return the findings
      */
+    @QMGenerics(types = {String.class, Double.class})
     public Map<String, Double> getNormalizedFindings() {
         return normalizedFindings;
     }
@@ -191,7 +193,26 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
      * 
      * @return the durations
      */
+    @QMGenerics(types = {String.class, Double.class})
     public Map<String, Double> getDurations() {
         return durations;
     }
+
+    /**
+     * Returns the maximum duration.
+     * 
+     * @return the maximum duration
+     */
+    public Double getMaxDuration() {
+        Double result = null;
+        if (null != durations) {
+            for (Double d : durations.values()) {
+                if (null == result || d > result) {
+                    result = d;
+                }
+            }
+        }
+        return null;
+    }
+    
 }
