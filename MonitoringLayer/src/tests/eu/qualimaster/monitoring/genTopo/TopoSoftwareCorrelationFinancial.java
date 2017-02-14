@@ -45,10 +45,10 @@ public class TopoSoftwareCorrelationFinancial extends AbstractHyTopology impleme
     public SubTopologyOutput createSubTopology(TopologyBuilder builder, Config config, String prefix, String input,
                     String streamId) {
         builder.setBolt(getHyMapperName(), 
-            new SubTopologyFamilyElement0FamilyElement(getHyMapperName(), namespace, false, false), 1)
+            new SubTopologyFamilyElement0FamilyElement(getHyMapperName(), namespace, true, false), 1)
             .setNumTasks(1).shuffleGrouping(input);
         builder.setBolt(getHyProcessorName(), 
-            new SubTopologyFamilyElement1FamilyElement(getHyProcessorName(), namespace, false, false), 1)
+            new SubTopologyFamilyElement1FamilyElement(getHyProcessorName(), namespace, true, false), 1)
             .setNumTasks(3).shuffleGrouping(getHyMapperName());
         return new SubTopologyOutput(getHyProcessorName(), streamId, 1, 1);
     }

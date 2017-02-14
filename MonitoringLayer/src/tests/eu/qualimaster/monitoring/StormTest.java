@@ -9,7 +9,6 @@ import org.junit.Assert;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import tests.eu.qualimaster.coordination.AbstractCoordinationTests;
@@ -262,7 +261,6 @@ public class StormTest extends AbstractCoordinationTests {
     /**
      * Tests a topology emulating a manual sub-topology.
      */
-    @Ignore("Instable")
     @Test
     public void testManTopology() {
         if (!isJenkins()) {

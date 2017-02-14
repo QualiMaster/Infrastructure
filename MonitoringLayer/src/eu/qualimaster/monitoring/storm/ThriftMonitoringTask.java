@@ -383,6 +383,7 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
      */
     private void debugExecutors(List<ExecutorSummary> executors, INameMapping mapping, PipelineSystemPart part) {
         if (MonitoringConfiguration.debugThriftMonitoring()) {
+            LogManager.getLogger(EventManager.class).info("from events " + part);
             for (int e = 0; e < executors.size(); e++) {
                 ExecutorSummary executor = executors.get(e);
                 boolean isInternal = Utils.isInternal(executor); 
