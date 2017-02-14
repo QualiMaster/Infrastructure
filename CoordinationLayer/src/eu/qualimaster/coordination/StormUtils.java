@@ -11,6 +11,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -44,6 +45,7 @@ import backtype.storm.generated.Nimbus;
 import backtype.storm.generated.NotAliveException;
 import backtype.storm.generated.RebalanceOptions;
 import backtype.storm.generated.StormTopology;
+import backtype.storm.generated.SupervisorSummary;
 import backtype.storm.generated.TopologyInfo;
 import backtype.storm.generated.TopologySummary;
 import backtype.storm.utils.NimbusClient;
@@ -1082,6 +1084,7 @@ public class StormUtils {
                 }
                 boolean isWaiting = false;
                 if (null != stormAssng) {
+                    checkTargetHosts(connection, changes);
                     Assignment newAssng = changeParallelism(stormAssng, changes, taskComponents, tData);
                     if (null != newAssng) {
                         LOGGER.info("Parallelism change request: " + origRequest + " remaining " + changes);
@@ -1220,6 +1223,70 @@ public class StormUtils {
                 componentAssignments, workerSequence);
         }
         return result;
+    }
+    
+    /**
+     * Checks the target host for generic names replacing it with a free host/worker name. [heuristic]
+     * 
+     * @param connection the thrift connection for receiving the actual supervisors/workers
+     * @param changes the requested changes to the parallelism
+     * @throws TException in case that accessing the supervisors/workers fails
+     */
+    private static final void checkTargetHosts(ThriftConnection connection, 
+        Map<String, ParallelismChangeRequest> changes) throws TException {
+        ClusterSummary cluster = connection.getClusterSummary();
+        List<SupervisorSummary> supervisors = cluster.get_supervisors();
+        Map<String, Integer> free = new HashMap<String, Integer>();
+        List<String> hosts = new ArrayList<String>();
+        for (SupervisorSummary supervisor: supervisors) {
+            String host = supervisor.get_host();
+            int f = supervisor.get_num_workers() - supervisor.get_num_used_workers();
+            if (f > 0) {
+                Integer known = free.get(host);
+                if (null == known) {
+                    free.put(host, f);
+                    hosts.add(host);
+                } else { // local cluster testing case
+                    free.put(host, known + f);
+                }
+            }
+        }
+        
+        for (Map.Entry<String, ParallelismChangeRequest> ent : changes.entrySet()) {
+            ParallelismChangeRequest req = ent.getValue();
+            if (req.isAnyHost()) {
+                String host = null; // replace "*" in any situation
+                if (!hosts.isEmpty()) {
+                    sortByFreeWorkers(hosts, free);
+                    host = hosts.get(0);
+                    Integer f = free.get(host);
+                    if (f > 0) {
+                        free.put(host, f - 1);
+                    } else {
+                        host = null;
+                    }
+                }
+                ent.setValue(new ParallelismChangeRequest(req.getExecutorDiff(), host, req.otherHostThenAssignment()));
+            }
+        }
+    }
+    
+    /**
+     * Sorts <code>hosts</code> by the free workers in <code>free</code>.
+     * 
+     * @param hosts the host names to be sorted
+     * @param free the hostname-free mapping used for sorting
+     */
+    private static final void sortByFreeWorkers(List<String> hosts, final Map<String, Integer> free) {
+        hosts.sort(new Comparator<String>() {
+
+            @Override
+            public int compare(String h1, String h2) {
+                int f1 = free.containsKey(h1) ? free.get(h1) : 0;
+                int f2 = free.containsKey(h2) ? free.get(h2) : 0;
+                return -Integer.compare(f1, f2); // revert sorting so that highest first
+            }
+        });
     }
     
     /**

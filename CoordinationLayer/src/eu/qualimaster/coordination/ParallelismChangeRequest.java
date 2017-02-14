@@ -28,6 +28,7 @@ import eu.qualimaster.common.QMSupport;
 @QMSupport
 public class ParallelismChangeRequest implements Serializable {
 
+    public static final String ANY_HOST = "*";
     public static final int DELETE = Integer.MIN_VALUE + 1;
     @QMInternal
     public static final int FULFILLED = Integer.MIN_VALUE;
@@ -55,7 +56,8 @@ public class ParallelismChangeRequest implements Serializable {
      * @param executorDiff a positive number increases the number of parallel executors, a negative 
      *     number decreases, 0 indicates a migration of executors to a different host, may be {@link #DELETE} to 
      *     delete / kill all related executors.
-     * @param host the host name as also known to Storm, may be <b>null</b> if the same host shall be used
+     * @param host the host name as also known to Storm, may be <b>null</b> if the same host shall be used, may
+     *     be {@link #ANY_HOST} for let infrastructure decide
      */
     public ParallelismChangeRequest(int executorDiff, String host) {
         this(executorDiff, host, null);
@@ -71,7 +73,8 @@ public class ParallelismChangeRequest implements Serializable {
      *     related executors.
      * @param host the host name as also known to Storm, may be <b>null</b> if the same host shall be used
      * @param otherHostThenAssignment select another host than given in the respective assignment if possible,
-     *     intended for testing, <code>false</code> for the same, ignored for <b>null</b>)
+     *     intended for testing, <code>false</code> for the same, ignored for <b>null</b>), may
+     *     be {@link #ANY_HOST} for let infrastructure decide
      */
     @QMInternal
     public ParallelismChangeRequest(int executorDiff, String host, Boolean otherHostThenAssignment) {
@@ -98,6 +101,17 @@ public class ParallelismChangeRequest implements Serializable {
      */
     public String getHost() {
         return host;
+    }
+    
+    /**
+     * Returns whether the supervisor host is the pseudo name {@link #ANY_HOST} to be replaced by the infrastructure
+     * with a free/adequate host if possible.
+     * 
+     * @return <code>true</code> if the infrastructure shall decide, <code>false</code> if the host name is fixed or 
+     *     <b>null</b>
+     */
+    public boolean isAnyHost() {
+        return ANY_HOST.equals(host);
     }
 
     /**
