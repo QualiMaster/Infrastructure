@@ -139,7 +139,7 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 			counter = 0;
 		} catch (IOException e) {
 			log.error("Canot establish the connection to the default quorum "); // + HBASE_QUORUM, e);
-			// e.printStackTrace();
+			e.printStackTrace();
 		}
 	}
 
