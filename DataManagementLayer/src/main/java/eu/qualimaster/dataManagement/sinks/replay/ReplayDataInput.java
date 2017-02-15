@@ -80,10 +80,11 @@ public class ReplayDataInput implements IDataInput, Closeable {
     /** the current prefix of query */
     // private byte[][] filter;
     // 2017-02-14: Change to MultiRowRangeFilter
-    private FilterList filter;
+    // private FilterList filter;
+    private Filter filter;
 
     /* for logging purpose */
-    private String queryStr;
+    private String queryStr = "";
 
     /** Reference to the aggregator */
     private ReplayAggregator aggregator;
@@ -179,7 +180,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
     } */
 
     /** 2017-02-14: parse the query involving multiple market players using both queries */
-    private void parseQuery(String query, Date startDate, Date endDate) {
+    /*private void parseQuery(String query, Date startDate, Date endDate) {
         long begin = ReplayUtils.getTimestamp(startDate);
         long end = ReplayUtils.getTimestamp(endDate);
         if (query.indexOf(' ') < 0) {
@@ -205,7 +206,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
                 range.addFilter(new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL, new BinaryComparator(startRow)));
                 range.addFilter(new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, new BinaryComparator(endRow)));
                 filter.addFilter(range);
-                queryStr += (item + DELIMITER + String.valueOf(begin) + DELIMITER + String.valueOf(end));
+                queryStr += (item + DELIMITER + String.valueOf(begin) + DELIMITER + String.valueOf(end) + ",");
             }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
@@ -216,7 +217,43 @@ public class ReplayDataInput implements IDataInput, Closeable {
             LOG.error("Error processing query: " + queryStr);
             throw new RuntimeException(e);
         }
+    }*/
+    private void parseQuery(String query, Date startDate, Date endDate) {
+        long begin = ReplayUtils.getTimestamp(startDate);
+        long end = ReplayUtils.getTimestamp(endDate);
+        if (query.indexOf(' ') < 0) {
+            LOG.warn("Current replay mechanism only support multiple-player queries");
+            return;
+        }
+        List<String> pairs = new ArrayList<>();
+        String[] items = query.split(" ");
+        int n = items.length;
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = i+1; j < n; j++) {
+                pairs.add(items[i] + DELIMITER + items[j]);
+                pairs.add(items[j] + DELIMITER + items[i]);
+            }
+        }
+        List<MultiRowRangeFilter.RowRange> ranges = new ArrayList<MultiRowRangeFilter.RowRange>();
+        try {
+            for (String item : pairs) {
+                byte[] startRow = (item + DELIMITER + String.valueOf(begin)).getBytes("UTF-8");
+                byte[] endRow = (item + DELIMITER + String.valueOf(end)).getBytes("UTF-8");
+                MultiRowRangeFilter.RowRange range = new MultiRowRangeFilter.RowRange(startRow, true, endRow, true);
+                ranges.add(range);
+            }
+            filter = new MultiRowRangeFilter(ranges);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            LOG.error("Error processing query: " + queryStr);
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            e.printStackTrace();
+            LOG.error("Error processing query: " + queryStr);
+            throw new RuntimeException(e);
+        }
     }
+
 
     /** Perform binary search over the keyIdx, or -1 if not found */
     private int _searchKeyIndex() {
