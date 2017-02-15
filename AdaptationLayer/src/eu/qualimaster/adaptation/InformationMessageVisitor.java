@@ -16,7 +16,11 @@
 package eu.qualimaster.adaptation;
 
 import eu.qualimaster.adaptation.external.ExecutionResponseMessage.ResultType;
+
+import java.util.Map;
+
 import eu.qualimaster.adaptation.external.InformationMessage;
+import eu.qualimaster.coordination.ParallelismChangeRequest;
 import eu.qualimaster.coordination.commands.AbstractCoordinationCommandVisitor;
 import eu.qualimaster.coordination.commands.AlgorithmChangeCommand;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
@@ -137,7 +141,31 @@ class InformationMessageVisitor extends AbstractCoordinationCommandVisitor {
 
     @Override
     public CoordinationExecutionResult visitParallelismChangeCommand(ParallelismChangeCommand command) {
-        schedule(command.getPipeline(), null, "parallelism change");
+        String text;
+        if (null != command.getIncrementalChanges()) {
+            text = " ";
+            int count = 0;
+            for (Map.Entry<String, ParallelismChangeRequest> ent : command.getIncrementalChanges().entrySet()) {
+                if (count > 0) {
+                    text = text + ", ";
+                }
+                text += ent.getKey() + " ->";
+                ParallelismChangeRequest req = ent.getValue();
+                if (req.getExecutorDiff() != 0) {
+                    text += " executor diff " + req.getExecutorDiff();
+                }
+                if (null != req.getHost()) {
+                    text += " target machine " + req.getHost(); 
+                }
+                count++;
+            }
+        } else {
+            text = " workers " + command.getNumberOfWorkers();
+            if (null != command.getExecutors()) {
+                text += " executors " + command.getExecutors(); 
+            }
+        }
+        schedule(command.getPipeline(), null, "parallelism change " + text);
         return null;
     }
 
