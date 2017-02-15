@@ -33,9 +33,24 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
     private static final long serialVersionUID = -1484370408104441395L;
     private String pipeline;
     private String source;
+    
+    /** The alarm values for each term (how much the predicted volume exceeds the threshold) */
     private Map<String, Double> findings = new HashMap<String, Double>();
+    
+    /** Normalized version of findings (between 0 and 1) */
     private Map<String, Double> normalizedFindings = new HashMap<String, Double>();
+    
+    /** Probabilities of each alarm to stay active for (at least) the next 5 minutes */
     private Map<String, Double> durations = new HashMap<String, Double>();
+    
+    /** The observed volumes for each critical term */
+    private Map<String, Long> volumes = new HashMap<String, Long>();
+    
+    /** The predicted volumes for each critical term */
+    private Map<String, Double> predictions = new HashMap<>();
+    
+    /** The threshold for each critical term (to determine whether to raise an alarm or not) */
+    private Map<String, Double> thresholds = new HashMap<String, Double>();
 
     /**
      * Creates a source volume adaptation event.
@@ -111,6 +126,58 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
         this.findings = findings;
         this.normalizedFindings = normFindings;
         this.durations = durations;
+    }
+    
+    /**
+     * Creates a source volume adaptation event.
+     * 
+     * @param pipeline the pipeline name
+     * @param source the source name
+     * @param findings the findings
+     * @param normFindings the normalized findings
+     * @param durations the probabilities of alarms to hold for "enough" time
+     * @param volumes the volumes of the terms
+     * @param predictions the predictions for the terms
+     * @param thresholds the thresholds for the terms
+     * @throws IllegalArgumentException if <code>findings</code> is <b>null</b> or empty
+     */
+    @QMInternal
+    public SourceVolumeAdaptationEvent(String pipeline, String source, Map<String, Double> findings,
+        Map<String, Double> normFindings, Map<String, Double> durations, Map<String, Long> volumes,
+        Map<String, Double> predictions, Map<String, Double> thresholds) {
+        if (null == findings || findings.isEmpty() || null == normFindings || normFindings.isEmpty()) {
+            throw new IllegalArgumentException("no findings");
+        }
+        this.pipeline = pipeline;
+        this.source = source;
+        this.findings = findings;
+        this.normalizedFindings = normFindings;
+        this.durations = durations;
+        this.volumes = volumes;
+        this.predictions = predictions;
+        this.thresholds = thresholds;
+    }
+    
+    /**
+     * Creates an empty source volume adaptation event.
+     * 
+     * @param pipeline the pipeline name
+     * @param source the source name
+     * @param findings the findings
+     * @param normFindings the normalized findings
+     * @param durations the probabilities of alarms to hold for "enough" time
+     * @throws IllegalArgumentException if <code>findings</code> is <b>null</b> or empty
+     */
+    @QMInternal
+    public SourceVolumeAdaptationEvent(String pipeline, String source) {
+        this.pipeline = pipeline;
+        this.source = source;
+        this.findings = new HashMap<>();
+        this.normalizedFindings = new HashMap<>();
+        this.durations = new HashMap<>();
+        this.volumes = new HashMap<>();
+        this.predictions = new HashMap<>();
+        this.thresholds = new HashMap<>();
     }
     
     /**
@@ -214,5 +281,25 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
         }
         return null;
     }
-    
+
+    /**
+     * @return the volumes
+     */
+    public Map<String, Long> getVolumes() {
+        return volumes;
+    }
+
+    /**
+     * @return the predictions
+     */
+    public Map<String, Double> getPredictions() {
+        return predictions;
+    }
+
+    /**
+     * @return the thresholds
+     */
+    public Map<String, Double> getThresholds() {
+        return thresholds;
+    }
 }

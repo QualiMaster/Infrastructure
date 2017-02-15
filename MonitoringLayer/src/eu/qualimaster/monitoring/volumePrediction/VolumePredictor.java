@@ -82,6 +82,9 @@ public class VolumePredictor {
 
     /** Alarm event at the current time point (null if there was no event) */
     AdaptationEvent adaptationEvent;
+    
+    /** Last alarm raised */
+    private SourceVolumeAdaptationEvent lastAlarm;
 
     /**
      * The number of months (in milliseconds) of data to consider when training
@@ -131,6 +134,7 @@ public class VolumePredictor {
         this.historicalDataFile = null;
         this.idsToNamesMap = formatMap(idsToNamesMap);
         this.test = test;
+        this.lastAlarm = null;
     }
 
     /**
@@ -260,6 +264,9 @@ public class VolumePredictor {
         HashMap<String, Double> alarms = new HashMap<>();
         HashMap<String, Double> normalizedAlarms = new HashMap<>();
         HashMap<String, Double> durations = new HashMap<>();
+        HashMap<String, Long> volumesForEvent = new HashMap<>();
+        HashMap<String, Double> predictionsForEvent = new HashMap<>();
+        HashMap<String, Double> thresholdsForEvent = new HashMap<>(); 
         ArrayList<String> unknownTerms = new ArrayList<>();
         for (String termId : observations.keySet()) {
 //            System.out.println("Term id = " + termId);
@@ -314,6 +321,9 @@ public class VolumePredictor {
                     alarms.put(termId, alarm[0]);
                     normalizedAlarms.put(termId, alarm[0] / currVolume);
                     durations.put(termId, alarm[1]);
+                    volumesForEvent.put(termId, currVolume);
+                    predictionsForEvent.put(termId, predictions[0]);
+                    thresholdsForEvent.put(termId, alarm[2]);
                 }
                 toPrint += "alarms = " + alarm[0] + "\t" + alarm[1] + "\t" + "|" + "\t";
                 System.out.println(toPrint);
@@ -326,15 +336,28 @@ public class VolumePredictor {
             // store the current observation in the historical data of the
             // current term (only for twitter)
             storeInHistoricalData(termName, timestamp, currVolume);
+            
+            if(currVolume < this.lastAlarm.getVolumes().get(termId)){
+                System.out.println("Critical period for term " + termId + " is over");
+                removeTermFromAlarm(termId);
+            }
         }
         System.out.print("\n");
 
         // raise an alarm to the adaptation layer containing all the critical
         // terms and their volumes
         if (!alarms.isEmpty())
-            raiseAlarms(alarms, normalizedAlarms, durations);
+            raiseAlarms(alarms, normalizedAlarms, durations,
+                        volumesForEvent, predictionsForEvent, thresholdsForEvent);
         else
             this.adaptationEvent = null;
+        
+        // check if the critical period is over for ALL the terms. If so, signal this
+        // to the adaptation layer by sending an empty SourceVolumeAdaptationEvent
+        if(this.lastAlarm.getFindings().isEmpty()){
+            this.lastAlarm = null;
+            EventManager.send(new SourceVolumeAdaptationEvent(this.pipeline, this.source));
+        }
 
         // initialize one predictor for each unknown term that was observed in
         // the source
@@ -385,7 +408,7 @@ public class VolumePredictor {
         // not result in alarms
 
         // an alarm is made of a magnitude and a duration probability
-        double[] alarm = new double[2];
+        double[] alarm = new double[3];
         
         // compute average and std deviation within the recent history
         ArrayList<Long> recentVolumesForTerm = this.recentVolumes.get(term);
@@ -403,6 +426,7 @@ public class VolumePredictor {
             if (predictions[0] > current){
                 alarm[0] = (double) (predictions[0] - current);
                 alarm[1] = estimateDuration(predictions, threshold, current);
+                alarm[2] = threshold;
                 return alarm;
             }
             
@@ -491,13 +515,70 @@ public class VolumePredictor {
 
     private void raiseAlarms(HashMap<String, Double> alarms,
             HashMap<String, Double> normalizedAlarms,
-            HashMap<String, Double> durations) {
+            HashMap<String, Double> durations,
+            HashMap<String, Long> volumes,
+            HashMap<String, Double> predictions,
+            HashMap<String, Double> thresholds) {
+        
         // use the event class defined in the infrastructure to send alarms to
         // the adaptation layer
         SourceVolumeAdaptationEvent svae = new SourceVolumeAdaptationEvent(
-                this.pipeline, this.source, alarms, normalizedAlarms, durations);
+                this.pipeline, this.source, alarms, normalizedAlarms, durations,
+                volumes, predictions, thresholds);
         this.adaptationEvent = svae;
+        
+        // before raising alarms, check if a previous alarm exists and
+        // if the new alarms are less critical than it (if so, then do not
+        // send any alarm).
+        svae = removeNotCriticalAlarms(svae);
+        if(svae.getFindings().isEmpty()){
+            System.out.println("No new critical alarms found, nothing to signal");
+            return;
+        }
+        
+        if(this.lastAlarm == null)
+            this.lastAlarm = svae;
+        else
+            mergeLastAlarms(svae);
+            
         EventManager.send(svae);
+    }
+    
+    private SourceVolumeAdaptationEvent removeNotCriticalAlarms(
+            SourceVolumeAdaptationEvent event){
+        if(this.lastAlarm == null)
+            return event;
+        ArrayList<String> termsToRemove = new ArrayList<>();
+        for(String term : event.getNormalizedFindings().keySet()){
+            Map<String, Double> lastNormAlarms = event.getNormalizedFindings();
+            if(lastNormAlarms.containsKey(term) && 
+            event.getNormalizedFindings().get(term) <= lastNormAlarms.get(term))
+                termsToRemove.add(term);
+        }
+        
+        for(String term : termsToRemove){
+            removeTermFromAlarm(term);
+        }
+        
+        return event;
+    }
+    
+    private void removeTermFromAlarm(String term){
+        this.lastAlarm.getFindings().remove(term);
+        this.lastAlarm.getNormalizedFindings().remove(term);
+        this.lastAlarm.getDurations().remove(term);
+        this.lastAlarm.getVolumes().remove(term);
+        this.lastAlarm.getPredictions().remove(term);
+        this.lastAlarm.getThresholds().remove(term);
+    }
+    
+    private void mergeLastAlarms(SourceVolumeAdaptationEvent event){
+        this.lastAlarm.getFindings().putAll(event.getFindings());
+        this.lastAlarm.getNormalizedFindings().putAll(event.getNormalizedFindings());
+        this.lastAlarm.getDurations().putAll(event.getDurations());
+        this.lastAlarm.getVolumes().putAll(event.getVolumes());
+        this.lastAlarm.getPredictions().putAll(event.getPredictions());
+        this.lastAlarm.getThresholds().putAll(event.getThresholds());
     }
 
     private void addRecentVolume(String term, Long volume) {
