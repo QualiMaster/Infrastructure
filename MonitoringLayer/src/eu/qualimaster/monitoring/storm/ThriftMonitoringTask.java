@@ -290,7 +290,7 @@ public class ThriftMonitoringTask extends AbstractContainerMonitoringTask {
                     if (doThrift(executor, nodePart, isInternal)) { // non-thrift happens along the events
                         aggregateExecutor(executor, nodePart, isInternal);
                     }
-                    if (!isInternal) {
+                    if (!isInternal && nodePart.getParent() instanceof PipelineSystemPart) { // pipeline -> reduce load
                         sendSummaryEvent(nodePart, part.getName(), MonitoringManager.DEMO_MSG_PROCESSING_ELEMENT);
                     }
                 } // no stats... in particular if
