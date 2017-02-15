@@ -355,6 +355,7 @@ public class VolumePredictor {
         // check if the critical period is over for ALL the terms. If so, signal this
         // to the adaptation layer by sending an empty SourceVolumeAdaptationEvent
         if(this.lastAlarm != null && this.lastAlarm.getFindings().isEmpty()){
+            System.out.println("Critical period is over for all terms, sending signal to Adaptation Layer");
             this.lastAlarm = null;
             EventManager.send(new SourceVolumeAdaptationEvent(this.pipeline, this.source));
         }

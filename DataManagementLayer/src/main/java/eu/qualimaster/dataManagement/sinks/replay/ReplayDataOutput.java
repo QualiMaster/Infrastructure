@@ -291,7 +291,7 @@ public class ReplayDataOutput implements IDataOutput, Closeable {
 					timestamp = ReplayUtils.getTimestamp(fields[idx], value);
 				} catch (Exception e) {
 					// e.printStackTrace();
-					log.warn("Error in converting timestamp: " + value + ". Ignore");
+					// log.warn("Error in converting timestamp: " + value + ". Ignore");
 					hasNull = true;
 				}
 			} else {
@@ -460,7 +460,7 @@ public class ReplayDataOutput implements IDataOutput, Closeable {
 	@Override
 	public void writeByteArray(byte[] array) throws IOException {
 		if (array == null) {
-			log.warn("Data at field " + fields[idx].getName() + " does not have data. Ignore this item");
+			// log.warn("Data at field " + fields[idx].getName() + " does not have data. Ignore this item");
 			hasNull = true;
 		}
 		else {
