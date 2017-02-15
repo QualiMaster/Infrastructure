@@ -253,7 +253,7 @@ public class VolumePredictor {
      *        for each term
      */
     public void handlePredictionStep(Map<String, Integer> observations) {
-        System.out.println("Handling prediction step...");
+//        System.out.println("Handling prediction step...");
         String toPrint = "";
         String timestamp = getTimestamp();
         toPrint += "measured timestamp = " + timestamp + "\t";
@@ -262,7 +262,7 @@ public class VolumePredictor {
         HashMap<String, Double> durations = new HashMap<>();
         ArrayList<String> unknownTerms = new ArrayList<>();
         for (String termId : observations.keySet()) {
-            System.out.println("Term id = " + termId);
+//            System.out.println("Term id = " + termId);
             // get the name of the source term from its id
             String termName;
             if (!this.idsToNamesMap.isEmpty())
@@ -270,7 +270,7 @@ public class VolumePredictor {
             else
                 termName = termId;
             
-            System.out.println("Term name = " + termName);
+//            System.out.println("Term name = " + termName);
 
             long currVolume = (long) observations.get(termId);
             

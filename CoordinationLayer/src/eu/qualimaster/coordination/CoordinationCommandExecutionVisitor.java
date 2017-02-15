@@ -207,8 +207,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
         startingCommand(command);
         String pipelineName = command.getPipeline();
         INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
-        Component receiver = CoordinationUtils.getReceiverComponent(
-            mapping.getPipelineNodeComponent(command.getPipelineElement()));
+        Component receiver = getReceiverComponent(mapping, command.getPipelineElement());
         if (null == receiver) {
             String message = "no receiver for changing the algorithm on " + command.getPipeline() + "/" 
                 + command.getPipelineElement();
@@ -233,6 +232,32 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
             getTracer().executedAlgorithmChangeCommand(command, failing);
         }
         return writeCoordinationLog(command, failing);        
+    }
+
+    /**
+     * Returns the pipeline component taking fallback into account.
+     * 
+     * @param mapping the name mapping
+     * @param pipelineElement the pipeline element
+     * @return the receiver component, <b>null</b> if there is none
+     */
+    private Component getPipelineComponent(INameMapping mapping, String pipelineElement) {
+        Component comp = mapping.getPipelineNodeComponent(pipelineElement);
+        if (null == comp) {
+            comp = mapping.getComponentByImplName(pipelineElement);
+        }
+        return comp;
+    }
+    
+    /**
+     * Returns the receiver component based on {@link #getPipelineComponent(INameMapping, String)}.
+     * 
+     * @param mapping the name mapping
+     * @param pipelineElement the pipeline element
+     * @return the receiver component, <b>null</b> if there is none
+     */
+    private Component getReceiverComponent(INameMapping mapping, String pipelineElement) {
+        return CoordinationUtils.getReceiverComponent(getPipelineComponent(mapping, pipelineElement));
     }
     
     @Override
@@ -522,8 +547,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
         String pipelineName = command.getPipeline();
         if (null != pipelineName && null != command.getPipelineElement()) {
             INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
-            Component receiver = CoordinationUtils.getReceiverComponent(
-                mapping.getPipelineNodeComponent(command.getPipelineElement()));
+            Component receiver = getReceiverComponent(mapping, command.getPipelineElement());
             if (null != receiver) {
                 MonitoringChangeSignal signal = new MonitoringChangeSignal(getNamespace(mapping), receiver.getName(), 
                     command.getFrequencies(), command.getObservables(), getCauseMessageId());
@@ -842,8 +866,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
         startingCommand(command);
         String pipelineName = command.getPipeline();
         INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
-        Component receiver = CoordinationUtils.getReceiverComponent(
-            mapping.getPipelineNodeComponent(command.getPipelineElement()));
+        Component receiver = getReceiverComponent(mapping, command.getPipelineElement());
         if (null == receiver) {
             String message = "no receiver for sending replay command on " + command.getPipeline() + "/" 
                 + command.getPipelineElement();
@@ -868,8 +891,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
         startingCommand(command);
         String pipelineName = command.getPipeline();
         INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
-        Component receiver = CoordinationUtils.getReceiverComponent(
-            mapping.getPipelineNodeComponent(command.getPipelineElement()));
+        Component receiver = getReceiverComponent(mapping, command.getPipelineElement());
         if (null == receiver) {
             String message = "no receiver for sending replay command on " + command.getPipeline() + "/" 
                 + command.getPipelineElement();
