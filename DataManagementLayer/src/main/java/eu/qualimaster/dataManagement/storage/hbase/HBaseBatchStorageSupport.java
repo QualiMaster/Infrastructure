@@ -79,7 +79,6 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 		log.info("parent: " + DataManagementConfiguration.getHbaseZnodeParent());
 		log.info("quorum: " + DataManagementConfiguration.getHbaseZkeeperQuorum());
 
-
 		// config.set("zookeeper.znode.parent", HBASE_NODE);
 		// config.set("hbase.zookeeper.quorum", HBASE_QUORUM);
 
@@ -111,8 +110,7 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 				htd.addFamily(hcd);
 				admin.createTable(htd);
 			}
-
-		} catch (Exception e) {
+		} catch (IOException e) {
 			log.error("Cannot declare generic table ", e);
 			// e.printStackTrace();
 		}
@@ -120,9 +118,9 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 
 	@Override
 	public void connect() {
-		super.connect();
-		log.info("Replay: connect");
 		try {
+			super.connect();
+			log.info("Replay: connect");
 			// config.set("zookeeper.znode.parent", "/hbase");
 			// config.set("hbase.zookeeper.quorum", "node19.ib,node23.ib,master.ib,master03.ib,node15.ib");
 
@@ -137,7 +135,7 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 			// Important: We do the flush manually to allow bulk put
 			table.setAutoFlush(false, false);
 			counter = 0;
-		} catch (IOException e) {
+		} catch (Exception e) {
 			log.error("Canot establish the connection to the default quorum "); // + HBASE_QUORUM, e);
 			e.printStackTrace();
 		}

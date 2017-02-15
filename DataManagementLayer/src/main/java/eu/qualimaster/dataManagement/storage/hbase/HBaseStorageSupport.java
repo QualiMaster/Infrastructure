@@ -116,11 +116,8 @@ public class HBaseStorageSupport extends HBaseStorageTable implements IStorageSu
 			e.printStackTrace();
 		}
 		try {
-
 			table.put(put);
-		} catch (RetriesExhaustedWithDetailsException e) {
-			e.printStackTrace();
-		} catch (InterruptedIOException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		// }
