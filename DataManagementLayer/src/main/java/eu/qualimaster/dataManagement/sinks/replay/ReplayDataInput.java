@@ -241,6 +241,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
                 byte[] endRow = (item + DELIMITER + String.valueOf(end)).getBytes("UTF-8");
                 MultiRowRangeFilter.RowRange range = new MultiRowRangeFilter.RowRange(startRow, true, endRow, true);
                 ranges.add(range);
+                queryStr += (item + DELIMITER + String.valueOf(begin) + DELIMITER + String.valueOf(end) + ",");
             }
             filter = new MultiRowRangeFilter(ranges);
         } catch (UnsupportedEncodingException e) {
