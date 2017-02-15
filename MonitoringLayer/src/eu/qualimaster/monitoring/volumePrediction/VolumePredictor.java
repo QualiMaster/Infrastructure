@@ -585,7 +585,7 @@ public class VolumePredictor {
     }
 
     private void addRecentVolume(String term, Long volume) {
-        if (this.recentVolumes.containsKey(term)) {
+        if (null != this.recentVolumes && this.recentVolumes.containsKey(term)) {
             if (this.recentVolumes.get(term).size() >= RECENT_HISTORY_SIZE)
                 this.recentVolumes.get(term).remove(0);
             this.recentVolumes.get(term).add(volume);
