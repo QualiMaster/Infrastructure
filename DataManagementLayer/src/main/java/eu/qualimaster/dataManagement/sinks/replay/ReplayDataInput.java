@@ -7,13 +7,14 @@ import eu.qualimaster.dataManagement.common.replay.Tuple;
 import eu.qualimaster.dataManagement.serialization.IDataInput;
 import eu.qualimaster.dataManagement.storage.hbase.HBaseBatchStorageSupport;
 import static eu.qualimaster.dataManagement.storage.hbase.HBaseBatchStorageSupport.COLUMN_FAMILY_BYTES;
+import static org.apache.hadoop.hbase.filter.FilterList.Operator.MUST_PASS_ALL;
+import static org.apache.hadoop.hbase.filter.FilterList.Operator.MUST_PASS_ONE;
 
 import eu.qualimaster.dataManagement.storage.support.IStorageSupport;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.MultiRowRangeFilter;
+import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.StringUtils;
 import org.slf4j.Logger;
@@ -79,7 +80,7 @@ public class ReplayDataInput implements IDataInput, Closeable {
     /** the current prefix of query */
     // private byte[][] filter;
     // 2017-02-14: Change to MultiRowRangeFilter
-    private Filter filter;
+    private FilterList filter;
 
     /* for logging purpose */
     private String queryStr;
@@ -194,22 +195,24 @@ public class ReplayDataInput implements IDataInput, Closeable {
                 pairs.add(items[j] + DELIMITER + items[i]);
             }
         }
-        List<MultiRowRangeFilter.RowRange> ranges = new ArrayList<MultiRowRangeFilter.RowRange>();
+        // List<MultiRowRangeFilter.RowRange> ranges = new ArrayList<MultiRowRangeFilter.RowRange>();
+        filter = new FilterList(MUST_PASS_ONE);
         try {
             for (String item : pairs) {
+                FilterList range = new FilterList(MUST_PASS_ALL);
                 byte[] startRow = (item + DELIMITER + String.valueOf(begin)).getBytes("UTF-8");
                 byte[] endRow = (item + DELIMITER + String.valueOf(end)).getBytes("UTF-8");
-                MultiRowRangeFilter.RowRange range = new MultiRowRangeFilter.RowRange(startRow, true, endRow, true);
-                ranges.add(range);
+                range.addFilter(new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL, new BinaryComparator(startRow)));
+                range.addFilter(new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, new BinaryComparator(endRow)));
+                filter.addFilter(range);
                 queryStr += (item + DELIMITER + String.valueOf(begin) + DELIMITER + String.valueOf(end));
             }
         } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
             LOG.error("Error processing query: " + queryStr);
             throw new RuntimeException(e);
-        }
-        try {
-            filter = new MultiRowRangeFilter(ranges);
         } catch (IOException e) {
+            e.printStackTrace();
             LOG.error("Error processing query: " + queryStr);
             throw new RuntimeException(e);
         }
