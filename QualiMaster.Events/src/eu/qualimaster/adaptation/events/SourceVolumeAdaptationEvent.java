@@ -34,22 +34,22 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
     private String pipeline;
     private String source;
     
-    /** The alarm values for each term (how much the predicted volume exceeds the threshold) */
+    /** The alarm values for each term (how much the predicted volume exceeds the threshold). */
     private Map<String, Double> findings = new HashMap<String, Double>();
     
-    /** Normalized version of findings (between 0 and 1) */
+    /** Normalized version of findings (between 0 and 1). */
     private Map<String, Double> normalizedFindings = new HashMap<String, Double>();
     
-    /** Probabilities of each alarm to stay active for (at least) the next 5 minutes */
+    /** Probabilities of each alarm to stay active for (at least) the next 5 minutes. */
     private Map<String, Double> durations = new HashMap<String, Double>();
     
-    /** The observed volumes for each critical term */
+    /** The observed volumes for each critical term. */
     private Map<String, Long> volumes = new HashMap<String, Long>();
     
-    /** The predicted volumes for each critical term */
+    /** The predicted volumes for each critical term. */
     private Map<String, Double> predictions = new HashMap<>();
     
-    /** The threshold for each critical term (to determine whether to raise an alarm or not) */
+    /** The threshold for each critical term (to determine whether to raise an alarm or not). */
     private Map<String, Double> thresholds = new HashMap<String, Double>();
 
     /**
@@ -128,6 +128,8 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
         this.durations = durations;
     }
     
+    // checkstyle: stop parameter number check
+    
     /**
      * Creates a source volume adaptation event.
      * 
@@ -157,15 +159,14 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
         this.predictions = predictions;
         this.thresholds = thresholds;
     }
-    
+
+    // checkstyle: resume parameter number check
+
     /**
      * Creates an empty source volume adaptation event.
      * 
      * @param pipeline the pipeline name
      * @param source the source name
-     * @param findings the findings
-     * @param normFindings the normalized findings
-     * @param durations the probabilities of alarms to hold for "enough" time
      * @throws IllegalArgumentException if <code>findings</code> is <b>null</b> or empty
      */
     @QMInternal
@@ -283,6 +284,8 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
     }
 
     /**
+     * Returns the volumes.
+     * 
      * @return the volumes
      */
     public Map<String, Long> getVolumes() {
@@ -290,6 +293,8 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
     }
 
     /**
+     * Returns the predictions.
+     * 
      * @return the predictions
      */
     public Map<String, Double> getPredictions() {
@@ -297,6 +302,8 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
     }
 
     /**
+     * Returns the thresholds.
+     * 
      * @return the thresholds
      */
     public Map<String, Double> getThresholds() {
