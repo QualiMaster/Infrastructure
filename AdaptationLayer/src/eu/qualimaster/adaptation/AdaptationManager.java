@@ -105,6 +105,12 @@ public class AdaptationManager {
 
         @Override
         protected void handle(AdaptationEvent event) {
+            if (null != endpoint) {
+                InformationMessage msg = AdaptationEventInformationMessageConverter.toMessage(event);
+                if (null != msg) {
+                    endpoint.schedule(msg);
+                }
+            }
             AdaptationManager.handleEvent(event);
         }
         
