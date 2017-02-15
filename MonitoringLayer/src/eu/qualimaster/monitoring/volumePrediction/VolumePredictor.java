@@ -796,7 +796,7 @@ public class VolumePredictor {
             //String[] fields = name.split("ï¿½");
             String[] fields = name.split("-");
             if (fields.length > 1)
-                name = fields[0] + "·" + fields[1];
+                name = fields[0] + "-" + fields[1];
             else
                 name = fields[0];
             System.out.println("Name after formatting = " + name);
