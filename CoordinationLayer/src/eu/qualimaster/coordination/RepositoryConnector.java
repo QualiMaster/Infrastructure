@@ -47,6 +47,7 @@ import net.ssehub.easy.varModel.model.datatypes.Reference;
 import net.ssehub.easy.varModel.model.values.CompoundValue;
 import net.ssehub.easy.varModel.model.values.ContainerValue;
 import net.ssehub.easy.varModel.model.values.IntValue;
+import net.ssehub.easy.varModel.model.values.RealValue;
 import net.ssehub.easy.varModel.model.values.ReferenceValue;
 import net.ssehub.easy.varModel.model.values.StringValue;
 import net.ssehub.easy.varModel.model.values.Value;
@@ -908,6 +909,23 @@ public class RepositoryConnector {
             Value value = var.getValue();
             if (value instanceof IntValue) {
                 result = ((IntValue) value).getValue();
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns the Integer value of a decision variable.
+     * 
+     * @param var the variable to return the Integer for
+     * @return the value, only if <code>var</code> is not <b>null</b> and of type Integer
+     */
+    public static Double getRealValue(IDecisionVariable var) {
+        Double result = null;
+        if (null != var) {
+            Value value = var.getValue();
+            if (value instanceof RealValue) {
+                result = ((RealValue) value).getValue();
             }
         }
         return result;

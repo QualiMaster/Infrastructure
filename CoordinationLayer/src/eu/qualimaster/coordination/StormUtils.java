@@ -28,12 +28,18 @@ import org.apache.thrift7.TException;
 import eu.qualimaster.base.algorithm.IMainTopologyCreate;
 import eu.qualimaster.base.algorithm.TopologyOutput;
 import eu.qualimaster.common.signal.ThriftConnection;
+import eu.qualimaster.coordination.RepositoryConnector.Models;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.coordination.events.CoordinationCommandExecutionEvent;
 import eu.qualimaster.easy.extension.internal.AlgorithmProfileHelper.ProfileData;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineOptions;
 import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
+import net.ssehub.easy.varModel.confModel.Configuration;
+import net.ssehub.easy.varModel.confModel.IDecisionVariable;
+import net.ssehub.easy.varModel.model.AbstractVariable;
+import net.ssehub.easy.varModel.model.ModelQuery;
+import net.ssehub.easy.varModel.model.ModelQueryException;
 import backtype.storm.Config;
 import backtype.storm.ILocalCluster;
 import backtype.storm.StormSubmitter;
@@ -1239,9 +1245,41 @@ public class StormUtils {
         List<SupervisorSummary> supervisors = cluster.get_supervisors();
         Map<String, Integer> free = new HashMap<String, Integer>();
         List<String> hosts = new ArrayList<String>();
+        int allWorkers = 0;
+        int usedWorkers = 0;
+        for (SupervisorSummary supervisor: supervisors) {
+            allWorkers += supervisor.get_num_workers();
+            usedWorkers += supervisor.get_num_used_workers();
+        }
+        
+        double maxAllocationPercentage = 1;
+        Models models = CoordinationUtils.getCoordinationModels();
+        if (null != models) {
+            Configuration cfg = models.getConfiguration();
+            if (null != cfg) {
+                try {
+                    AbstractVariable decl = ModelQuery.findVariable(cfg.getProject(), "maxClusterAllocation", null);
+                    if (null != decl) {
+                        IDecisionVariable var = models.getConfiguration().getDecision(decl);
+                        Double tmp = RepositoryConnector.getRealValue(var);
+                        if (null != tmp) {
+                            maxAllocationPercentage = tmp;
+                        }
+                    }
+                } catch (ModelQueryException e) {
+                }
+            }
+        }
+
+        int residualWorkers = allWorkers - (int) (allWorkers * maxAllocationPercentage);
+        int usableWorkers = allWorkers - residualWorkers - usedWorkers;
+        int consideredWorkers = 0;
         for (SupervisorSummary supervisor: supervisors) {
             String host = supervisor.get_host();
             int f = supervisor.get_num_workers() - supervisor.get_num_used_workers();
+            if (consideredWorkers < usableWorkers) {
+                f = Math.min(f, usableWorkers - consideredWorkers);
+            }
             if (f > 0) {
                 Integer known = free.get(host);
                 if (null == known) {
@@ -1251,6 +1289,7 @@ public class StormUtils {
                     free.put(host, known + f);
                 }
             }
+            consideredWorkers += f;
         }
         
         for (Map.Entry<String, ParallelismChangeRequest> ent : changes.entrySet()) {
