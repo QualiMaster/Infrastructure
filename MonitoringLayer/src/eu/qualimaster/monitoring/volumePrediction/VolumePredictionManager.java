@@ -273,21 +273,21 @@ public class VolumePredictionManager {
             volumePredictors.put(event.getSource(), predictor);
             status = "ready";
             
-            System.out.println();
-            System.out.println("Available predictors:");
-            for(String key : volumePredictors.keySet()){
-                VolumePredictor p = volumePredictors.get(key);
-                System.out.println("source = " + p.getSourceName());
-                for(String idKey : p.getIdsToNamesMap().keySet()){
-                    System.out.println("term id = " + idKey + ", termName = " + p.getIdsToNamesMap().get(idKey));
-                }
-                String toPrint = "Monitored terms: ";
-                for(String model : p.getMonitoredTerms())
-                    toPrint += model + ", ";
-                System.out.println(toPrint);
-                System.out.println();
-            }
-            System.out.println();
+//            System.out.println();
+//            System.out.println("Available predictors:");
+//            for(String key : volumePredictors.keySet()){
+//                VolumePredictor p = volumePredictors.get(key);
+//                System.out.println("source = " + p.getSourceName());
+//                for(String idKey : p.getIdsToNamesMap().keySet()){
+//                    System.out.println("term id = " + idKey + ", termName = " + p.getIdsToNamesMap().get(idKey));
+//                }
+//                String toPrint = "Monitored terms: ";
+//                for(String model : p.getMonitoredTerms())
+//                    toPrint += model + ", ";
+//                System.out.println(toPrint);
+//                System.out.println();
+//            }
+//            System.out.println();
             
             //warmup
             warmUp(MonitoringConfiguration.getVolumeModelLocation() + "/warmupData/");
@@ -355,32 +355,32 @@ public class VolumePredictionManager {
         // use the right predictor (based on the source) to handle the
         // prediction for the incoming terms
         
-        System.out.println("Received monitoring for prediction:");
-        System.out.println("source = " + event.getPipelineElement());
-        for(String key : event.getObservations().keySet())
-            System.out.println("key = " + key + ", value = " + event.getObservations().get(key));
+//        System.out.println("Received monitoring for prediction:");
+//        System.out.println("source = " + event.getPipelineElement());
+//        for(String key : event.getObservations().keySet())
+//            System.out.println("key = " + key + ", value = " + event.getObservations().get(key));
         
-        System.out.println();
-        System.out.println("Available predictors:");
-        for(String key : volumePredictors.keySet()){
-            VolumePredictor p = volumePredictors.get(key);
-            System.out.println("source = " + p.getSourceName());
-            for(String idKey : p.getIdsToNamesMap().keySet()){
-                System.out.println("term id = " + idKey + ", termName = " + p.getIdsToNamesMap().get(idKey));
-            }
-            String toPrint = "Monitored terms: ";
-            for(String model : p.getMonitoredTerms())
-                toPrint += model + ", ";
-            System.out.println(toPrint);
-            System.out.println();
-        }
-        System.out.println();
+//        System.out.println();
+//        System.out.println("Available predictors:");
+//        for(String key : volumePredictors.keySet()){
+//            VolumePredictor p = volumePredictors.get(key);
+//            System.out.println("source = " + p.getSourceName());
+//            for(String idKey : p.getIdsToNamesMap().keySet()){
+//                System.out.println("term id = " + idKey + ", termName = " + p.getIdsToNamesMap().get(idKey));
+//            }
+//            String toPrint = "Monitored terms: ";
+//            for(String model : p.getMonitoredTerms())
+//                toPrint += model + ", ";
+//            System.out.println(toPrint);
+//            System.out.println();
+//        }
+//        System.out.println();
         
         status = "monitoring";
         VolumePredictor predictor = volumePredictors.get(event
                 .getPipelineElement());
         if (predictor != null){
-            System.out.println("Predictor exists for source " + event.getPipelineElement());
+//            System.out.println("Predictor exists for source " + event.getPipelineElement());
             predictor.handlePredictionStep(event.getObservations());
         }
         else{
