@@ -23,6 +23,7 @@ import eu.qualimaster.monitoring.events.FrozenSystemState;
 import eu.qualimaster.monitoring.parts.PartType;
 import eu.qualimaster.monitoring.tracing.ITrace;
 import eu.qualimaster.monitoring.tracing.Tracing;
+import eu.qualimaster.observables.IObservable;
 
 /**
  * Represents the platform itself.
@@ -266,21 +267,21 @@ public class PlatformSystemPart extends SystemPart {
     }
 
     @Override
-    protected void fill(String prefix, String name, FrozenSystemState state) {
-        super.fill(prefix, name, state);
+    protected void fill(String prefix, String name, FrozenSystemState state, Map<IObservable, Double> factors) {
+        super.fill(prefix, name, state, factors);
         synchronized (machines) {
             for (Map.Entry<String, MachineSystemPart> entry : machines.entrySet()) {
-                entry.getValue().fill(FrozenSystemState.MACHINE, entry.getKey(), state);
+                entry.getValue().fill(FrozenSystemState.MACHINE, entry.getKey(), state, factors);
             }
         }
         synchronized (hwClusters) {
             for (Map.Entry<String, HwNodeSystemPart> entry : hwClusters.entrySet()) {
-                entry.getValue().fill(FrozenSystemState.HWNODE, entry.getKey(), state);
+                entry.getValue().fill(FrozenSystemState.HWNODE, entry.getKey(), state, factors);
             }
         }
         synchronized (clouds) {
             for (Map.Entry<String, CloudEnvironmentSystemPart> entry : clouds.entrySet()) {
-                entry.getValue().fill(FrozenSystemState.CLOUDENV, entry.getKey(), state);
+                entry.getValue().fill(FrozenSystemState.CLOUDENV, entry.getKey(), state, factors);
             }
         }
     }

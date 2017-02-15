@@ -20,6 +20,7 @@ import java.util.TimerTask;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import eu.qualimaster.adaptation.events.SourceVolumeAdaptationEvent;
 import eu.qualimaster.common.monitoring.MonitoringPluginRegistry;
 import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.coordination.INameMapping;
@@ -793,6 +794,42 @@ public class MonitoringManager {
         EventManager.register(new CoordinationCommandEventHandler());
         EventManager.register(new ShutdownEventHandler());
         EventManager.register(new AlgorithmProfilingEventHandler());
+        EventManager.register(new SourceVolumeAdaptationEventHandler());
+    }
+
+    /**
+     * A handler for source volume adaptation requests. Actually, the monitoring handler shall handle this
+     * but we just increase the frozen system state values here and reuse the complete constraint mechanism.
+     * 
+     * @author Holger Eichelberger
+     */
+    private static class SourceVolumeAdaptationEventHandler extends EventHandler<SourceVolumeAdaptationEvent> {
+
+        /**
+         * Creates a new handler.
+         */
+        protected SourceVolumeAdaptationEventHandler() {
+            super(SourceVolumeAdaptationEvent.class);
+        }
+
+        @Override
+        protected void handle(SourceVolumeAdaptationEvent event) {
+            PipelineSystemPart pip = getSystemState().getPipeline(event.getPipeline());
+            if (null != pip) {
+                Map<String, Double> deviations = event.getNormalizedFindings();
+                if (null != deviations) {
+                    if (deviations.isEmpty()) {
+                        pip.setOverloadEvent(null);
+                    } else {
+                        SourceVolumeAdaptationEvent old = pip.getOverloadEvent();
+                        if (null == old || old.getAverageDeviations() < event.getAverageDeviations()) {
+                            pip.setOverloadEvent(event);
+                        }
+                    }
+                }
+            }
+        }
+        
     }
 
     /**

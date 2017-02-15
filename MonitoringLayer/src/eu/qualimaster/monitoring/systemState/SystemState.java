@@ -233,10 +233,11 @@ public class SystemState implements Serializable {
      */
     public synchronized FrozenSystemState freeze() {
         FrozenSystemState result = new FrozenSystemState();
-        platform.fill(FrozenSystemState.INFRASTRUCTURE, FrozenSystemState.INFRASTRUCTURE_NAME, result);
+        platform.fill(FrozenSystemState.INFRASTRUCTURE, FrozenSystemState.INFRASTRUCTURE_NAME, result, null);
         synchronized (pipelines) {
             for (Map.Entry<String, PipelineSystemPart> entry : pipelines.entrySet()) {
-                entry.getValue().fill(FrozenSystemState.PIPELINE, entry.getKey(), result);
+                PipelineSystemPart pip = entry.getValue();
+                pip.fill(FrozenSystemState.PIPELINE, entry.getKey(), result, pip.getAdjustmentFactors());
             }
         }
         return result;
@@ -252,17 +253,18 @@ public class SystemState implements Serializable {
      */
     public synchronized FrozenSystemState freeze(String pipeline) {
         FrozenSystemState result = new FrozenSystemState();
-        platform.fill(FrozenSystemState.INFRASTRUCTURE, FrozenSystemState.INFRASTRUCTURE_NAME, result);
+        platform.fill(FrozenSystemState.INFRASTRUCTURE, FrozenSystemState.INFRASTRUCTURE_NAME, result, null);
         if (null != pipeline) {
             synchronized (pipelines) {
                 PipelineSystemPart pip = pipelines.get(pipeline);
                 if (null != pip) {
-                    pip.fill(FrozenSystemState.PIPELINE, pipeline, result);
+                    pip.fill(FrozenSystemState.PIPELINE, pipeline, result, pip.getAdjustmentFactors());
                 }
             }
         }
         return result;
     }
+    
     
     /**
      * Returns the pipeline node part for a given implementation name.

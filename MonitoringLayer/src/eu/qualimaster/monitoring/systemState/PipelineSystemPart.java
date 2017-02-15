@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.apache.log4j.LogManager;
 
+import eu.qualimaster.adaptation.events.SourceVolumeAdaptationEvent;
 import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.INameMapping.Algorithm;
 import eu.qualimaster.coordination.INameMapping.Component;
@@ -51,6 +52,7 @@ import eu.qualimaster.monitoring.tracing.ITrace;
 import eu.qualimaster.monitoring.tracing.Tracing;
 import eu.qualimaster.observables.IObservable;
 import eu.qualimaster.observables.ResourceUsage;
+import eu.qualimaster.observables.Scalability;
 
 /**
  * Stores monitoring information for a pipeline system part.
@@ -74,6 +76,7 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
     private transient PipelineTopology topology;
     private transient ITopologyProjection topologyProjection;
     private SystemState state;
+    private transient SourceVolumeAdaptationEvent overloadEvent;
     
     @SuppressWarnings("serial")
     private IReturnableEvent currentOrigin = new AbstractReturnableEvent() { };
@@ -150,6 +153,46 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
         setTopology(source.topology); // readonly, can be copied
         // all elements happens through copying / register node
     }
+    
+    /**
+     * Assigns an overload event affecting the monitored values passed to a frozen system state.
+     * 
+     * @param overloadEvent the overload event (<b>null</b> for none)
+     */
+    public void setOverloadEvent(SourceVolumeAdaptationEvent overloadEvent) {
+        this.overloadEvent = overloadEvent;
+    }
+    
+    /**
+     * Returns the overload event.
+     * 
+     * @return the overload event (<b>null</b> for none)
+     */
+    public SourceVolumeAdaptationEvent getOverloadEvent() {
+        return overloadEvent;
+    }
+    
+    /**
+     * Returns observable adjustment factors for freezing.
+     * 
+     * @return the adjustment factors, may be <b>null</b> for none
+     */
+    protected Map<IObservable, Double> getAdjustmentFactors() {
+        Map<IObservable, Double> factors = null;
+        if (null != overloadEvent) {
+            double dev = overloadEvent.getAverageDeviations();
+            if (dev > 0) {
+                double factor = 1 + dev;
+                factors = new HashMap<IObservable, Double>();
+                factors.put(Scalability.ITEMS, factor);
+                factors.put(Scalability.PREDECESSOR_ITEMS, factor);
+                factors.put(ResourceUsage.CAPACITY, factor);
+                // throughput/latency shall follow
+            }
+        }
+        return factors;
+    }
+
     
     @Override
     public PipelineTopology getTopology() {
@@ -473,33 +516,33 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
     }
 
     @Override
-    protected void fill(String prefix, String name, FrozenSystemState state) {
-        super.fill(prefix, name, state);
+    protected void fill(String prefix, String name, FrozenSystemState state, Map<IObservable, Double> factors) {
+        super.fill(prefix, name, state, factors);
         synchronized (elements) {
             for (Map.Entry<String, PipelineNodeSystemPart> entry : elements.entrySet()) {
                 PipelineNodeSystemPart part = entry.getValue();
                 if (!part.isInternal()) {
                     part.fill(FrozenSystemState.PIPELINE_ELEMENT, 
-                        FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state);
+                        FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state, factors);
                 }
             }
         }
         synchronized (algorithms) {
             for (Map.Entry<String, NodeImplementationSystemPart> entry : algorithms.entrySet()) {
                 entry.getValue().fill(FrozenSystemState.ALGORITHM, 
-                    FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state);
+                    FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state, factors);
             }
         }
         synchronized (sources) {
             for (Map.Entry<String, NodeImplementationSystemPart> entry : sources.entrySet()) {
                 entry.getValue().fill(FrozenSystemState.DATASOURCE, 
-                    FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state);
+                    FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state, factors);
             }
         }
         synchronized (sinks) {
             for (Map.Entry<String, NodeImplementationSystemPart> entry : sources.entrySet()) {
                 entry.getValue().fill(FrozenSystemState.DATASINK, 
-                    FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state);
+                    FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state, factors);
             }
         }
     }
