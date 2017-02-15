@@ -185,9 +185,18 @@ public class ReplayDataInput implements IDataInput, Closeable {
             LOG.warn("Current replay mechanism only support multiple-player queries");
             return;
         }
+        List<String> pairs = new ArrayList<>();
+        String[] items = query.split(" ");
+        int n = items.length;
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = i+1; j < n; j++) {
+                pairs.add(items[i] + DELIMITER + items[j]);
+                pairs.add(items[j] + DELIMITER + items[i]);
+            }
+        }
         List<MultiRowRangeFilter.RowRange> ranges = new ArrayList<MultiRowRangeFilter.RowRange>();
         try {
-            for (String item : query.split(" ")) {
+            for (String item : pairs) {
                 byte[] startRow = (item + DELIMITER + String.valueOf(begin)).getBytes("UTF-8");
                 byte[] endRow = (item + DELIMITER + String.valueOf(end)).getBytes("UTF-8");
                 MultiRowRangeFilter.RowRange range = new MultiRowRangeFilter.RowRange(startRow, true, endRow, true);
