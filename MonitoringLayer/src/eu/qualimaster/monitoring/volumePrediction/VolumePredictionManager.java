@@ -380,16 +380,16 @@ public class VolumePredictionManager {
         VolumePredictor predictor = volumePredictors.get(event
                 .getPipelineElement());
         if (predictor != null){
-            System.out.println("Predictor exists for source " + event.getPipelineElement());
+//            System.out.println("Predictor exists for source " + event.getPipelineElement());
             predictor.handlePredictionStep(event.getObservations());
         }
         else{
-            //if (!pipelinesWithErrors.contains(event.getPipelineElement())){
+            if (!pipelinesWithErrors.contains(event.getPipelineElement())){
                 System.out
                 .println("ERROR: no volume predictor available for the input source "
                         + event.getPipelineElement());
-            //    pipelinesWithErrors.add(event.getPipelineElement());
-            //}
+                pipelinesWithErrors.add(event.getPipelineElement());
+            }
         }
         status = "ready";
     }
