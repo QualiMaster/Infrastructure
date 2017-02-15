@@ -30,10 +30,10 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
 	private static final String BASE_URL = "http://84.200.210.254/Qualimaster/history/";
 	
 	/** The default list of terms to be monitored by default */
-	private static final String[] DEFAULT_MONITORED_TERMS = {"NASDAQ種FLX"}; //"NASDAQ稟APL","NASDAQ稟MAT", //"NYSE稢HK","NASDAQ稢SCO","NASDAQ稦B","NASDAQ稧OOGL","NYSE稩BM","NASDAQ稭U","NYSE_MKT稸HC"};
+	private static final String[] DEFAULT_MONITORED_TERMS = {"NASDAQ路NFLX"};
 	
 	/** The default list of terms to be looked up for blind prediction */
-	private static final String[] DEFAULT_BLIND_TERMS = {"NASDAQ稟APL","NASDAQ稟MAT","NASDAQ種FLX","NYSE稢HK","NASDAQ稢SCO","NASDAQ稦B","NASDAQ稧OOGL","NYSE稩BM","NASDAQ稭U","NYSE_MKT稸HC","Toronto稥CA","NYSE稦","NYSE稨PQ","Amsterdam稭T","NASDAQ稴PLS"};
+	private static final String[] DEFAULT_BLIND_TERMS = {"NASDAQ路AAPL","NASDAQ路AMAT","NASDAQ路NFLX","NYSE路CHK","NASDAQ路CSCO","NASDAQ路FB","NASDAQ路GOOGL","NYSE路IBM","NASDAQ路MU","NYSE_MKT路VHC","Toronto路ECA","NYSE路F","NYSE路HPQ","Amsterdam路MT","NASDAQ路SPLS"};
 	
 	/** The default set of months used for testing. */
 	private static final String[] TEST_MONTHS = {"201603","201604","201605"};
@@ -48,7 +48,7 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
      * Obtains historical data from Spring server (default url)
      * 
      * @param timeHorizon the time horizon in milliseconds into the past
-     * @param term the name of the stock for which the historical data is demanded (format: INDEX_NAME稴TOCK_NAME)
+     * @param term the name of the stock for which the historical data is demanded (format: INDEX_NAME锟絊TOCK_NAME)
      * @param target the target file where to store the data
      * @throws IOException in case that obtaining the historical data fails
      */
@@ -61,7 +61,7 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
      * Obtains historical data from a custom server
      * 
      * @param timeHorizon the time horizon in milliseconds into the past
-     * @param term the name of the stock for which the historical data is demanded (format: INDEX_NAME稴TOCK_NAME)
+     * @param term the name of the stock for which the historical data is demanded (format: INDEX_NAME锟絊TOCK_NAME)
      * @param target the target file where to store the data
      * @param server the url of the server where the data has to be downloaded
      * @throws IOException in case that obtaining the historical data fails
@@ -134,7 +134,7 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
     {
     	try{
 			// download the data (zip file) in a ZipInputStream object
-	    	URL url = new URL(server + date + "_" + term + "種oExpiry.zip");
+	    	URL url = new URL(server + date + "_" + term + "锟絅oExpiry.zip");
 	    	HttpURLConnection con = (HttpURLConnection )url.openConnection();
 			
 	    	Charset charset = Charset.forName("CP437");
@@ -154,7 +154,7 @@ public class SpringHistoricalDataProvider implements IHistoricalDataProvider,Ser
     private boolean getHistoricalDataLocally(String term, String date, String path, BufferedWriter writer) throws IOException
     {
     	try{
-			String fileName = date + "_" + term + "種oExpiry.his";
+			String fileName = date + "_" + term + "锟絅oExpiry.his";
 			File folder = new File(path);
 			for(File f : folder.listFiles()){
 				if(f.getName().compareTo(fileName) == 0){
