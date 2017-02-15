@@ -288,7 +288,7 @@ public class VolumePredictor {
             }
             
             toPrint += "current volume = " + currVolume + "\t";
-            Prediction model = this.models.get(termName);
+            Prediction model = null == this.models ? null : this.models.get(termName);
 
             // add the current observation to the recent volumes for the current
             // term
