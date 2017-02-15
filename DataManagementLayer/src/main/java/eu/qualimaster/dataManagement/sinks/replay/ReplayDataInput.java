@@ -11,6 +11,9 @@ import static eu.qualimaster.dataManagement.storage.hbase.HBaseBatchStorageSuppo
 import eu.qualimaster.dataManagement.storage.support.IStorageSupport;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.MultiRowRangeFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.StringUtils;
 import org.slf4j.Logger;
@@ -20,9 +23,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * The wrapper of replay data input. Current version is backed by the
@@ -76,7 +77,9 @@ public class ReplayDataInput implements IDataInput, Closeable {
     private boolean eod;
 
     /** the current prefix of query */
-    private byte[][] filter;
+    // private byte[][] filter;
+    // 2017-02-14: Change to MultiRowRangeFilter
+    private Filter filter;
 
     /* for logging purpose */
     private String queryStr;
@@ -93,7 +96,6 @@ public class ReplayDataInput implements IDataInput, Closeable {
         this.db.connect();
         int n = schema.getFields().size();
         fields = new byte[n][];
-        filter = new byte[2][];
 
         // The first item is the number of key fields
         keyIdx = new int[n];
@@ -121,14 +123,11 @@ public class ReplayDataInput implements IDataInput, Closeable {
         if (scanner != null)
             scanner.close();
         peekedRow = null;
-        Object obj = null;
         try {
-            LOG.info("Querying db with query range: " + new String(filter[0]) + ", " + new String(filter[1]));
-            obj = db.get(filter);
-            if (obj == null || !(obj instanceof ResultScanner)) {
-                LOG.warn("Error getting the scanner from the query " + query);
-            }
-            scanner = (ResultScanner)obj;
+            LOG.info("Querying db with query: " + queryStr);
+            Scan obj = new Scan();
+            obj.setFilter(filter);
+            scanner = (ResultScanner) db.get(obj);
             isClosed = false;
 
             iter = scanner.iterator();
@@ -158,7 +157,8 @@ public class ReplayDataInput implements IDataInput, Closeable {
         }
     }
     */
-    private void parseQuery(String query, Date startDate, Date endDate) {
+
+    /* private void parseQuery(String query, Date startDate, Date endDate) {
         long begin = ReplayUtils.getTimestamp(startDate);
         long end = ReplayUtils.getTimestamp(endDate);
         if (query.indexOf(' ') >= 0) {
@@ -173,6 +173,35 @@ public class ReplayDataInput implements IDataInput, Closeable {
             filter[1] = (queryStr + DELIMITER + String.valueOf(end)).getBytes("UTF-8");
         } catch (UnsupportedEncodingException e) {
             LOG.error("Error processing query: " + query);
+            throw new RuntimeException(e);
+        }
+    } */
+
+    /** 2017-02-14: parse the query involving multiple market players using both queries */
+    private void parseQuery(String query, Date startDate, Date endDate) {
+        long begin = ReplayUtils.getTimestamp(startDate);
+        long end = ReplayUtils.getTimestamp(endDate);
+        if (query.indexOf(' ') < 0) {
+            LOG.warn("Current replay mechanism only support multiple-player queries");
+            return;
+        }
+        List<MultiRowRangeFilter.RowRange> ranges = new ArrayList<MultiRowRangeFilter.RowRange>();
+        try {
+            for (String item : query.split(" ")) {
+                byte[] startRow = (item + DELIMITER + String.valueOf(begin)).getBytes("UTF-8");
+                byte[] endRow = (item + DELIMITER + String.valueOf(end)).getBytes("UTF-8");
+                MultiRowRangeFilter.RowRange range = new MultiRowRangeFilter.RowRange(startRow, true, endRow, true);
+                ranges.add(range);
+                queryStr += (item + DELIMITER + String.valueOf(begin) + DELIMITER + String.valueOf(end));
+            }
+        } catch (UnsupportedEncodingException e) {
+            LOG.error("Error processing query: " + queryStr);
+            throw new RuntimeException(e);
+        }
+        try {
+            filter = new MultiRowRangeFilter(ranges);
+        } catch (IOException e) {
+            LOG.error("Error processing query: " + queryStr);
             throw new RuntimeException(e);
         }
     }
@@ -449,11 +478,14 @@ public class ReplayDataInput implements IDataInput, Closeable {
         }
     }
 
+    /** Silently iterate and aggregate the items */
     private void _advance() {
+        Result lastRow = null; // Keep the last raw item to emit in case the aggregation does not go the full cycle
         while (iter.hasNext()) {
             Result r = iter.next();
-            String[] rKey = (peekedRow != null) ? new String(r.getRow(), Charset.forName("UTF-8")).split("-") : null;
-            LOG.info("Get data " + StringUtils.join("-", rKey));
+            String[] rKey = new String(r.getRow(), Charset.forName("UTF-8")).split("-");
+            LOG.info("Get data: " + StringUtils.join("-", rKey));
+            lastRow = r;
             Result aggregatedRow = aggregator.aggregate(rKey, r);
             if (aggregatedRow != null) {
                 peekedRow = aggregatedRow;
@@ -462,9 +494,9 @@ public class ReplayDataInput implements IDataInput, Closeable {
                 return;
             }
         }
-        LOG.info("The iterator is empty or exhausted. Return null");
-        peekedRow = null;
-        eod = true;
+        LOG.info("The iterator is empty or exhausted. Return the last item if any");
+        peekedRow = lastRow;
+        eod = (lastRow == null);
     }
 
     @Override

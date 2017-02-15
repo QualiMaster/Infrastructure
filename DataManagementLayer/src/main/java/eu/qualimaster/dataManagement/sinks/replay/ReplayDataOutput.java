@@ -1,9 +1,6 @@
 package eu.qualimaster.dataManagement.sinks.replay;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-
+import java.io.*;
 import eu.qualimaster.dataManagement.common.replay.Field;
 import static eu.qualimaster.dataManagement.common.replay.Field.DELIMITER;
 import eu.qualimaster.dataManagement.common.replay.ReplayUtils;
@@ -293,6 +290,7 @@ public class ReplayDataOutput implements IDataOutput, Closeable {
 				try {
 					timestamp = ReplayUtils.getTimestamp(fields[idx], value);
 				} catch (Exception e) {
+					// e.printStackTrace();
 					log.warn("Error in converting timestamp: " + value + ". Ignore");
 					hasNull = true;
 				}
@@ -480,5 +478,44 @@ public class ReplayDataOutput implements IDataOutput, Closeable {
 	@Override
 	public void close() throws IOException {
 		storer.disconnect();
+	}
+
+	/** Test routine: Write CSV file into HBase */
+	private static void importTransfer(String[] args) {
+		HBaseBatchStorageSupport storer = new HBaseBatchStorageSupport("output-prior-replay--pairwiseFinancial");
+		Field f = new eu.qualimaster.dataManagement.common.replay.Field("value", double.class, false, false);
+		try {
+			storer.connect();
+			HBaseBatchStorageSupport.HBaseRow row = new HBaseBatchStorageSupport.HBaseRow();
+			row.addColumn(Bytes.toBytes(f.getName()));
+			// Open the file
+			FileInputStream fstream = new FileInputStream(args[0]);
+			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+
+			String strLine;
+
+			//Read File Line By Line
+			while ((strLine = br.readLine()) != null)   {
+				String[] strs = strLine.split("\t");
+				long ts = ReplayUtils.getTimestamp(strs[2]);
+				String key = strs[0] + "-" + strs[1] + "-" + ts;
+				row.setKey(key.getBytes("UTF-8"));
+				row.addValue(Bytes.toBytes(Double.parseDouble(strs[3])));
+				storer.write(row);
+				row.resetData();
+			}
+
+			br.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			storer.disconnect();
+		}
+	}
+
+	public static void main(String[] args) {
+		importTransfer(args);
 	}
 }

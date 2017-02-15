@@ -82,7 +82,7 @@
 			</plugin>
 
 
-            <!--  disabled due to local dependency
+            <!--  disabled due to local dependency -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
@@ -103,7 +103,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			 -->
+
 		</plugins>
 
 		<pluginManagement>
@@ -177,7 +177,7 @@
             <scope>import</scope>
         </dependency>            
     </dependencies>
-</dependencyManagement>
+	</dependencyManagement>
   
 	<dependencies>
 		<!-- Storm Dependency -->
@@ -196,6 +196,7 @@
 		<dependency>
 			<groupId>org.apache.hbase</groupId>
 			<artifactId>hbase-client</artifactId>
+			<version>1.2.0</version>
 		</dependency>
 		<dependency>
 	      <groupId>org.apache.hadoop</groupId>

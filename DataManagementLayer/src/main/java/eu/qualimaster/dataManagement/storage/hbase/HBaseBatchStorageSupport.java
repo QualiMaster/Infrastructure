@@ -139,7 +139,7 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 			counter = 0;
 		} catch (IOException e) {
 			log.error("Canot establish the connection to the default quorum "); // + HBASE_QUORUM, e);
-			// e.printStackTrace();
+			e.printStackTrace();
 		}
 	}
 
@@ -195,19 +195,22 @@ public class HBaseBatchStorageSupport extends HBaseStorageTable implements IStor
 	// Caveat: the input type is a pair of 2 byte arrays (the range),
 	// and output type is a ResultScanner
 	public Object get(Object key) {
-		if (!(key instanceof byte[][])) {
+		/*if (!(key instanceof byte[][])) {
 			throw new RuntimeException("Can only query from a compiled prefix");
 		}
 		byte[][] filter = (byte[][]) key;
 		if (filter.length != 2) {
 			throw new RuntimeException("Invalid query syntax");
 		}
-		Scan scan = new Scan(filter[0], filter[1]);
+		Scan scan = new Scan(filter[0], filter[1]);*/
+		if (!(key instanceof Scan)) {
+			throw new RuntimeException("Can only query from a compiled prefix");
+		}
 
 		// TODO: Need to check, which queries are supported
 		ResultScanner result = null;
 		try {
-			result = table.getScanner(scan);
+			result = table.getScanner((Scan)key);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
