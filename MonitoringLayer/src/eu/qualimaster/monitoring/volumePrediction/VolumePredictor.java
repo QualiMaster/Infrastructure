@@ -337,7 +337,7 @@ public class VolumePredictor {
             // current term (only for twitter)
             storeInHistoricalData(termName, timestamp, currVolume);
             
-            if(currVolume < this.lastAlarm.getVolumes().get(termId)){
+            if(this.lastAlarm != null && currVolume < this.lastAlarm.getVolumes().get(termId)){
                 System.out.println("Critical period for term " + termId + " is over");
                 removeTermFromAlarm(termId);
             }
@@ -354,7 +354,7 @@ public class VolumePredictor {
         
         // check if the critical period is over for ALL the terms. If so, signal this
         // to the adaptation layer by sending an empty SourceVolumeAdaptationEvent
-        if(this.lastAlarm.getFindings().isEmpty()){
+        if(this.lastAlarm != null && this.lastAlarm.getFindings().isEmpty()){
             this.lastAlarm = null;
             EventManager.send(new SourceVolumeAdaptationEvent(this.pipeline, this.source));
         }
@@ -550,7 +550,7 @@ public class VolumePredictor {
             return event;
         ArrayList<String> termsToRemove = new ArrayList<>();
         for(String term : event.getNormalizedFindings().keySet()){
-            Map<String, Double> lastNormAlarms = event.getNormalizedFindings();
+            Map<String, Double> lastNormAlarms = this.lastAlarm.getNormalizedFindings();
             if(lastNormAlarms.containsKey(term) && 
             event.getNormalizedFindings().get(term) <= lastNormAlarms.get(term))
                 termsToRemove.add(term);
