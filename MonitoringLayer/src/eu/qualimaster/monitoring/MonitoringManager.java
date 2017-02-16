@@ -825,7 +825,7 @@ public class MonitoringManager {
                     } else {
                         SourceVolumeAdaptationEvent old = pip.getOverloadEvent();
                         if (null == old || old.getAverageDeviations() < event.getAverageDeviations()) {
-                            LogManager.getLogger(getClass()).info("Sett overload event for: " 
+                            LogManager.getLogger(getClass()).info("Setting overload event for: " 
                                 + event.getPipeline() + " " + event);
                             pip.setOverloadEvent(event);
                         }

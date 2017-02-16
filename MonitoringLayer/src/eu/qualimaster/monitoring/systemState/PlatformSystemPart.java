@@ -267,21 +267,21 @@ public class PlatformSystemPart extends SystemPart {
     }
 
     @Override
-    protected void fill(String prefix, String name, FrozenSystemState state, Map<IObservable, Double> factors) {
-        super.fill(prefix, name, state, factors);
+    protected void fill(String prefix, String name, FrozenSystemState state, Map<IObservable, IOverloadModifier> mods) {
+        super.fill(prefix, name, state, mods);
         synchronized (machines) {
             for (Map.Entry<String, MachineSystemPart> entry : machines.entrySet()) {
-                entry.getValue().fill(FrozenSystemState.MACHINE, entry.getKey(), state, factors);
+                entry.getValue().fill(FrozenSystemState.MACHINE, entry.getKey(), state, mods);
             }
         }
         synchronized (hwClusters) {
             for (Map.Entry<String, HwNodeSystemPart> entry : hwClusters.entrySet()) {
-                entry.getValue().fill(FrozenSystemState.HWNODE, entry.getKey(), state, factors);
+                entry.getValue().fill(FrozenSystemState.HWNODE, entry.getKey(), state, mods);
             }
         }
         synchronized (clouds) {
             for (Map.Entry<String, CloudEnvironmentSystemPart> entry : clouds.entrySet()) {
-                entry.getValue().fill(FrozenSystemState.CLOUDENV, entry.getKey(), state, factors);
+                entry.getValue().fill(FrozenSystemState.CLOUDENV, entry.getKey(), state, mods);
             }
         }
     }

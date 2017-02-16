@@ -237,7 +237,7 @@ public class SystemState implements Serializable {
         synchronized (pipelines) {
             for (Map.Entry<String, PipelineSystemPart> entry : pipelines.entrySet()) {
                 PipelineSystemPart pip = entry.getValue();
-                pip.fill(FrozenSystemState.PIPELINE, entry.getKey(), result, pip.getAdjustmentFactors());
+                pip.fill(FrozenSystemState.PIPELINE, entry.getKey(), result, pip.getOverloadModifiers());
             }
         }
         return result;
@@ -258,7 +258,7 @@ public class SystemState implements Serializable {
             synchronized (pipelines) {
                 PipelineSystemPart pip = pipelines.get(pipeline);
                 if (null != pip) {
-                    pip.fill(FrozenSystemState.PIPELINE, pipeline, result, pip.getAdjustmentFactors());
+                    pip.fill(FrozenSystemState.PIPELINE, pipeline, result, pip.getOverloadModifiers());
                 }
             }
         }

@@ -143,8 +143,8 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
     }
     
     @Override
-    protected void fill(String prefix, String name, FrozenSystemState state, Map<IObservable, Double> factors) {
-        super.fill(prefix, name, state, factors);
+    protected void fill(String prefix, String name, FrozenSystemState state, Map<IObservable, IOverloadModifier> mods) {
+        super.fill(prefix, name, state, mods);
         if (null != current) {
             // let's leave the active flag for all
             state.setActiveAlgorithm(getPipeline().getName(), current.getName());

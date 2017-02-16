@@ -173,22 +173,22 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
     }
     
     /**
-     * Returns observable adjustment factors for freezing.
+     * Returns overload modifies for freezing.
      * 
-     * @return the adjustment factors, may be <b>null</b> for none
+     * @return the overload modifiers factors, may be <b>null</b> for none
      */
-    protected Map<IObservable, Double> getAdjustmentFactors() {
-        Map<IObservable, Double> factors = null;
+    protected Map<IObservable, IOverloadModifier> getOverloadModifiers() {
+        Map<IObservable, IOverloadModifier> factors = null;
         if (null != overloadEvent) {
             double dev = overloadEvent.getAverageDeviations();
             if (dev > 0) {
-                double factor = 1 + dev;
-                factors = new HashMap<IObservable, Double>();
-                factors.put(Scalability.ITEMS, factor);
-                factors.put(Scalability.PREDECESSOR_ITEMS, factor);
-                factors.put(ResourceUsage.CAPACITY, factor);
+                double factor = 1 / dev;
+                factors = new HashMap<IObservable, IOverloadModifier>();
+                factors.put(Scalability.ITEMS, new MultiplicativeOverloadModifer(factor));
+                factors.put(Scalability.PREDECESSOR_ITEMS, new MultiplicativeOverloadModifer(factor));
+                factors.put(ResourceUsage.CAPACITY, new MultiplicativeOverloadModifer(factor));
                 // throughput/latency shall follow
-                LogManager.getLogger(getClass()).info("Current adjustment factors: " + factors);
+                LogManager.getLogger(getClass()).info("Current overload adjustments: " + factors);
             }
         }
         return factors;
@@ -517,33 +517,33 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
     }
 
     @Override
-    protected void fill(String prefix, String name, FrozenSystemState state, Map<IObservable, Double> factors) {
-        super.fill(prefix, name, state, factors);
+    protected void fill(String prefix, String name, FrozenSystemState state, Map<IObservable, IOverloadModifier> mods) {
+        super.fill(prefix, name, state, mods);
         synchronized (elements) {
             for (Map.Entry<String, PipelineNodeSystemPart> entry : elements.entrySet()) {
                 PipelineNodeSystemPart part = entry.getValue();
                 if (!part.isInternal()) {
                     part.fill(FrozenSystemState.PIPELINE_ELEMENT, 
-                        FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state, factors);
+                        FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state, mods);
                 }
             }
         }
         synchronized (algorithms) {
             for (Map.Entry<String, NodeImplementationSystemPart> entry : algorithms.entrySet()) {
                 entry.getValue().fill(FrozenSystemState.ALGORITHM, 
-                    FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state, factors);
+                    FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state, mods);
             }
         }
         synchronized (sources) {
             for (Map.Entry<String, NodeImplementationSystemPart> entry : sources.entrySet()) {
                 entry.getValue().fill(FrozenSystemState.DATASOURCE, 
-                    FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state, factors);
+                    FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state, mods);
             }
         }
         synchronized (sinks) {
             for (Map.Entry<String, NodeImplementationSystemPart> entry : sources.entrySet()) {
                 entry.getValue().fill(FrozenSystemState.DATASINK, 
-                    FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state, factors);
+                    FrozenSystemState.obtainPipelineElementSubkey(name, entry.getKey()), state, mods);
             }
         }
     }

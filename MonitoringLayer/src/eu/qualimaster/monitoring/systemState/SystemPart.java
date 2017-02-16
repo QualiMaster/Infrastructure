@@ -592,21 +592,21 @@ public class SystemPart implements IObservationProvider, ITopologyProvider, Seri
      * @param prefix the prefix to be used for filling
      * @param name the name of the element
      * @param state the state to be filled (modified as a side effect)
-     * @param factors adjustment factors for individual observables (may be <b>null</b>)
+     * @param mods overload modifiers for individual observables (may be <b>null</b>)
      */
-    protected void fill(String prefix, String name, FrozenSystemState state, Map<IObservable, Double> factors) {
+    protected void fill(String prefix, String name, FrozenSystemState state, Map<IObservable, IOverloadModifier> mods) {
         synchronized (parameterValues) {
             for (Map.Entry<IObservable, IObservation> entry : parameterValues.entrySet()) {
                 IObservation observation = entry.getValue();
                 if (observation.isValueSet()) {
-                    double factor = 1;
-                    if (null != factors) {
-                        Double f = factors.get(entry.getKey());
-                        if (null != f) {
-                            factor = f;
+                    double value = observation.getValue();
+                    if (null != mods) {
+                        IOverloadModifier m = mods.get(entry.getKey());
+                        if (null != m) {
+                            value = m.modify(value);
                         }
                     }
-                    state.setObservation(prefix, name, entry.getKey(), observation.getValue() * factor);
+                    state.setObservation(prefix, name, entry.getKey(), value);
                 }
             }
         }
