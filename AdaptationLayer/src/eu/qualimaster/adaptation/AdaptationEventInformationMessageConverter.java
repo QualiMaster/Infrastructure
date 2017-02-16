@@ -94,7 +94,9 @@ public class AdaptationEventInformationMessageConverter {
             @Override
             protected InformationMessage convert(SourceVolumeAdaptationEvent event) {
                 return new InformationMessage(event.getPipeline(), event.getSource(), 
-                     "source volume findings: " + event.getNormalizedFindings());
+                     "source volume, normalized findings: " + event.getNormalizedFindings() + " findings: " 
+                     + event.getFindings() + " volumes: " + event.getVolumes() + " predictions: " 
+                     + event.getPredictions() + " thresholds: " + event.getThresholds());
             }
             
         };
