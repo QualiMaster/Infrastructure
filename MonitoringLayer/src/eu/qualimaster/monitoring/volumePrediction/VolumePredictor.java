@@ -329,7 +329,7 @@ public class VolumePredictor {
                 System.out.println(toPrint);
             } else {
                 System.out.println("No predictors available for term " + termName);
-                if (!this.monitoredTerms.contains(termName))
+                if (null != this.monitoredTerms && !this.monitoredTerms.contains(termName))
                     unknownTerms.add(termName);
             }
 
@@ -667,41 +667,43 @@ public class VolumePredictor {
             return;
         }
         
-        System.out.println("Warming up predictor for source" + this.getSourceName());
-        
-        File directory = new File(dataFolder);
-        for (String term : this.monitoredTerms) {
-            System.out.println("Warming up model for term " + term);
-            File file = null;
-            for (File f : directory.listFiles()) {
-                if (f.getName().contains(term)) {
-                    file = f;
-                    break;
+        if (null != monitoredTerms) {
+            System.out.println("Warming up predictor for source" + this.getSourceName());
+            
+            File directory = new File(dataFolder);
+            for (String term : this.monitoredTerms) {
+                System.out.println("Warming up model for term " + term);
+                File file = null;
+                for (File f : directory.listFiles()) {
+                    if (f.getName().contains(term)) {
+                        file = f;
+                        break;
+                    }
+                }
+    
+                if (file == null) {
+                    System.out.println("No warm up data available for term: "
+                            + term);
+                    continue;
+                }
+    
+                TreeMap<String, Long> data = DataUtils.readData(file);
+                for (String timestamp : data.keySet()) {
+                    // feed the recent history within the prediction model (for
+                    // making predictions)
+                    this.models.get(term).updateRecentVolumes(timestamp,
+                            data.get(timestamp));
+    
+                    // feed the recent history within the predictor (for computing
+                    // the volume threshold)
+                    addRecentVolume(term, data.get(timestamp));
+                    
+                    System.out.println("Warmed up with data: [" + timestamp + ", " + data.get(timestamp) + "]");
                 }
             }
-
-            if (file == null) {
-                System.out.println("No warm up data available for term: "
-                        + term);
-                continue;
-            }
-
-            TreeMap<String, Long> data = DataUtils.readData(file);
-            for (String timestamp : data.keySet()) {
-                // feed the recent history within the prediction model (for
-                // making predictions)
-                this.models.get(term).updateRecentVolumes(timestamp,
-                        data.get(timestamp));
-
-                // feed the recent history within the predictor (for computing
-                // the volume threshold)
-                addRecentVolume(term, data.get(timestamp));
-                
-                System.out.println("Warmed up with data: [" + timestamp + ", " + data.get(timestamp) + "]");
-            }
+            
+            System.out.println("Predictor warmed up" + this.getSourceName());
         }
-        
-        System.out.println("Predictor warmed up" + this.getSourceName());
     }
 
     private void storeInHistoricalData(String term, String timestamp, Long value) {
