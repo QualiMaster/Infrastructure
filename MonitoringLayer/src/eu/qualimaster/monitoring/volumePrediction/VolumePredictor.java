@@ -636,7 +636,7 @@ public class VolumePredictor {
             else
                 this.historyProvider.obtainHistoricalData(NUM_MONTHS, term,
                         this.historicalDataFile);
-        } catch (IOException e) {
+        } catch (Throwable t) { // catch more in case that the data provider fails
             // handle the absence of historical data:
             // clear the content of the historicalDataFile, because it refers to
             // the read of historical data for a previous term
@@ -708,7 +708,7 @@ public class VolumePredictor {
 
     private void storeInHistoricalData(String term, String timestamp, Long value) {
         // store a value in the historical data only for twitter
-        if (this.historyProvider.getClass().equals(
+        if (null != this.historyProvider && this.historyProvider.getClass().equals(
                 TwitterHistoricalDataProvider.class))
             storeTwitterVolume(timestamp, term, value);
     }
