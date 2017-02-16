@@ -819,10 +819,14 @@ public class MonitoringManager {
                 Map<String, Double> deviations = event.getNormalizedFindings();
                 if (null != deviations) {
                     if (deviations.isEmpty()) {
+                        LogManager.getLogger(getClass()).info("Resetting overload event for: " 
+                            + event.getPipeline() + " " + event);
                         pip.setOverloadEvent(null);
                     } else {
                         SourceVolumeAdaptationEvent old = pip.getOverloadEvent();
                         if (null == old || old.getAverageDeviations() < event.getAverageDeviations()) {
+                            LogManager.getLogger(getClass()).info("Sett overload event for: " 
+                                + event.getPipeline() + " " + event);
                             pip.setOverloadEvent(event);
                         }
                     }

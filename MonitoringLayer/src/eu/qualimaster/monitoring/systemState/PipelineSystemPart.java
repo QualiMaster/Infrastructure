@@ -188,6 +188,7 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
                 factors.put(Scalability.PREDECESSOR_ITEMS, factor);
                 factors.put(ResourceUsage.CAPACITY, factor);
                 // throughput/latency shall follow
+                LogManager.getLogger(getClass()).info("Current adjustment factors: " + factors);
             }
         }
         return factors;
