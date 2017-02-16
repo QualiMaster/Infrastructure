@@ -200,12 +200,16 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
      */
     private void setCurrent(NodeImplementationSystemPart current, boolean switchedTo) {
         if (current != this.current) {
+            NodeImplementationSystemPart old = this.current;
             //unlink(this.current, ILinkSelector.ALL); // no links, happens by sub-topology aggregation
             this.current = current;
             //link(this.current, ILinkSelector.ALL); // no links, happens by ub-topology aggregation
             currentCount = 1;
             if (switchedTo) {
                 switchedTo();
+                if (null != old) {
+                    old.switchedTo();
+                }
             }
         } else {
             currentCount++;
