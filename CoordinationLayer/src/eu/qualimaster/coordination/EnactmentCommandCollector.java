@@ -84,7 +84,7 @@ public class EnactmentCommandCollector extends AbstractCoordinationCommandVisito
 
     @Override
     public CoordinationExecutionResult visitParallelismChangeCommand(ParallelismChangeCommand command) {
-        // handled by coordination layer
+        result.add(command);
         return null;
     }
 
