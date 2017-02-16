@@ -119,6 +119,10 @@
 	    <groupId>org.apache.commons</groupId>
 	    <artifactId>commons-math3</artifactId>
        </dependency>
+        <dependency>
+          <groupId>org.apache.storm</groupId>
+          <artifactId>storm-stateTransfer</artifactId>
+        </dependency>
 	    <dependency>
 	      <groupId>pentaho.weka</groupId>
 	      <artifactId>pdm-timeseriesforecasting-ce</artifactId>

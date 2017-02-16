@@ -95,17 +95,18 @@ public class EnactingPipelineElements {
             }
             PipelineSystemPart psp = MonitoringManager.getSystemState().obtainPipeline(pipeline);
             if (null != psp) {
-                psp.setValue(AnalysisObservables.IS_ENACTING, 
-                    enactingPipelines.containsKey(pipeline) ? 1.0 : 0.0, null);
+                psp.setValue(AnalysisObservables.IS_ENACTING, isEnacting(pipeline) ? 1.0 : 0.0, null);
                 PipelineNodeSystemPart pnsp = psp.obtainPipelineNode(pipelineElement);
                 if (null != pnsp) {
-                    pnsp.setValue(AnalysisObservables.IS_ENACTING, mark ? 1.0 : 0.0, null);
-                    pnsp.setValue(TimeBehavior.ENACTMENT_DELAY, enactmentDelay, null);
+                    pnsp.setValue(AnalysisObservables.IS_ENACTING, isEnacting(fPath) ? 1.0 : 0.0, null);
+                    if (enactmentDelay > 0) {
+                        pnsp.setValue(TimeBehavior.ENACTMENT_DELAY, enactmentDelay, null);
+                    }
                 }
             }
         }
     }
-
+    
     /**
      * Modified a counter stored in a map.
      * 
