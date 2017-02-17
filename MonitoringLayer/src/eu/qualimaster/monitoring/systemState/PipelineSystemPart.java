@@ -182,7 +182,8 @@ public class PipelineSystemPart extends SystemPart implements ITopologyProvider 
         if (null != overloadEvent) {
             double dev = overloadEvent.getAverageDeviations();
             if (dev > 0) {
-                double factor = 1 / dev;
+                //double factor = 1 / dev;+
+                double factor = 3 * (1 + dev);
                 factors = new HashMap<IObservable, IOverloadModifier>();
                 factors.put(Scalability.ITEMS, new MultiplicativeOverloadModifer(factor));
                 factors.put(Scalability.PREDECESSOR_ITEMS, new MultiplicativeOverloadModifer(factor));
