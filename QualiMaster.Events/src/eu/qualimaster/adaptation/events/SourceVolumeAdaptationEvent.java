@@ -159,6 +159,35 @@ public class SourceVolumeAdaptationEvent extends AdaptationEvent implements IPip
         this.predictions = predictions;
         this.thresholds = thresholds;
     }
+    
+    /**
+     * Creates a source volume adaptation event.
+     * 
+     * @param pipeline the pipeline name
+     * @param source the source name
+     * @param findings the findings
+     * @param normFindings the normalized findings
+     * @param volumes the volumes of the terms
+     * @param predictions the predictions for the terms
+     * @param thresholds the thresholds for the terms
+     * @throws IllegalArgumentException if <code>findings</code> is <b>null</b> or empty
+     */
+    @QMInternal
+    public SourceVolumeAdaptationEvent(String pipeline, String source, Map<String, Double> findings,
+        Map<String, Double> normFindings, Map<String, Long> volumes,
+        Map<String, Double> predictions, Map<String, Double> thresholds) {
+        if (null == findings || findings.isEmpty() || null == normFindings || normFindings.isEmpty()) {
+            throw new IllegalArgumentException("no findings");
+        }
+        this.pipeline = pipeline;
+        this.source = source;
+        this.findings = findings;
+        this.normalizedFindings = normFindings;
+        this.durations = new HashMap<>();
+        this.volumes = volumes;
+        this.predictions = predictions;
+        this.thresholds = thresholds;
+    }
 
     // checkstyle: resume parameter number check
 
