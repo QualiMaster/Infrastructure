@@ -420,9 +420,7 @@ public class AggregationTest {
      */
     @Test
     public void testSwitchingSubPipsLoose() throws IOException {
-        FileInputStream fis = new FileInputStream("testdata/aggregation/testAggSub2.xml");
-        INameMapping mapping = new NameMapping("pip", fis);
-        fis.close();
+        INameMapping mapping = registerMapping("pip", "testAggSub2.xml");
         CoordinationManager.registerTestMapping(mapping);
         SystemState state = new SystemState();
         PipelineSystemPart pip = state.obtainPipeline("pip");
@@ -474,9 +472,7 @@ public class AggregationTest {
      */
     @Test
     public void testSwitchingSubPipsTight() throws IOException {
-        FileInputStream fis = new FileInputStream("testdata/aggregation/testAggSub.xml");
-        INameMapping mapping = new NameMapping("pip", fis);
-        fis.close();
+        INameMapping mapping = registerMapping("pip", "testAggSub.xml");
         CoordinationManager.registerTestMapping(mapping);
         SystemState state = new SystemState();
         PipelineSystemPart pip = state.obtainPipeline("pip");
