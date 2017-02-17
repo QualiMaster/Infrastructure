@@ -108,7 +108,7 @@ class InformationMessageVisitor extends AbstractCoordinationCommandVisitor {
     @Override
     public CoordinationExecutionResult visitAlgorithmChangeCommand(AlgorithmChangeCommand command) {
         schedule(command.getPipeline(), command.getPipelineElement(), 
-            "algorithm change to '" + command.getAlgorithm());
+            "algorithm change to '" + command.getAlgorithm() + "'");
         return null;
     }
 
