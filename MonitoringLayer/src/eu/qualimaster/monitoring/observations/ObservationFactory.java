@@ -558,6 +558,7 @@ public class ObservationFactory {
             Scalability.VOLUME, Scalability.VELOCITY, Scalability.VARIETY, Scalability.ITEMS,
             AnalysisObservables.IS_VALID, AnalysisObservables.IS_ENACTING);
         registerPart(PartType.SOURCE, 
+            TimeBehavior.LATENCY, TimeBehavior.THROUGHPUT_ITEMS, TimeBehavior.THROUGHPUT_VOLUME, 
             FunctionalSuitability.ACCURACY_CONFIDENCE, FunctionalSuitability.COMPLETENESS, 
             Scalability.VOLUME, Scalability.VELOCITY, Scalability.VOLATILITY,
             AnalysisObservables.IS_VALID, AnalysisObservables.IS_ENACTING);
