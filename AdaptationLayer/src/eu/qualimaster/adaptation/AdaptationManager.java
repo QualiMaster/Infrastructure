@@ -60,6 +60,7 @@ import eu.qualimaster.monitoring.events.CloudResourceMonitoringEvent;
 import eu.qualimaster.monitoring.events.HardwareAliveEvent;
 import eu.qualimaster.monitoring.events.MonitoringEvent;
 import eu.qualimaster.monitoring.events.MonitoringInformationEvent;
+import eu.qualimaster.monitoring.events.ParameterChangedMonitoringEvent;
 import eu.qualimaster.monitoring.utils.IScheduler;
 
 /**
@@ -220,6 +221,10 @@ public class AdaptationManager {
             } else if (event instanceof HardwareAliveEvent) {
                 HardwareAliveEvent evt = (HardwareAliveEvent) event;
                 send(new HardwareAliveMessage(evt.getIdentifier()));
+            } else if (event instanceof ParameterChangedMonitoringEvent) {
+                ParameterChangedMonitoringEvent evt = (ParameterChangedMonitoringEvent) event;
+                send(new InformationMessage(evt.getPipeline(), evt.getPipelineElement(), "parameter " 
+                    + evt.getParameter() + " changed to " + evt.getValue()));
             }
         }
     }
