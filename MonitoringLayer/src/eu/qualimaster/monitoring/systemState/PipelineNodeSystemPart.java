@@ -22,10 +22,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.coordination.INameMapping.ISubPipeline;
 import eu.qualimaster.coordination.INameMapping.Component.Type;
+import eu.qualimaster.monitoring.MonitoringManager;
 import eu.qualimaster.monitoring.events.ComponentKey;
 import eu.qualimaster.monitoring.events.FrozenSystemState;
 import eu.qualimaster.monitoring.observations.IObservationProvider;
+import eu.qualimaster.monitoring.observations.ObservedValue;
 import eu.qualimaster.monitoring.parts.PartType;
 import eu.qualimaster.monitoring.topology.ITopologyProvider;
 import eu.qualimaster.monitoring.topology.PipelineTopology;
@@ -207,12 +211,53 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
             currentCount = 1;
             if (switchedTo) {
                 switchedTo();
+                checkPropagated(current, false);
                 if (null != old) {
                     old.switchedTo();
+                    checkPropagated(old, true);
                 }
             }
         } else {
             currentCount++;
+        }
+    }
+    
+    /**
+     * Checks the observables that have been propagated upon an algorithm switch.
+     * 
+     * @param algorithm the algorithm to check for
+     * @param clear whether to clear the values of the old values (<code>true</code>) or whether to propagate the 
+     *     values of a new algorithm (<code>false</code>)
+     */
+    private void checkPropagated(NodeImplementationSystemPart algorithm, boolean clear) {
+        if (null != algorithm) {
+            PipelineSystemPart pip = getPipeline();
+            INameMapping mapping = MonitoringManager.getNameMapping(pip.getName());
+            ISubPipeline subPip = mapping.getSubPipelineByAlgorithmName(algorithm.getName());
+            if (null != subPip) {
+                if (clear) {
+                    for (IObservable o : VALIDATE) {
+                        for (PipelineNodeSystemPart node : algorithm.getNodes()) {
+                            Set<Object> keys = node.getComponentKeys(o);
+                            pip.clearComponents(o, keys);
+                            clearComponents(o, keys);
+                            node.clearComponents(o, keys);
+                        }
+                    }
+                } else {
+                    for (IObservable o : VALIDATE) {
+                        for (PipelineNodeSystemPart node : algorithm.getNodes()) {
+                            Set<Object> keys = node.getComponentKeys(o);
+                            for (Object key : keys) {
+                                ObservedValue val = node.getObservedValue(o, key);
+                                if (null != val) {
+                                    setValue(o, val.get(), key); // propagate
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     

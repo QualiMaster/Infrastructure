@@ -412,5 +412,114 @@ public class AggregationTest {
         CoordinationManager.registerTestMapping(mapping);
         return mapping;
     }
+    
+    /**
+     * Tests executor monitoring when switching loosely integrated sub-pipelines.
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test
+    public void testSwitchingSubPipsLoose() throws IOException {
+        FileInputStream fis = new FileInputStream("testdata/aggregation/testAggSub2.xml");
+        INameMapping mapping = new NameMapping("pip", fis);
+        fis.close();
+        CoordinationManager.registerTestMapping(mapping);
+        SystemState state = new SystemState();
+        PipelineSystemPart pip = state.obtainPipeline("pip");
+        PipelineNodeSystemPart node = pip.obtainPipelineNode("processor");
+        ComponentKey nodeKey = new ComponentKey("m1", 1234, 7);
+        nodeKey.setThreadId(7);
+        NodeImplementationSystemPart alg1 = pip.getAlgorithm("myAlg");
+        PipelineNodeSystemPart alg1node1 = alg1.obtainPipelineNode("algNode");
+        ComponentKey alg1node1Key = new ComponentKey("m2", 1234, 8);
+        nodeKey.setThreadId(8);
+        alg1node1.setValue(ResourceUsage.EXECUTORS, 2, alg1node1Key);
+        alg1node1.setValue(ResourceUsage.TASKS, 3, alg1node1Key);
+        node.setValue(ResourceUsage.EXECUTORS, 1, nodeKey);
+        node.setValue(ResourceUsage.TASKS, 1, nodeKey);
+        node.setCurrent(alg1);
+
+        SystemStateTest.assertEquals(1 + 2, pip, ResourceUsage.EXECUTORS); // propagated
+        SystemStateTest.assertEquals(1 + 3, pip, ResourceUsage.TASKS); // propagated
+        SystemStateTest.assertEquals(1 + 2, node, ResourceUsage.EXECUTORS); // propagated
+        SystemStateTest.assertEquals(1 + 3, node, ResourceUsage.TASKS); // propagated
+        SystemStateTest.assertEquals(2, alg1node1, ResourceUsage.EXECUTORS);
+        SystemStateTest.assertEquals(3, alg1node1, ResourceUsage.TASKS);
+        
+        NodeImplementationSystemPart alg2 = pip.getAlgorithm("myAlg1");
+        PipelineNodeSystemPart alg2node1 = alg2.obtainPipelineNode("algNode1");
+        ComponentKey alg2node1Key = new ComponentKey("m3", 1234, 9);
+        nodeKey.setThreadId(9);
+        alg2node1.setValue(ResourceUsage.EXECUTORS, 4, alg2node1Key);
+        alg2node1.setValue(ResourceUsage.TASKS, 5, alg2node1Key);
+        node.setCurrent(alg2);
+        
+        // cleared as disappeared
+        SystemStateTest.assertEquals(1 + 4, pip, ResourceUsage.EXECUTORS); // propagated
+        SystemStateTest.assertEquals(1 + 5, pip, ResourceUsage.TASKS); // propagated
+        SystemStateTest.assertEquals(1 + 4, node, ResourceUsage.EXECUTORS); // propagated
+        SystemStateTest.assertEquals(1 + 5, node, ResourceUsage.TASKS); // propagated
+        SystemStateTest.assertEquals(0, alg1node1, ResourceUsage.EXECUTORS);
+        SystemStateTest.assertEquals(0, alg1node1, ResourceUsage.TASKS);
+        SystemStateTest.assertEquals(4, alg2node1, ResourceUsage.EXECUTORS);
+        SystemStateTest.assertEquals(5, alg2node1, ResourceUsage.TASKS);
+
+        CoordinationManager.unregisterNameMapping(mapping);
+    }
+    
+    /**
+     * Tests executor monitoring when switching loosely integrated sub-pipelines.
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test
+    public void testSwitchingSubPipsTight() throws IOException {
+        FileInputStream fis = new FileInputStream("testdata/aggregation/testAggSub.xml");
+        INameMapping mapping = new NameMapping("pip", fis);
+        fis.close();
+        CoordinationManager.registerTestMapping(mapping);
+        SystemState state = new SystemState();
+        PipelineSystemPart pip = state.obtainPipeline("pip");
+        PipelineNodeSystemPart node = pip.obtainPipelineNode("processor");
+        ComponentKey nodeKey = new ComponentKey("m1", 1234, 7);
+        nodeKey.setThreadId(7);
+        NodeImplementationSystemPart alg1 = pip.getAlgorithm("myAlg");
+        PipelineNodeSystemPart alg1node1 = alg1.obtainPipelineNode("algNode");
+        ComponentKey alg1node1Key = new ComponentKey("m2", 1234, 8);
+        nodeKey.setThreadId(8);
+        alg1node1.setValue(ResourceUsage.EXECUTORS, 2, alg1node1Key);
+        alg1node1.setValue(ResourceUsage.TASKS, 3, alg1node1Key);
+        node.setValue(ResourceUsage.EXECUTORS, 1, nodeKey);
+        node.setValue(ResourceUsage.TASKS, 1, nodeKey);
+        node.setCurrent(alg1);
+
+        SystemStateTest.assertEquals(1 + 2, pip, ResourceUsage.EXECUTORS); // propagated
+        SystemStateTest.assertEquals(1 + 3, pip, ResourceUsage.TASKS); // propagated
+        SystemStateTest.assertEquals(1 + 2, node, ResourceUsage.EXECUTORS); // propagated
+        SystemStateTest.assertEquals(1 + 3, node, ResourceUsage.TASKS); // propagated
+        SystemStateTest.assertEquals(2, alg1node1, ResourceUsage.EXECUTORS);
+        SystemStateTest.assertEquals(3, alg1node1, ResourceUsage.TASKS);
+        
+        NodeImplementationSystemPart alg2 = pip.getAlgorithm("myAlg1");
+        PipelineNodeSystemPart alg2node1 = alg2.obtainPipelineNode("algNode1");
+        ComponentKey alg2node1Key = new ComponentKey("m3", 1234, 9);
+        nodeKey.setThreadId(9);
+        alg2node1.setValue(ResourceUsage.EXECUTORS, 4, alg2node1Key);
+        alg2node1.setValue(ResourceUsage.TASKS, 5, alg2node1Key);
+        node.setCurrent(alg2);
+        
+        // not cleared, still there
+        SystemStateTest.assertEquals(1 + 2 + 4, pip, ResourceUsage.EXECUTORS); // propagated
+        SystemStateTest.assertEquals(1 + 3 + 5, pip, ResourceUsage.TASKS); // propagated
+        SystemStateTest.assertEquals(1 + 2 + 4, node, ResourceUsage.EXECUTORS); // propagated
+        SystemStateTest.assertEquals(1 + 3 + 5, node, ResourceUsage.TASKS); // propagated
+        SystemStateTest.assertEquals(2, alg1node1, ResourceUsage.EXECUTORS);
+        SystemStateTest.assertEquals(3, alg1node1, ResourceUsage.TASKS);
+        SystemStateTest.assertEquals(4, alg2node1, ResourceUsage.EXECUTORS);
+        SystemStateTest.assertEquals(5, alg2node1, ResourceUsage.TASKS);
+
+        CoordinationManager.unregisterNameMapping(mapping);
+    }
+
 
 }
