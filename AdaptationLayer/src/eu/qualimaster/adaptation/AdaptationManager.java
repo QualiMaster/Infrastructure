@@ -46,9 +46,7 @@ import eu.qualimaster.adaptation.reflective.ReflectiveAdaptationManager;
 import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
-import eu.qualimaster.coordination.commands.LoadSheddingCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand;
-import eu.qualimaster.coordination.commands.ReplayCommand;
 import eu.qualimaster.coordination.events.CoordinationCommandExecutionEvent;
 import eu.qualimaster.dataManagement.events.IShutdownListener;
 import eu.qualimaster.dataManagement.events.ShutdownEvent;
@@ -270,19 +268,6 @@ public class AdaptationManager {
             AdaptationFiltering.modifyPipelineElementFilters(event.getCommand(), false);
             handleEvent(new HandlerAdaptationEvent<CoordinationCommandExecutionEvent>(
                 event, coordinationCommandExecutionHandler));
-            if (null != endpoint) {
-                CoordinationCommand cmd = event.getCommand();
-                if (cmd instanceof ReplayCommand) {
-                    ReplayCommand rCmd = (ReplayCommand) cmd;
-                    endpoint.schedule(new InformationMessage(rCmd.getPipeline(), rCmd.getPipelineElement(), 
-                        "Replay ticket: " + rCmd.getTicket() + " speed: " + rCmd.getSpeed() 
-                        + " query: " + rCmd.getQuery()));
-                } else if (cmd instanceof LoadSheddingCommand) {
-                    LoadSheddingCommand lCmd = (LoadSheddingCommand) cmd;
-                    endpoint.schedule(new InformationMessage(lCmd.getPipeline(), lCmd.getPipelineElement(), 
-                        "LoadShedding " + lCmd.toString()));
-                }
-            }
         }
         
     }
