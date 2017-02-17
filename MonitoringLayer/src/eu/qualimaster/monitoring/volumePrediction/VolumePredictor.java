@@ -524,7 +524,7 @@ public class VolumePredictor {
         // use the event class defined in the infrastructure to send alarms to
         // the adaptation layer
         SourceVolumeAdaptationEvent svae = new SourceVolumeAdaptationEvent(
-                this.pipeline, this.source, alarms, normalizedAlarms, durations,
+                this.pipeline, this.source, alarms, normalizedAlarms,
                 volumes, predictions, thresholds);
         this.adaptationEvent = svae;
         
