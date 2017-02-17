@@ -293,6 +293,7 @@ public class AdaptationManager {
 
         @Override
         protected void handle(CoordinationCommand command) {
+            command.accept(AdaptationEventQueue.CMD_VISITOR);
             handleEvent(new HandlerAdaptationEvent<CoordinationCommand>(command, coordinationCommandHandler));
         }
         

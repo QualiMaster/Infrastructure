@@ -56,6 +56,8 @@ import eu.qualimaster.monitoring.events.FrozenSystemState;
  */
 public class AdaptationEventQueue {
 
+    static final InformationMessageVisitor CMD_VISITOR = new InformationMessageVisitor(null);
+
     private static final boolean WITH_REASONING 
         = Boolean.valueOf(System.getProperty("qm.adaptation.reasoning", "true"));
     private static final boolean WITH_DEBUG = Boolean.valueOf(System.getProperty("qm.adaptation.debug", "false"));
@@ -72,7 +74,6 @@ public class AdaptationEventQueue {
     private static CommandResponseStore commandStore = new CommandResponseStore(RESPONSE_TIMEOUT);
     private static EventConsumer consumer;
     private static int debugFileCount = 0;
-    private static InformationMessageVisitor cmdVisitor = new InformationMessageVisitor(null);
     private static RtVilValueMapping rtVilMapping = new RtVilValueMapping();
 
     private static final TracerFactory ADAPTATION_TRACER_FACTORY = new TracerFactory() {
@@ -449,7 +450,7 @@ public class AdaptationEventQueue {
         LOGGER.info("External command known " + known + " " + command);
         //if (!known) { // either already removed or from CLI
         commandStore.sent(command);
-        command.accept(cmdVisitor);
+        command.accept(CMD_VISITOR);
         //}
     }
 
@@ -464,8 +465,8 @@ public class AdaptationEventQueue {
         CoordinationCommand command = commandStore.received(event);
         LOGGER.info("Received " + event + " -> " + command);
         if (null != command) {
-            cmdVisitor.setResponse(event);
-            command.accept(cmdVisitor);
+            CMD_VISITOR.setResponse(event);
+            command.accept(CMD_VISITOR);
         }
         IAdaptationLogger logger = AdaptationLoggerFactory.getLogger();
         if (null != logger) {
