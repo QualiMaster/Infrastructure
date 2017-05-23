@@ -528,6 +528,16 @@ public abstract class AbstractDirectAdaptationTests {
          */
         protected void end() {
         }
+        
+        /**
+         * Enables or disables this test case.
+         * 
+         * @param config the actual configuration
+         * @return <code>true</code> if enabled, <code>false</code> if disabled
+         */
+        protected boolean isEnabled(Configuration config) {
+            return true; 
+        }
 
     }
     
@@ -590,14 +600,16 @@ public abstract class AbstractDirectAdaptationTests {
      * @see #afterTestSpec(TestSpec)
      */
     protected void performAdaptation(TestSpec testSpec) throws IOException {
-        boolean doTest = true;
+        String ignoreMessage = null;
         try {
             beforeTestSpec(testSpec);
+            if (!testSpec.isEnabled(adaptConfig)) {
+                ignoreMessage = "not enabled by testSpec";
+            }
         } catch (IOException e) {
-            doTest = false;
-            System.out.println("WARNING (Test ignored): " + e.getMessage());
+            ignoreMessage = e.getMessage();
         }
-        if (doTest) {
+        if (null == ignoreMessage) {
             IReasoningModelProvider provider = new SimpleReasoningModelProvider(
                 monConfig, monRtVilModel, monCopyMapping);
             ReasoningTask rTask = new ReasoningTask(provider);
@@ -646,6 +658,8 @@ public abstract class AbstractDirectAdaptationTests {
     
             testSpec.end();
             afterTestSpec(testSpec);
+        } else {
+            System.out.println("WARNING (Test ignored): " + ignoreMessage);
         }
     }
 
