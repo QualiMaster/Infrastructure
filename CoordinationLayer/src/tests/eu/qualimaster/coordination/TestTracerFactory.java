@@ -24,6 +24,7 @@ import net.ssehub.easy.instantiation.core.model.common.VariableDeclaration;
 import net.ssehub.easy.instantiation.core.model.common.VilException;
 import net.ssehub.easy.instantiation.core.model.execution.IInstantiatorTracer;
 import net.ssehub.easy.instantiation.core.model.execution.TracerFactory;
+import net.ssehub.easy.instantiation.core.model.expressions.AbstractTracerBase;
 import net.ssehub.easy.instantiation.core.model.expressions.CallExpression.CallType;
 import net.ssehub.easy.instantiation.core.model.expressions.Expression;
 import net.ssehub.easy.instantiation.core.model.templateModel.Def;
@@ -64,7 +65,8 @@ public class TestTracerFactory extends TracerFactory {
      * 
      * @author Holger Eichelberger
      */
-    private static class Tracer implements net.ssehub.easy.instantiation.core.model.templateModel.ITracer,
+    private static class Tracer extends AbstractTracerBase 
+        implements net.ssehub.easy.instantiation.core.model.templateModel.ITracer,
         net.ssehub.easy.instantiation.core.model.buildlangModel.ITracer, IInstantiatorTracer {
 
         @Override
