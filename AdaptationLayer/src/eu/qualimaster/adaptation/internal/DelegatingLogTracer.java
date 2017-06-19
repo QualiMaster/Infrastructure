@@ -61,14 +61,14 @@ public class DelegatingLogTracer extends DelegatingTracer implements ICoordinati
     }
     
     @Override
-    public void visitScript(Script script, RuntimeEnvironment environment) {
+    public void visitScript(Script script, RuntimeEnvironment<?> environment) {
         scripts.push(script);
         super.visitScript(script, environment);
     }
     
     @SuppressWarnings("unchecked")
     @Override
-    public void visitScriptBody(Script script, RuntimeEnvironment environment) {
+    public void visitScriptBody(Script script, RuntimeEnvironment<?> environment) {
         super.visitScriptBody(script, environment);
         if (isMainVil()) { // inform only about main script, not imports or calls to other scripts
             CoordinationCommandNotifier.addNotifier(this);
@@ -124,7 +124,7 @@ public class DelegatingLogTracer extends DelegatingTracer implements ICoordinati
      * @param type the target type
      * @return the parameter value, <b>null</b> if the parameter does not exist or cannot be casted
      */
-    private static <T> T getParameterValue(Script script, int index, RuntimeEnvironment environment, Class<T> type) {
+    private static <T> T getParameterValue(Script script, int index, RuntimeEnvironment<?> environment, Class<T> type) {
         T result = null;
         if (script.getParameterCount() >= index + 1) {
             try {
@@ -146,7 +146,7 @@ public class DelegatingLogTracer extends DelegatingTracer implements ICoordinati
     }
 
     @Override
-    public void visitedRule(Rule rule, RuntimeEnvironment environment, Object result) {
+    public void visitedRule(Rule rule, RuntimeEnvironment<?> environment, Object result) {
         super.visitedRule(rule, environment, result);
         boolean successful = false;
         if (result instanceof RuleExecutionResult) {
