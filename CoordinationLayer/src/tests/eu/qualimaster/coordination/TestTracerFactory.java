@@ -120,12 +120,12 @@ public class TestTracerFactory extends TracerFactory {
         }
 
         @Override
-        public void visitRule(Rule arg0, RuntimeEnvironment<?> arg1) {
+        public void visitRule(Rule arg0, RuntimeEnvironment<?, ?> arg1) {
             System.out.println("executing " + arg0.getName());
         }
 
         @Override
-        public void visitScript(Script arg0, RuntimeEnvironment<?> env) {
+        public void visitScript(Script arg0, RuntimeEnvironment<?, ?> env) {
             System.out.println("executing " + arg0.getName());
         }
 
@@ -138,7 +138,7 @@ public class TestTracerFactory extends TracerFactory {
         }
 
         @Override
-        public void visitedRule(Rule arg0, RuntimeEnvironment<?> arg1, Object arg2) {
+        public void visitedRule(Rule arg0, RuntimeEnvironment<?, ?> arg1, Object arg2) {
         }
 
         @Override
@@ -158,7 +158,7 @@ public class TestTracerFactory extends TracerFactory {
         }
 
         @Override
-        public void visitDef(Def arg0, RuntimeEnvironment<?> arg1) {
+        public void visitDef(Def arg0, RuntimeEnvironment<?, ?> arg1) {
         }
 
         @Override
@@ -171,7 +171,7 @@ public class TestTracerFactory extends TracerFactory {
         }
 
         @Override
-        public void visitedDef(Def arg0, RuntimeEnvironment<?> arg1, Object arg2) {
+        public void visitedDef(Def arg0, RuntimeEnvironment<?, ?> arg1, Object arg2) {
         }
 
         @Override
@@ -187,7 +187,7 @@ public class TestTracerFactory extends TracerFactory {
         }
 
         @Override
-        public void visitLoop(IEnumeratingLoop loop, RuntimeEnvironment<?> environment) {
+        public void visitLoop(IEnumeratingLoop loop, RuntimeEnvironment<?, ?> environment) {
         }
 
         @Override
@@ -197,7 +197,7 @@ public class TestTracerFactory extends TracerFactory {
         }
 
         @Override
-        public void visitedLoop(IEnumeratingLoop loop, RuntimeEnvironment<?> environment) {
+        public void visitedLoop(IEnumeratingLoop loop, RuntimeEnvironment<?, ?> environment) {
         }
 
         @Override
@@ -209,7 +209,7 @@ public class TestTracerFactory extends TracerFactory {
         }
 
         @Override
-        public void visitScriptBody(Script arg0, RuntimeEnvironment<?> arg1) {
+        public void visitScriptBody(Script arg0, RuntimeEnvironment<?, ?> arg1) {
         }
         
         @Override
