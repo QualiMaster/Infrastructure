@@ -124,7 +124,8 @@ public class DelegatingLogTracer extends DelegatingTracer implements ICoordinati
      * @param type the target type
      * @return the parameter value, <b>null</b> if the parameter does not exist or cannot be casted
      */
-    private static <T> T getParameterValue(Script script, int index, RuntimeEnvironment<?, ?> environment, Class<T> type) {
+    private static <T> T getParameterValue(Script script, int index, RuntimeEnvironment<?, ?> environment, 
+        Class<T> type) {
         T result = null;
         if (script.getParameterCount() >= index + 1) {
             try {
