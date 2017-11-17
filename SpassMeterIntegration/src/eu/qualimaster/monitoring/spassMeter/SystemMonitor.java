@@ -218,7 +218,7 @@ public class SystemMonitor {
                 Measurements measurements = pData.getSystem();
                 observations.put(ResourceUsage.USED_MEMORY, measurements.getAvgMemUse());
                 observations.put(ResourceUsage.LOAD, measurements.getAvgLoad());
-                ProcessData.release(pData);
+                ProcessData.POOL.release(pData);
             } else {
                 observations.put(ResourceUsage.USED_MEMORY, Double.valueOf(MEMORY_DATA_GATHERER.getCurrentMemoryUse()));
                 observations.put(ResourceUsage.LOAD, PROCESSOR_DATA_GATHERER.getCurrentSystemLoad());
