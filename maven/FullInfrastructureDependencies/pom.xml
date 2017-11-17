@@ -44,14 +44,14 @@
        </dependency>
        <!-- spass-meter-rt comes as SPASSMeterIntegration -->
        <dependency>
-         <groupId>de.uni_hildesheim.sse.spassMeter</groupId>
+         <groupId>de.uni-hildesheim.sse.spassMeter</groupId>
          <artifactId>spass-meter-ia</artifactId>
-         <version>1.15-SNAPSHOT</version>
+         <version>1.26-SNAPSHOT</version>
        </dependency>
        <dependency>
-         <groupId>de.uni_hildesheim.sse.spassMeter</groupId>
+         <groupId>de.uni-hildesheim.sse.spassMeter</groupId>
          <artifactId>spass-meter-boot</artifactId>
-         <version>1.15-SNAPSHOT</version>
+         <version>1.26-SNAPSHOT</version>
        </dependency>
        <dependency>
          <groupId>eu.qualimaster</groupId>
@@ -60,9 +60,9 @@
          <scope>provided</scope>
        </dependency>
        <dependency>
-         <groupId>de.uni_hildesheim.sse.spassMeter</groupId>
+         <groupId>de.uni-hildesheim.sse.spassMeter</groupId>
          <artifactId>locutor</artifactId>
-         <version>1.00-SNAPSHOT</version>
+         <version>1.10-SNAPSHOT</version>
          <scope>provided</scope>
        </dependency>
        <dependency>

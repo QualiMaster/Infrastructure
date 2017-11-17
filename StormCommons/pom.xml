@@ -144,7 +144,7 @@
          <artifactId>SpassMeterIntegration</artifactId>
        </dependency>
        <dependency>
-         <groupId>de.uni_hildesheim.sse.spassMeter</groupId>
+         <groupId>de.uni-hildesheim.sse.spassMeter</groupId>
          <artifactId>locutor</artifactId>
        </dependency>
         <dependency>

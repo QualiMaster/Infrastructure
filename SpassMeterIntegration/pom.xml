@@ -83,9 +83,9 @@
          <version>0.5.0-SNAPSHOT</version>
        </dependency>              
        <dependency>
-         <groupId>de.uni_hildesheim.sse.spassMeter</groupId>
+         <groupId>de.uni-hildesheim.sse.spassMeter</groupId>
          <artifactId>spass-meter</artifactId>
-         <version>1.15-SNAPSHOT</version>
+         <version>1.26-SNAPSHOT</version>
        </dependency>
         <dependency>
 		    <groupId>junit</groupId>
