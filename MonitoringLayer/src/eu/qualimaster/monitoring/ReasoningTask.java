@@ -849,9 +849,9 @@ public class ReasoningTask extends TimerTask {
         // is finding type and assignable
         IDatatype type = actual.getDeclaration().getType();
         while (type instanceof Compound) {
-            Compound ref = ((Compound) type).getRefines();
-            if (null != ref) {
-                type = ref;
+            Compound cType = (Compound) type;
+            if (cType.getRefinesCount() > 0) {
+                type = cType.getRefines(0); // legacy, just take the first one
             } else {
                 break;
             }
