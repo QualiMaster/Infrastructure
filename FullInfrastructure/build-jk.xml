@@ -79,15 +79,15 @@
         <copy file="${eu.qualimaster:DataManagementLayer:jar}" todir="build/base/provided-libs"/>
         <copy file="${eu.qualimaster:QualiMaster.Events:jar}" todir="build/base/provided-libs"/>
         <copy file="${eu.qualimaster:StormCommons:jar}" todir="build/base/provided-libs"/>
-        <copy file="${de.uni_hildesheim.sse.spassMeter:locutor:jar}" todir="build/base/provided-libs"/>
+        <copy file="${de.uni-hildesheim.sse.spassMeter:locutor:jar}" todir="build/base/provided-libs"/>
         <copy file="${org.apache.storm:storm-stateTransfer:jar}" todir="build/base/provided-libs"/>
     	
         <copy file="${eu.qualimaster:AdaptationLayer:jar}" todir="build/base/qm-libs"/>
         <copy file="${eu.qualimaster:CoordinationLayer:jar}" todir="build/base/qm-libs"/>
         <copy file="${eu.qualimaster:MonitoringLayer:jar}" todir="build/base/qm-libs"/>
     	
-    	<copy file="${de.uni_hildesheim.sse.spassMeter:spass-meter-ia:jar}" tofile="build/base/qm-libs/spass-meter-ia.jar"/>
-    	<copy file="${de.uni_hildesheim.sse.spassMeter:spass-meter-boot:jar}" tofile="build/base/qm-libs/spass-meter-boot.jar"/>
+    	<copy file="${de.uni-hildesheim.sse.spassMeter:spass-meter-ia:jar}" tofile="build/base/qm-libs/spass-meter-ia.jar"/>
+    	<copy file="${de.uni-hildesheim.sse.spassMeter:spass-meter-boot:jar}" tofile="build/base/qm-libs/spass-meter-boot.jar"/>
         <copy file="${eu.qualimaster:SpassMeterIntegration:jar}" tofile="build/base/qm-libs/spass-meter-rt.jar"/>
         <copy file="${eu.qualimaster.easyProducer.runtime:EASy.QualiMaster:jar}" todir="build/base/qm-libs"/>
         <copy file="${eu.qualimaster.easyProducer.runtime:Eclipse.QualiMaster:jar}" todir="build/base/qm-libs"/>
