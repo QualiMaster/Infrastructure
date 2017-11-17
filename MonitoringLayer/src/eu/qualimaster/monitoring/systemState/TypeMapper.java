@@ -243,11 +243,10 @@ public class TypeMapper {
             if (null == result) {
                 if (type instanceof Compound) {
                     Compound cType = (Compound) type;
-                    for (int r = 0; null == result && r < cType.getRefinesCount(); r++) {
-                        type = cType.getRefines(r);
-                        if (TYPE_PREFIX.containsKey(type.getName())) {
-                            break;
-                        }
+                    if (cType.getRefinesCount() > 0) {
+                        type = cType.getRefines(0); // legacy, consider just the first
+                    } else {
+                        type = null;
                     }
                 } else if (type instanceof Reference) {
                     type = Reference.dereference(type);
@@ -259,5 +258,5 @@ public class TypeMapper {
         } while (null == result && null != type);
         return result;
     }
-
+    
 }
