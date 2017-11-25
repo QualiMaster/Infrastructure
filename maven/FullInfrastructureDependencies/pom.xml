@@ -46,12 +46,12 @@
        <dependency>
          <groupId>de.uni-hildesheim.sse.spassMeter</groupId>
          <artifactId>spass-meter-ia</artifactId>
-         <version>1.26-SNAPSHOT</version>
+         <version>1.27-SNAPSHOT</version>
        </dependency>
        <dependency>
          <groupId>de.uni-hildesheim.sse.spassMeter</groupId>
          <artifactId>spass-meter-boot</artifactId>
-         <version>1.26-SNAPSHOT</version>
+         <version>1.27-SNAPSHOT</version>
        </dependency>
        <dependency>
          <groupId>eu.qualimaster</groupId>
@@ -62,7 +62,7 @@
        <dependency>
          <groupId>de.uni-hildesheim.sse.spassMeter</groupId>
          <artifactId>locutor</artifactId>
-         <version>1.10-SNAPSHOT</version>
+         <version>1.11-SNAPSHOT</version>
          <scope>provided</scope>
        </dependency>
        <dependency>
