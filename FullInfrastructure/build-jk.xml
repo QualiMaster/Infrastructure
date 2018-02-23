@@ -157,6 +157,7 @@
             <fileset dir="build/stamp" excludes="**/lib/*.jar"/>
         </zip>
     	<clearMavenRepo/>
+    	<delete dir="build"/>
     </target>
     
 </project>
