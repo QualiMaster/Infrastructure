@@ -56,9 +56,9 @@ public class ProfilingRegistry {
      */
     public enum QuantizerMode {
         
-        KEY_CREATION (true, false),
-        PROFILE_CREATION (false, true),
-        ALL (true, true);
+        KEY_CREATION(true, false),
+        PROFILE_CREATION(false, true),
+        ALL(true, true);
         
         private boolean keyCreation;
         private boolean profileCreation;
