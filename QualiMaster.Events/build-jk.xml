@@ -95,11 +95,6 @@
             basedir="${build.classes.dir}" includes="tests/** testdata/**"/>
         <jar destfile="${build.jar.dir}/${ant.project.name}-sources.jar" 
             basedir="${src.dir}"/>
-        
-		<!-- Copy created jar to global EASy Plug-ins directory -->
-		<copy todir="${easy.bundles.dir}">
-			<fileset dir="${build.jar.dir}" includes="**/*.jar"/>
-		</copy>
 
 		<artifact:install file="${build.jar.dir}/${ant.project.name}.jar">
             <pom refid="pom"/>
