@@ -86,7 +86,7 @@
        <dependency>
          <groupId>eu.qualimaster.easyProducer.runtime</groupId>
          <artifactId>EASy.QualiMaster</artifactId>
-         <version>1.2.0-SNAPSHOT</version>
+         <version>1.3.0-SNAPSHOT</version>
        </dependency>
         <dependency>
             <groupId>eu.qualimaster</groupId>
