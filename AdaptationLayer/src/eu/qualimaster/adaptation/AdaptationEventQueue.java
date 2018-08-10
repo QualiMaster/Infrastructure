@@ -20,6 +20,7 @@ import net.ssehub.easy.instantiation.core.model.execution.TracerFactory;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.Executor;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.RtVilExecution;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.Script;
+import net.ssehub.easy.reasoning.core.reasoner.ReasonerConfiguration;
 import net.ssehub.easy.reasoning.core.reasoner.ReasonerConfiguration.IAdditionalInformationLogger;
 import net.ssehub.easy.varModel.confModel.Configuration;
 import net.ssehub.easy.instantiation.core.model.tracing.ConsoleTracerFactory;
@@ -100,13 +101,8 @@ public class AdaptationEventQueue {
 
     static {
         VariableValueMapping.setInstance(rtVilMapping);
-        RtVilExecution.REASONER_CONFIGURATION.setAdditionalInformationLogger(new IAdditionalInformationLogger() {
-            
-            @Override
-            public void info(String text) {
-                // no output, print for debugging
-            }
-        });
+        RtVilExecution.REASONER_CONFIGURATION.setAdditionalInformationLogger(
+            ReasonerConfiguration.ADDITIONAL_INFO_LOG_NONE);
     }
     
     /**
