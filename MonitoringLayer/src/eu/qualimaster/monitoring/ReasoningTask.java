@@ -57,7 +57,6 @@ import eu.qualimaster.observables.IObservable;
 import net.ssehub.easy.basics.progress.ProgressObserver;
 import net.ssehub.easy.reasoning.core.frontend.ReasonerFrontend;
 import net.ssehub.easy.reasoning.core.reasoner.ReasonerConfiguration;
-import net.ssehub.easy.reasoning.core.reasoner.ReasonerConfiguration.IAdditionalInformationLogger;
 import net.ssehub.easy.reasoning.core.reasoner.ReasoningResult;
 import net.ssehub.easy.varModel.confModel.Configuration;
 import net.ssehub.easy.varModel.confModel.IDecisionVariable;
@@ -116,12 +115,7 @@ public class ReasoningTask extends TimerTask {
     
     static {
         CONFIGURATION.setRuntimeMode(true);
-        CONFIGURATION.setAdditionalInformationLogger(new IAdditionalInformationLogger() {
-            
-            @Override
-            public void info(String arg0) {
-            }
-        });
+        CONFIGURATION.setAdditionalInformationLogger(ReasonerConfiguration.ADDITIONAL_INFO_LOG_NONE);
     }
     
     /**

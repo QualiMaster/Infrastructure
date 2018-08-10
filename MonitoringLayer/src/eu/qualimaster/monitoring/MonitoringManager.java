@@ -171,7 +171,7 @@ public class MonitoringManager {
         private void setStatus(Status status) {
             this.status = status;
             if (Status.STOPPED == status) {
-                pipelines.remove(this);
+                pipelines.remove(name);
                 PipelineInfo parent = getMainPipelineInfo();
                 if (null != parent) {
                     parent.removeSubPipeline(this);
