@@ -22,7 +22,10 @@ import eu.qualimaster.coordination.commands.ProfileAlgorithmCommand;
 import eu.qualimaster.coordination.commands.ReplayCommand;
 import eu.qualimaster.coordination.commands.ShutdownCommand;
 import eu.qualimaster.coordination.commands.UpdateCommand;
+import eu.qualimaster.coordination.events.CoordinationCommandExecutionEvent;
+import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
+import eu.qualimaster.file.Utils;
 import eu.qualimaster.monitoring.events.ChangeMonitoringEvent;
 import eu.qualimaster.pipeline.AlgorithmChangeParameter;
 import org.slf4j.Logger;
@@ -40,10 +43,12 @@ import org.slf4j.LoggerFactory;
  */
 public class Cli {
     
-    public static final String CLI_STANDALONE = "cli.standalone";  
+    public static final String CLI_STANDALONE = "cli.standalone";
+    public static final String CLI_WAIT = "cli.wait";
     public static final String CFG_FILE_OLD = "qm.cfg"; // legacy
     public static final String CFG_FILE = "qm.cli.cfg";
     private static boolean standalone = false;
+    private static boolean waitForExecution = false; // legacy
 
     private static final SimpleDateFormat SDF = new SimpleDateFormat("MM/dd/yyyy,HH:mm:ss", Locale.GERMANY);
     private static final Logger LOGGER = LoggerFactory.getLogger(Cli.class);
@@ -104,18 +109,60 @@ public class Cli {
             if (null != error) {
                 System.out.println("Error: " + error);
             } else {
-                CoordinationCommand cCmd = result.getCommand();
-                if (!standalone) {
-                    cCmd.execute(); // implicitly starts local or client event manager
-                    EventManager.cleanup();
-                    EventManager.stop();
-                } else {
-                    // just use coordination manager as a library
-                    CoordinationManager.execute(cCmd);
-                    CoordinationManager.stop();
-                }
+                executeCommand(result.getCommand());
             }
         }
+    }
+
+    /**
+     * Executes a coordination command.
+     *  
+     * @param cCmd the command
+     */
+    private static void executeCommand(CoordinationCommand cCmd) {
+        if (!standalone) {
+            // implicitly starts local or client event manager, either during registration or cmd execution
+            if (waitForExecution) {
+                EventManager.register(new CoordinationCommandExecutionEventHandler());
+            }
+            cCmd.execute(); 
+            EventManager.cleanup();
+            EventManager.stop();
+            while (waitForExecution) {
+                Utils.sleep(200);
+            }
+        } else {
+            // just use coordination manager as a library
+            CoordinationManager.execute(cCmd);
+            CoordinationManager.stop();
+        }
+    }
+    
+    /**
+     * A handler for responses sent by the coordination command execution.
+     * 
+     * @author Holger Eichelberger
+     */
+    private static class CoordinationCommandExecutionEventHandler 
+        extends EventHandler<CoordinationCommandExecutionEvent> {
+
+        /**
+         * Creates a new handler.
+         */
+        private CoordinationCommandExecutionEventHandler() {
+            super(CoordinationCommandExecutionEvent.class);
+        }
+
+        @Override
+        protected void handle(CoordinationCommandExecutionEvent event) {
+            if (event.isSuccessful()) {
+                LOGGER.info("Successful execution: " + event.getMessage());
+            } else {
+                LOGGER.info("Failed execution: " + event.getMessage());
+            }
+            waitForExecution = false;
+        }
+        
     }
     
     /**
@@ -574,7 +621,25 @@ public class Cli {
         readCfg(CFG_FILE, prop);
         readCfg(CFG_FILE_OLD, prop); // legacy
         AdaptationConfiguration.configure(prop);
-        standalone = "true".equals(prop.get(CLI_STANDALONE));
+        standalone = readBooleanProperty(prop, CLI_STANDALONE, standalone);
+        waitForExecution = readBooleanProperty(prop, CLI_WAIT, waitForExecution);
+    }
+    
+    /**
+     * Reads a boolean property.
+     * 
+     * @param prop the properties object
+     * @param key the key of the property
+     * @param dflt the default value if the property is not present
+     * @return the boolean value for the property
+     */
+    private static final boolean readBooleanProperty(Properties prop, String key, boolean dflt) {
+        boolean result = dflt;
+        Object tmp = prop.get(key);
+        if (null != tmp) {
+            result = "true".equals(tmp.toString().trim().toLowerCase());
+        }
+        return result;
     }
 
 }
