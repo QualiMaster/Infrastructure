@@ -130,6 +130,7 @@ public class RepositoryConnector {
     public static final String PROPERTY_RTVIL_VERSION = PREFIX_RTVIL + SUFFIX_VERSION;
 
     private static final String PIPELINES_VAR_NAME = "pipelines";
+    private static final String ACTIVE_PIPELINES_VAR_NAME = "activePipelines";
     private static final String PIPELINE_NAME_VAR_NAME = "name";
     private static final String PIPELINE_ARTIFACT_VAR_NAME = "artifact";
     
@@ -739,35 +740,74 @@ public class RepositoryConnector {
         String artifact = null;
         if (null != pipelineName && null != config) {
             ContainerValue pipelines = getPipelines(config);
-            if (null != pipelines) {
-                for (int e = 0, n = pipelines.getElementSize(); null == artifact && e < n; e++) {
-                    Value val = dereference(pipelines.getElement(e), config);
-                    if (val instanceof CompoundValue) {
-                        CompoundValue pipeline = (CompoundValue) val;
-                        String name = pipeline.getStringValue(PIPELINE_NAME_VAR_NAME);
-                        if (pipelineName.equals(name)) {
-                            artifact = pipeline.getStringValue(PIPELINE_ARTIFACT_VAR_NAME);
-                        }
-                    } else {
-                        getLogger().error("Pipeline value is not a compound rather than " + val.getType());
-                    }
-                }
+            CompoundValue pipeline = getPipeline(config, pipelines, pipelineName);
+            if (null != pipeline) {
+                artifact = pipeline.getStringValue(PIPELINE_ARTIFACT_VAR_NAME);
             }
         }
         return artifact;
+    }
+    
+    /**
+     * Returns a pipeline.
+     * 
+     * @param config configuration the configuration of the model
+     * @param pipelines the set of pipelines
+     * @param pipelineName the name of the pipeline
+     * @return the pipeline, <b>null</b> if not 
+     *     available / configured
+     */
+    static CompoundValue getPipeline(Configuration config, ContainerValue pipelines, String pipelineName) {
+        CompoundValue result = null;
+        if (null != pipelineName && null != pipelines) {
+            for (int e = 0, n = pipelines.getElementSize(); null == result && e < n; e++) {
+                Value val = dereference(pipelines.getElement(e), config);
+                if (val instanceof CompoundValue) {
+                    CompoundValue pipeline = (CompoundValue) val;
+                    String name = pipeline.getStringValue(PIPELINE_NAME_VAR_NAME);
+                    if (pipelineName.equals(name)) {
+                        result = pipeline;
+                    }
+                } else {
+                    getLogger().error("Pipeline value is not a compound rather than " + val.getType());
+                }
+            }
+        }
+        return result;
     }
 
     /**
      * Returns the configured pipelines as a container value containing compounds.
      * 
      * @param config the configuration to take the value from
-     * @return the container value or <b>null</b> if not avaluable for some reason
+     * @return the container value or <b>null</b> if not available for some reason
      */
-    private static ContainerValue getPipelines(Configuration config) {
+    static ContainerValue getPipelines(Configuration config) {
+        return getPipelines(config, PIPELINES_VAR_NAME);
+    }
+
+    /**
+     * Returns the configured active pipelines as a container value containing compounds.
+     * 
+     * @param config the configuration to take the value from
+     * @return the container value or <b>null</b> if not available for some reason
+     */
+    static ContainerValue getActivePipelines(Configuration config) {
+        return getPipelines(config, ACTIVE_PIPELINES_VAR_NAME);
+    }
+    
+    /**
+     * Returns pipelines as a container value containing compounds.
+     * 
+     * @param config the configuration to take the value from
+     * @param varName the name of the pipeline variable
+     * @return the container value or <b>null</b> if not available for some reason
+     */
+    private static ContainerValue getPipelines(Configuration config, String varName) {
         ContainerValue result = null;
         Project model = config.getProject();
         try {
-            AbstractVariable decl = ModelQuery.findVariable(model, PIPELINES_VAR_NAME, null);
+            AbstractVariable decl = ModelQuery.findVariable(model, varName, null);
             if (null != decl) {
                 IDecisionVariable var = config.getDecision(decl);
                 if (null != var) {
@@ -777,18 +817,18 @@ public class RepositoryConnector {
                         IDatatype cType = result.getContainedType();
                         cType = Reference.dereference(cType);
                         if (!Compound.TYPE.isAssignableFrom(cType)) {
-                            getLogger().error("Variable " + PIPELINES_VAR_NAME + " does not contain a collection "
+                            getLogger().error("Variable " + varName + " does not contain a collection "
                                 + "of compounds.");
                             result = null;
                         }
                     } else {
-                        getLogger().error("Variable " + PIPELINES_VAR_NAME + " is not configured correclty.");
+                        getLogger().error("Variable " + varName + " is not configured correctly.");
                     }
                 } else {
-                    getLogger().error("Variable " + PIPELINES_VAR_NAME + " not found.");
+                    getLogger().error("Variable " + varName + " not found.");
                 }
             } else {
-                getLogger().error("Declaration for " + PIPELINES_VAR_NAME + " not found.");
+                getLogger().error("Declaration for " + varName + " not found.");
             }
         } catch (ModelQueryException e) {
             getLogger().error(e.getMessage());

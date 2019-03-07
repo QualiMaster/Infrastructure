@@ -71,6 +71,7 @@ project QM {
         }
     }
     
+    setOf(refTo(Pipeline)) activePipelines;
     setOf(refTo(Pipeline)) pipelines;
     setOf(refTo(Algorithm)) algorithms;
     
@@ -114,6 +115,7 @@ project QM {
     };
     
     pipelines = {refBy(pip)};
+    activePipelines = {refBy(pip)};
     algorithms = {refBy(alg1), refBy(alg2)};
     
     freeze {
@@ -125,6 +127,7 @@ project QM {
         src;
         pip;
         pipelines;
+        activePipelines;
         algorithms;
     } but (v | v.bindingTime == BindingTime.runtime);
 }

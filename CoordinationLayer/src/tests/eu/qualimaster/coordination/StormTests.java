@@ -132,8 +132,14 @@ public class StormTests extends AbstractCoordinationTests {
             new File(Utils.getTestdataDir(), "pipeline.xml"), topoCfg));
         env.setTopologies(topologies);
         clear();
+        
+        // pipeline shall not exist
+        PipelineCommand cmd = new PipelineCommand("xyz1234", PipelineCommand.Status.START);
+        cmd.execute();
+        waitForExecution(0, 1, 1000); // pipeline status tracker <-> monitoring
+        clear();
 
-        PipelineCommand cmd = new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.START);
+        cmd = new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.START);
         cmd.execute();
         fakeCheckedPipeline(Naming.PIPELINE_NAME);
         waitForExecution(1, 0, 1000); // pipeline status tracker <-> monitoring

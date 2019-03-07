@@ -12,6 +12,12 @@ import eu.qualimaster.infrastructure.PipelineOptions;
  */
 public class PipelineCommand extends AbstractPipelineCommand {
 
+    /**
+     * An internal pipeline option suppressing the check whether a pipeline is in the set of active pipelines when 
+     * starting up a pipeline. By default, the membership in the set of active pipelines is checked. This is omitted
+     * if this pipeline option is specified, the value is irrelevant unless it is not <b>null</b>.
+     */
+    public static final String KEY_SUPPRESS_ACTIVE_CHECK = "qm.suppress.active.check";
     private static final long serialVersionUID = -2324993487797063739L;
 
     /**

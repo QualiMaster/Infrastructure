@@ -408,6 +408,30 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
         }
         return failing;
     }
+
+    /**
+     * Checks whether the pipeline specified in <code>command</code> is in the set of active pipelines. 
+     * If the pipeline option {@link PipelineCommand#KEY_SUPPRESS_ACTIVE_CHECK} is set, the result will always be ok.
+     * 
+     * @param models the actual models
+     * @param command the command to check for
+     * @return <b>null</b> for ok, a failing execution result else
+     */
+    private static CoordinationExecutionResult checkActivePipeline(Models models, PipelineCommand command) {
+        CoordinationExecutionResult failing = null;
+        Configuration cfg = models.getConfiguration();
+        if (null != command.getOptions().getOption(PipelineCommand.KEY_SUPPRESS_ACTIVE_CHECK)) {
+            failing = null;
+        } else {
+            String pipelineName = command.getPipeline();
+            if (null == RepositoryConnector.getPipeline(cfg, 
+                RepositoryConnector.getActivePipelines(cfg), pipelineName)) {
+                failing = new CoordinationExecutionResult(command, "Pipeline " + pipelineName + " is not declared as "
+                    + "active in the configuration model", CoordinationExecutionCode.STARTING_PIPELINE);
+            }
+        }
+        return failing;
+    }
     
     /**
      * Handles starting a pipeline.
@@ -418,19 +442,28 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
     private CoordinationExecutionResult handlePipelineStart(PipelineCommand command) {
         CoordinationExecutionResult failing = null;
         String pipelineName = command.getPipeline();
-        // clear but not if the pipeline was just created, then we have the right information object
-        CoordinationManager.clearPipeline(pipelineName, null);
-        CoordinationManager.registerPipelineOptions(pipelineName, command.getOptions());
-        INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
-        getLogger().info("Processing pipeline start command for " + pipelineName + " with options " 
-            + command.getOptions());
-        try {
-            String absPath = CoordinationUtils.loadMapping(pipelineName);
-            doPipelineStart(mapping, absPath, command.getOptions(), command);
-        } catch (IOException e) { // implies file not found!
-            String message = "while starting pipeline '" + command.getPipeline() + "': " +  e.getMessage();
-            failing = new CoordinationExecutionResult(command, message, 
-                CoordinationExecutionCode.STARTING_PIPELINE);
+        Models models = RepositoryConnector.getModels(RepositoryConnector.Phase.MONITORING);
+        if (null == models) {
+            failing = new CoordinationExecutionResult(command, "Configuration model is not available "
+                + "- see messages above", CoordinationExecutionCode.STARTING_PIPELINE);
+        } else {
+            failing = checkActivePipeline(models, command);
+            if (null == failing) {
+                // clear but not if the pipeline was just created, then we have the right information object
+                CoordinationManager.clearPipeline(pipelineName, null);
+                CoordinationManager.registerPipelineOptions(pipelineName, command.getOptions());
+                INameMapping mapping = CoordinationManager.getNameMapping(pipelineName);
+                getLogger().info("Processing pipeline start command for " + pipelineName + " with options " 
+                    + command.getOptions());
+                try {
+                    String absPath = CoordinationUtils.loadMapping(pipelineName);
+                    doPipelineStart(mapping, absPath, command.getOptions(), command);
+                } catch (IOException e) { // implies file not found!
+                    String message = "while starting pipeline '" + command.getPipeline() + "': " +  e.getMessage();
+                    failing = new CoordinationExecutionResult(command, message, 
+                        CoordinationExecutionCode.STARTING_PIPELINE);
+                }
+            }
         }
         return failing;
     }
@@ -442,7 +475,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
      * @param jarPath the absolute path to the pipeline Jar
      * @param options the pipeline options
      * @param command the causing command (may be <b>null</b>)
-     * @throws IOException in case that stopping fails
+     * @throws IOException in case that starting fails
      */
     static void doPipelineStart(INameMapping mapping, String jarPath, PipelineOptions options, 
         CoordinationCommand command) throws IOException {
