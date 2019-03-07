@@ -78,6 +78,7 @@ project QM {
         }
     }
     
+    setOf(refTo(Pipeline)) activePipelines;
     setOf(refTo(Pipeline)) pipelines;
     setOf(refTo(Algorithm)) algorithms;
     
@@ -142,7 +143,8 @@ project QM {
         name = "pipeline",
         sources = {refBy(src)}
     };
-    
+
+    activePipelines = {refBy(pip)};
     pipelines = {refBy(pip)};
     algorithms = {refBy(alg1), refBy(alg2), refBy(hwAlg), refBy(subAlg)};
     
@@ -165,6 +167,7 @@ project QM {
         src;
         pip;
         pipelines;
+        activePipelines;
         algorithms;
         clusters;
     } but (v | v.bindingTime == BindingTime.runtime);

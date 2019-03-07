@@ -134,7 +134,8 @@ public abstract class AbstractTopology {
      */
     protected static void assertGreater(double expected, PipelineNodeSystemPart part, IObservable obs) {
         Assert.assertTrue("no value for " + obs + " on " + part, part.hasValue(obs));
-        Assert.assertTrue("not greater " + part, expected < part.getObservedValue(obs));
+        Assert.assertTrue("not fulfilled " + expected + " <= " + part.getObservedValue(obs)  + " in " + part, 
+            expected <= part.getObservedValue(obs));
     }
     
     /**

@@ -1,6 +1,8 @@
 package tests.eu.qualimaster.monitoring;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -31,8 +33,11 @@ import eu.qualimaster.easy.extension.internal.AlgorithmProfileHelper.ProfileData
 import eu.qualimaster.base.pipeline.RecordingTopologyBuilder;
 import eu.qualimaster.coordination.CoordinationConfiguration;
 import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.coordination.ParallelismChangeRequest;
 import eu.qualimaster.coordination.StormUtils;
+import eu.qualimaster.coordination.ZkUtils;
 import eu.qualimaster.coordination.StormUtils.TopologyTestInfo;
+import eu.qualimaster.coordination.commands.ParallelismChangeCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand;
 import eu.qualimaster.coordination.commands.ProfileAlgorithmCommand;
 import eu.qualimaster.coordination.events.AlgorithmProfilingEvent.DetailMode;
@@ -333,7 +338,9 @@ public class StormTest extends AbstractCoordinationTests {
         ti.setSubTopologyEvent(evt);
         topologies.put(topo.getName(), ti);
         env.setTopologies(topologies);
-        new PipelineCommand(topo.getName(), PipelineCommand.Status.START).execute();
+        PipelineOptions pOpt = new PipelineOptions();
+        pOpt.setOption(PipelineCommand.KEY_SUPPRESS_ACTIVE_CHECK, Boolean.TRUE);
+        new PipelineCommand(topo.getName(), PipelineCommand.Status.START, pOpt).execute();
         sleep(500);
         EventManager.send(new PipelineLifecycleEvent(topo.getName(), 
             PipelineLifecycleEvent.Status.CHECKED, null)); // fake as we have no adaptation layer started
@@ -600,6 +607,177 @@ public class StormTest extends AbstractCoordinationTests {
     @Test
     public void testProfilingSource() {
         testTopology(new ProfilingSourceTopology());
+    }
+
+    /**
+     * Tests the pipeline parallelism executor.
+     * 
+     * @throws IOException shall not occur
+     */
+    @Test
+    public void testPipelineParallelismExecutor() throws IOException {
+        if (ZkUtils.isQmStormVersion()) { // only supported by the patched version
+            testPipelineCommands(TestExecutionMode.EXECUTOR_PARALLELISM);
+        }
+    }
+
+    /**
+     * Tests pipeline commands.
+     * 
+     * @param mode the execution mode
+     * @throws IOException shall not occur
+     */
+    private void testPipelineCommands(TestExecutionMode mode) throws IOException {
+        // System.setProperty("storm.conf.file", "test.yaml"); -> QMstormVersion
+        LocalStormEnvironment env = new LocalStormEnvironment();
+        // build the test topology
+        RecordingTopologyBuilder builder = new RecordingTopologyBuilder();
+        Topology.createTopology(builder);
+        StormTopology topology = builder.createTopology();
+        Map<String, TopologyTestInfo> topologies = new HashMap<String, TopologyTestInfo>();
+        @SuppressWarnings("rawtypes")
+        Map topoCfg = createTopologyConfiguration();
+        //topoCfg.put(Config.TOPOLOGY_WORKERS, 3);
+        topologies.put(Naming.PIPELINE_NAME, new TopologyTestInfo(topology, 
+            new File(Utils.getTestdataDir(), "pipeline.xml"), topoCfg));
+        env.setTopologies(topologies);
+        clear();
+
+        PipelineCommand cmd = new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.START);
+        cmd.execute();
+        fakeCheckedPipeline(Naming.PIPELINE_NAME);
+        waitForExecution(1, 0, 1000); // pipeline status tracker <-> monitoring
+        Assert.assertTrue(getTracer().contains(cmd));
+        Assert.assertEquals(1, getTracer().getLogEntryCount());
+        Assert.assertEquals(0, getFailedHandler().getFailedCount());
+        clear();
+
+        sleep(3000); // let Storm run for a while
+
+        cmd = new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.CONNECT);
+        cmd.execute();
+        waitForExecution(1, 0, 1000);
+        Assert.assertTrue(getTracer().contains(cmd));
+        Assert.assertEquals(1, getTracer().getLogEntryCount());
+        Assert.assertEquals(0, getFailedHandler().getFailedCount());
+        clear();
+
+        /*EventManager.send(new SourceVolumeAdaptationEvent(Naming.PIPELINE_NAME, Naming.NODE_SOURCE, 
+            create("1656", 1839.5837325157627), create("1656", 0.47229364121072215), 
+            create("1656", 0.0), create("1656", 3895L), 
+            create("1656", 5734.583732515763), create("1656", 5195.447782491298)));*/
+        
+        handleMode(mode, 1);
+        
+        sleep(4000); // let Storm run for a while // 600000
+        
+        handleMode(mode, 2);
+
+        cmd = new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.DISCONNECT);
+        cmd.execute();
+        waitForExecution(1, 0, 1000);
+        //Assert.assertTrue(getTracer().contains(cmd));
+        //Assert.assertEquals(1, getTracer().getLogEntryCount());
+        //Assert.assertEquals(0, getFailedHandler().getFailedCount());
+        clear();
+
+        sleep(1000);
+        cmd = new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.STOP);
+        cmd.execute();
+        waitForExecution(1, 0, 1000, new PipelineCommandFilter(PipelineCommand.Status.STOP));
+        //Assert.assertTrue(getTracer().contains(cmd));
+        //Assert.assertEquals(1, getTracer().getLogEntryCount());
+        //Assert.assertEquals(0, getFailedHandler().getFailedCount());
+        clear();
+
+        sleep(2000); // let Storm run for a while
+        env.shutdown();
+        env.cleanup();
+    }
+
+    /**
+     * Creates a map from a single key-value mapping.
+     * 
+     * @param <T> the value type
+     * @param key the key
+     * @param value the value
+     * @return the map
+     */
+    @SuppressWarnings("unused")
+    private <T> Map<String, T> create(String key, T value) {
+        Map<String, T> result = new HashMap<String, T>();
+        result.put(key, value);
+        return result;
+    }
+
+    /**
+     * Handles an execution mode.
+     * 
+     * @param mode the mode
+     * @param callCount the call count
+     * @throws IOException shall not occur
+     */
+    private void handleMode(TestExecutionMode mode, int callCount) throws IOException {
+        if (mode.changesParallelism()) {
+            if (1 == callCount) {
+                sleep(1000); // let Storm run for a while
+                Map<String, ParallelismChangeRequest> taskChanges = new HashMap<String, ParallelismChangeRequest>();
+                if (TestExecutionMode.EXECUTOR_PARALLELISM == mode) {
+                    taskChanges.put(Naming.NODE_PROCESS, new ParallelismChangeRequest(1));
+                } else if (TestExecutionMode.WORKER_PARALLELISM == mode) {
+                    String host = InetAddress.getLocalHost().getCanonicalHostName();
+                    // same host (local cluster), but second supervisor
+                    // test with StormUtils.ParallelismChangeRequest(1, host, 1)
+                    taskChanges.put(Naming.NODE_PROCESS, new ParallelismChangeRequest(0, host, true));
+                }
+                new ParallelismChangeCommand(Naming.PIPELINE_NAME, taskChanges).execute(); // command just for testing
+                sleep(8000); // let Storm run for a while
+            } else { // revert the changes
+                Map<String, ParallelismChangeRequest> taskChanges = new HashMap<String, ParallelismChangeRequest>();
+                if (TestExecutionMode.EXECUTOR_PARALLELISM == mode) {
+                    taskChanges.put(Naming.NODE_PROCESS, new ParallelismChangeRequest(-1));
+                } else if (TestExecutionMode.WORKER_PARALLELISM == mode) {
+                    sleep(10000);
+                    String host = InetAddress.getLocalHost().getCanonicalHostName();
+                    taskChanges.put(Naming.NODE_PROCESS, new ParallelismChangeRequest(0, host, true));
+                }
+                new ParallelismChangeCommand(Naming.PIPELINE_NAME, taskChanges).execute(); // command just for testing
+                sleep(10000); // let Storm run for a while
+            }
+        } 
+    }
+
+    /**
+     * Defines execution modes.
+     * 
+     * @author Holger Eichelberger
+     */
+    private enum TestExecutionMode {
+        DEFAULT_EXECUTION(false),
+        WORKER_PARALLELISM(true),
+        EXECUTOR_PARALLELISM(true),
+        LOAD_SHEDDING_SOURCE(false),
+        LOAD_SHEDDING_PROCESSOR(false);
+
+        private boolean changesParallelism;
+        
+        /**
+         * Creates a new "constant".
+         * 
+         * @param changesParallelism whether parallelism changes shall happen
+         */
+        private TestExecutionMode(boolean changesParallelism) {
+            this.changesParallelism = changesParallelism;
+        }
+        
+        /**
+         * Returns whether a parallelism change shall happen.
+         * 
+         * @return <code>true</code> in case of a change, <code>false</code> else
+         */
+        public boolean changesParallelism() {
+            return changesParallelism;
+        }
     }
 
 }

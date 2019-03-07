@@ -430,13 +430,13 @@ public class SystemStateTest {
         node.clear(Scalability.ITEMS);
         node.setValue(TimeBehavior.THROUGHPUT_ITEMS, 750, null); // incremental - 0 change, frame 1000
         Thread.sleep(3000);
-        Assert.assertEquals(750 / 3, node.getObservedValue(Scalability.ITEMS), 5);
+        Assert.assertEquals(750 / 3, node.getObservedValue(Scalability.ITEMS), 30); // ~15% deviation
         
         node.clear(TimeBehavior.THROUGHPUT_ITEMS); // reset firstUpdate!
         node.clear(Scalability.ITEMS);
         node.setValue(TimeBehavior.THROUGHPUT_ITEMS, 1000, null);
         Thread.sleep(3000);
-        Assert.assertEquals(1000 / 3, node.getObservedValue(Scalability.ITEMS), 5);
+        Assert.assertEquals(1000 / 3, node.getObservedValue(Scalability.ITEMS), 50); // ~15% deviation
     }
     
     /**
