@@ -22,6 +22,7 @@ import tests.eu.qualimaster.storm.SignalCollector;
 import tests.eu.qualimaster.storm.TestTopology;
 import tests.eu.qualimaster.storm.SignalCollector.SignalEntry;
 import tests.eu.qualimaster.storm.Topology;
+import tests.eu.qualimaster.testSupport.TestExcludeHosts;
 import eu.qualimaster.base.pipeline.RecordingTopologyBuilder;
 import eu.qualimaster.common.shedding.DefaultLoadShedders;
 import eu.qualimaster.common.shedding.DefaultLoadSheddingParameter;
@@ -358,7 +359,7 @@ public class StormTests extends AbstractCoordinationTests {
      */
     @Test
     public void testPipelineCommand() throws IOException {
-        if (!isJenkins()) {
+        if (!TestExcludeHosts.isExcludedHost()) {
             testPipelineCommands(TestExecutionMode.DEFAULT_EXECUTION);
         }
     }

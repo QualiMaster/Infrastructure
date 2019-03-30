@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import tests.eu.qualimaster.storm.Naming;
+import tests.eu.qualimaster.testSupport.TestExcludeHosts;
 import eu.qualimaster.common.shedding.DefaultLoadShedders;
 import eu.qualimaster.common.shedding.DefaultLoadSheddingParameter;
 import eu.qualimaster.coordination.CoordinationConfiguration;
@@ -215,7 +216,7 @@ public class ManagerTests extends AbstractCoordinationTests {
      * @param successful the number of expected successful commands
      */
     private void assertCoordinationResponse(int failed, int successful) {
-        if (!AbstractCoordinationTests.isJenkins()) {
+        if (!TestExcludeHosts.isExcludedHost()) {
             EventManager.cleanup(); // ensure that response is processed
             Assert.assertEquals(failed, getFailedHandler().getFailedCount());
             Assert.assertEquals(successful, getFailedHandler().getSuccessfulCount());
@@ -476,7 +477,7 @@ public class ManagerTests extends AbstractCoordinationTests {
         EventManager.send(new PipelineLifecycleEvent(Naming.PIPELINE_NAME, 
             PipelineLifecycleEvent.Status.CHECKED, null)); // fake as we have no adaptation layer started
         waitForExecution(2, 0); // + response
-        if (!AbstractCoordinationTests.isJenkins()) {
+        if (!TestExcludeHosts.isExcludedHost()) {
             Assert.assertTrue(getTracer().contains(cmd));
         }
         assertNotification(cmd);

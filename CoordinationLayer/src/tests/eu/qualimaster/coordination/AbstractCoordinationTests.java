@@ -1,13 +1,9 @@
 package tests.eu.qualimaster.coordination;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.storm.curator.utils.DebugUtils;
 import org.junit.After;
@@ -54,14 +50,9 @@ import tests.eu.qualimaster.storm.Naming;
 public class AbstractCoordinationTests {
 
     private static final int TIMEOUT = 8000; // ms, loading models through repository connector
-    private static final Set<String> JENKINS = new HashSet<String>();
     private TestTracer tracer;
     private CoordinationCommandExecutionEventHandler failedHandler;
     private PipelineStatusTracker tracker;
-    
-    static {
-        JENKINS.add("jenkins.sse.uni-hildesheim.de");
-    }
     
     /**
      * Runs a test job in a local Storm cluster.
@@ -588,22 +579,6 @@ public class AbstractCoordinationTests {
         String pipArtifact = RepositoryConnector.getPipelineArtifact(models, Naming.PIPELINE_NAME);
         Assert.assertEquals("eu.qualiMaster:TestPipeline:0.0.1", pipArtifact);
     }
-    
-    /**
-     * Returns whether the running machine is identified as Jenkins and some tests shall not run.
-     * 
-     * @return <code>true</code> if the running machine is Jenkins, <code>false</code> else
-     */
-    public static boolean isJenkins() {
-        String hostname;
-        try {
-            hostname = InetAddress.getLocalHost().getCanonicalHostName();
-        } catch (UnknownHostException e) {
-            hostname = "localhost";
-        }
-        return JENKINS.contains(hostname);
-    }
-
     
     /**
      * Fakes a checked pipeline without adaptation layer.
