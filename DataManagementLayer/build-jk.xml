@@ -68,6 +68,7 @@
                 <formatter type="xml" />
             </test>
             <jvmarg value="-Dqm.base.dir=${libs.qualimaster.dataManagementLayer.dir}"/>
+        	<jvmarg value="-Dtest.exclude.hosts=${test.exclude.hosts}"/>
         </junit>
       </jacoco:coverage>
     </target>
