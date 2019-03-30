@@ -29,6 +29,7 @@ import tests.eu.qualimaster.monitoring.genTopo.SwitchTopology;
 import tests.eu.qualimaster.storm.Naming;
 import tests.eu.qualimaster.storm.TestTopology;
 import tests.eu.qualimaster.storm.Topology;
+import tests.eu.qualimaster.testSupport.TestExcludeHosts;
 import eu.qualimaster.easy.extension.internal.AlgorithmProfileHelper.ProfileData;
 import eu.qualimaster.base.pipeline.RecordingTopologyBuilder;
 import eu.qualimaster.coordination.CoordinationConfiguration;
@@ -258,7 +259,7 @@ public class StormTest extends AbstractCoordinationTests {
      */
     @Test
     public void testGenTopology() {
-        if (!isJenkins()) {
+        if (!TestExcludeHosts.isExcludedHost()) {
             testTopology(new GenTopology());
         }
     }
@@ -268,7 +269,7 @@ public class StormTest extends AbstractCoordinationTests {
      */
     @Test
     public void testManTopology() {
-        if (!isJenkins()) {
+        if (!TestExcludeHosts.isExcludedHost()) {
             testTopology(new ManTopology());
         }
     }
@@ -278,7 +279,7 @@ public class StormTest extends AbstractCoordinationTests {
      */
     @Test
     public void testHwTopology() {
-        if (!isJenkins()) {
+        if (!TestExcludeHosts.isExcludedHost()) {
             testTopology(new HwTopology());
         }
     }
@@ -288,7 +289,7 @@ public class StormTest extends AbstractCoordinationTests {
      */
     @Test
     public void testHwTopologyIntegrated() {
-        if (!isJenkins()) {
+        if (!TestExcludeHosts.isExcludedHost()) {
             testTopology(new HwTopologyInt(true));
         }
     }
@@ -298,7 +299,7 @@ public class StormTest extends AbstractCoordinationTests {
      */
     @Test(timeout = 2 * 60 * 1000)
     public void testSwitchTopologySink() {
-        if (!isJenkins()) {
+        if (!TestExcludeHosts.isExcludedHost()) {
             testTopology(new SwitchTopology(true));
         }
     }
@@ -369,7 +370,7 @@ public class StormTest extends AbstractCoordinationTests {
 
         env.cleanup();
         
-        if (!isJenkins()) { // for now, copy seems to cause problems
+        if (!TestExcludeHosts.isExcludedHost()) { // for now, copy seems to cause problems
             topo.assertState(state, mapping, pipRunTime);
         }
     }

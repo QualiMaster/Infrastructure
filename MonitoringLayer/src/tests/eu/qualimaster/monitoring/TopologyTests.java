@@ -29,8 +29,8 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
-import tests.eu.qualimaster.coordination.AbstractCoordinationTests;
 import tests.eu.qualimaster.coordination.Utils;
+import tests.eu.qualimaster.testSupport.TestExcludeHosts;
 import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.coordination.INameMapping;
 import eu.qualimaster.coordination.NameMapping;
@@ -572,12 +572,12 @@ public class TopologyTests {
         // algorithm corresponds to active nodes (via implicit topology aggregation)
         assertEqualsAll(toArray(pPrc11, pPrc12), alg1, toObservables(aggregators));
         walker.visit(pipeline, aggregators);
-        if (!AbstractCoordinationTests.isJenkins()) {
+        if (!TestExcludeHosts.isExcludedHost()) {
             assertEqualsAll(toArray(pSrc, pPrc, pSnk), aggregators); // assert the aggregators
             assertEqualsAll(toArray(pSrc, pPrc, pSnk), pipeline, toObservables(aggregators)); // assert the system part
         }
         StatisticsWalker.clear(aggregators);
-        if (!AbstractCoordinationTests.isJenkins()) {
+        if (!TestExcludeHosts.isExcludedHost()) {
             assertEquals(pSnk, pipeline, Scalability.ITEMS); // through ITEMS aggregation, setting in basic data
         }
         for (ObservationAggregator aggregator : aggregators) {
