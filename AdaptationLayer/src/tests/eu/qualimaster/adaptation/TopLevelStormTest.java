@@ -48,12 +48,12 @@ import eu.qualimaster.monitoring.events.ConstraintViolationAdaptationEvent;
 import eu.qualimaster.monitoring.events.MonitoringInformationEvent;
 import eu.qualimaster.monitoring.events.PipelineElementMultiObservationMonitoringEvent;
 import eu.qualimaster.monitoring.events.PipelineElementObservationMonitoringEvent;
-import tests.eu.qualimaster.coordination.AbstractCoordinationTests;
 import tests.eu.qualimaster.coordination.LocalStormEnvironment;
 import tests.eu.qualimaster.coordination.TestNameMapping;
 import tests.eu.qualimaster.coordination.Utils;
 import tests.eu.qualimaster.storm.Naming;
 import tests.eu.qualimaster.storm.Topology;
+import tests.eu.qualimaster.testSupport.TestExcludeHosts;
 
 /**
  * A top-level test of the infrastructure.
@@ -272,7 +272,7 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
      */
     @Test
     public void testStackStatic() throws IOException {
-        if (!AbstractCoordinationTests.isJenkins()) {
+        if (!TestExcludeHosts.isExcludedHost()) {
             testStackImpl(true, InitializationMode.STATIC);
         }
     }
@@ -285,7 +285,7 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
      */
     @Test
     public void testStackDynamic() throws IOException {
-        if (!AbstractCoordinationTests.isJenkins()) {
+        if (!TestExcludeHosts.isExcludedHost()) {
             testStackImpl(true, InitializationMode.DYNAMIC);
         }
     }
@@ -298,7 +298,7 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
     //@Ignore("does not run in sequence")
     @Test
     public void testStackAdaptive() throws IOException {
-        if (!AbstractCoordinationTests.isJenkins()) {
+        if (!TestExcludeHosts.isExcludedHost()) {
             testStackImpl(false, InitializationMode.ADAPTIVE);
         }
     }

@@ -71,6 +71,7 @@
                 <formatter type="xml" />
             </test>
             <jvmarg value="-Dqm.base.dir=${libs.qualimaster.adaptationLayer.dir}"/>
+        	<jvmarg value="-Dtest.exclude.hosts=${test.exclude.hosts}"/>
             <env key="STORM_TEST_TIMEOUT_MS" value="200000"/>
           </junit>
         </jacoco:coverage>

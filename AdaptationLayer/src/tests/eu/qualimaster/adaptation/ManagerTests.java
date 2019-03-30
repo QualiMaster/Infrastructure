@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import tests.eu.qualimaster.coordination.AbstractCoordinationTests;
 import tests.eu.qualimaster.coordination.Utils;
+import tests.eu.qualimaster.testSupport.TestExcludeHosts;
 
 /**
  * Global tests.
@@ -51,7 +52,7 @@ public class ManagerTests {
      */
     @Test
     public void testRegistryConnectorModels() {
-        if (!AbstractAdaptationTests.isJenkins()) {
+        if (!TestExcludeHosts.isExcludedHost()) {
             AbstractCoordinationTests.testLoadModels();
         }
     }

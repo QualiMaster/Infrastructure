@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -91,7 +89,6 @@ import tests.eu.qualimaster.adaptation.TimeMeasurementTracerFactory.Measure;
  */
 public abstract class AbstractDirectAdaptationTests {
 
-    private static final Set<String> JENKINS = new HashSet<String>();
     private static IScheduler scheduler = new IScheduler() {
         
         @Override
@@ -109,10 +106,6 @@ public abstract class AbstractDirectAdaptationTests {
     private File tmp;
     private boolean debug = false;
     private List<INameMapping> mappings;
-    
-    static {
-        JENKINS.add("jenkins.sse.uni-hildesheim.de");
-    }
     
     /**
      * Indicates whether also the VIL model for {@link Phase#MONITORING} shall be loaded.
@@ -763,21 +756,6 @@ public abstract class AbstractDirectAdaptationTests {
         }
     }
 
-    /**
-     * Returns whether the running machine is identified as Jenkins and some tests shall not run.
-     * 
-     * @return <code>true</code> if the running machine is Jenkins, <code>false</code> else
-     */
-    public static boolean isJenkins() {
-        String hostname;
-        try {
-            hostname = InetAddress.getLocalHost().getCanonicalHostName();
-        } catch (UnknownHostException e) {
-            hostname = "localhost";
-        }
-        return JENKINS.contains(hostname);
-    }
-    
     /**
      * Returns the test directory depending on the system property <code>qm.base.dir</code>.
      * 
