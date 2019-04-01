@@ -27,6 +27,7 @@ import eu.qualimaster.infrastructure.PipelineLifecycleEvent.Status;
 import eu.qualimaster.infrastructure.PipelineOptions;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
 import eu.qualimaster.monitoring.events.IEnactmentCompletedMonitoringEvent;
+import eu.qualimaster.plugins.ILayerDescriptor;
 
 /**
  * The external interface to execute coordination commands.
@@ -34,6 +35,15 @@ import eu.qualimaster.monitoring.events.IEnactmentCompletedMonitoringEvent;
  * @author Holger Eichelberger
  */
 public class CoordinationManager {
+
+    /**
+     * Defines the coordination layer plugin descriptor.
+     * 
+     * @author Holger Eichelberger
+     */
+    public enum Layer implements ILayerDescriptor {
+        COORDINATION
+    }
 
     private static final Map<String, INameMapping> NAME_MAPPING = new HashMap<String, INameMapping>();
     private static IExecutionTracer executionTracer;
@@ -414,13 +424,16 @@ public class CoordinationManager {
      * Starts this layer.
      */
     public static void start() {
+        eu.qualimaster.plugins.PluginRegistry.registerLayer(Layer.COORDINATION);
         RepositoryConnector.initialize();
+        eu.qualimaster.plugins.PluginRegistry.startPlugins(Layer.COORDINATION);
     }
 
     /**
      * Stop this layer.
      */
     public static void stop() {
+        eu.qualimaster.plugins.PluginRegistry.shutdownPlugins(Layer.COORDINATION);
         NAME_MAPPING.clear();
         SignalMechanism.clear();
     }
