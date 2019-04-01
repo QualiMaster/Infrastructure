@@ -4,6 +4,8 @@ import java.io.File;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+
+import eu.qualimaster.Configuration;
 import eu.qualimaster.adaptation.AdaptationConfiguration;
 import eu.qualimaster.adaptation.AdaptationManager;
 import eu.qualimaster.coordination.CoordinationManager;
@@ -14,6 +16,7 @@ import eu.qualimaster.dataManagement.events.ShutdownEvent;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.monitoring.MonitoringManager;
 import eu.qualimaster.monitoring.events.MonitoringInformationEvent;
+import eu.qualimaster.plugins.PluginRegistry;
 
 /**
  * A simple main class for the entire platform. Sorry for just putting it on the top layer
@@ -63,6 +66,11 @@ public class Main extends ToolBase implements IShutdownListener {
         if (null != configFile && configFile.exists()) {
             LOGGER.info("Reading platform configuration " + configFile + " ...");
             AdaptationConfiguration.configure(configFile);
+        }
+        String pluginLocation = AdaptationConfiguration.getPluginsLocation();
+        if (!Configuration.isEmpty(pluginLocation)) {
+            LOGGER.info("Loading plugins from " + pluginLocation + " ...");
+            PluginRegistry.loadPlugins(new File(pluginLocation));
         }
         LOGGER.info("Starting event bus ...");
         EventManager.startServer();  

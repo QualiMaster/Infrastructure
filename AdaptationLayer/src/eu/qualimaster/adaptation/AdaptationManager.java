@@ -62,6 +62,7 @@ import eu.qualimaster.monitoring.events.MonitoringEvent;
 import eu.qualimaster.monitoring.events.MonitoringInformationEvent;
 import eu.qualimaster.monitoring.events.ParameterChangedMonitoringEvent;
 import eu.qualimaster.monitoring.utils.IScheduler;
+import eu.qualimaster.plugins.ILayerDescriptor;
 
 /**
  * Realizes the external interface of the adaptation manager.
@@ -69,6 +70,15 @@ import eu.qualimaster.monitoring.utils.IScheduler;
  * @author Holger Eichelberger
  */
 public class AdaptationManager {
+    
+    /**
+     * Defines the adaptation layer plugin descriptor.
+     * 
+     * @author Holger Eichelberger
+     */
+    public enum Layer implements ILayerDescriptor {
+        ADAPTATION
+    }
 
     private static ServerEndpoint endpoint;
     private static IAuthenticationProvider authProvider = HilariousAuthenticationProvider.INSTANCE;
@@ -493,7 +503,9 @@ public class AdaptationManager {
      * May be an event.
      */
     public static void start() {
+        eu.qualimaster.plugins.PluginRegistry.registerLayer(Layer.ADAPTATION);
         Logging.setBack(Log4jLoggingBack.INSTANCE);
+        eu.qualimaster.plugins.PluginRegistry.startPlugins(Layer.ADAPTATION);
         RtVilStorage.setInstance(new RtVILMemoryStorage()); // TODO switch to QmRtVILStorageProvider
         try {
             AdaptationDispatcher dispatcher = new AdaptationDispatcher();
@@ -512,6 +524,7 @@ public class AdaptationManager {
      * May be an event.
      */
     public static void stop() {
+        eu.qualimaster.plugins.PluginRegistry.shutdownPlugins(Layer.ADAPTATION);
         ReflectiveAdaptationManager.stop();
         AdaptationEventQueue.stop();
         AdaptationLoggerFactory.closeLogger();

@@ -1,0 +1,11 @@
+- before Mar'19: 
+  - new EASy-Producer reasoner, incremental/runtime mode not activated
+- Apr'19: 
+  - Infrastructure plugin mechanism to allow loose dependencies. 
+    Detailed description in QualiMaster.Events/src/eu.qualimaster.plugions.package-info.java.
+    Configuration change: plugins.location=<folder>
+  - TBD:
+    - rt-VIL reasoner access as called by rt-VIL
+    - configurable: use incemental/runtime reasoner
+    - check: algorithm change monitoring
+   
