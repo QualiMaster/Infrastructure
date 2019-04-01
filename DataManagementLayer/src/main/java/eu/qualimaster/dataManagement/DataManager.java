@@ -17,6 +17,7 @@ import eu.qualimaster.events.AbstractEvent;
 import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
+import eu.qualimaster.plugins.ILayerDescriptor;
 
 /**
  * Realizes the external interface of the storage manager.
@@ -25,6 +26,15 @@ import eu.qualimaster.infrastructure.PipelineLifecycleEvent;
  */
 public class DataManager {
 
+    /**
+     * Defines the data management layer plugin descriptor.
+     * 
+     * @author Holger Eichelberger
+     */
+    public enum Layer implements ILayerDescriptor {
+        DATA_MANAGEMENT
+    }
+    
     /**
      * The data source data manager.
      */
@@ -354,8 +364,10 @@ public class DataManager {
      *            run the data management layer in test mode
      */
     public static void start(boolean testMode) {
+        eu.qualimaster.plugins.PluginRegistry.registerLayer(Layer.DATA_MANAGEMENT);
         started = true;
         localMode = testMode;
+        eu.qualimaster.plugins.PluginRegistry.startPlugins(Layer.DATA_MANAGEMENT);
     }
 
     /**
@@ -364,6 +376,7 @@ public class DataManager {
      * the JVM of the local cluster.
      */
     public static void stop() {
+        eu.qualimaster.plugins.PluginRegistry.shutdownPlugins(Layer.DATA_MANAGEMENT);
         started = false;
     }
 
