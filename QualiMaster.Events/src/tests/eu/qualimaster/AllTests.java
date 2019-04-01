@@ -12,15 +12,16 @@ import tests.eu.qualimaster.events.PipelineStatusTrackerTest;
 import tests.eu.qualimaster.events.RemoteHandlerTests;
 
 /**
- * The test suite for the event handler.
+ * The test suite for the event manager/basic layer.
  * 
  * @author Holger Eichelberger
  */
 @RunWith(Suite.class)
+//beware of the sequence
 @Suite.SuiteClasses({ConfigurationTests.class, EventHandlerTests.class, EventsTests.class, RemoteHandlerTests.class, 
     PipelineStatusTrackerTest.class, ForwardTests.class, PipelineOptionsTest.class, FrozenSystemStateTest.class, 
     ComponentKeyTests.class, AlgorithmChangeParameterTest.class, ResponseStoreTest.class, AdditionalTests.class, 
-    EventManagerTests.class, FileTests.class })
+    EventManagerTests.class, FileTests.class, tests.eu.qualimaster.plugins.AllTests.class })
 public class AllTests {
 
 }

@@ -25,9 +25,8 @@ import eu.qualimaster.IOptionSetter;
  * 
  * @author Holger Eichelberger
  */
-public class ConfigurationTests {
+public class ConfigurationTests extends AbstractTest {
     
-    private static final File TESTDATA = new File(System.getProperty("qm.base.dir", "."), "testdata");
     private static final int ZK_PORT = 3000;
     private static final String ZK1 = "zookeeper.sse.uni-hildesheim.de";
     private static final String ZK2 = "zookeeper2.sse.uni-hildesheim.de";
@@ -136,6 +135,7 @@ public class ConfigurationTests {
         Configuration.configure(file);
         System.out.println("Direct test");
         testDirect();
+        Assert.assertEquals("/home/plugins", Configuration.getPluginsLocation());
 
         Map cfg = new HashMap();
         cfg.put(Config.NIMBUS_THRIFT_PORT, 1234);

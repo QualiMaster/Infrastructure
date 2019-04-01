@@ -22,6 +22,7 @@ import org.apache.log4j.Logger;
 
 import backtype.storm.Config;
 import backtype.storm.utils.Utils;
+import eu.qualimaster.Configuration.ConfigurationOption;
 import eu.qualimaster.infrastructure.InitializationMode;
 
 /**
@@ -204,6 +205,15 @@ public class Configuration {
      */
     public static final boolean DEFAULT_MONITORING_VOLUME_ENABLED = true;
 
+    /**
+     * Denotes the (optional - empty) local location where the infrastructure plugins reside.
+     */
+    public static final String PLUGINS_LOCATION = "plugins.location";
+
+    /**
+     * The default value for {@link #PLUGINS_LOCATION}, {@link #EMPTY_VALUE}.
+     */
+    public static final String DEFAULT_PLUGINS_LOCATION = EMPTY_VALUE;
     
     public static final PropertyReader<InitializationMode> INIT_MODE_READER = new PropertyReader<InitializationMode>() {
 
@@ -340,6 +350,8 @@ public class Configuration {
         = createIntegerOption(PORT_EVENT, DEFAULT_PORT_EVENT);
     private static ConfigurationOption<String> eventDisableLogging 
         = createStringOption(EVENT_DISABLE_LOGGING, DEFAULT_EVENT_DISABLE_LOGGING);
+    private static ConfigurationOption<String> pluginsLocation
+        = createStringOption(PLUGINS_LOCATION, DEFAULT_PLUGINS_LOCATION);
 
     // storm commons
     
@@ -895,6 +907,15 @@ public class Configuration {
      */
     public static int getWatcherWaitingTime() {
         return watcherWaitingTime.getValue();        
+    }
+    
+    /**
+     * Returns the plugins location.
+     * 
+     * @return the plugins location
+     */
+    public static String getPluginsLocation() {
+        return pluginsLocation.getValue();
     }
 
 }
