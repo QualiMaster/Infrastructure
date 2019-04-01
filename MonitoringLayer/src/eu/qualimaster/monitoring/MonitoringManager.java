@@ -63,6 +63,7 @@ import eu.qualimaster.monitoring.tracing.TracingTask;
 import eu.qualimaster.monitoring.utils.IScheduler;
 import eu.qualimaster.monitoring.volumePrediction.VolumePredictionManager;
 import eu.qualimaster.observables.MonitoringFrequency;
+import eu.qualimaster.plugins.ILayerDescriptor;
 import net.ssehub.easy.varModel.confModel.Configuration;
 import net.ssehub.easy.varModel.confModel.IDecisionVariable;
 import net.ssehub.easy.varModel.model.AbstractVariable;
@@ -76,6 +77,15 @@ import net.ssehub.easy.varModel.model.ModelQueryException;
  * @author Holger Eichelberger
  */
 public class MonitoringManager {
+    
+    /**
+     * Defines the monitoring layer plugin descriptor.
+     * 
+     * @author Holger Eichelberger
+     */
+    public enum Layer implements ILayerDescriptor {
+        MONITORING
+    }
 
     public static final int DEMO_MSG_INFRASTRUCTURE = 0x00000001;
     public static final int DEMO_MSG_PIPELINE = 0x00000002;
@@ -870,12 +880,14 @@ public class MonitoringManager {
      * @see #registerDefaultPlugins()
      */
     public static void start(boolean registerDefaultPlugins) {
+        eu.qualimaster.plugins.PluginRegistry.registerLayer(Layer.MONITORING);
         if (registerDefaultPlugins) {
             registerDefaultPlugins();
         } else {
             plugins.clear();
         }
         loadMonitoringPlugins();
+        eu.qualimaster.plugins.PluginRegistry.startPlugins(Layer.MONITORING);
         timer = new Timer();
         for (IMonitoringPlugin plugin : plugins) {
             startPlugin(plugin);
@@ -1058,6 +1070,7 @@ public class MonitoringManager {
             timer.cancel();
             timer = null;
         }
+        eu.qualimaster.plugins.PluginRegistry.shutdownPlugins(Layer.MONITORING);
         Tracing.close();
         state.clear();
         state.closePlatformTrace();
