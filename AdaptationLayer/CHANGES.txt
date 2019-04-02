@@ -1,5 +1,10 @@
+CHANGE summary for the QualiMaster infrastructure
+
 - before Mar'19: 
   - new EASy-Producer reasoner, incremental/runtime mode not activated
+- Mar'19: 
+  - cli.sh prevents that non-active pipelines are not started (consistency)
+  - cli.sh client option cli.wait (false by default) allows waiting for infrastructure response
 - Apr'19: 
   - Infrastructure plugin mechanism to allow loose dependencies. 
     Detailed description in QualiMaster.Events/src/eu.qualimaster.plugions.package-info.java.
