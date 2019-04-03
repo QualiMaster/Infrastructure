@@ -427,7 +427,7 @@ public class RepositoryConnector {
      * layer startup.
      */
     public static void initialize() {
-        if (null == loader) {
+        if (null == loader && System.getProperty("qm.repositoryConnector.testing") != null) {
             // start up EASy 
             try {
                 QmLogging.setLogLevel(Level.INFO);
