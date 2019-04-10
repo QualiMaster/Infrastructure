@@ -50,6 +50,7 @@ public class FrozenSystemState implements Serializable {
     public static final String DATASINK = "DataSink";
     public static final String PIPELINE = "Pipeline";
     public static final String PIPELINE_ELEMENT = "PipelineElement";
+    public static final String ACTUAL = "Actual";
 
     @QMInternal
     public static final String SEPARATOR = ":";
@@ -150,20 +151,69 @@ public class FrozenSystemState implements Serializable {
         values.put(obtainKey(prefix, obtainPipelineElementSubkey(pipeline, element), observable), value);
     }
     
-    // >> preliminary
-
     /**
      * Sets whether an algorithm is considered to be active in a pipeline at the moment of freezing.
      * 
      * @param pipeline the name of the pipeline
+     * @param nodeName the name of the node
      * @param algorithmName the name of the algorithm
      */
     @QMInternal
-    public void setActiveAlgorithm(String pipeline, String algorithmName) {
-        setObservation(ALGORITHM, pipeline, algorithmName, ResourceUsage.AVAILABLE, 1.0);
+    public void setActiveAlgorithm(String pipeline, String nodeName, String algorithmName) {
+        // difficult: it would be nice to transfer the index of the algorithm from active, but if models diverge
+        // decision: transport the name as last pseudo segment and separate during mapping
+        // AVAILABLE and value are irrelevant
+        values.put(composeActiveAlgorithmKey(pipeline,  nodeName, algorithmName), 1.0);
+    }
+
+    /**
+     * Composes the active algorithm key for {@code pipeline}/{@code nodeName} and {@code algorithmName} as active
+     * algorithm.
+     * 
+     * @param pipeline the pipeline name
+     * @param nodeName the node name
+     * @param algorithmName the algorithmname
+     * @return the composed key
+     */
+    private static String composeActiveAlgorithmKey(String pipeline, String nodeName, String algorithmName) {
+        return obtainKey(ACTUAL, 
+            obtainPipelineElementSubkey(pipeline, obtainPipelineElementSubkey(nodeName, algorithmName)), 
+            ResourceUsage.AVAILABLE);
     }
     
-    // << preliminary
+    /**
+     * Returns whether this frozen state contains {@code algorithmName} as active algorithm for 
+     * {@code pipeline}/{@code nodeName}.
+     * 
+     * @param pipeline the pipeline name
+     * @param nodeName the node name
+     * @param algorithmName the algorithm name
+     * @return {@code true} if the given algorithm is set as active on the given pipeline/node, {@code false} else
+     */
+    public boolean hasActiveAlgorithm(String pipeline, String nodeName, String algorithmName) {
+        return values.containsKey(composeActiveAlgorithmKey(pipeline,  nodeName, algorithmName));
+    }
+
+    /**
+     * Returns the active algorithm for {@code pipeline}/{@code nodeName}.
+     * 
+     * @param pipeline the pipeline name
+     * @param nodeName the node name
+     * @return the active algorithm name, <b>null</b> if none is known
+     */
+    public String getActiveAlgorithm(String pipeline, String nodeName) {
+        // not really efficient, intended for testing...
+        String result = null;
+        String prefix = ACTUAL + SEPARATOR + obtainPipelineElementSubkey(pipeline, nodeName) + SEPARATOR;
+        String postfix = SEPARATOR + ResourceUsage.AVAILABLE;
+        for (String k : values.keySet()) {
+            if (k.startsWith(prefix) && k.endsWith(postfix)) {
+                result = k.substring(prefix.length() + 1, k.length() - postfix.length());
+                break;
+            }
+        }
+        return result;
+    }
     
     /**
      * Returns an observation.
