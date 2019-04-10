@@ -172,7 +172,7 @@ public class FrozenSystemState implements Serializable {
      * 
      * @param pipeline the pipeline name
      * @param nodeName the node name
-     * @param algorithmName the algorithmname
+     * @param algorithmName the algorithm name
      * @return the composed key
      */
     private static String composeActiveAlgorithmKey(String pipeline, String nodeName, String algorithmName) {
