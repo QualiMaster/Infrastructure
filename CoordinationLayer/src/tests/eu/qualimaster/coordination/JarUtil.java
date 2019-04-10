@@ -62,31 +62,32 @@ public class JarUtil {
         jar.putNextEntry(entry);
         jar.closeEntry();
         
-        String fileName = folder + "QM.ivml";
-        File f = createFileWithFallback(fileName);
-        getLogger().info("Including " + f.getAbsolutePath() + " into model jar");
-        entry = createJarEntry(fileName, "EASy/");
-        jar.putNextEntry(entry);
-        putFile(jar, f);
-        jar.closeEntry();
-
-        fileName = folder + "QM.rtvil";
-        f = createFileWithFallback(fileName);
-        getLogger().info("Including " + f.getAbsolutePath() + " into model jar");
-        entry  = createJarEntry(fileName, "EASy/");
-        jar.putNextEntry(entry);
-        putFile(jar, f);
-        jar.closeEntry();
-
-        fileName = folder + "model.properties";
-        f = createFileWithFallback(fileName);
-        getLogger().info("Including " + f.getAbsolutePath() + " into model jar");
-        entry = createJarEntry(fileName, "EASy/");
-        jar.putNextEntry(entry);
-        putFile(jar, f);
-        jar.closeEntry();
+        writeFile(jar, folder + "QM.ivml");
+        writeFile(jar, folder + "Meta.ivml");
+        writeFile(jar, folder + "InfraCfg.ivml");
+        writeFile(jar, folder + "PipCfg.ivml");
+        writeFile(jar, folder + "QM.rtvil");
+        writeFile(jar, folder + "model.properties");
 
         jar.close();
+    }
+    
+    /**
+     * Writes the specified file into the given {@code jar} if the file exists.
+     * 
+     * @param jar the jar to modify/append
+     * @param fileName the name of the file to append
+     * @throws IOException in case of read/write problems
+     */
+    private static void writeFile(JarOutputStream jar, String fileName) throws IOException {
+        File f = createFileWithFallback(fileName);
+        if (f.exists()) {
+            getLogger().info("Including " + f.getAbsolutePath() + " into model jar");
+            JarEntry entry = createJarEntry(fileName, "EASy/");
+            jar.putNextEntry(entry);
+            putFile(jar, f);
+            jar.closeEntry();
+        }
     }
     
     /**
@@ -140,7 +141,7 @@ public class JarUtil {
     private static File createFileWithFallback(String fileName) {
         File f = new File(Utils.getTestdataDir(), fileName);
         if (!f.exists()) {
-            f = new File("../CoordinationLayer/testdata", fileName); // TODO make clean
+            f = new File("../CoordinationLayer/testdata", fileName);
         }
         return f;
     }

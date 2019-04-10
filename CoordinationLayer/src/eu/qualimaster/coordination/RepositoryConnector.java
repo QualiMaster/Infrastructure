@@ -13,9 +13,10 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import ch.qos.logback.classic.Level;
-import de.uni_hildesheim.sse.easy.loader.ListLoader;
+import de.uni_hildesheim.sse.easy.loader.ILoader;
 import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.common.logging.QmLogging;
+import eu.qualimaster.coordination.RepositoryHelper.IConnectorInitializer;
 import eu.qualimaster.coordination.events.ModelUpdatedEvent;
 import eu.qualimaster.dataManagement.storage.hdfs.HdfsUtils;
 import eu.qualimaster.easy.extension.internal.ConfigurationInitializer;
@@ -135,7 +136,7 @@ public class RepositoryConnector {
     private static final String PIPELINE_ARTIFACT_VAR_NAME = "artifact";
     
     private static Properties modelProperties = new Properties();
-    private static ListLoader loader;
+    private static ILoader loader;
     private static Map<IPhase, Models> models = new HashMap<IPhase, Models>();
     private static Map<Thread, IPhase> phases = new HashMap<Thread, IPhase>();
     private static File modelsLocation;
@@ -174,9 +175,10 @@ public class RepositoryConnector {
                 modelProperties.getProperty(PROPERTY_IVML_NAME, "QM"), 
                 modelProperties.getProperty(PROPERTY_IVML_VERSION, null));
             if (null != project) {
-                configuration = createConfiguration(project, phase);
+                variableMapping = new RuntimeVariableMapping();
+                configuration = createConfiguration(project, phase, variableMapping);
                 try {
-                    variableMapping = ConfigurationInitializer.createVariableMapping(configuration);
+                    variableMapping = ConfigurationInitializer.createVariableMapping(configuration, variableMapping);
                 } catch (ModelQueryException e) {
                     LogManager.getLogger(getClass()).error(e.getMessage(), e);
                 }
@@ -318,9 +320,10 @@ public class RepositoryConnector {
                         + " was not reloaded.");
                 }
                 
-                configuration = createConfiguration(newProject, phase);
+                variableMapping = new RuntimeVariableMapping();
+                configuration = createConfiguration(newProject, phase, variableMapping);
                 try {
-                    variableMapping = ConfigurationInitializer.createVariableMapping(configuration);
+                    variableMapping = ConfigurationInitializer.createVariableMapping(configuration, variableMapping);
                 } catch (ModelQueryException e) {
                     LogManager.getLogger(RepositoryConnector.class).error(e.getMessage(), e);
                 }
@@ -383,7 +386,7 @@ public class RepositoryConnector {
         } else {
             update = !modelExists;
         }
-        if (update) {
+        if (update && RepositoryHelper.getInitializer().updateModels()) {
             boolean unpack = true;
             File artifact = obtainArtifact(artifactSpec, "infrastructure_model", ".jar");
             if (null != artifact) { // delete only if we have something to override
@@ -427,20 +430,26 @@ public class RepositoryConnector {
      * layer startup.
      */
     public static void initialize() {
-        if (null == loader && System.getProperty("qm.repositoryConnector.testing") != null) {
+        if (null == loader) {
+            IConnectorInitializer initializer = RepositoryHelper.getInitializer();
             // start up EASy 
             try {
                 QmLogging.setLogLevel(Level.INFO);
                 QmLogging.disableUnwantedLogging();
                 //QmLogging.setLogLevel("org.eclipse.xtext.service.BindModule", Level.INFO);
-                loader = new ListLoader();
+                loader = initializer.createLoader();
                 loader.setVerbose(false);
                 loader.startup();
             } catch (IOException e) {
                 getLogger().error(e.getMessage());
             }
             
-            if (readModels()) {
+            boolean setTracer = true;
+            if (initializer.loadModels()) {
+                setTracer = readModels();
+            }
+            
+            if (setTracer) {
                 // set tracing 
                 TracerFactory.setDefaultInstance(TracerFactory.DEFAULT);
             }
@@ -527,7 +536,7 @@ public class RepositoryConnector {
             } catch (ModelManagementException e) {
                 getLogger().error("Extracting Infrastructure Model: " + e.getMessage());
             }
-            if (modelDone) {
+            if (modelDone && RepositoryHelper.getInitializer().updateSettings()) {
                 try {
                     String settingsTarget = CoordinationConfiguration.getPipelineSettingsLocation();
                     if (null != settingsTarget && !CoordinationConfiguration.isEmpty(settingsTarget)) {
@@ -613,14 +622,15 @@ public class RepositoryConnector {
      * 
      * @param project the project to create the configuration for
      * @param phase the phase
+     * @param mapping optional runtime mapping to be updated (may be <b>null</b>)
      * @return the configuration
      */
-    public static Configuration createConfiguration(Project project, IPhase phase) {
+    public static Configuration createConfiguration(Project project, IPhase phase, RuntimeVariableMapping mapping) {
         boolean initActual = true;
         if (Phase.ADAPTATION == phase) {
             initActual = InitializationMode.STATIC == CoordinationConfiguration.getInitializationMode();
         }
-        return RepositoryHelper.createConfiguration(project, phase.name(), initActual);
+        return RepositoryHelper.createConfiguration(project, phase.name(), initActual, mapping);
     }
 
     /**

@@ -831,7 +831,7 @@ class CoordinationCommandExecutionVisitor extends AbstractCoordinationCommandExe
                 getLogger().debug("visitProfileAlgorithmCommand: add location = " + tmp.getAbsolutePath());
                 ModelInitializer.addLocation(tmp, ProgressObserver.NO_OBSERVER);
                 Project project = RepositoryConnector.obtainModel(VarModel.INSTANCE, "QM", null);
-                Configuration cfg = RepositoryConnector.createConfiguration(project, Phase.MONITORING);
+                Configuration cfg = RepositoryConnector.createConfiguration(project, Phase.MONITORING, null);
                 getLogger().debug("visitProfileAlgorithmCommand: cfg = " + cfg);
                 ProfileData data;
                 try {

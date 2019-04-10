@@ -28,6 +28,9 @@ import java.util.List;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import de.uni_hildesheim.sse.easy.loader.ILoader;
+import de.uni_hildesheim.sse.easy.loader.ListLoader;
+import de.uni_hildesheim.sse.easy.loader.NullLoader;
 import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.coordination.MavenMetaInfo.SnapshotVersion;
 import eu.qualimaster.easy.extension.internal.ConfigurationInitializer;
@@ -54,10 +57,124 @@ import net.ssehub.easy.varModel.model.datatypes.Compound;
  * @author Holger Eichelberger
  */
 public class RepositoryHelper {
+    
+    /**
+     * Describes the capabilities of a connector initializer, allowing to exchange the loader and to influence the 
+     * initial model loading.
+     * 
+     * @author Holger Eichelberger
+     */
+    public interface IConnectorInitializer {
+
+        /**
+         * Creates the EASy loader.
+         * 
+         * @return the EASy loader
+         * @throws IOException in case that creating the loader fails
+         */
+        public ILoader createLoader() throws IOException;
+        
+        /**
+         * Load the models during initialization.
+         * 
+         * @return {@code true} for loading, {@code false} for not loading models
+         */
+        public boolean loadModels();
+        
+        /**
+         * Perform model updates during initialization?
+         * 
+         * @return {@code true} for updates, {@code false} for no updates
+         */
+        public boolean updateModels();
+
+        /**
+         * Perform settings updates during initialization?
+         * 
+         * @return {@code true} for updates, {@code false} for no updates
+         */
+        public boolean updateSettings();
+        
+    }
+
+    /**
+     * The default connector initializer.
+     */
+    public static class DefaultConnectorInitializer implements IConnectorInitializer {
+
+        @Override
+        public boolean loadModels() {
+            return true;
+        }
+        
+        @Override
+        public boolean updateModels() {
+            return true;
+        }
+
+        @Override
+        public boolean updateSettings() {
+            return true;
+        }
+
+        @Override
+        public ILoader createLoader() throws IOException {
+            return new ListLoader();
+        }
+    }
+
+    /**
+     * A connector initializer that causes nothing, not even loading of models.
+     */
+    public static class NullConnectorInitializer implements IConnectorInitializer {
+
+        @Override
+        public boolean loadModels() {
+            return false;
+        }
+
+        @Override
+        public boolean updateModels() {
+            return true;
+        }
+
+        @Override
+        public boolean updateSettings() {
+            return true;
+        }
+        
+        @Override
+        public ILoader createLoader() throws IOException {
+            return new NullLoader();
+        }
+
+    }
 
     private static final String MAVEN_SNAPSHOT_SUFFIX = "-SNAPSHOT";
     
     private static boolean overrideIfExists = true;
+    
+    private static IConnectorInitializer initializer = new DefaultConnectorInitializer();
+
+    /**
+     * Returns the actual initializer.
+     * 
+     * @return the initializer
+     */
+    public static IConnectorInitializer getInitializer() {
+        return initializer;
+    }
+    
+    /**
+     * Sets the connector initializer.
+     * 
+     * @param init the new initializer, ignored if <b>null</b>
+     */
+    public static void setInitializer(IConnectorInitializer init) {
+        if (null != init) {
+            initializer = init;
+        }
+    }
     
     /**
      * Returns whether the model shall be overridden if it already exists.
@@ -82,10 +199,12 @@ public class RepositoryHelper {
      * 
      * @param project the project to obtain the configuration for
      * @param newVariablePrefix the prefix to be used for new variables
+     * @param mapping optional runtime mapping to be updated (may be <b>null</b>)
      * @return the configuration
      */
-    public static Configuration createConfiguration(Project project, String newVariablePrefix) {
-        return createConfiguration(project, newVariablePrefix, true);
+    public static Configuration createConfiguration(Project project, String newVariablePrefix, 
+        RuntimeVariableMapping mapping) {
+        return createConfiguration(project, newVariablePrefix, true, mapping);
     }
     
     /**
@@ -94,12 +213,14 @@ public class RepositoryHelper {
      * @param project the project to obtain the configuration for
      * @param newVariablePrefix the prefix to be used for new variables
      * @param initActual whether actual variables shall be initialized
+     * @param mapping optional runtime mapping to be updated (may be <b>null</b>)
      * @return the configuration
      */
-    public static Configuration createConfiguration(Project project, String newVariablePrefix, boolean initActual) {
+    public static Configuration createConfiguration(Project project, String newVariablePrefix, boolean initActual, 
+        RuntimeVariableMapping mapping) {
         Configuration configuration = new Configuration(project);
         try {
-            ConfigurationInitializer.initializeConfiguration(configuration, newVariablePrefix, initActual);
+            ConfigurationInitializer.initializeConfiguration(configuration, newVariablePrefix, initActual, mapping);
         } catch (VilException e) {
             getLogger().error("Cannot initialize runtime model: " + e.getMessage());
         }
