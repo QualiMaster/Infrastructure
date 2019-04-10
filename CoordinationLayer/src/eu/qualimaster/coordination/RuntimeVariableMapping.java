@@ -34,6 +34,7 @@ public class RuntimeVariableMapping {
     private Map<IDecisionVariable, IDecisionVariable> mapping = new HashMap<IDecisionVariable, IDecisionVariable>();
     private Map<IDecisionVariable, List<IDecisionVariable>> reverseMapping
         = new HashMap<IDecisionVariable, List<IDecisionVariable>>();
+    private Map<IDecisionVariable, IDecisionVariable> varMapping = new HashMap<IDecisionVariable, IDecisionVariable>();
     
     /**
      * Creates an instance.
@@ -77,9 +78,38 @@ public class RuntimeVariableMapping {
         mappedChilds.add(referenced);
     }
     
+    /**
+     * Returns the mapped copy of {@code origin}.
+     * 
+     * @param origin the original variable
+     * @return the mapped copy or {@code origin}
+     */
+    public IDecisionVariable getMappedCopy(IDecisionVariable origin) {
+        IDecisionVariable result = origin;
+        if (null != origin) {
+            IDecisionVariable tmp = varMapping.get(origin);
+            if (null != tmp) {
+                result = tmp;
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * Adds a variable mapping between an original and a copied variable.
+     * 
+     * @param origin the origin variable (ignored if <b>null</b>)
+     * @param target the copied (target) variable
+     */
+    public void addVariableMapping(IDecisionVariable origin, IDecisionVariable target) {
+        if (null != origin) {
+            varMapping.put(origin, target);
+        }
+    }
+    
     @Override
     public String toString() {
-        return mapping.toString();
+        return mapping + " copies: " + varMapping;
     }
 
 }
