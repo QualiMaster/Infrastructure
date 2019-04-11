@@ -150,8 +150,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
     protected void fill(String prefix, String name, FrozenSystemState state, Map<IObservable, IOverloadModifier> mods) {
         super.fill(prefix, name, state, mods);
         if (null != current) {
-            // let's leave the active flag for all
-            state.setActiveAlgorithm(getPipeline().getName(), current.getName());
+            state.setActiveAlgorithm(getPipeline().getName(), getName(), current.getName());
         }
     }
     
@@ -484,7 +483,7 @@ public class PipelineNodeSystemPart extends SystemPart implements ITopologyProvi
                 List<Processor> enableNext = current.projectTopologyNodes(true);
                 boolean connected = false;
                 for (int o = 0; !connected && o < proc.getOutputCount(); o++) {
-                    connected |= enableNext.contains(proc.getOutput(o));
+                    connected |= enableNext.contains(proc.getOutput(o).getTarget());
                 }
                 if (!connected) { // we have a fam-interm-algNode integration, start with the algorithm (sources)
                     start.addAll(enableNext);
