@@ -128,7 +128,7 @@ public class TopologyTests {
         
     }
 
-    private static final double ASSERT_PERCENTAGE = 0.3; // time varying differences
+    private static final double ASSERT_PERCENTAGE = 0.5; // time varying differences
     private static final Map<IAggregationFunction, IPathAggregator> AGGREGATOR_MAPPING 
         = new HashMap<IAggregationFunction, IPathAggregator>();
     

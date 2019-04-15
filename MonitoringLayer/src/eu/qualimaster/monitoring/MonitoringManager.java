@@ -50,6 +50,7 @@ import eu.qualimaster.monitoring.handlers.ConnectTaskMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.ParameterChangedMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.PipelineElementMultiObservationMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.PipelineElementObservationMonitoringEventHandler;
+import eu.qualimaster.monitoring.handlers.PipelineObservationMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.PlatformMonitoringEventHandler;
 import eu.qualimaster.monitoring.handlers.PlatformMultiMonitoringHostEventHandler;
 import eu.qualimaster.monitoring.handlers.SourceVolumeMonitoringEventHandler;
@@ -788,6 +789,7 @@ public class MonitoringManager {
         register(AlgorithmChangedMonitoringEventHandler.INSTANCE);
         register(AlgorithmMonitoringEventHandler.INSTANCE);
         register(ChangeMonitoringEventHandler.INSTANCE);
+        register(PipelineObservationMonitoringEventHandler.INSTANCE);
         register(PipelineElementMultiObservationMonitoringEventHandler.INSTANCE);
         register(PipelineElementObservationMonitoringEventHandler.INSTANCE);
         register(PlatformMonitoringEventHandler.INSTANCE);

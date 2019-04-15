@@ -37,7 +37,7 @@ public class PlatformMonitoringEventHandler extends MonitoringEventHandler<Platf
 
     @Override
     protected void handle(PlatformMonitoringEvent event, SystemState state) {
-        state.getPlatform().incrementValue(event.getObservable(), event.getObservation(), event.getKey());
+        state.getPlatform().setValue(event.getObservable(), event.getObservation(), event.getKey());
     }
 
 }
