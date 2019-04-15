@@ -1,0 +1,47 @@
+project PipCfg {
+
+    import Meta;
+    import InfraCfg;
+    annotate BindingTime bindingTime = BindingTime.compile to PipCfg;
+
+    Sink snk = {
+        name = "sink", 
+        sink = refBy(dsnk)
+    };
+    
+    FamilyElement famElt1 = {
+        name = "process",
+        family = refBy(fam1), 
+        output = {refBy(famElt1Snk)}
+    };
+    
+    Flow famElt1Snk = {
+        destination = refBy(snk)
+    };
+    
+    Source src = {
+        name = "source", 
+        output = {refBy(srcFamElt1)}, 
+        source = refBy(dsrc)
+    };
+    
+    Flow srcFamElt1 = {
+        destination = refBy(famElt1)
+    };
+
+    Pipeline pip = {
+        artifact = "eu.qualiMaster:TestPipeline:0.0.1",
+        name = "pipeline",
+        sources = {refBy(src)}
+    };
+
+    freeze {
+        snk;
+        famElt1;
+        famElt1Snk;
+        src;
+        srcFamElt1;
+        pip;
+    } but (v | v.bindingTime == BindingTime.runtime);
+
+}

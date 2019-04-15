@@ -82,8 +82,8 @@ rtVilScript QM (Project source, Configuration config, Project target, Adaptation
     }
 
     assignFirst(Source src) = : {
-        for(PipelineElement n:src.next) {
-            assignFirst(n);
+        for(Flow n:src.output) {
+            assignFirst(n.destination);
         };
     }
 
@@ -96,8 +96,8 @@ println(elt.actual);
             elt.actual = fam.members.toSequence().first();
         //}
 println(elt.actual);      
-        for(PipelineElement n:elt.next) {
-            assignFirst(n);
+        for(Flow n:elt.output) {
+            assignFirst(n.destination);
         };
     }
     
@@ -116,8 +116,8 @@ println(elt.actual);
     }
 
     enact(Pipeline pipeline, Source source) = : {
-        for(PipelineElement n:source.next) {
-            enact(pipeline, n);
+        for(Flow n:source.output) {
+            enact(pipeline, n.destination);
         };
     }
 
@@ -127,8 +127,8 @@ println(elt.actual);
         if (elt.actual != null) {
             cmd.add(new AlgorithmChangeCommand(pipeline.name, elt.name, elt.actual.name));
         }
-        for(PipelineElement n:elt.next) {
-            enact(pipeline, n);
+        for(Flow n:elt.output) {
+            enact(pipeline, n.destination);
         };
         cmd.exec();
     }
@@ -167,8 +167,8 @@ println(elt.actual);
 
     bindValues(Source src, Pipeline pipeline, FrozenSystemState state) = {
         // nothing further to monitor - test case 
-        for(PipelineElement n : src.next) {
-            bindValues(n, pipeline, state);
+        for(Flow n : src.output) {
+            bindValues(n.destination, pipeline, state);
         };
     }
 
@@ -179,8 +179,8 @@ println(elt.actual);
         elt.capacity = state.getPipelineElementObservation(pipName, eltName, ResourceUsage.CAPACITY);
         elt.executors = state.getPipelineElementObservation(pipName,eltName, ResourceUsage.EXECUTORS);
         // all values come from algorithm
-        for(PipelineElement n : elt.next) {
-            bindValues(n, pipeline, state);
+        for(Flow n : elt.output) {
+            bindValues(n.destination, pipeline, state);
         };
     }
 

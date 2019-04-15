@@ -1,0 +1,43 @@
+project InfraCfg {
+
+    import Meta;
+    annotate BindingTime bindingTime = BindingTime.compile to InfraCfg;
+
+    Algorithm alg1 = {
+        name = "alg1"
+    };
+
+    Algorithm alg2 = {
+        name = "alg2"
+    };
+    
+    Family fam1 = {
+        name = "fam1",
+        members = {refBy(alg1), refBy(alg2)}
+    };
+
+    DataSource dsrc = {
+        name = "source"
+    };
+    
+    DataSink dsnk = {
+        name = "sink"
+    };
+
+    algorithms = {refBy(alg1), refBy(alg2)};
+
+    PublicCloudEnvironment AWS = {
+        name = "AWS"
+    };
+
+    freeze {
+        dsrc;
+        dsnk;
+        alg1;
+        alg2;
+        fam1;
+        algorithms;
+        AWS;
+    } but (v | v.bindingTime == BindingTime.runtime);
+    
+}

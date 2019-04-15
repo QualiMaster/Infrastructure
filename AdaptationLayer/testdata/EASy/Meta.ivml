@@ -1,0 +1,142 @@
+// specific variability model for tests.eu.qualimaster.storm
+
+project Meta {
+
+    enum BindingTime {compile = 0, runtime = 1};
+    annotate BindingTime bindingTime = BindingTime.compile to Meta;
+
+    // -------------------- Observables -------------------
+
+    typedef IsAvailable Boolean;
+    typedef Ping Real;
+    typedef Used_Memory Integer;
+    typedef Volume Real;
+    typedef Latency Integer;
+    typedef Throughput_Items Integer;
+    typedef Throughput_Volume Integer;
+    typedef Capacity Real;
+    typedef Executors Integer;
+    typedef Items Real;
+    typedef Used_Machines Integer;
+    typedef Available_Machines Integer;
+    typedef Completeness Real;
+    typedef Accuracy_Confidence Real;
+    typedef Bandwidth Real;
+
+    assign (bindingTime = BindingTime.runtime) to {
+        Used_Machines usedMachines = 0;
+        Available_Machines availableMachines = 0;
+    }
+
+    // -------------------- cloud -----------------------
+
+    abstract compound CloudResource {
+        String name;
+        assign (bindingTime = BindingTime.runtime) to {
+            Ping ping;
+        }
+    }
+
+    compound PublicCloudEnvironment refines CloudResource {
+    }
+    
+    // opposed to QM, for testing global (Platform/Infrastructure) observation
+    assign (bindingTime = BindingTime.runtime) to {
+        Bandwidth bandwidth;
+    }
+    
+    // --------------------------- DataMgt ---------------------
+    
+    compound DataSource {
+        String name;
+    }
+    
+    compound DataSink {
+        String name;
+    }
+
+    // --------------------------- Algorithms ---------------------
+
+    compound Algorithm {
+        String name;
+        assign (bindingTime = BindingTime.runtime) to {
+          Real latency;
+          Integer throughputItem;
+        }
+    }
+
+    // --------------------------- Families ---------------------
+
+    compound Family {
+        String name;
+        setOf(refTo(Algorithm)) members;
+    }
+
+    // --------------------------- Pipelines ---------------------
+
+    compound PipelineElement {
+        String name;
+    }
+    
+    compound PipelineNode refines PipelineElement {
+    }
+    
+    compound Flow {
+        refTo(PipelineNode) destination;
+    }
+    
+    compound Source refines PipelineNode {
+        setOf(refTo(Flow)) output;
+        refTo(DataSource) source;
+        assign (bindingTime = BindingTime.runtime) to {
+          refTo(DataSource) actual;
+          setOf(refTo(DataSource)) available;
+          Completeness completeness;
+        }
+    }
+    
+    compound FamilyElement refines PipelineNode {
+        setOf(refTo(Flow)) output;
+        refTo(Family) family;
+
+        assign (bindingTime = BindingTime.runtime) to {
+          refTo(Algorithm) actual;
+          setOf(refTo(Algorithm)) available;
+          Real capacity;
+          Integer executors;
+          Completeness completeness;
+        }
+        capacity < 0.30;
+    }
+    
+    compound Sink refines PipelineNode {
+        refTo(DataSink) sink;
+        assign (bindingTime = BindingTime.runtime) to {
+          refTo(DataSink) actual;
+          setOf(refTo(DataSink)) available;
+        }
+    }
+    
+    compound ReplaySink refines Sink {
+    }
+
+    compound Pipeline {
+        String artifact;
+        String name;
+        setOf(refTo(Source)) sources;
+
+        assign (bindingTime = BindingTime.runtime) to {
+          Integer throughputItem; // legacy, orthogonal test
+          Latency latency;
+          Throughput_Items throughputItems;
+          Accuracy_Confidence accuracyConfidence;
+          Capacity capacity;
+          Executors executors;
+        }
+    }
+    
+    setOf(refTo(Pipeline)) activePipelines;
+    setOf(refTo(Pipeline)) pipelines;
+    setOf(refTo(Algorithm)) algorithms;
+    
+}

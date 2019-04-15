@@ -1,147 +1,17 @@
 // specific variability model for tests.eu.qualimaster.storm
 
 project QM {
+    import Meta;
+    import InfraCfg;
+    import PipCfg;
 
-    enum BindingTime {compile = 0, runtime = 1};
     annotate BindingTime bindingTime = BindingTime.compile to QM;
-
-    compound PipelineElement {
-        String name;
-    }
-    
-    compound DataSource {
-        String name;
-    }
-    
-    compound DataSink {
-        String name;
-    }
-    
-    compound Source refines PipelineElement {
-        setOf(refTo(PipelineElement)) next;
-        refTo(DataSource) source;
-        assign (bindingTime = BindingTime.runtime) to {
-          refTo(DataSource) actual;
-          setOf(refTo(DataSource)) available;
-        }
-    }
-    
-    compound FamilyElement refines PipelineElement {
-        setOf(refTo(PipelineElement)) next;
-        refTo(Family) family;
-
-        assign (bindingTime = BindingTime.runtime) to {
-          refTo(Algorithm) actual;
-          setOf(refTo(Algorithm)) available;
-          Real capacity;
-          Integer executors;
-        }
-        capacity < 0.30;
-    }
-    
-    compound Sink refines PipelineElement {
-        refTo(DataSink) sink;
-        assign (bindingTime = BindingTime.runtime) to {
-          refTo(DataSink) actual;
-          setOf(refTo(DataSink)) available;
-        }
-    }
-    
-    compound ReplaySink refines Sink {
-    }
-    
-    compound Family {
-        String name;
-        setOf(refTo(Algorithm)) members;
-    }
-    
-    compound Algorithm {
-        String name;
-        assign (bindingTime = BindingTime.runtime) to {
-          Real latency;
-          Integer throughputItem;
-        }
-    }
-
-    compound Pipeline {
-        String artifact;
-        String name;
-        setOf(refTo(Source)) sources;
-
-        assign (bindingTime = BindingTime.runtime) to {
-          Real latency;
-          Integer throughputItem;
-          Real capacity;
-          Integer executors;
-        }
-    }
-    
-    setOf(refTo(Pipeline)) activePipelines;
-    setOf(refTo(Pipeline)) pipelines;
-    setOf(refTo(Algorithm)) algorithms;
-    
-    // ---------------------- instances ---------------------
-    
-    Algorithm alg1 = {
-        name = "alg1"
-    };
-
-    Algorithm alg2 = {
-        name = "alg2"
-    };
-    
-    Family fam1 = {
-        name = "fam1",
-        members = {refBy(alg1), refBy(alg2)}
-    };
-
-    Sink snk = {
-        name = "sink", 
-        sink = refBy(dsnk)
-    };
-    
-    FamilyElement famElt1 = {
-        name = "process",
-        family = refBy(fam1), 
-        next = {refBy(snk)}
-    };
-    
-    Source src = {
-        name = "source", 
-        next = {refBy(famElt1)}, 
-        source = refBy(dsrc)
-    };
-
-    DataSource dsrc = {
-        name = "source"
-    };
-    
-    DataSink dsnk = {
-        name = "sink"
-    };
-    
-    Pipeline pip = {
-        artifact = "eu.qualiMaster:TestPipeline:0.0.1",
-        name = "pipeline",
-        sources = {refBy(src)}
-    };
     
     activePipelines = {refBy(pip)};
     pipelines = {refBy(pip)};
-    algorithms = {refBy(alg1), refBy(alg2)};
     
     freeze {
-        dsrc;
-        dsnk;
-        alg1;
-        alg2;
-        fam1;
-        snk;
-        famElt1;
-        src;
-        pip;
         activePipelines;
         pipelines;
-        algorithms;
     } but (v | v.bindingTime == BindingTime.runtime);
 }

@@ -33,21 +33,43 @@ import eu.qualimaster.adaptation.external.SwitchAlgorithmRequest;
 import eu.qualimaster.common.logging.QmLogging;
 import eu.qualimaster.common.signal.ThriftConnection;
 import eu.qualimaster.coordination.CoordinationManager;
+import eu.qualimaster.coordination.RepositoryConnector.Phase;
 import eu.qualimaster.coordination.StormUtils;
 import eu.qualimaster.coordination.StormUtils.TopologyTestInfo;
 import eu.qualimaster.coordination.commands.AlgorithmChangeCommand;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.coordination.commands.ParameterChangeCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand;
+import eu.qualimaster.easy.extension.QmConstants;
+import eu.qualimaster.easy.extension.internal.BindValuesInstantiator;
 import eu.qualimaster.events.EventHandler;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.InitializationMode;
 import eu.qualimaster.infrastructure.PipelineLifecycleEvent.Status;
 import eu.qualimaster.monitoring.MonitoringManager;
+import eu.qualimaster.monitoring.ReasoningTask;
+import eu.qualimaster.monitoring.ReasoningTask.IReasoningModelProvider;
+import eu.qualimaster.monitoring.ReasoningTask.PhaseReasoningModelProvider;
+import eu.qualimaster.monitoring.events.CloudResourceMonitoringEvent;
 import eu.qualimaster.monitoring.events.ConstraintViolationAdaptationEvent;
+import eu.qualimaster.monitoring.events.FrozenSystemState;
 import eu.qualimaster.monitoring.events.MonitoringInformationEvent;
 import eu.qualimaster.monitoring.events.PipelineElementMultiObservationMonitoringEvent;
 import eu.qualimaster.monitoring.events.PipelineElementObservationMonitoringEvent;
+import eu.qualimaster.monitoring.events.PipelineObservationMonitoringEvent;
+import eu.qualimaster.monitoring.events.PlatformMonitoringEvent;
+import eu.qualimaster.observables.CloudResourceUsage;
+import eu.qualimaster.observables.FunctionalSuitability;
+import eu.qualimaster.observables.IObservable;
+import net.ssehub.easy.instantiation.core.model.vilTypes.configuration.Configuration;
+import net.ssehub.easy.instantiation.core.model.vilTypes.configuration.DecisionVariable;
+import net.ssehub.easy.instantiation.core.model.vilTypes.configuration.NoVariableFilter;
+import net.ssehub.easy.varModel.model.IvmlDatatypeVisitor;
+import net.ssehub.easy.varModel.model.ModelQueryException;
+import net.ssehub.easy.varModel.model.datatypes.DerivedDatatype;
+import net.ssehub.easy.varModel.model.datatypes.IDatatype;
+import net.ssehub.easy.varModel.model.datatypes.RealType;
+import net.ssehub.easy.varModel.model.values.ValueDoesNotMatchTypeException;
 import tests.eu.qualimaster.coordination.LocalStormEnvironment;
 import tests.eu.qualimaster.coordination.TestNameMapping;
 import tests.eu.qualimaster.coordination.Utils;
@@ -295,7 +317,6 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
      * 
      * @throws IOException shall not occur
      */
-    //@Ignore("does not run in sequence")
     @Test
     public void testStackAdaptive() throws IOException {
         if (!TestExcludeHosts.isExcludedHost()) {
@@ -331,6 +352,19 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
         prop.put(AdaptationConfiguration.PROFILE_LOCATION, profiles.getAbsolutePath());
         AdaptationConfiguration.configure(prop);
         return profiles;
+    }
+    
+    /**
+     * Turns an observation into a map.
+     * 
+     * @param obs the observable
+     * @param value the observed value
+     * @return the resulting map
+     */
+    private static Map<IObservable, Double> toMap(IObservable obs, Double value) {
+        Map<IObservable, Double> result = new HashMap<IObservable, Double>();
+        result.put(obs, value);
+        return result;
     }
 
     /**
@@ -372,14 +406,14 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
         // broken reasoner may prevent proper startup
         getPipelineStatusTracker().waitFor(Naming.PIPELINE_NAME, Status.STARTED, 30000); 
         clear();
-        sleep(3000);
+        sleep(4000);
 
-        sleep(1000);
         CoordinationCommand cmd = new ParameterChangeCommand<Integer>(Naming.PIPELINE_NAME, Naming.NODE_SOURCE, 
             "param", 5);
         EventManager.send(cmd);
         waitForExecution(1, 0);
         clear();
+        sendAdditionalEvents();
 
         sleep(4000); // let Storm run for a while
         // this is a command send by the adaptation layer itself
@@ -388,13 +422,13 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
         waitForExecution(1, 0);
         clear();
         sleep(1000);
-        // this is a command sent via the client
         SwitchAlgorithmRequest saReq = new SwitchAlgorithmRequest(Naming.PIPELINE_NAME, Naming.NODE_PROCESS, 
-            Naming.NODE_PROCESS_ALG1);
+            Naming.NODE_PROCESS_ALG1); // this is a command sent via the client
         endpoint.schedule(saReq);
         dispatcher.registerForResponse(saReq);
         sleep(2000); // let Storm run for a while
 
+        FrozenSystemState state = MonitoringManager.getSystemState().freeze();
         EventManager.send(new PipelineCommand(Naming.PIPELINE_NAME, PipelineCommand.Status.STOP));
         waitForExecution(1, 0);
         clear();
@@ -405,10 +439,24 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
         StormUtils.forTesting(null, null);
         EventManager.cleanup();
         env.cleanup();
+        asserts(state);
         asserts(dispatcher);
         //Assert.assertTrue(adaptationEventHandler.recordedConstraintViolations());
         MonitoringManager.setDemoMessageState(demo);
         configure(iMode); 
+    }
+
+    /**
+     * Sends additional (monitoring) events.
+     */
+    private void sendAdditionalEvents() {
+        EventManager.send(new PlatformMonitoringEvent(CloudResourceUsage.BANDWIDTH, 15000, null));
+        EventManager.send(new PipelineObservationMonitoringEvent(Naming.PIPELINE_NAME, null, 
+            FunctionalSuitability.ACCURACY_CONFIDENCE, 100.0));
+        EventManager.send(new PipelineElementMultiObservationMonitoringEvent(Naming.PIPELINE_NAME, Naming.NODE_PROCESS, 
+            null, toMap(FunctionalSuitability.COMPLETENESS, 50.0)));
+        EventManager.send(new CloudResourceMonitoringEvent("AWS", toMap(CloudResourceUsage.PING, 1500.0)));
+        sleep(1000);
     }
 
     // pipeline must be running...
@@ -443,6 +491,158 @@ public class TopLevelStormTest extends AbstractAdaptationTests {
         Assert.assertTrue(dispatcher.getMonitoringDataCount(srcName) > 0);
         Assert.assertTrue(dispatcher.getMonitoringDataCount(snkName) > 0);
         dispatcher.assertResponses();
+    }
+    
+    /**
+     * Asserts entries in the frozen system state captured before shutdown.
+     * 
+     * @param state the state
+     */
+    private void asserts(FrozenSystemState state) {
+        //EventManager.send(new PlatformMonitoringEvent(CloudResourceUsage.BANDWIDTH, 15000, null));
+        assertEquals(15000.0, state.getInfrastructureObservation(CloudResourceUsage.BANDWIDTH, 0.0));
+        //EventManager.send(new CloudResourceMonitoringEvent("AWS", toMap(CloudResourceUsage.PING, 1500.0)));
+        assertEquals(1500.0, state.getCloudObservation("AWS", CloudResourceUsage.PING, 0.0));
+        //SwitchAlgorithmRequest saReq = new SwitchAlgorithmRequest(Naming.PIPELINE_NAME, Naming.NODE_PROCESS, 
+        //  Naming.NODE_PROCESS_ALG1);
+        Assert.assertTrue(state.hasActiveAlgorithm(Naming.PIPELINE_NAME, Naming.NODE_PROCESS, 
+            Naming.NODE_PROCESS_ALG1));
+        Assert.assertEquals(Naming.NODE_PROCESS_ALG1, 
+            state.getActiveAlgorithm(Naming.PIPELINE_NAME, Naming.NODE_PROCESS));
+        //EventManager.send(new PipelineObservationMonitoringEvent(Naming.PIPELINE_NAME, null, 
+        //  FunctionalSuitability.ACCURACY_CONFIDENCE, 100.0));
+        assertEquals(100.0, state.getPipelineObservation(Naming.PIPELINE_NAME, 
+            FunctionalSuitability.ACCURACY_CONFIDENCE));
+        //EventManager.send(new PipelineElementMultiObservationMonitoringEvent(Naming.PIPELINE_NAME, 
+        //  Naming.NODE_PROCESS, null, toMap(FunctionalSuitability.COMPLETENESS, 50.0)));
+        assertEquals(50.0, state.getPipelineElementObservation(Naming.PIPELINE_NAME, Naming.NODE_PROCESS, 
+            FunctionalSuitability.COMPLETENESS));
+        
+        assertMonitoringModel(state);
+    }
+    
+    /**
+     * Asserts a Double vs a double with default delta 1.
+     * 
+     * @param expected the expected value
+     * @param actual the actual value (must not be <b>null</b>)
+     */
+    private static void assertEquals(double expected, Double actual) {
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected, actual, 1);
+    }
+    
+    /**
+     * Asserts (faked) information in the monitoring model.
+     * 
+     * @param state the state
+     * @throws ModelQueryException in case that querying the model fails
+     * @throws ValueDoesNotMatchTypeException
+     */
+    private void assertMonitoringModel(FrozenSystemState state) {
+        IReasoningModelProvider modelProvider = new PhaseReasoningModelProvider(Phase.MONITORING);
+        net.ssehub.easy.varModel.confModel.Configuration config = modelProvider.getConfiguration();  
+        Assert.assertTrue(null != config && null != modelProvider.getScript());
+        ReasoningTask reasoningTask = new ReasoningTask(modelProvider);
+        reasoningTask.reason(false);
+        
+        // assert access as in rtVIL
+        Configuration cfg = new Configuration(config, NoVariableFilter.INSTANCE);
+        
+        Map<String, Double> mapping = state.getMapping();
+        Map<String, Object> tmp = new HashMap<String, Object>();
+        tmp.putAll(mapping);
+        
+        // test model does this directly via VIL, fake call here and test it
+        BindValuesInstantiator.storeValueBinding(cfg, tmp);
+
+        //EventManager.send(new PlatformMonitoringEvent(CloudResourceUsage.BANDWIDTH, 15000, null));
+        assertDouble(cfg, "bandwidth", 15000.0);
+        //EventManager.send(new CloudResourceMonitoringEvent("AWS", toMap(CloudResourceUsage.PING, 1500.0)));
+        assertDouble(cfg, "AWS", "ping", 1500.0);
+        //SwitchAlgorithmRequest saReq = new SwitchAlgorithmRequest(Naming.PIPELINE_NAME, Naming.NODE_PROCESS, 
+        //  Naming.NODE_PROCESS_ALG1);
+        assertActual(cfg, "famElt1", Naming.NODE_PROCESS_ALG1);
+        //EventManager.send(new PipelineObservationMonitoringEvent(Naming.PIPELINE_NAME, null, 
+        //  FunctionalSuitability.COMPLETENESS, 100.0));
+        assertDouble(cfg, "pip", "accuracyConfidence", 100); 
+        //EventManager.send(new PipelineElementMultiObservationMonitoringEvent(Naming.PIPELINE_NAME, 
+        //  Naming.NODE_PROCESS, null, toMap(FunctionalSuitability.COMPLETENESS, 50.0)));
+        assertDouble(cfg, "famElt1", "completeness", 50);
+    }
+    
+    /**
+     * Asserts the existence of a compound slot and returns the slot using VIL accessors.
+     * 
+     * @param cfg the configuration to obtain the slot from
+     * @param var the top-level variable name
+     * @param slot the slot name
+     * @return the slot variable
+     */
+    private static DecisionVariable assertSlot(Configuration cfg, String var, String slot) {
+        DecisionVariable dVar = cfg.getByName(var);
+        Assert.assertNotNull("Variable " + var + " not expected to be null", dVar);
+        DecisionVariable dSlot = dVar.getByName(slot);
+        Assert.assertNotNull("Slot " + slot + " not expected to be null", dSlot);
+        Assert.assertNotNull("Slot value not expected to be null", dSlot.getValue());
+        return dSlot;
+    }
+    
+    /**
+     * Asserts the IVML type of a slot/variable.
+     * 
+     * @param var the variable
+     * @param type the expected type of {@code var}
+     */
+    private static void assertType(DecisionVariable var, IDatatype type) {
+        Assert.assertEquals("Variable/slot type not " + IvmlDatatypeVisitor.getQualifiedType(type), type, 
+            DerivedDatatype.resolveToBasis(var.getDecisionVariable().getDeclaration().getType()));
+    }
+    
+    /**
+     * Asserts a Real slot value.
+     * 
+     * @param cfg the VIL configuration (no filter!)
+     * @param var the variable name
+     * @param slot the slot name
+     * @param value the expected value of {@code slot}
+     */
+    private static void assertDouble(Configuration cfg, String var, String slot, double value) {
+        DecisionVariable dSlot = assertSlot(cfg, var, slot);
+        assertType(dSlot, RealType.TYPE);
+        Assert.assertEquals(value, dSlot.getRealValue(), 1.0);        
+    }
+    
+    /**
+     * Asserts a Double value.
+     * 
+     * @param cfg the VIL configuration (no filter!)
+     * @param var the variable name
+     * @param value the expected value of {@code var}
+     */
+    private static void assertDouble(Configuration cfg, String var, double value) {
+        DecisionVariable dVar = cfg.getByName(var);
+        Assert.assertNotNull("Variable " + var + " not expected to be null", dVar);
+        assertType(dVar, RealType.TYPE);
+        Assert.assertNotNull("Double value not expected to be null", dVar.getRealValue());
+        Assert.assertEquals(value, dVar.getRealValue().doubleValue(), 1.0);
+    }
+    
+    /**
+     * Asserts an actual algorithm.
+     * 
+     * @param cfg the VIL configuration (no filter!)
+     * @param var the variable name
+     * @param alg the expected actual algorithm (data source, data sink)
+     */
+    private static void assertActual(Configuration cfg, String var, String alg) {
+        DecisionVariable dVar = cfg.getByName(var);
+        Assert.assertNotNull("Variable " + var + " not expected to be null", dVar);
+        DecisionVariable aVar = dVar.getByName(QmConstants.SLOT_ACTUAL);
+        Assert.assertNotNull("Slot " + QmConstants.SLOT_ACTUAL + " not expected to be null", aVar);
+        DecisionVariable nVar = aVar.getByName(QmConstants.SLOT_NAME);
+        Assert.assertNotNull("Slot " + QmConstants.SLOT_NAME + " not expected to be null", nVar);
+        Assert.assertEquals(alg, nVar.getStringValue());
     }
 
 }
