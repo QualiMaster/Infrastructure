@@ -208,7 +208,7 @@ public class FrozenSystemState implements Serializable {
         String postfix = SEPARATOR + ResourceUsage.AVAILABLE;
         for (String k : values.keySet()) {
             if (k.startsWith(prefix) && k.endsWith(postfix)) {
-                result = k.substring(prefix.length() + 1, k.length() - postfix.length());
+                result = k.substring(prefix.length(), k.length() - postfix.length());
                 break;
             }
         }
