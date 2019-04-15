@@ -146,8 +146,9 @@ public abstract class AbstractDirectAdaptationTests {
         ModelInitializer.addLocation(getModelLocation(), ProgressObserver.NO_OBSERVER);
         Project project = RepositoryConnector.obtainModel(VarModel.INSTANCE, "QM", null);
         //CopyMappingCreationListener listener = new CopyMappingCreationListener();
-        monConfig = RepositoryConnector.createConfiguration(project, Phase.MONITORING);
-        monCopyMapping = ConfigurationInitializer.createVariableMapping(monConfig);
+        monCopyMapping = new RuntimeVariableMapping();
+        monConfig = RepositoryConnector.createConfiguration(project, Phase.MONITORING, monCopyMapping);
+        monCopyMapping = ConfigurationInitializer.createVariableMapping(monConfig, monCopyMapping);
         net.ssehub.easy.instantiation.core.model.buildlangModel.Script vil = null;
         if (loadVilModel()) {
             vil = RepositoryConnector.obtainModel(BuildModel.INSTANCE, "QM", null);
@@ -158,12 +159,14 @@ public abstract class AbstractDirectAdaptationTests {
 
         ModelInitializer.addLocation(getModelLocation(), ProgressObserver.NO_OBSERVER);
         project = RepositoryConnector.obtainModel(VarModel.INSTANCE, "QM", null);
-        adaptConfig = RepositoryConnector.createConfiguration(project, Phase.ADAPTATION);
+        RuntimeVariableMapping adaptMapping = new RuntimeVariableMapping();
+        adaptConfig = RepositoryConnector.createConfiguration(project, Phase.ADAPTATION, adaptMapping);
         adaptRtVilModel = RepositoryConnector.obtainModel(RtVilModel.INSTANCE, "QM", null);
+        adaptMapping = ConfigurationInitializer.createVariableMapping(adaptConfig, adaptMapping);
+        
         tmp = RepositoryConnector.createTmpFolder();
 //        new Models(Phase.ADAPTATION, adaptConfig, adaptRtVilModel, null, null);  // overrides
-        new Models(Phase.ADAPTATION, adaptConfig, adaptRtVilModel, null,
-            ConfigurationInitializer.createVariableMapping(adaptConfig));  // overrides
+        new Models(Phase.ADAPTATION, adaptConfig, adaptRtVilModel, null, adaptMapping);  // overrides
         ModelInitializer.removeLocation(getModelLocation(), ProgressObserver.NO_OBSERVER);
 
         EventManager.start();
