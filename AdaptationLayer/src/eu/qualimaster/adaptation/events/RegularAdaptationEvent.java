@@ -1,5 +1,6 @@
 package eu.qualimaster.adaptation.events;
 
+import eu.qualimaster.adaptation.AdaptationConfiguration;
 import eu.qualimaster.common.QMInternal;
 
 /**
@@ -9,6 +10,7 @@ import eu.qualimaster.common.QMInternal;
  * bulks of delayed adaptation events.
  *  
  * @author Holger Eichelberger
+ * @see AdaptationConfiguration#getAdaptationRegularEventPeriod()
  */
 public class RegularAdaptationEvent extends AdaptationEvent {
 

@@ -82,7 +82,7 @@ public class AdaptationConfiguration extends MonitoringConfiguration {
 
     /**
      * Denotes the (optional - 0) regular scheduling period for the regular adaptation event in ms. To be effective,
-     * the value must be greater than 50.
+     * the value must be greater than 50. Default value: {@link #DEFAULT_ADAPTATION_REGULAR_EVENT_PERIOD}.
      */
     public static final String ADAPTATION_REGULAR_EVENT_PERIOD = "adaptation.regularEvent.period";
 
@@ -243,6 +243,7 @@ public class AdaptationConfiguration extends MonitoringConfiguration {
      * Returns the regular adaptation event scheduling period.
      * 
      * @return the scheduling period in ms [0 for none]
+     * @see #ADAPTATION_REGULAR_EVENT_PERIOD
      */
     public static int getAdaptationRegularEventPeriod() {
         return adaptationRegularEventPeriod.getValue();
