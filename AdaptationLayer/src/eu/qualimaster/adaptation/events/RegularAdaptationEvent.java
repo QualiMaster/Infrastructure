@@ -5,7 +5,8 @@ import eu.qualimaster.common.QMInternal;
 /**
  * A regular adaptation event is issued regularly by the Adaptation Layer in order
  * to trigger regular adaptation actions. However, regular events may be delayed if other events must be executed 
- * before in the sequence of the event queue.
+ * before in the sequence of the event queue. In that time, regular adaptation events are not scheduled again to avoid
+ * bulks of delayed adaptation events.
  *  
  * @author Holger Eichelberger
  */

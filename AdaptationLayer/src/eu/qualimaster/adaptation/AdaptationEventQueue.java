@@ -21,7 +21,6 @@ import net.ssehub.easy.instantiation.rt.core.model.rtVil.Executor;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.RtVilExecution;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.Script;
 import net.ssehub.easy.reasoning.core.reasoner.ReasonerConfiguration;
-import net.ssehub.easy.reasoning.core.reasoner.ReasonerConfiguration.IAdditionalInformationLogger;
 import net.ssehub.easy.varModel.confModel.Configuration;
 import net.ssehub.easy.instantiation.core.model.tracing.ConsoleTracerFactory;
 import net.ssehub.easy.instantiation.core.model.vilTypes.configuration.VariableValueMapping;
@@ -29,6 +28,7 @@ import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.adaptation.events.CheckBeforeStartupAdaptationEvent;
 import eu.qualimaster.adaptation.events.HandlerAdaptationEvent;
 import eu.qualimaster.adaptation.events.IPipelineAdaptationEvent;
+import eu.qualimaster.adaptation.events.RegularAdaptationEvent;
 import eu.qualimaster.adaptation.events.StartupAdaptationEvent;
 import eu.qualimaster.adaptation.events.WrappingRequestMessageAdaptationEvent;
 import eu.qualimaster.adaptation.external.RequestMessage;
@@ -68,6 +68,7 @@ public class AdaptationEventQueue {
         = Collections.synchronizedMap(new HashMap<String, Class<? extends AdaptationEvent>>());
     private static Map<String, Map<String, AlgorithmChangedMonitoringEvent>> startupAlgorithmChangedEvents 
         = Collections.synchronizedMap(new HashMap<String, Map<String, AlgorithmChangedMonitoringEvent>>());
+    private static boolean containsRegular = false;
 
     private static final int RESPONSE_TIMEOUT = AdaptationConfiguration.getEventResponseTimeout();
     private static MessageResponseStore messageStore = new MessageResponseStore(RESPONSE_TIMEOUT);
@@ -148,11 +149,20 @@ public class AdaptationEventQueue {
         if (null != tmp) {
             tmp = tmp.unpack();
         }
+        // if filter disables event, do not add
         if (tmp instanceof IPipelineAdaptationEvent) {
             String pipName = ((IPipelineAdaptationEvent) tmp).getPipeline();
             if (null != pipName) {
                 Class<? extends AdaptationEvent> filter = adaptationFilters.get(pipName);
                 add = (null == filter || !filter.isInstance(tmp));
+            }
+        }
+        // if regular adaptation event is already scheduled, wait until processed to add next
+        if (add && (tmp instanceof RegularAdaptationEvent)) {
+            if (containsRegular) { // if already in, do not add again
+                add = false;
+            } else { // otherwise change flag
+                containsRegular = true;
             }
         }
         if (add) {
@@ -221,6 +231,8 @@ public class AdaptationEventQueue {
                         } else if (event instanceof HandlerAdaptationEvent) {
                             ((HandlerAdaptationEvent<?>) event).handle();
                             adapt = false;
+                        } else if (event instanceof RegularAdaptationEvent) {
+                            containsRegular = false; // now this is the only one in the queue, reset flag   
                         } else {
                             eventStore.setCurrentRequest(event);
                         }
