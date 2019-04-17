@@ -79,6 +79,18 @@ public class AdaptationConfiguration extends MonitoringConfiguration {
      * The default value for {@link #ADAPTATION_LOG_REFLECTIVE_LOCATION}, {@link #EMPTY_VALUE}.
      */
     public static final String DEFAULT_ADAPTATION_LOG_REFLECTIVE_LOCATION = EMPTY_VALUE;
+
+    /**
+     * Denotes the (optional - 0) regular scheduling period for the regular adaptation event in ms. To be effective,
+     * the value must be greater than 50.
+     */
+    public static final String ADAPTATION_REGULAR_EVENT_PERIOD = "adaptation.regularEvent.period";
+
+    /**
+     * The default value for {@link #ADAPTATION_REGULAR_EVENT_PERIOD}, {@link #EMPTY_VALUE} in ms.
+     */
+    public static final int DEFAULT_ADAPTATION_REGULAR_EVENT_PERIOD = 0;
+    
     
     private static ConfigurationOption<String> adaptationHost 
         = createStringOption(HOST_ADAPTATION, DEFAULT_HOST_ADAPTATION);
@@ -90,6 +102,8 @@ public class AdaptationConfiguration extends MonitoringConfiguration {
         = createIntegerOption(PORT_ADAPTATION, DEFAULT_PORT_ADAPTATION);
     private static ConfigurationOption<String> adaptationLogReflective
         = createStringOption(ADAPTATION_LOG_REFLECTIVE_LOCATION, DEFAULT_ADAPTATION_LOG_REFLECTIVE_LOCATION);
+    private static ConfigurationOption<Integer> adaptationRegularEventPeriod
+        = createIntegerOption(ADAPTATION_REGULAR_EVENT_PERIOD, DEFAULT_ADAPTATION_REGULAR_EVENT_PERIOD);
 
     /**
      * Reads the configuration settings from the file.
@@ -223,6 +237,15 @@ public class AdaptationConfiguration extends MonitoringConfiguration {
      */
     public static String getAdaptationLogReflectiveLocation() {
         return adaptationLogReflective.getValue();
+    }
+
+    /**
+     * Returns the regular adaptation event scheduling period.
+     * 
+     * @return the scheduling period in ms [0 for none]
+     */
+    public static int getAdaptationRegularEventPeriod() {
+        return adaptationRegularEventPeriod.getValue();
     }
 
 }

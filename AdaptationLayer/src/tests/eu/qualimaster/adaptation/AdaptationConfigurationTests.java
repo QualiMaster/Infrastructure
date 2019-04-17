@@ -33,6 +33,7 @@ public class AdaptationConfigurationTests extends MonitoringConfigurationTests {
         Assert.assertEquals(AdaptationConfiguration.DEFAULT_ADAPTATION_RTVIL_TRACERFACTORY, 
             AdaptationConfiguration.getAdaptationRtVilTracerFactory());
         Assert.assertTrue(AdaptationConfiguration.enableAdaptationRtVilLogging());
+        Assert.assertEquals(742, AdaptationConfiguration.getAdaptationRegularEventPeriod());
     }
 
     @Override

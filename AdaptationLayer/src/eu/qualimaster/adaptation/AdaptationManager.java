@@ -15,6 +15,7 @@ import eu.qualimaster.adaptation.events.AlgorithmConfigurationAdaptationEvent;
 import eu.qualimaster.adaptation.events.CheckBeforeStartupAdaptationEvent;
 import eu.qualimaster.adaptation.events.HandlerAdaptationEvent;
 import eu.qualimaster.adaptation.events.ParameterConfigurationAdaptationEvent;
+import eu.qualimaster.adaptation.events.RegularAdaptationEvent;
 import eu.qualimaster.adaptation.events.ReplayAdaptationEvent;
 import eu.qualimaster.adaptation.events.ResourceChangeAdaptationEvent;
 import eu.qualimaster.adaptation.events.ShutdownAdaptationEvent;
@@ -518,6 +519,17 @@ public class AdaptationManager {
         timer = new Timer();
         AdaptationEventQueue.start();
         ReflectiveAdaptationManager.start(scheduler);
+        
+        int regularSchedulingPeriod = AdaptationConfiguration.getAdaptationRegularEventPeriod();
+        if (regularSchedulingPeriod > 50) {
+            timer.scheduleAtFixedRate(new TimerTask() {
+                
+                @Override
+                public void run() {
+                    AdaptationEventQueue.add(new RegularAdaptationEvent());
+                }
+            }, 0, regularSchedulingPeriod);
+        }
     }
     
     /**
