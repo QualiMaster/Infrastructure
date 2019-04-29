@@ -9,6 +9,7 @@ import java.util.TimerTask;
 
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.RtVILMemoryStorage;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.RtVilStorage;
+import net.ssehub.easy.reasoning.core.frontend.ReasonerAdapter;
 import eu.qualimaster.adaptation.TestHandler.ITestHandler;
 import eu.qualimaster.adaptation.events.AdaptationEvent;
 import eu.qualimaster.adaptation.events.AlgorithmConfigurationAdaptationEvent;
@@ -46,6 +47,9 @@ import eu.qualimaster.adaptation.internal.ServerEndpoint;
 import eu.qualimaster.adaptation.reflective.ReflectiveAdaptationManager;
 import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.coordination.ModelUpdatedEventHandler;
+import eu.qualimaster.coordination.RepositoryConnector;
+import eu.qualimaster.coordination.RepositoryConnector.Phase;
 import eu.qualimaster.coordination.commands.CoordinationCommand;
 import eu.qualimaster.coordination.commands.PipelineCommand;
 import eu.qualimaster.coordination.events.CoordinationCommandExecutionEvent;
@@ -89,6 +93,8 @@ public class AdaptationManager {
     private static Set<String> activePipelines = new HashSet<String>();
     private static IShutdownListener shutdownListener = null;
     private static Timer timer;
+    // as reasoners/IVML models are not necessarily thread safe, create an own one
+    private static ReasonerAdapter reasonerAdapter = AdaptationConfiguration.createReasonerAdapter();
    
     private static IScheduler scheduler = new IScheduler() {
         
@@ -379,6 +385,7 @@ public class AdaptationManager {
         EventManager.register(new ShutdownEventHandler());
         EventManager.register(new AlgorithmChangedMonitoringEventHandler());
         // not AlgorithmChangedMonitoringEventHandler.INSTANCE as dynamic
+        EventManager.register(new ModelUpdatedEventHandler(Phase.ADAPTATION, reasonerAdapter));
     }
 
     /**
@@ -517,6 +524,7 @@ public class AdaptationManager {
             e.printStackTrace();
         }
         timer = new Timer();
+        RepositoryConnector.registerForReasoning(Phase.ADAPTATION, reasonerAdapter);
         AdaptationEventQueue.start();
         ReflectiveAdaptationManager.start(scheduler);
         
@@ -547,6 +555,7 @@ public class AdaptationManager {
             timer.cancel();
             timer = null;
         }
+        RepositoryConnector.unregisterFromReasoning(Phase.ADAPTATION, reasonerAdapter);
     }
     
     /**
