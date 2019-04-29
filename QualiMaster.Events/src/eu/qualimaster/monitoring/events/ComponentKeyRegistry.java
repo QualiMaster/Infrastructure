@@ -50,7 +50,7 @@ public class ComponentKeyRegistry {
      */
     public static void unregister(Object component) {
         if (null != component) {
-            COMPONENTS.remove(System.identityHashCode(component));
+            COMPONENTS.remove((long) System.identityHashCode(component));
         }        
     }
     

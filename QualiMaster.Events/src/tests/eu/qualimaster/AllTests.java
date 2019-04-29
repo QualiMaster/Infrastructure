@@ -21,7 +21,8 @@ import tests.eu.qualimaster.events.RemoteHandlerTests;
 @Suite.SuiteClasses({ConfigurationTests.class, EventHandlerTests.class, EventsTests.class, RemoteHandlerTests.class, 
     PipelineStatusTrackerTest.class, ForwardTests.class, PipelineOptionsTest.class, FrozenSystemStateTest.class, 
     ComponentKeyTests.class, AlgorithmChangeParameterTest.class, ResponseStoreTest.class, AdditionalTests.class, 
-    EventManagerTests.class, FileTests.class, tests.eu.qualimaster.plugins.AllTests.class })
+    EventManagerTests.class, FileTests.class, tests.eu.qualimaster.plugins.AllTests.class, 
+    tests.eu.qualimaster.reflection.ReflectionHelperTests.class })
 public class AllTests {
 
 }
