@@ -55,7 +55,7 @@ import eu.qualimaster.monitoring.systemState.TypeMapper.TypeCharacterizer;
 import eu.qualimaster.observables.AnalysisObservables;
 import eu.qualimaster.observables.IObservable;
 import net.ssehub.easy.basics.progress.ProgressObserver;
-import net.ssehub.easy.reasoning.core.frontend.ReasonerFrontend;
+import net.ssehub.easy.reasoning.core.frontend.ReasonerAdapter;
 import net.ssehub.easy.reasoning.core.reasoner.ReasonerConfiguration;
 import net.ssehub.easy.reasoning.core.reasoner.ReasoningResult;
 import net.ssehub.easy.varModel.confModel.Configuration;
@@ -101,6 +101,7 @@ public class ReasoningTask extends TimerTask {
     private IReasoningListener listener;
     private IReasoningModelProvider provider;
     private double minDevDifference = MonitoringConfiguration.getAnalysisMinDeviationDifference() / 100.0;
+    private ReasonerAdapter reasonerAdapter;
     
     private IDatatype typePipeline;
     private IDatatype typePipelineElement;
@@ -413,12 +414,23 @@ public class ReasoningTask extends TimerTask {
     }
     
     /**
-     * Creates a reasoning task.
+     * Creates a reasoning task. Uses a new non-instance-based reasoner adapter.
      * 
      * @param provider the model provider
      */
     public ReasoningTask(IReasoningModelProvider provider) {
+        this(provider, new ReasonerAdapter(false));
+    }
+
+    /**
+     * Creates a reasoning task.
+     * 
+     * @param provider the model provider
+     * @param reasonerAdapter the adapter to use
+     */
+    public ReasoningTask(IReasoningModelProvider provider, ReasonerAdapter reasonerAdapter) {
         this.provider = provider;
+        this.reasonerAdapter = reasonerAdapter;
         tmp = RepositoryConnector.createTmpFolder();
         tmp.deleteOnExit();
         checkProviderUpdate();
@@ -530,8 +542,7 @@ public class ReasoningTask extends TimerTask {
         exec.stopAfterBindValues();
         try {
             exec.execute();
-            result = ReasonerFrontend.getInstance().check(config.getProject(), config, CONFIGURATION, 
-                ProgressObserver.NO_OBSERVER);
+            result = reasonerAdapter.check(config, CONFIGURATION, ProgressObserver.NO_OBSERVER);
         } catch (Exception e) { // be extremely careful
             getLogger().error("During value binding: " + e.getMessage(), e);
         }

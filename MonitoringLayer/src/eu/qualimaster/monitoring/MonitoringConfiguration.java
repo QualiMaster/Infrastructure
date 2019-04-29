@@ -24,6 +24,7 @@ import org.apache.commons.io.FileUtils;
 
 import eu.qualimaster.IOptionSetter;
 import eu.qualimaster.coordination.CoordinationConfiguration;
+import net.ssehub.easy.reasoning.core.frontend.ReasonerAdapter;
 
 /**
  * Specific configuration options introduced by the monitoring layer.
@@ -201,6 +202,17 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
      * The default value for {@link #PROFILE_APPROXIMATE} ({@value}).
      */
     public static final boolean DEFAULT_PROFILE_ENABLED = true;
+
+    /**
+     * Denotes whether instance-based reasoning is enabled at all.
+     */
+    public static final String REASONING_INSTANCE_BASED = "reasoning.instance-based";
+
+    /**
+     * The default value for {@link #REASONING_INSTANCE_BASED} ({@value}).
+     */
+    public static final boolean DEFAULT_REASONING_INSTANCE_BASED = false;
+
     
     private static ConfigurationOption<String> monitoringAnalysisDisabled
         = createStringOption(MONITORING_ANALYSIS_DISABLED, DEFAULT_MONITORING_ANALYSIS_DISABLED);
@@ -234,6 +246,8 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
         = createBooleanOption(PROFILE_ENABLED, DEFAULT_PROFILE_ENABLED);
     private static ConfigurationOption<Integer> profileTtl
         = createIntegerOption(PROFILE_TTL, DEFAULT_PROFILE_TTL);
+    private static ConfigurationOption<Boolean> reasoningInstanceBased
+        = createBooleanOption(REASONING_INSTANCE_BASED, DEFAULT_REASONING_INSTANCE_BASED);
     
     /**
      * Reads the configuration settings from the file.
@@ -482,6 +496,27 @@ public class MonitoringConfiguration extends CoordinationConfiguration {
      */
     public static int getProfileTtl() {
         return profileTtl.getValue();
+    }
+    
+    /**
+     * Returns whether reasoning shall be instance-based, i.e., reuse a reasoner for a given model.
+     * 
+     * @return {@code true} for instance-based reasoning, {@code false} for creating a new reasoner per 
+     *    reasoning action
+     */
+    public static boolean getReasoningInstanceBased() {
+        return reasoningInstanceBased.getValue();
+    }
+    
+    /**
+     * Creates a reasoner adapter for storing already known reasoner instances for configurations. 
+     * Considers {@link getReasoningInstanceBased()}. [convenience]
+     * 
+     * @return the reasoner adapter
+     */
+    public static ReasonerAdapter createReasonerAdapter() {
+        // TODO MonLayer/AdaptLayer clear upon model change
+        return new ReasonerAdapter(MonitoringConfiguration.getReasoningInstanceBased());
     }
 
 }

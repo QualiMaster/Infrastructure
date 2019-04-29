@@ -24,6 +24,7 @@ import eu.qualimaster.adaptation.events.SourceVolumeAdaptationEvent;
 import eu.qualimaster.common.monitoring.MonitoringPluginRegistry;
 import eu.qualimaster.coordination.CoordinationManager;
 import eu.qualimaster.coordination.INameMapping;
+import eu.qualimaster.coordination.ModelUpdatedEventHandler;
 import eu.qualimaster.coordination.RepositoryConnector;
 import eu.qualimaster.coordination.RepositoryConnector.Models;
 import eu.qualimaster.coordination.RepositoryConnector.Phase;
@@ -65,6 +66,7 @@ import eu.qualimaster.monitoring.utils.IScheduler;
 import eu.qualimaster.monitoring.volumePrediction.VolumePredictionManager;
 import eu.qualimaster.observables.MonitoringFrequency;
 import eu.qualimaster.plugins.ILayerDescriptor;
+import net.ssehub.easy.reasoning.core.frontend.ReasonerAdapter;
 import net.ssehub.easy.varModel.confModel.Configuration;
 import net.ssehub.easy.varModel.confModel.IDecisionVariable;
 import net.ssehub.easy.varModel.model.AbstractVariable;
@@ -114,6 +116,7 @@ public class MonitoringManager {
     private static Map<String, PipelineInfo> pipelines 
         = Collections.synchronizedMap(new HashMap<String, PipelineInfo>());
     private static ReasoningTask reasoningTask;
+    private static ReasonerAdapter reasonerAdapter = MonitoringConfiguration.createReasonerAdapter();
     
     private static IScheduler scheduler = new IScheduler() {
         
@@ -615,7 +618,7 @@ public class MonitoringManager {
                 } else if (runningPipelines > 0 && null == reasoningTask) {
                     IReasoningModelProvider modelProvider = new PhaseReasoningModelProvider(Phase.MONITORING);
                     if (null != modelProvider.getConfiguration() && null != modelProvider.getScript()) {
-                        reasoningTask = new ReasoningTask(modelProvider);     
+                        reasoningTask = new ReasoningTask(modelProvider, reasonerAdapter);     
                         timer.schedule(reasoningTask, 0, REASONING_FREQUENCY);
                     } else {
                         LOGGER.error("Monitoring model not loaded - cannot monitor pipelines");
@@ -807,6 +810,7 @@ public class MonitoringManager {
         EventManager.register(new ShutdownEventHandler());
         EventManager.register(new AlgorithmProfilingEventHandler());
         EventManager.register(new SourceVolumeAdaptationEventHandler());
+        EventManager.register(new ModelUpdatedEventHandler(Phase.MONITORING, reasonerAdapter));
     }
 
     /**
@@ -882,6 +886,7 @@ public class MonitoringManager {
      * @see #registerDefaultPlugins()
      */
     public static void start(boolean registerDefaultPlugins) {
+        RepositoryConnector.registerForReasoning(Phase.MONITORING, reasonerAdapter);
         eu.qualimaster.plugins.PluginRegistry.registerLayer(Layer.MONITORING);
         if (registerDefaultPlugins) {
             registerDefaultPlugins();
@@ -1083,6 +1088,7 @@ public class MonitoringManager {
                 LOGGER.error(e.getMessage());
             }
         }
+        RepositoryConnector.unregisterFromReasoning(Phase.MONITORING, reasonerAdapter);
     }
     
     /**
