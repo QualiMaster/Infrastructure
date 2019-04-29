@@ -45,8 +45,7 @@ public class MonitoringConfigurationTests extends CoordinationConfigurationTests
             MonitoringConfiguration.getStormExecutorStartupParallel());
         Assert.assertEquals(MonitoringConfiguration.DEFAULT_PROFILE_APPROXIMATE, 
             MonitoringConfiguration.enableProfileApproximate());
-        Assert.assertEquals(MonitoringConfiguration.DEFAULT_REASONING_INSTANCE_BASED, 
-            MonitoringConfiguration.getReasoningInstanceBased());
+        Assert.assertEquals(true, MonitoringConfiguration.getReasoningInstanceBased());
         Assert.assertNotNull(MonitoringConfiguration.createReasonerAdapter());
     }
 
