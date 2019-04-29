@@ -25,7 +25,7 @@ import net.ssehub.easy.varModel.confModel.IDecisionVariable;
 /**
  * Collects the references of (runtime) variables, i.e., for a given
  * variable, who is referencing this. Instances of this class are 
- * created by {@link CopyMappingCreationListener} applied to {@link VariableValueCopier}.
+ * created by {@link CopyMappingCreationListener}.
  * 
  * @author Holger Eichelberger
  */

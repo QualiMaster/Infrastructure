@@ -35,6 +35,7 @@ import net.ssehub.easy.instantiation.core.model.templateModel.TemplateModel;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.Executor;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.RtVilModel;
 import net.ssehub.easy.instantiation.rt.core.model.rtVil.Script;
+import net.ssehub.easy.reasoning.core.frontend.ReasonerAdapter;
 import net.ssehub.easy.varModel.confModel.Configuration;
 import net.ssehub.easy.varModel.confModel.IDecisionVariable;
 import net.ssehub.easy.varModel.management.VarModel;
@@ -284,13 +285,14 @@ public class RepositoryConnector {
                 usageCounter--;
             }
             if (0 == usageCounter && null != update) {
+                EventManager.send(new ModelUpdatedEvent(ModelUpdatedEvent.Type.CHANGING));
                 this.configuration = update.configuration;
                 this.adaptationScript = update.adaptationScript;
                 this.instantiationScript = update.instantiationScript;
                 this.variableMapping = update.variableMapping;
                 this.location = update.location;
                 update = null;
-                EventManager.send(new ModelUpdatedEvent());
+                EventManager.send(new ModelUpdatedEvent(ModelUpdatedEvent.Type.CHANGED));
             }
         }
 
@@ -996,6 +998,34 @@ public class RepositoryConnector {
             }
         }
         return result;
+    }
+
+    /**
+     * Registers the denoted model for instance-based reasoning. As the adapter knows about performing instance-based 
+     * reasoning or not, registering a model although if no instance-based reasoning is needed is not a problem.
+     * 
+     * @param phase the phase to take the model from
+     * @param adapter the reasoning adapter to register with
+     */
+    public static void registerForReasoning(IPhase phase, ReasonerAdapter adapter) {
+        Models models = getModels(phase);
+        if (null != models && null != models.getConfiguration()) {
+            adapter.register(models.getConfiguration());
+        }
+    }
+
+    /**
+     * Unregisters the denoted model for instance-based reasoning. As the adapter knows about performing instance-based 
+     * reasoning or not, registering a model although if no instance-based reasoning is needed is not a problem.
+     * 
+     * @param phase the phase to take the model from
+     * @param adapter the reasoning adapter to register with
+     */
+    public static void unregisterFromReasoning(IPhase phase, ReasonerAdapter adapter) {
+        Models models = getModels(phase);
+        if (null != models && null != models.getConfiguration()) {
+            adapter.clear(models.getConfiguration());
+        }
     }
 
     /**

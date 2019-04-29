@@ -23,5 +23,41 @@ package eu.qualimaster.coordination.events;
 public class ModelUpdatedEvent extends CoordinationEvent {
 
     private static final long serialVersionUID = 6449323533180161122L;
+    private Type type;
+    
+    /**
+     * The type of the event.
+     * 
+     * @author Holger Eichelberger
+     */
+    public enum Type {
+        /**
+         * Pre-announcement that the model will change. Time to unregister things.
+         */
+        CHANGING,
+
+        /**
+         * Announcement that the model changed. Time to register things again with the new model.
+         */
+        CHANGED;
+    }
+
+    /**
+     * Creates a model updated event with given type.
+     * 
+     * @param type the type
+     */
+    public ModelUpdatedEvent(Type type) {
+        this.type = type;
+    }
+    
+    /**
+     * Returns the type of the event.
+     * 
+     * @return the type
+     */
+    public Type getType() {
+        return type;
+    }
 
 }
