@@ -392,7 +392,7 @@ public class PipelineOptions implements Serializable, IOptionSetter {
      * @param dflt the default value in case that no option is given
      * @return the Boolean value or, if not in options, <code>dflt</code>
      */
-    private boolean getBooleanValue(String key, boolean dflt) {
+    public boolean getBooleanValue(String key, boolean dflt) {
         boolean result = dflt;
         Object val = options.get(key);
         if (val instanceof Boolean) {
@@ -415,7 +415,7 @@ public class PipelineOptions implements Serializable, IOptionSetter {
      * @param dflt the default value in case that no option is given
      * @return the int value or, if not in options, <code>dflt</code>
      */
-    private int getIntValue(String key, int dflt) {
+    public int getIntValue(String key, int dflt) {
         int result;
         Number number = getNumberValue(key, dflt);
         if (null == number) {
@@ -433,7 +433,7 @@ public class PipelineOptions implements Serializable, IOptionSetter {
      * @param dflt the default value in case that no option is given
      * @return the number value or, if not in options, <code>dflt</code>
      */
-    private Number getNumberValue(String key, Number dflt) {
+    public Number getNumberValue(String key, Number dflt) {
         Number result = dflt;
         Object tmp = options.get(key);
         if (tmp instanceof Integer) {
