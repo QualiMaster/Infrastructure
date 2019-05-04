@@ -17,6 +17,7 @@ package eu.qualimaster.common.signal;
 
 import java.util.HashMap;
 
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.Configuration;
@@ -45,8 +46,22 @@ public class HadoopSignalHandler implements SignalListener, IShutdownListener {
      * @param receiver the receiver to delegate to
      */
     public HadoopSignalHandler(String namespace, String elementName, IHadoopSignalReceiver receiver) {
+        this(namespace, elementName, receiver, null);
+    }
+    
+    /**
+     * Creates a Hadoop signal listener.
+     * 
+     * @param namespace the namespace
+     * @param elementName the element name
+     * @param receiver the receiver to delegate to
+     * @param jConf the job configuration to configure from
+     */
+    public HadoopSignalHandler(String namespace, String elementName, IHadoopSignalReceiver receiver, JobConf jConf) {
         @SuppressWarnings("rawtypes")
         java.util.Map conf = new HashMap(); // contents/source unclear
+        putInt(conf, Configuration.HOST_EVENT, jConf.get(Configuration.HOST_EVENT));
+        putInt(conf, Configuration.PORT_EVENT, jConf.get(Configuration.PORT_EVENT));
         StormSignalConnection.configureEventBus(conf);
         this.namespace = namespace;
         this.elementName = elementName;
@@ -56,6 +71,25 @@ public class HadoopSignalHandler implements SignalListener, IShutdownListener {
             algorithmEventHandler = AlgorithmChangeEventHandler.createAndRegister(receiver, namespace, elementName);
             parameterEventHandler = ParameterChangeEventHandler.createAndRegister(receiver, namespace, elementName);
             shutdownEventHandler = ShutdownEventHandler.createAndRegister(this, namespace, elementName);
+        }
+    }
+    
+    /**
+     * Puts an int value to {@code conf}. If the conversion fails, nothing happens.
+     * 
+     * @param conf the configuration to modify
+     * @param key the key
+     * @param value the value to be turned into an int
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static void putInt(java.util.Map conf, String key, Object value) {
+        if (value instanceof Integer) {
+            conf.put(key, value);
+        } else if (value != null) {
+            try {
+                conf.put(key, Integer.parseInt(value.toString()));
+            } catch (NumberFormatException e) {
+            }
         }
     }
     
