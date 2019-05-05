@@ -240,7 +240,7 @@ public class EventManagerTests {
             for (int w = 0; allCompleted && w < WORKER_COUNT; w++) {
                 allCompleted &= workers[w].isCompleted();
             }
-            sleep(100);
+            sleep(200);
         } while (!allCompleted);
         client.doCleanup();
         if (client != server) {
