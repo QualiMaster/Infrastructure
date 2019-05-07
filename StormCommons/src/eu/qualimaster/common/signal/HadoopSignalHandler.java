@@ -15,9 +15,11 @@
  */
 package eu.qualimaster.common.signal;
 
+import java.io.Closeable;
 import java.util.HashMap;
 
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.Configuration;
@@ -28,8 +30,10 @@ import eu.qualimaster.events.EventManager;
  * 
  * @author Holger Eichelberger
  */
-public class HadoopSignalHandler implements SignalListener, IShutdownListener {
-    
+public class HadoopSignalHandler implements SignalListener, IShutdownListener, Closeable {
+
+    public static final String PREFIX_SOURCE = "source";
+    public static final String PREFIX_SINK = "sink";
     private String namespace;
     private String elementName;
     private IHadoopSignalReceiver receiver;
@@ -44,24 +48,24 @@ public class HadoopSignalHandler implements SignalListener, IShutdownListener {
      * @param namespace the namespace
      * @param elementName the element name
      * @param receiver the receiver to delegate to
+     * @param jConf the job configuration to configure from
      */
-    public HadoopSignalHandler(String namespace, String elementName, IHadoopSignalReceiver receiver) {
-        this(namespace, elementName, receiver, null);
+    public HadoopSignalHandler(String namespace, String elementName, IHadoopSignalReceiver receiver, JobConf jConf) {
+        this(namespace, elementName, receiver, toConf(jConf));
     }
-    
+
     /**
      * Creates a Hadoop signal listener.
      * 
      * @param namespace the namespace
      * @param elementName the element name
      * @param receiver the receiver to delegate to
-     * @param jConf the job configuration to configure from
+     * @param conf the Storm-like configuration to configure from, containing at least {@link Configuration#HOST_EVENT}
+     *      and {@link Configuration#HOST_EVENT}
      */
-    public HadoopSignalHandler(String namespace, String elementName, IHadoopSignalReceiver receiver, JobConf jConf) {
-        @SuppressWarnings("rawtypes")
-        java.util.Map conf = new HashMap(); // contents/source unclear
-        putInt(conf, Configuration.HOST_EVENT, jConf.get(Configuration.HOST_EVENT));
-        putInt(conf, Configuration.PORT_EVENT, jConf.get(Configuration.PORT_EVENT));
+    @SuppressWarnings("rawtypes") // storm style
+    public HadoopSignalHandler(String namespace, String elementName, IHadoopSignalReceiver receiver, 
+        java.util.Map conf) {
         StormSignalConnection.configureEventBus(conf);
         this.namespace = namespace;
         this.elementName = elementName;
@@ -73,26 +77,58 @@ public class HadoopSignalHandler implements SignalListener, IShutdownListener {
             shutdownEventHandler = ShutdownEventHandler.createAndRegister(this, namespace, elementName);
         }
     }
-    
+
     /**
-     * Puts an int value to {@code conf}. If the conversion fails, nothing happens.
+     * Creates a default signal handler and configures itself from prefix.namespace and prefix.elementName from 
+     * {@code jConf}.
      * 
-     * @param conf the configuration to modify
-     * @param key the key
-     * @param value the value to be turned into an int
+     * @param receiver the signal receiver
+     * @param prefix the prefix string
+     * @param jConf the Hadoop job configuration
+     * @return the created signal handler
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private static void putInt(java.util.Map conf, String key, Object value) {
-        if (value instanceof Integer) {
-            conf.put(key, value);
-        } else if (value != null) {
-            try {
-                conf.put(key, Integer.parseInt(value.toString()));
-            } catch (NumberFormatException e) {
-            }
-        }
+    public static HadoopSignalHandler createDefaultHadoopSignalHandler(IHadoopSignalReceiver receiver, 
+        String prefix, JobConf jConf) {
+        String namespace = jConf.get(prefix + ".namespace");
+        String elementName = jConf.get(prefix + ".elementName");
+        return new HadoopSignalHandler(namespace, elementName, receiver, jConf);
     }
-    
+
+    /**
+     * Returns the Storm-like configuration from the relevant data of {@code jConf}.
+     * 
+     * @param jConf the Hadoop configuration
+     * @return the Storm-like configuration
+     */
+    @SuppressWarnings("rawtypes")
+    public static java.util.Map toConf(JobConf jConf) {
+        int port = 1024;
+        try {
+            port = Integer.parseInt(jConf.get(Configuration.PORT_EVENT));
+        } catch (NumberFormatException e) {
+            LogManager.getLogger(HadoopSignalHandler.class).warn("No event port configured, using " + 1024);
+        } catch (IllegalArgumentException e) {
+            LogManager.getLogger(HadoopSignalHandler.class).warn("No event port configured, using " + 1024);
+            
+        }
+        return toConf(jConf.get(Configuration.HOST_EVENT), port);
+    }
+
+    /**
+     * Returns the Storm-like configuration from the given data.
+     * 
+     * @param host the event host
+     * @param port the event port
+     * @return the Storm-like configuration
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static java.util.Map toConf(String host, int port) {
+        java.util.Map conf = new HashMap();
+        conf.put(Configuration.HOST_EVENT, host);
+        conf.put(Configuration.HOST_EVENT, port);
+        return conf;
+    }
+
     @Override
     public void onSignal(byte[] data) {
         getLogger().info("onSignal: Listening on the signal! " + namespace + "/" + elementName);
@@ -107,8 +143,13 @@ public class HadoopSignalHandler implements SignalListener, IShutdownListener {
     
     @Override
     public final void notifyShutdown(ShutdownSignal signal) {
-        signalConnection.close();
         receiver.notifyShutdown(signal);
+        close();
+    }
+    
+    @Override
+    public void close() {
+        signalConnection.close();
         if (Configuration.getPipelineSignalsQmEvents()) {
             EventManager.unregister(algorithmEventHandler);
             EventManager.unregister(parameterEventHandler);

@@ -20,6 +20,8 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import eu.qualimaster.reflection.ReflectionHelper;
+
 /**
  * A factory for registered load shedders.
  * 
@@ -117,7 +119,7 @@ public class LoadShedderFactory {
             Class<? extends LoadShedder<?>> cls = INSTANCES.get(identifier);
             if (null != cls) {
                 try {
-                    result = cls.newInstance();
+                    result = ReflectionHelper.createInstance(cls);
                 } catch (InstantiationException e) {
                     Logger.getLogger(LoadShedderFactory.class).error("Cannot create shedder instance: " 
                         + e.getMessage());

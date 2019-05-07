@@ -37,6 +37,7 @@ import org.apache.storm.zookeeper.Watcher.Event.EventType;
 
 import backtype.storm.utils.Utils;
 import eu.qualimaster.Configuration;
+import eu.qualimaster.reflection.ReflectionHelper;
 
 import static eu.qualimaster.common.signal.SignalMechanism.PATH_SEPARATOR;
 
@@ -1108,7 +1109,7 @@ public class PortManager {
         try {
             T result = load(path, cls);
             if (null == result) {
-                result = cls.newInstance();
+                result = ReflectionHelper.createInstance(cls);
             }
             return result;
         } catch (Exception e) {
