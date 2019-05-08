@@ -15,7 +15,11 @@
  */
 package eu.qualimaster.common.signal;
 
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.log4j.Logger;
+
 import eu.qualimaster.common.signal.AlgorithmSignalHandler.IAlgorithmHolder;
+import eu.qualimaster.reflection.ReflectionHelper;
 
 /**
  * Implements a default hadoop signal receiver implementing the algorithm change and parameter change
@@ -30,11 +34,42 @@ public class DefaultHadoopSignalReceiver<T> implements IHadoopSignalReceiver {
     private ParameterSignalHandler paramHandler;
 
     /**
+     * Defines the interface of a configurer instance.
+     * 
+     * @param <T> the algorithm/source/sink type
+     * @author Holger Eichelberger
+     */
+    public interface IConfigurer<T> {
+        
+        /**
+         * Returns the name of the signal namespace.
+         * 
+         * @return the namespace
+         */
+        public String getNamespace();
+
+        /**
+         * Returns the element name for sending signals to.
+         * 
+         * @return the element name
+         */
+        public String getElementName();
+        
+        /**
+         * Configures the algorithm and parameter signal handlers.
+         * 
+         * @param receiver the receiver to configure
+         */
+        public void configure(DefaultHadoopSignalReceiver<T> receiver);
+    }
+    
+    /**
      * A self-contained signal receiver being its own algorithm holder.
      * 
      * @param <T> the algorithm type
      * @author Holger Eichelberger
      */
+    @Deprecated
     public static class SelfContainedHadoopSignalReceiver<T> extends DefaultHadoopSignalReceiver<T> 
         implements IAlgorithmHolder<T> {
 
@@ -84,6 +119,7 @@ public class DefaultHadoopSignalReceiver<T> implements IHadoopSignalReceiver {
      * @param <T> the algorithm type
      * @return the self-contained signal receiver
      */
+    @Deprecated
     public static <T> DefaultHadoopSignalReceiver<T> createSelfContainedReceiver() {
         return new DefaultHadoopSignalReceiver<>(new SelfContainedHadoopSignalReceiver<T>());
     }
@@ -128,6 +164,46 @@ public class DefaultHadoopSignalReceiver<T> implements IHadoopSignalReceiver {
 
     @Override
     public void notifyShutdown(ShutdownSignal signal) {
+    }
+
+    /**
+     * Configures a Hadoop signal receiver.
+     * 
+     * @param <T> the algorithm/source/sink type
+     * @param prefix the configuration key prefix
+     * @param job the job configuration
+     * @param receiver the receiver to configure
+     * @return a configured hadoop signal handler, <b>null</b> if no configurer was specified or creating the 
+     *     configurer failed
+     */
+    public static <T> HadoopSignalHandler configure(String prefix, JobConf job, 
+        DefaultHadoopSignalReceiver<T> receiver) {
+        HadoopSignalHandler handler = null;
+        String key = HadoopSignalHandler.getConfigurerKey(prefix); 
+        String clsName = job.get(key);
+        if (null != clsName) {
+            try {
+                Class<?> cls = Class.forName(clsName);
+                @SuppressWarnings("unchecked")
+                IConfigurer<T> configurer = (IConfigurer<T>) ReflectionHelper.createInstance(cls);
+                configurer.configure(receiver);
+                handler = new HadoopSignalHandler(configurer.getNamespace(), configurer.getElementName(), 
+                    receiver, job);
+            } catch (ClassNotFoundException e) {
+                Logger.getLogger(DefaultHadoopSignalReceiver.class).error(
+                    "Cannot create configurer: " + e.getMessage());
+            } catch (IllegalAccessException e) {
+                Logger.getLogger(DefaultHadoopSignalReceiver.class).error(
+                    "Cannot create configurer: " + e.getMessage());
+            } catch (InstantiationException e) {
+                Logger.getLogger(DefaultHadoopSignalReceiver.class).error(
+                    "Cannot create configurer: " + e.getMessage());
+            }
+        } else {
+            Logger.getLogger(DefaultHadoopSignalReceiver.class).error(
+                "Configurer not specified: " + key);            
+        }
+        return handler; 
     }
 
 }

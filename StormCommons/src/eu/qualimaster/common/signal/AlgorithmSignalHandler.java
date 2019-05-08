@@ -23,6 +23,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import backtype.storm.stateTransfer.StateTransfer;
+import eu.qualimaster.reflection.ReflectionHelper;
 
 /**
  * Implements a generic algorithm signal handler. Supports {@link StateTransfer}.
@@ -112,6 +113,15 @@ public class AlgorithmSignalHandler<T> implements Serializable, IAlgorithmChange
             this.name = name;
         }
         
+        /**
+         * Returns the handled class.
+         * 
+         * @return the handled class
+         */
+        protected Class<? extends T> getHandledClass() {
+            return cls;
+        }
+        
         @Override
         public String getName() {
             return name;
@@ -122,6 +132,43 @@ public class AlgorithmSignalHandler<T> implements Serializable, IAlgorithmChange
             return null == origin || !origin.getClass().equals(cls);
         }
 
+    }
+
+    /**
+     * Implements a default algorithm change handler. Default behavior: Switches to the new algorithm if the 
+     * origin algorithm is either <b>null</b> or of a different immediate type. Creates an instance of the handled
+     * class using its no-arg constructor. 
+     * 
+     * @param <T> the algorithm type
+     * @author Holger Eichelberger
+     */
+    public static class DefaultAlgorithmChangeHandler<T> extends AbstractAlgorithmChangeHandler<T> {
+        
+        private static final long serialVersionUID = 8031010380634897333L;
+
+        /**
+         * Creates a handler instance.
+         * 
+         * @param name the name of the algorithm to react on
+         * @param cls the immediate class this algorithm change handler will switch to
+         */
+        public DefaultAlgorithmChangeHandler(String name, Class<? extends T> cls) {
+            super(name, cls);
+        }
+        
+        @Override
+        public T handle() {
+            T result = null;
+            try {
+                result = (T) ReflectionHelper.createInstance(getHandledClass());
+            } catch (InstantiationException e) {
+                getLogger().warn("Cannot create algorithm instance: " + e.getMessage());
+            } catch (IllegalAccessException e) {
+                getLogger().warn("Cannot create algorithm instance: " + e.getMessage());
+            }
+            return result;
+        }
+        
     }
 
     private static final long serialVersionUID = 7156238110043291252L;
@@ -148,7 +195,22 @@ public class AlgorithmSignalHandler<T> implements Serializable, IAlgorithmChange
     
     @Override
     public void notifyAlgorithmChange(AlgorithmChangeSignal signal) {
-        String name = signal.getAlgorithm();
+        setAlgorithm(signal.getAlgorithm()); // TODO enable defer
+    }
+
+    /**
+     * Executes a deferred algorithm change. Does nothing if there is no such change.
+     */
+    protected void execute() {
+        // TODO enable defer
+    }
+    
+    /**
+     * Immediately changes the algorithm.
+     * 
+     * @param name the name of the algorithm
+     */
+    protected void setAlgorithm(String name) {
         IAlgorithmChangeHandler<T> handler = handlers.get(name);
         if (null != handler) {
             T origin = holder.getCurrentAlgorithm();

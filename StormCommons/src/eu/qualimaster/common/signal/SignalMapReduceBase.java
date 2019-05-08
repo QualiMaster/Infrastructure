@@ -17,6 +17,7 @@ package eu.qualimaster.common.signal;
 
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MapReduceBase;
+import org.apache.log4j.Logger;
 
 import eu.qualimaster.common.signal.AlgorithmSignalHandler.IAlgorithmChangeHandler;
 import eu.qualimaster.common.signal.AlgorithmSignalHandler.IAlgorithmHolder;
@@ -33,7 +34,7 @@ public abstract class SignalMapReduceBase<T> extends MapReduceBase implements IA
     private static final long serialVersionUID = 4150525332007541340L;
     private HadoopSignalHandler signalHandler;
     private DefaultHadoopSignalReceiver<T> receiver = new DefaultHadoopSignalReceiver<T>(this);
-    private T algorithm;
+    private transient T algorithm;
     private String namespace;
     private String elementName;
 
@@ -92,6 +93,22 @@ public abstract class SignalMapReduceBase<T> extends MapReduceBase implements IA
     protected void addHandler(IParameterChangeHandler handler) {
         receiver.getParameterHandler().addHandler(handler);
     }
+    
+    /**
+     * Immediately changes the algorithm.
+     * 
+     * @param name the name of the algorithm
+     */
+    protected void setAlgorithm(String name) {
+        receiver.getAlgorithmHandler().setAlgorithm(name);
+    }
+    
+    /**
+     * Executes a deferred algorithm change. Does nothing if there is no such change.
+     */
+    protected void executeDeferredAlgorithmChange() {
+        receiver.getAlgorithmHandler().execute();
+    }
 
     /**
      * Returns the signal listener/handler instance.
@@ -100,6 +117,15 @@ public abstract class SignalMapReduceBase<T> extends MapReduceBase implements IA
      */
     protected SignalListener getSignalHandler() {
         return signalHandler;
+    }
+
+    /**
+     * Returns the logger.
+     * 
+     * @return the responsible logger
+     */
+    protected Logger getLogger() {
+        return Logger.getLogger(getClass());
     }
 
 }
