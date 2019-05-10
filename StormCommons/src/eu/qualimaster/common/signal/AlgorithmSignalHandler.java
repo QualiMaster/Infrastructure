@@ -26,7 +26,8 @@ import backtype.storm.stateTransfer.StateTransfer;
 import eu.qualimaster.reflection.ReflectionHelper;
 
 /**
- * Implements a generic algorithm signal handler. Supports {@link StateTransfer}.
+ * Implements a generic algorithm signal handler. Allows to defer received signals until {@code {@link #execute()}} 
+ * or to execute them immediately. Supports {@link StateTransfer}.
  * 
  * @param <T> the algorithm type
  * @author Holger Eichelberger
@@ -174,14 +175,28 @@ public class AlgorithmSignalHandler<T> implements Serializable, IAlgorithmChange
     private static final long serialVersionUID = 7156238110043291252L;
     private Map<String, IAlgorithmChangeHandler<T>> handlers = new HashMap<String, IAlgorithmChangeHandler<T>>();
     private IAlgorithmHolder<T> holder;
+    private boolean immediate;
+    private AlgorithmChangeSignal deferred;
     
     /**
-     * Creates a generic algorithm signal handler instance.
+     * Creates a generic deferred algorithm signal handler instance.
      * 
      * @param holder the algorithm (state) holder
      */
     public AlgorithmSignalHandler(IAlgorithmHolder<T> holder) {
+        this(holder, true);
+    }
+
+    /**
+     * Creates a generic algorithm signal handler instance.
+     * 
+     * @param holder the algorithm (state) holder
+     * @param immediate shall algorithm change events be executed immediately or stored and deferred until polled 
+     *     through {@link #execute()}
+     */
+    public AlgorithmSignalHandler(IAlgorithmHolder<T> holder, boolean immediate) {
         this.holder = holder;
+        this.immediate = immediate;
     }
 
     /**
@@ -195,28 +210,46 @@ public class AlgorithmSignalHandler<T> implements Serializable, IAlgorithmChange
     
     @Override
     public void notifyAlgorithmChange(AlgorithmChangeSignal signal) {
-        setAlgorithm(signal.getAlgorithm()); // TODO enable defer
+        if (immediate) {
+            setAlgorithm(signal.getAlgorithm(), signal);
+        } else {
+            deferred = signal;
+        }
     }
 
     /**
      * Executes a deferred algorithm change. Does nothing if there is no such change.
      */
     protected void execute() {
-        // TODO enable defer
+        if (!immediate && null != deferred) {
+            setAlgorithm(deferred.getAlgorithm(), deferred);
+        }
     }
-    
+
     /**
      * Immediately changes the algorithm.
      * 
      * @param name the name of the algorithm
      */
     protected void setAlgorithm(String name) {
+        setAlgorithm(name, null);
+    }
+    
+    /**
+     * Immediately changes the algorithm.
+     * 
+     * @param name the name of the algorithm
+     * @param signal the actual signal (may be <b>null</b> for immediate changes without parameters)
+     */
+    private void setAlgorithm(String name, AlgorithmChangeSignal signal) {
         IAlgorithmChangeHandler<T> handler = handlers.get(name);
         if (null != handler) {
             T origin = holder.getCurrentAlgorithm();
             if (handler.changeFrom(origin)) {
                 T target = handler.handle();
-                //AlgorithmChangeParameter
+                //if (null != signal) {
+                    //TODO AlgorithmChangeParameter
+                //}
                 holder.setCurrentAlgorithm(target);
                 try {
                     StateTransfer.transferState(target, origin);

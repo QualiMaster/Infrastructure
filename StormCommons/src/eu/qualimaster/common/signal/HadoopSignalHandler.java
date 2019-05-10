@@ -34,10 +34,6 @@ public class HadoopSignalHandler implements SignalListener, IShutdownListener, C
 
     public static final String PREFIX_SOURCE = "source";
     public static final String PREFIX_SINK = "sink";
-    @Deprecated
-    public static final String POSTFIX_NAMESPACE = "namespace";
-    @Deprecated
-    public static final String POSTFIX_ELEMENTNAME = "elementName";
     public static final String POSTFIX_CONFIGURER = "configurer";
     public static final String KEY_SEPARATOR = ".";
     
@@ -104,23 +100,6 @@ public class HadoopSignalHandler implements SignalListener, IShutdownListener, C
      */
     public static String getConfigurerKey(String prefix) {
         return HadoopSignalHandler.composeKey(prefix, POSTFIX_CONFIGURER);
-    }
-
-    /**
-     * Creates a default signal handler and configures itself from prefix.namespace and prefix.elementName from 
-     * {@code jConf}.
-     * 
-     * @param receiver the signal receiver
-     * @param prefix the prefix string
-     * @param jConf the Hadoop job configuration
-     * @return the created signal handler
-     */
-    @Deprecated
-    public static HadoopSignalHandler createDefaultHadoopSignalHandler(IHadoopSignalReceiver receiver, 
-        String prefix, JobConf jConf) {
-        String namespace = jConf.get(composeKey(prefix, POSTFIX_NAMESPACE));
-        String elementName = jConf.get(composeKey(prefix, POSTFIX_ELEMENTNAME));
-        return new HadoopSignalHandler(namespace, elementName, receiver, jConf);
     }
 
     /**

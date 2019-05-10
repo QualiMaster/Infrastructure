@@ -64,38 +64,6 @@ public class DefaultHadoopSignalReceiver<T> implements IHadoopSignalReceiver {
     }
     
     /**
-     * A self-contained signal receiver being its own algorithm holder.
-     * 
-     * @param <T> the algorithm type
-     * @author Holger Eichelberger
-     */
-    @Deprecated
-    public static class SelfContainedHadoopSignalReceiver<T> extends DefaultHadoopSignalReceiver<T> 
-        implements IAlgorithmHolder<T> {
-
-        private static final long serialVersionUID = 8866490508667250705L;
-        private T algorithm;
-
-        /**
-         * Creates an instance.
-         */
-        public SelfContainedHadoopSignalReceiver() {
-            initialize(this);
-        }
-        
-        @Override
-        public T getCurrentAlgorithm() {
-            return algorithm;
-        }
-
-        @Override
-        public void setCurrentAlgorithm(T algorithm) {
-            this.algorithm = algorithm;
-        }
-        
-    }
-    
-    /**
      * Creates a signal receiver for a given algorithm holder. Call {@link #initialize(IAlgorithmHolder)} explicitly.
      * 
      * @see #initialize(IAlgorithmHolder)
@@ -111,17 +79,6 @@ public class DefaultHadoopSignalReceiver<T> implements IHadoopSignalReceiver {
      */
     public DefaultHadoopSignalReceiver(IAlgorithmHolder<T> holder) {
         initialize(holder);
-    }
-    
-    /**
-     * Creates a self-contained default signal receiver.
-     * 
-     * @param <T> the algorithm type
-     * @return the self-contained signal receiver
-     */
-    @Deprecated
-    public static <T> DefaultHadoopSignalReceiver<T> createSelfContainedReceiver() {
-        return new DefaultHadoopSignalReceiver<>(new SelfContainedHadoopSignalReceiver<T>());
     }
     
     /**
