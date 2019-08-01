@@ -13,12 +13,12 @@ public class DataFlag {
     public static final int FLAG_BYTES_LEN = 8;
 
     /**
-     * Used for signalling the flag as length.
+     * Used for signaling the flag as length.
      */
     public static final int DATA_FLAG = -FLAG_BYTES_LEN;
     
     /**
-     * Used for signalling the end of a stream.
+     * Used for signaling the end of a stream.
      */
     public static final int EOD_FLAG = -1;
     

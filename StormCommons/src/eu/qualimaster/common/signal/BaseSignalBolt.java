@@ -488,4 +488,12 @@ public abstract class BaseSignalBolt extends BaseRichBolt implements SignalListe
         return Logger.getLogger(getClass());
     }
 
+    /**
+     * Returns the signal connection.
+     * @return the signal connection
+     */
+    public StormSignalConnection getSignalConnection() {
+        return signalConnection;
+    }
+
 }

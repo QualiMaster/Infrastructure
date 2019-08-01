@@ -437,4 +437,11 @@ public abstract class BaseSignalSpout extends BaseRichSpout implements SignalLis
         return Logger.getLogger(getClass());
     }
 
+    /**
+     * Returns the signal connection.
+     * @return the signal connection
+     */
+    public StormSignalConnection getSignalConnection() {
+        return signalConnection;
+    }
 }
