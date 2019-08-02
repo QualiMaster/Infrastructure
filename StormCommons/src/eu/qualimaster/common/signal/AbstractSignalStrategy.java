@@ -1,5 +1,6 @@
 package eu.qualimaster.common.signal;
 
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,13 +30,14 @@ public abstract class AbstractSignalStrategy implements ISignalStrategy {
     }
     
     @Override
-    public void handleSignal(ParameterChangeSignal signal, String node) {
+    public void handleSignal(ParameterChangeSignal signal, String node, Serializable value) {
         for (int i = 0; i < signal.getChangeCount(); i++) {
             ParameterChange para = signal.getChange(i);
             try {
                 logger.info("Handling the signal: " + para.getName());
                 ISignalHandler handler = SignalHandlerRegistry.getSignalHandler(para.getName() + node)
-                        .getDeclaredConstructor(ParameterChangeSignal.class, String.class).newInstance(signal, node);
+                        .getDeclaredConstructor(ParameterChangeSignal.class, String.class, Serializable.class)
+                        .newInstance(signal, node, value);
                 handler.doSignal();
                 signalHandlers.put(para.getName() + node, handler);
             } catch (InstantiationException e) {

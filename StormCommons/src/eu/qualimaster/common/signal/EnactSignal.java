@@ -1,5 +1,7 @@
 package eu.qualimaster.common.signal;
 
+import java.io.Serializable;
+
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -13,8 +15,8 @@ import eu.qualimaster.common.switching.warmupDataSynchronizationVariant.WSDSSign
  * @author Cui Qin
  *
  */
-public class EnactSignalHandler {
-    private static Logger logger = LogManager.getLogger(EnactSignalHandler.class);
+public class EnactSignal {
+    private static Logger logger = LogManager.getLogger(EnactSignal.class);
     private static final String SIGNALNAME = "enact";
     /**
      * Provide a signal handler for the signal "enact" in the original intermediary node.
@@ -36,10 +38,13 @@ public class EnactSignalHandler {
          * Constructor for the signal handler.
          * @param signal the switch-related signal
          * @param node the name of the node in which the signal shall be handled
+         * @param value the value to be sent in next signals
          */
-        public EnactOrgINTSignalHandler(ParameterChangeSignal signal, String node) {
+        public EnactOrgINTSignalHandler(ParameterChangeSignal signal, String node, Serializable value) {
 //            super(signal, node);
             switchArrivalPoint = getSwitchArrivalPoint(signal);
+            signalStrategy = (WSDSSignalStrategy) SwitchStrategies.getInstance()
+                    .getStrategies().get("signal");
         }
         
         /**
@@ -69,32 +74,41 @@ public class EnactSignalHandler {
         
         @Override
         public void nextSignals() {
-            //create a signal to disable the end node
-            ParameterChangeSignal disableSignal = new ParameterChangeSignal(getNameInfo().getTopologyName(), 
-                    getNameInfo().getOriginalEndNodeName(), "disable", true, null); 
-            logger.info("The original intermediary node name: " + getNameInfo().getOriginalIntermediaryNodeName());
-            logger.info("Created the disable signal sending to " + getNameInfo().getOriginalEndNodeName());
-            //create a signal to passivate the preceding node 
-            ParameterChangeSignal passivateSignal = new ParameterChangeSignal(getNameInfo().getTopologyName(), 
-                    getNameInfo().getPrecedingNodeName(), "passivate", true, null);
-            logger.info("Created the passivate signal sending to " + getNameInfo().getPrecedingNodeName());
-            signalStrategy = (WSDSSignalStrategy) SwitchStrategies.getInstance()
-                    .getStrategies().get("signal");
-            AbstractSignalConnection con = signalStrategy.getSignalConnection();
-            try {
-                //send the defined signals
-                logger.info("Sending the defined signals with the connection: " + con);
-                con.sendSignal(disableSignal);
-                con.sendSignal(passivateSignal);
-            } catch (SignalException e) {
-                e.printStackTrace();
-            }
+            logger.info(System.currentTimeMillis() 
+                    + ", Sending the diable signal to the original end node!");
+            DisableSignal.sendSignal(getNameInfo().getTopologyName()
+                    , getNameInfo().getOriginalEndNodeName(), true, signalStrategy.getSignalConnection());
+            
+            logger.info(System.currentTimeMillis() 
+                    + ", Sending the diable signal to the preceding node!");
+            DisableSignal.sendSignal(getNameInfo().getTopologyName()
+                    , getNameInfo().getPrecedingNodeName(), true, signalStrategy.getSignalConnection());
+            
+//            ParameterChangeSignal disableSignal = new ParameterChangeSignal(getNameInfo().getTopologyName(), 
+//                    getNameInfo().getOriginalEndNodeName(), "disable", true, null); 
+//            logger.info("The original intermediary node name: " + getNameInfo().getOriginalIntermediaryNodeName());
+//            logger.info("Created the disable signal sending to " + getNameInfo().getOriginalEndNodeName());
+//            //create a signal to passivate the preceding node 
+//            ParameterChangeSignal passivateSignal = new ParameterChangeSignal(getNameInfo().getTopologyName(), 
+//                    getNameInfo().getPrecedingNodeName(), "passivate", true, null);
+//            logger.info("Created the passivate signal sending to " + getNameInfo().getPrecedingNodeName());
+//            
+//            AbstractSignalConnection con = signalStrategy.getSignalConnection();
+//            try {
+//                //send the defined signals
+//                logger.info("Sending the defined signals with the connection: " + con);
+//                con.sendSignal(disableSignal);
+//                con.sendSignal(passivateSignal);
+//            } catch (SignalException e) {
+//                e.printStackTrace();
+//            }
         }
         
         static {
-            logger.info("Registing the signal handler for the signal:" + SIGNALNAME);
+            logger.info("Registing the signal handler for the signal:" + SIGNALNAME
+                    + ", for the node type: " + SwitchNodeNameInfo.ORIGINALINTERMEDIARYNODE);
             SignalHandlerRegistry.register(SIGNALNAME + SwitchNodeNameInfo.ORIGINALINTERMEDIARYNODE, 
-                    EnactSignalHandler.EnactOrgINTSignalHandler.class);
+                    EnactSignal.EnactOrgINTSignalHandler.class);
         }
     }
 }
