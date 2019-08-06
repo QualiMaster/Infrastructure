@@ -24,17 +24,37 @@ public class WSDSSwitchMechanism implements ISwitchMechanism {
     /**
      * Constructor of the switch mechanism for the "Warm-up Switch with Data Synchronization" variant. 
      * @param signalStrategy the signal strategy
+     */
+    public WSDSSwitchMechanism(WSDSSignalStrategy signalStrategy) {
+        this.signalStrategy = signalStrategy;
+        strategies = SwitchStrategies.getInstance().getStrategies();
+        strategies.put(signalStrategy.getStrategyType(), signalStrategy);
+    }
+    
+    /**
+     * Constructor of the switch mechanism for the "Warm-up Switch with Data Synchronization" variant. 
+     * @param signalStrategy the signal strategy
+     * @param synchronizationStrategy the synchronization strategy
+     */
+    public WSDSSwitchMechanism(WSDSSignalStrategy signalStrategy,
+            SeparatedINTSynchronizationStrategy synchronizationStrategy) {
+        this(signalStrategy);
+        strategies = SwitchStrategies.getInstance().getStrategies();
+        strategies.put(synchronizationStrategy.getStrategyType(), synchronizationStrategy);
+    }
+    
+    /**
+     * Constructor of the switch mechanism for the "Warm-up Switch with Data Synchronization" variant. 
+     * @param signalStrategy the signal strategy
      * @param determinationStrategy the determination strategy
      * @param synchronizationStrategy the synchronization strategy
      */
     public WSDSSwitchMechanism(WSDSSignalStrategy signalStrategy, WSDSDeterminationStrategy determinationStrategy
             , SeparatedINTSynchronizationStrategy synchronizationStrategy) {
-        this.signalStrategy = signalStrategy;
+        this(signalStrategy, synchronizationStrategy);
         this.determinationStrategy = determinationStrategy;
         strategies = SwitchStrategies.getInstance().getStrategies();
-        strategies.put(signalStrategy.getStrategyType(), signalStrategy);
         strategies.put(determinationStrategy.getStrategyType(), determinationStrategy);
-        strategies.put(synchronizationStrategy.getStrategyType(), synchronizationStrategy);
     }
     
     @Override

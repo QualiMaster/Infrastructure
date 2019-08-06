@@ -8,8 +8,6 @@ import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import eu.qualimaster.common.switching.SwitchNodeNameInfo;
-
 /**
  * An abstract signal strategy.
  * @author Cui Qin

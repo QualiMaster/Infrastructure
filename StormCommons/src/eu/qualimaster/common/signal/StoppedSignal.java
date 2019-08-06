@@ -56,7 +56,6 @@ public class StoppedSignal extends AbstractSignal {
         
         @Override
         public void doSignal() {
-            // TODO Auto-generated method stub
             nextSignals();
         }
 

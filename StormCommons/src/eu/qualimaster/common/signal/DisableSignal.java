@@ -55,7 +55,7 @@ public class DisableSignal extends AbstractSignal {
         
         @Override
         public void doSignal() {
-            //TODO: change the emit status
+            SignalStates.setEmittingOrgEND(false); //stop emitting data
             nextSignals();
         }
 
@@ -83,6 +83,7 @@ public class DisableSignal extends AbstractSignal {
      */
     public static class DisablePRESignalHandler extends AbstractSignalHandler {
         private WSDSSignalStrategy signalStrategy;
+        private Serializable value;
         
         /**
          * Constructor without parameters.
@@ -96,6 +97,7 @@ public class DisableSignal extends AbstractSignal {
          * @param value the value to be sent in next signals
          */
         public DisablePRESignalHandler(ParameterChangeSignal signal, String node, Serializable value) {
+            this.value = value;
             signalStrategy = (WSDSSignalStrategy) SwitchStrategies.getInstance()
                     .getStrategies().get("signal");
         }
@@ -110,7 +112,7 @@ public class DisableSignal extends AbstractSignal {
         public void nextSignals() {
             logger.info(System.currentTimeMillis() 
                     + ", Sending the disable signal to the target intermediary node!");
-            sendSignal(getNameInfo().getTopologyName(), getNameInfo().getTargetIntermediaryNodeName(), true
+            sendSignal(getNameInfo().getTopologyName(), getNameInfo().getTargetIntermediaryNodeName(), this.value
                     , signalStrategy.getSignalConnection());
         }
         
@@ -130,7 +132,6 @@ public class DisableSignal extends AbstractSignal {
     public static class DisableTrgINTSignalHandler extends AbstractSignalHandler {
         private WSDSSignalStrategy signalStrategy;
         private SeparatedINTSynchronizationStrategy synchronizationStrategy;
-        private Serializable value;
         
         /**
          * Constructor without parameters.
@@ -144,7 +145,6 @@ public class DisableSignal extends AbstractSignal {
          * @param value the value to be sent in next signals
          */
         public DisableTrgINTSignalHandler(ParameterChangeSignal signal, String node, Serializable value) {
-            this.value = value;
             signalStrategy = (WSDSSignalStrategy) SwitchStrategies.getInstance()
                     .getStrategies().get("signal");
             synchronizationStrategy = (SeparatedINTSynchronizationStrategy) SwitchStrategies.getInstance()
@@ -159,7 +159,6 @@ public class DisableSignal extends AbstractSignal {
         @Override
         public void nextSignals() {
             // do nothing
-            
         }
         
         static {

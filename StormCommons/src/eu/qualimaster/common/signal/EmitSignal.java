@@ -4,6 +4,10 @@ import java.io.Serializable;
 
 import org.apache.log4j.Logger;
 
+import eu.qualimaster.common.switching.SwitchNodeNameInfo;
+import eu.qualimaster.common.switching.SwitchStrategies;
+import eu.qualimaster.common.switching.warmupDataSynchronizationVariant.WSDSSignalStrategy;
+
 /**
  * Provide a signal handler for the "emit" signal.
  * @author Cui Qin
@@ -24,4 +28,46 @@ public class EmitSignal extends AbstractSignal {
         sendSignal(topology, nodeName, SIGNALNAME, value, con);
     }
     
+    /**
+     * Provide an emit signal handler for the target end node.
+     * @author Cui Qin
+     *
+     */
+    public static class EmitTrgENDSignalHandler extends AbstractSignalHandler {
+        private WSDSSignalStrategy signalStrategy;
+        
+        /**
+         * Constructor without parameters.
+         */
+        public EmitTrgENDSignalHandler() {}
+        
+        /**
+         * Constructor for the signal handler.
+         * @param signal the switch-related signal
+         * @param node the name of the node in which the signal shall be handled
+         * @param value the value to be sent in next signals
+         */
+        public EmitTrgENDSignalHandler(ParameterChangeSignal signal, String node, Serializable value) {
+            signalStrategy = (WSDSSignalStrategy) SwitchStrategies.getInstance()
+                    .getStrategies().get("signal");
+        }
+        
+        @Override
+        public void doSignal() {
+            SignalStates.setEmittingTrgEND(true); //enable the target node to emit
+        }
+
+        @Override
+        public void nextSignals() {
+            // TODO Auto-generated method stub
+            
+        }
+        
+        static {
+            logger.info("Registing the signal handler for the signal:" + SIGNALNAME 
+                    + ", for the node type: " + SwitchNodeNameInfo.TARGETENDNODE);
+            SignalHandlerRegistry.register(SIGNALNAME + SwitchNodeNameInfo.TARGETENDNODE, 
+                    EmitSignal.EmitTrgENDSignalHandler.class);
+        }
+    }
 }

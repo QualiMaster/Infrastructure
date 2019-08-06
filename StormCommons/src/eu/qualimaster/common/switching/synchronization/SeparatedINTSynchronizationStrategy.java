@@ -82,9 +82,8 @@ public class SeparatedINTSynchronizationStrategy extends AbstractSynchronization
     
     /**
      * Synchronize data items in both queues.
-     * @return the id of the first tuple to be transferred if needed
      */
-    private long synchronizeItems() {
+    private void synchronizeItems() {
         long firstId = 0;
         int numTransferredData = 0;
         if (inQueue.isEmpty()) { //request the original intermediary node to transfer all tuples
@@ -130,7 +129,11 @@ public class SeparatedINTSynchronizationStrategy extends AbstractSynchronization
                 + ", Sending the emit signal to the target end node!");
         EmitSignal.sendSignal(getNameInfo().getTopologyName(), getNameInfo().getTargetEndNodeName()
                 , true, signalConnection);
-        return firstId;
+        
+        //record the number of data items to be transferred
+        SignalStates.setNumTransferredDataTrgINT(numTransferredData);
+        //record the id of the first tuple to be transferred
+        SignalStates.setFirstId(firstId); 
     }
     
     /**

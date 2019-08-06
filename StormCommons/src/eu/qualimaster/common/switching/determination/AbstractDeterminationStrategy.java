@@ -19,7 +19,7 @@ public abstract class AbstractDeterminationStrategy implements IDeterminationStr
      * Check if the safe point is already determined.
      * @return <code>true</code> if determined, otherwise <code>false</code>
      */
-    public static boolean isDetermined() {
+    public boolean isDetermined() {
         return isDetermined;
     }
 

@@ -28,7 +28,7 @@ public class AcknowledgementStrategyStorm extends AbstractAcknowledgementStrateg
     @Override
     public long ack(Object msgId) {
         long lastProcessedId = 0;
-        if (!outQueue.isEmpty()) {
+        if (outQueue != null && !outQueue.isEmpty()) {
             ISwitchTuple ackItem = outQueue.peek();
             if (null != ackItem) {
                 if (msgId.equals(ackItem.getId())) {
@@ -45,6 +45,10 @@ public class AcknowledgementStrategyStorm extends AbstractAcknowledgementStrateg
                         }
                     }
                 }
+            }
+        } else {
+            if (null == outQueue) {
+                LOGGER.warn("The output queue is null!");
             }
         }
         return lastProcessedId;

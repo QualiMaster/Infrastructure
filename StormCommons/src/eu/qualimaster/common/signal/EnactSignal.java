@@ -15,9 +15,21 @@ import eu.qualimaster.common.switching.warmupDataSynchronizationVariant.WSDSSign
  * @author Cui Qin
  *
  */
-public class EnactSignal {
+public class EnactSignal extends AbstractSignal {
     private static Logger logger = LogManager.getLogger(EnactSignal.class);
     private static final String SIGNALNAME = "enact";
+    
+    /**
+     * Sends a disable signal.
+     * @param topology the topology to sent to
+     * @param nodeName the name of the node to sent to
+     * @param value the value to be sent
+     * @param con the connection used to send the signal
+     */
+    public static void sendSignal(String topology, String nodeName, Serializable value, AbstractSignalConnection con) {
+        sendSignal(topology, nodeName, SIGNALNAME, value, con);
+    }
+    
     /**
      * Provide a signal handler for the signal "enact" in the original intermediary node.
      * The value of this signal is the switch arrival point.
