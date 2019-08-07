@@ -7,19 +7,18 @@ import org.apache.log4j.Logger;
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
 import eu.qualimaster.common.switching.SwitchStrategies;
 import eu.qualimaster.common.switching.synchronization.SeparatedINTSynchronizationStrategy;
-import eu.qualimaster.common.switching.warmupDataSynchronizationVariant.WSDSSignalStrategy;
 
 /**
- * Provide a signal handler for the "headId" signal.
+ * Provide a signal handler for the "transferred" signal.
  * @author Cui Qin
  *
  */
-public class HeadIdSignal extends AbstractSignal {
-    private static Logger logger = Logger.getLogger(HeadIdSignal.class);
-    private static final String SIGNALNAME = "headId";
+public class TransferredSignal extends AbstractSignal {
+    private static final Logger LOGGER = Logger.getLogger(TransferredSignal.class);
+    private static final String SIGNALNAME = "transferred";
     
     /**
-     * Sends a headId signal.
+     * Sends a transfer signal.
      * @param topology the topology to sent to
      * @param nodeName the name of the node to sent to
      * @param value the value to be sent
@@ -30,19 +29,17 @@ public class HeadIdSignal extends AbstractSignal {
     }
     
     /**
-     * Provide a signal handler for the signal "headId" in the original intermediary node.
+     * Provide a signal handler for the signal "transferred" in the target intermediary node.
      * @author Cui Qin
      *
      */
-    public static class HeadIdOrgINTSignalHandler extends AbstractSignalHandler {
-        private WSDSSignalStrategy signalStrategy;
+    public static class TransferredTrgINTSignalHandler extends AbstractSignalHandler {
         private SeparatedINTSynchronizationStrategy synchronizationStrategy;
-        private Serializable value;
         
         /**
          * Constructor without parameters.
          */
-        public HeadIdOrgINTSignalHandler() {}
+        public TransferredTrgINTSignalHandler() {}
         
         /**
          * Constructor for the signal handler.
@@ -50,30 +47,26 @@ public class HeadIdSignal extends AbstractSignal {
          * @param node the name of the node in which the signal shall be handled
          * @param value the value to be sent in next signals
          */
-        public HeadIdOrgINTSignalHandler(ParameterChangeSignal signal, String node, Serializable value) {
-            this.value = value;
-            signalStrategy = (WSDSSignalStrategy) SwitchStrategies.getInstance()
-                    .getStrategies().get("signal");
+        public TransferredTrgINTSignalHandler(ParameterChangeSignal signal, String node, Serializable value) {
             synchronizationStrategy = (SeparatedINTSynchronizationStrategy) SwitchStrategies.getInstance()
                     .getStrategies().get("synchronization");
         }
-       
+        
         @Override
         public void doSignal() {
-            synchronizationStrategy.doSynchronization();
+            synchronizationStrategy.completingSynchronization();
         }
 
         @Override
         public void nextSignals() {
-            // TODO Auto-generated method stub
-            
+            //do nothing
         }
         
         static {
-            logger.info("Registing the signal handler for the signal:" + SIGNALNAME 
-                    + ", for the node type: " + SwitchNodeNameInfo.ORIGINALINTERMEDIARYNODE);
-            SignalHandlerRegistry.register(SIGNALNAME + SwitchNodeNameInfo.ORIGINALINTERMEDIARYNODE, 
-                    HeadIdSignal.HeadIdOrgINTSignalHandler.class);
+            LOGGER.info("Registing the signal handler for the signal:" + SIGNALNAME 
+                    + ", for the node type: " + SwitchNodeNameInfo.TARGETINTERMEDIARYNODE);
+            SignalHandlerRegistry.register(SIGNALNAME + SwitchNodeNameInfo.TARGETINTERMEDIARYNODE, 
+                    TransferredSignal.TransferredTrgINTSignalHandler.class);
         }
     }
 }
