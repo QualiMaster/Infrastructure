@@ -22,7 +22,6 @@ import org.apache.log4j.Logger;
 
 import backtype.storm.Config;
 import backtype.storm.utils.Utils;
-import eu.qualimaster.Configuration.ConfigurationOption;
 import eu.qualimaster.infrastructure.InitializationMode;
 
 /**
@@ -45,6 +44,9 @@ public class Configuration {
 
     public static final String CONFIG_KEY_STORM_ZOOKEEPER_PORT = Config.STORM_ZOOKEEPER_PORT;
     public static final String CONFIG_KEY_STORM_ZOOKEEPER_SERVERS = Config.STORM_ZOOKEEPER_SERVERS;
+    public static final String CONFIG_KEY_STORM_NIMBUS_HOST = Config.NIMBUS_HOST;
+    public static final String CONFIG_KEY_STORM_NIMBUS_PORT = Config.NIMBUS_THRIFT_PORT;
+    
     // don't use the retry time/interval as for startup intensive components this may overlap/cause Netty to fail
     
     /**
@@ -107,6 +109,17 @@ public class Configuration {
      * The default value for {@link #HOST_NIMBUS}.
      */
     public static final String DEFAULT_HOST_NIMBUS = "localhost";
+    
+    /**
+     * Denotes the nimbus thrift port setting (String). Although possible, this value shall not be set in the 
+     * QM infrastructure configuration file rather than in the anyway required Storm configuration.
+     */
+    public static final String PORT_THRIFT = "nimbus.thrift.port";
+
+    /**
+     * The default value for {@link #PORT_THRIFT}.
+     */
+    public static final int DEFAULT_PORT_THRIFT = 6627;
     
     /**
      * Denotes the zookeeper host setting (String). May be multiple zookeepers, each separated by a comma.
@@ -356,6 +369,8 @@ public class Configuration {
     // storm commons
     
     private static ConfigurationOption<String> nimbus = createStringOption(HOST_NIMBUS, DEFAULT_HOST_NIMBUS);
+    private static ConfigurationOption<Integer> thriftPort 
+        = createIntegerOption(PORT_THRIFT, DEFAULT_PORT_THRIFT);
     private static ConfigurationOption<String> zookeeper = createStringOption(HOST_ZOOKEEPER, DEFAULT_HOST_ZOOKEEPER);
     private static ConfigurationOption<Integer> zookeeperPort 
         = createIntegerOption(PORT_ZOOKEEPER, DEFAULT_PORT_ZOOKEEPER);
@@ -635,8 +650,8 @@ public class Configuration {
      */
     @SuppressWarnings("rawtypes")
     public static int getThriftPort(Map stormConf) {
-        int result = 6627;
-        if (null != stormConf) {
+        int result = thriftPort.getValue(); // may be set explicitly, may be the default
+        if (null != stormConf) { // on Nimbus, take over the one from Storm, ignore config
             Object cfg = stormConf.get(Config.NIMBUS_THRIFT_PORT);
             if (cfg instanceof Integer) {
                 result = (Integer) cfg;
@@ -796,6 +811,12 @@ public class Configuration {
         // transfer zookeeper information so that SignalMechanism can create Zookeeper frameworks
         if (null != conf.get(CONFIG_KEY_STORM_ZOOKEEPER_PORT)) {
             prop.put(PORT_ZOOKEEPER, conf.get(CONFIG_KEY_STORM_ZOOKEEPER_PORT).toString());
+        }
+        if (null != conf.get(CONFIG_KEY_STORM_NIMBUS_PORT)) {
+            prop.put(PORT_THRIFT, conf.get(CONFIG_KEY_STORM_NIMBUS_PORT).toString());
+        }
+        if (null != conf.get(CONFIG_KEY_STORM_NIMBUS_HOST)) {
+            prop.put(HOST_NIMBUS, conf.get(CONFIG_KEY_STORM_NIMBUS_HOST).toString());
         }
         if (null != conf.get(CONFIG_KEY_STORM_ZOOKEEPER_SERVERS)) {
             Object zks = conf.get(CONFIG_KEY_STORM_ZOOKEEPER_SERVERS);
