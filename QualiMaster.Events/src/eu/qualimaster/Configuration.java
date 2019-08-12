@@ -777,6 +777,8 @@ public class Configuration {
     public static void transferConfigurationTo(IOptionSetter options) {
         options.setOption(HOST_EVENT, getEventHost());
         options.setOption(PORT_EVENT, getEventPort());
+        options.setOption(CONFIG_KEY_STORM_NIMBUS_HOST, getNimbus());
+        options.setOption(CONFIG_KEY_STORM_NIMBUS_PORT, getThriftPort());
         options.setOption(EVENT_DISABLE_LOGGING, getEventDisableLogging());
         options.setOption(PIPELINE_INTERCONN_PORTS, getPipelinePorts());
         options.setOption(MONITORING_VOLUME_ENABLED, enableVolumeMonitoring());
