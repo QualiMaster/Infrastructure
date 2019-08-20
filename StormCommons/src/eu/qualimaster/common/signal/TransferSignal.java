@@ -6,7 +6,7 @@ import org.apache.log4j.Logger;
 
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
 import eu.qualimaster.common.switching.SwitchStrategies;
-import eu.qualimaster.common.switching.warmupDataSynchronizationVariant.WSDSSignalStrategy;
+import eu.qualimaster.common.switching.synchronization.SeparatedOrgINTSynchronizationStrategy;
 
 /**
  * Provide a signal handler for the "transfer" signal.
@@ -34,8 +34,7 @@ public class TransferSignal extends AbstractSignal {
      *
      */
     public static class TransferOrgINTSignalHandler extends AbstractSignalHandler {
-        private WSDSSignalStrategy signalStrategy;
-        private Serializable value;
+        private SeparatedOrgINTSynchronizationStrategy synchronizationStrategy;
         
         /**
          * Constructor without parameters.
@@ -49,20 +48,18 @@ public class TransferSignal extends AbstractSignal {
          * @param value the value to be sent in next signals
          */
         public TransferOrgINTSignalHandler(ParameterChangeSignal signal, String node, Serializable value) {
-            this.value = value;
-            signalStrategy = (WSDSSignalStrategy) SwitchStrategies.getInstance()
-                    .getStrategies().get("signal");
+            synchronizationStrategy = (SeparatedOrgINTSynchronizationStrategy) SwitchStrategies.getInstance()
+                    .getStrategies().get(SeparatedOrgINTSynchronizationStrategy.STRATEGYTYPE);
         }
        
         @Override
         public void doSignal() {
-            // TODO Auto-generated method stub
-            
+            synchronizationStrategy.doDataTransfer();
         }
 
         @Override
         public void nextSignals() {
-            // TODO Auto-generated method stub
+            // do nothing
             
         }
         

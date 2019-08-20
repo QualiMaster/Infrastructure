@@ -6,7 +6,7 @@ import org.apache.log4j.Logger;
 
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
 import eu.qualimaster.common.switching.SwitchStrategies;
-import eu.qualimaster.common.switching.synchronization.SeparatedINTSynchronizationStrategy;
+import eu.qualimaster.common.switching.synchronization.SeparatedOrgINTSynchronizationStrategy;
 import eu.qualimaster.common.switching.warmupDataSynchronizationVariant.WSDSSignalStrategy;
 
 /**
@@ -36,7 +36,7 @@ public class HeadIdSignal extends AbstractSignal {
      */
     public static class HeadIdOrgINTSignalHandler extends AbstractSignalHandler {
         private WSDSSignalStrategy signalStrategy;
-        private SeparatedINTSynchronizationStrategy synchronizationStrategy;
+        private SeparatedOrgINTSynchronizationStrategy synchronizationStrategy;
         private Serializable value;
         
         /**
@@ -54,13 +54,13 @@ public class HeadIdSignal extends AbstractSignal {
             this.value = value;
             signalStrategy = (WSDSSignalStrategy) SwitchStrategies.getInstance()
                     .getStrategies().get("signal");
-            synchronizationStrategy = (SeparatedINTSynchronizationStrategy) SwitchStrategies.getInstance()
-                    .getStrategies().get("synchronization");
+            synchronizationStrategy = (SeparatedOrgINTSynchronizationStrategy) SwitchStrategies.getInstance()
+                    .getStrategies().get(SeparatedOrgINTSynchronizationStrategy.STRATEGYTYPE);
         }
        
         @Override
         public void doSignal() {
-            synchronizationStrategy.doSynchronization();
+            synchronizationStrategy.doDataTransfer();
         }
 
         @Override

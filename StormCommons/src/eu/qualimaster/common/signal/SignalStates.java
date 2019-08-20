@@ -1,5 +1,7 @@
 package eu.qualimaster.common.signal;
 
+import eu.qualimaster.base.serializer.KryoSwitchTupleSerializer;
+
 /**
  * Record the signal states.
  * @author Cui Qin
@@ -7,6 +9,8 @@ package eu.qualimaster.common.signal;
  */
 public class SignalStates {
     private static SignalStates signalStatesInstance;
+    private static boolean isActiveOrgINT = true;
+    private static boolean isActiveTrgINT = false;
     private static boolean isPassivateTrgINT = false;
     private static boolean isPassivateOrgINT = false;
     private static boolean isTransferringTrgINT = false;
@@ -19,6 +23,11 @@ public class SignalStates {
     private static long lastProcessedId = 0;
     private static long lastEmittedId = 0;
     private static long headId = 0;
+    private static long algStartPoint = 0;
+    private static int targetPort  = 6027;
+    private static KryoSwitchTupleSerializer kryoSerOrgINT = null;
+    private static int synQueueSizeOrgINT = 10;
+    private static int synQueueSizeTrgINT = 100;
     
     /**
      * Constructor for the class.
@@ -40,7 +49,12 @@ public class SignalStates {
      * Initialize the initial values of the signal states.
      */
     public static void init() {
+        isActiveOrgINT = true;
+        isActiveTrgINT = false;
+        isPassivateTrgINT = false;
+        isPassivateOrgINT = false;
         isTransferringTrgINT = false;
+        isTransferringOrgINT = false;
         isEmittingOrgEND = true; //initially the original end node emits
         isEmittingTrgEND = false; //initially the target end node is disabled to emit
         isTransferAll = false;
@@ -49,6 +63,7 @@ public class SignalStates {
         lastProcessedId = 0;
         lastEmittedId = 0;
         headId = 0;
+        targetPort  = 6027;
     }
 
     /**
@@ -252,7 +267,118 @@ public class SignalStates {
     public static void setTransferAll(boolean isTransferAll) {
         SignalStates.isTransferAll = isTransferAll;
     }
+
+    /**
+     * Return the timestamp when the original algorithm is started to process tuples.
+     * @return the timestamp when the original algorithm is started to process tuples
+     */
+    public static long getAlgStartPoint() {
+        return algStartPoint;
+    }
+
+    /**
+     * Set the timestamp when the original algorithm is started to process tuples.
+     * @param algStartPoint the timestamp when the original algorithm is started to process tuples
+     */
+    public static void setAlgStartPoint(long algStartPoint) {
+        SignalStates.algStartPoint = algStartPoint;
+    }
     
+    /**
+     * Return the port of the target node.
+     * @return the port of the target node
+     */
+    public static int getTargetPort() {
+        return targetPort;
+    }
+
+    /**
+     * Set the port of the target node.
+     * @param targetPort the port of the target node
+     */
+    public static void setTargetPort(int targetPort) {
+        SignalStates.targetPort = targetPort;
+    }
+
+    /**
+     * Return the kryo serializer for the original intermediary node.
+     * @return the kryo serializer
+     */
+    public static KryoSwitchTupleSerializer getKryoSerOrgINT() {
+        return kryoSerOrgINT;
+    }
+
+    /**
+     * Set the kryo serializer for the original intermediary node.
+     * @param kryoSerOrgINT the kryo serializer
+     */
+    public static void setKryoSerOrgINT(KryoSwitchTupleSerializer kryoSerOrgINT) {
+        SignalStates.kryoSerOrgINT = kryoSerOrgINT;
+    }
+
+    /**
+     * Return the size of the synchronized queue in the original intermediary node.
+     * @return the size of the synchronized queue
+     */
+    public static int getSynQueueSizeOrgINT() {
+        return synQueueSizeOrgINT;
+    }
+
+    /**
+     * Set the size of the synchronized queue in the original intermediary node.
+     * @param synQueueSizeOrgINT the size of the synchronized queue
+     */
+    public static void setSynQueueSizeOrgINT(int synQueueSizeOrgINT) {
+        SignalStates.synQueueSizeOrgINT = synQueueSizeOrgINT;
+    }
+
+    /**
+     * Return the size of the synchronized queue in the target intermediary node.
+     * @return the size of the synchronized queue
+     */
+    public static int getSynQueueSizeTrgINT() {
+        return synQueueSizeTrgINT;
+    }
+
+    /**
+     * Set the size of the synchronized queue in the target intermediary node.
+     * @param synQueueSizeTrgINT the size of the synchronized queue
+     */
+    public static void setSynQueueSizeTrgINT(int synQueueSizeTrgINT) {
+        SignalStates.synQueueSizeTrgINT = synQueueSizeTrgINT;
+    }
     
+    /**
+     * Return whether the original intermediary node is active.
+     * @return <code>true</code> it is active, otherwise <code>false</code>
+     */
+    public static boolean isActiveOrgINT() {
+        return isActiveOrgINT;
+    }
+
+    /**
+     * Set the state of whether the original intermediary node is active.
+     * @param isActiveOrgINT <code>true</code> it is active, otherwise <code>false</code>
+     */
+    public static void setActiveOrgINT(boolean isActiveOrgINT) {
+        SignalStates.isActiveOrgINT = isActiveOrgINT;
+    }
+
+    /**
+     * Return whether the target intermediary node is active.
+     * @return <code>true</code> it is active, otherwise <code>false</code>
+     */
+    public static boolean isActiveTrgINT() {
+        return isActiveTrgINT;
+    }
+
+    /**
+     * Set the state of whether the target intermediary node is active.
+     * @param isActiveTrgINT <code>true</code> it is active, otherwise <code>false</code>
+     */
+    public static void setActiveTrgINT(boolean isActiveTrgINT) {
+        SignalStates.isActiveTrgINT = isActiveTrgINT;
+    }
+
     
 }

@@ -86,6 +86,7 @@ public class EnactSignal extends AbstractSignal {
         
         @Override
         public void nextSignals() {
+            SignalStates.setPassivateOrgINT(true); //passivate the org INT node
             logger.info(System.currentTimeMillis() 
                     + ", Sending the diable signal to the original end node!");
             DisableSignal.sendSignal(getNameInfo().getTopologyName()
@@ -95,25 +96,6 @@ public class EnactSignal extends AbstractSignal {
                     + ", Sending the diable signal to the preceding node!");
             DisableSignal.sendSignal(getNameInfo().getTopologyName()
                     , getNameInfo().getPrecedingNodeName(), true, signalStrategy.getSignalConnection());
-            
-//            ParameterChangeSignal disableSignal = new ParameterChangeSignal(getNameInfo().getTopologyName(), 
-//                    getNameInfo().getOriginalEndNodeName(), "disable", true, null); 
-//            logger.info("The original intermediary node name: " + getNameInfo().getOriginalIntermediaryNodeName());
-//            logger.info("Created the disable signal sending to " + getNameInfo().getOriginalEndNodeName());
-//            //create a signal to passivate the preceding node 
-//            ParameterChangeSignal passivateSignal = new ParameterChangeSignal(getNameInfo().getTopologyName(), 
-//                    getNameInfo().getPrecedingNodeName(), "passivate", true, null);
-//            logger.info("Created the passivate signal sending to " + getNameInfo().getPrecedingNodeName());
-//            
-//            AbstractSignalConnection con = signalStrategy.getSignalConnection();
-//            try {
-//                //send the defined signals
-//                logger.info("Sending the defined signals with the connection: " + con);
-//                con.sendSignal(disableSignal);
-//                con.sendSignal(passivateSignal);
-//            } catch (SignalException e) {
-//                e.printStackTrace();
-//            }
         }
         
         static {

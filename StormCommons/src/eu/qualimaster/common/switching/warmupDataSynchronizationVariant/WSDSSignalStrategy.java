@@ -2,6 +2,7 @@ package eu.qualimaster.common.switching.warmupDataSynchronizationVariant;
 
 import eu.qualimaster.common.signal.AbstractSignalConnection;
 import eu.qualimaster.common.signal.AbstractSignalStrategy;
+import eu.qualimaster.common.signal.SynchronizedSignal;
 import eu.qualimaster.common.signal.EnactSignal.*;
 import eu.qualimaster.common.signal.DisableSignal.*;
 import eu.qualimaster.common.signal.StoppedSignal.*;
@@ -9,6 +10,7 @@ import eu.qualimaster.common.signal.LastProcessedIdSignal.*;
 import eu.qualimaster.common.signal.HeadIdSignal.*;
 import eu.qualimaster.common.signal.TransferSignal.*;
 import eu.qualimaster.common.signal.TransferredSignal.*;
+import eu.qualimaster.common.switching.SwitchNodeNameInfo;
 import eu.qualimaster.common.signal.EmitSignal.*;
 import eu.qualimaster.common.signal.GoToActiveSignal.*;
 import eu.qualimaster.common.signal.GoToPassiveSignal.*;
@@ -43,6 +45,5 @@ public class WSDSSignalStrategy extends AbstractSignalStrategy {
         new EmitTrgENDSignalHandler();
         new GoToPassiveOrgENDSignalHandler();
         new GoToActiveTrgENDSignalHandler();
-    }      
-
+    }
 }

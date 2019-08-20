@@ -1,102 +1,123 @@
 package eu.qualimaster.common.switching.warmupDataSynchronizationVariant;
 
-import java.util.Map;
-
-import eu.qualimaster.base.algorithm.IGeneralTuple;
+import eu.qualimaster.base.algorithm.ISwitchTuple;
+import eu.qualimaster.common.signal.AbstractSignalStrategy;
 import eu.qualimaster.common.signal.TopologySignal;
 import eu.qualimaster.common.switching.AbstractAlgorithm;
-import eu.qualimaster.common.switching.IStrategy;
-import eu.qualimaster.common.switching.ISwitchMechanism;
-import eu.qualimaster.common.switching.SwitchStrategies;
-import eu.qualimaster.common.switching.synchronization.SeparatedINTSynchronizationStrategy;
+import eu.qualimaster.common.switching.AbstractSwitchMechanism;
+import eu.qualimaster.common.switching.synchronization.AbstractSynchronizationStrategy;
+import eu.qualimaster.common.switching.tupleEmit.AbstractTupleEmitStrategy;
+import eu.qualimaster.common.switching.tupleReceiving.AbstractTupleReceiveStrategy;
+
 /**
- * The switch mechanism, i.e., the implementation of the switch, 
- * for the "Warm-up Switch with Data Synchronization" variant. 
+ * The switch mechanism, i.e., the implementation of the switch, for the
+ * "Warm-up Switch with Data Synchronization" variant.
+ * 
  * @author Cui Qin
  *
  */
-public class WSDSSwitchMechanism implements ISwitchMechanism {
-    private WSDSSignalStrategy signalStrategy;
-    private WSDSDeterminationStrategy determinationStrategy;
-    private SeparatedINTSynchronizationStrategy synchronizationStrategy;
-    private Map<String, IStrategy> strategies;
-    
+public class WSDSSwitchMechanism extends AbstractSwitchMechanism {
     /**
-     * Constructor of the switch mechanism for the "Warm-up Switch with Data Synchronization" variant. 
-     * @param signalStrategy the signal strategy
+     * Constructor of the switch mechanism for the
+     * "Warm-up Switch with Data Synchronization" variant.
+     * 
+     * @param signalStrategy
+     *            the signal strategy
      */
     public WSDSSwitchMechanism(WSDSSignalStrategy signalStrategy) {
-        this.signalStrategy = signalStrategy;
-        strategies = SwitchStrategies.getInstance().getStrategies();
-        strategies.put(signalStrategy.getStrategyType(), signalStrategy);
+        super(signalStrategy);
     }
-    
+
     /**
-     * Constructor of the switch mechanism for the "Warm-up Switch with Data Synchronization" variant. 
-     * @param signalStrategy the signal strategy
-     * @param synchronizationStrategy the synchronization strategy
+     * Constructor of the switch mechanism for the
+     * "Warm-up Switch with Data Synchronization" variant.
+     * 
+     * @param signalStrategy
+     *            the signal strategy
+     * @param synchronizationStrategy
+     *            the synchronization strategy
      */
     public WSDSSwitchMechanism(WSDSSignalStrategy signalStrategy,
-            SeparatedINTSynchronizationStrategy synchronizationStrategy) {
-        this(signalStrategy);
-        strategies = SwitchStrategies.getInstance().getStrategies();
-        strategies.put(synchronizationStrategy.getStrategyType(), synchronizationStrategy);
+            AbstractSynchronizationStrategy synchronizationStrategy) {
+        super(signalStrategy, synchronizationStrategy);
+    }
+
+    /**
+     * Constructor of the switch mechanism for the
+     * "Warm-up Switch with Data Synchronization" variant.
+     * 
+     * @param signalStrategy
+     *            the signal strategy
+     * @param determinationStrategy
+     *            the determination strategy
+     * @param synchronizationStrategy
+     *            the synchronization strategy
+     */
+    public WSDSSwitchMechanism(WSDSSignalStrategy signalStrategy, WSDSDeterminationStrategy determinationStrategy,
+            AbstractSynchronizationStrategy synchronizationStrategy) {
+        super(signalStrategy, determinationStrategy, synchronizationStrategy);
+    }
+
+    /**
+     * Constructor of the switch mechanism.
+     * 
+     * @param signalStrategy
+     *            the signal strategy
+     * @param synchronizationStrategy
+     *            the synchronization strategy
+     * @param tupleEmitStrategy
+     *            the tuple emit strategy
+     * @param tupleReceiveStrategy
+     *            the tuple receive strategy
+     */
+    public WSDSSwitchMechanism(AbstractSignalStrategy signalStrategy,
+            AbstractSynchronizationStrategy synchronizationStrategy, AbstractTupleEmitStrategy tupleEmitStrategy,
+            AbstractTupleReceiveStrategy tupleReceiveStrategy) {
+        super(signalStrategy, synchronizationStrategy, tupleEmitStrategy, tupleReceiveStrategy);
     }
     
     /**
-     * Constructor of the switch mechanism for the "Warm-up Switch with Data Synchronization" variant. 
-     * @param signalStrategy the signal strategy
-     * @param determinationStrategy the determination strategy
-     * @param synchronizationStrategy the synchronization strategy
+     * Constructor of the switch mechanism for the
+     * "Warm-up Switch with Data Synchronization" variant.
+     * 
+     * @param signalStrategy
+     *            the signal strategy
+     * @param determinationStrategy
+     *            the determination strategy
+     * @param synchronizationStrategy
+     *            the synchronization strategy
+     * @param tupleEmitStrategy
+     *            the tuple emit strategy
+     * @param tupleReceiveStrategy
+     *            the tuple receive strategy
      */
-    public WSDSSwitchMechanism(WSDSSignalStrategy signalStrategy, WSDSDeterminationStrategy determinationStrategy
-            , SeparatedINTSynchronizationStrategy synchronizationStrategy) {
-        this(signalStrategy, synchronizationStrategy);
-        this.determinationStrategy = determinationStrategy;
-        strategies = SwitchStrategies.getInstance().getStrategies();
-        strategies.put(determinationStrategy.getStrategyType(), determinationStrategy);
-    }
-    
-    @Override
-    public void doSwitch(AbstractAlgorithm from, AbstractAlgorithm to) {
-        // TODO Auto-generated method stub
-        
+    public WSDSSwitchMechanism(WSDSSignalStrategy signalStrategy, WSDSDeterminationStrategy determinationStrategy,
+            AbstractSynchronizationStrategy synchronizationStrategy,
+            AbstractTupleEmitStrategy tupleEmitStrategy, AbstractTupleReceiveStrategy tupleReceiveStrategy) {
+        super(signalStrategy, determinationStrategy, synchronizationStrategy, tupleEmitStrategy, tupleReceiveStrategy);
     }
 
     @Override
-    public IGeneralTuple getNextTuple() {
+    public void doSwitch(AbstractAlgorithm from, AbstractAlgorithm to) {
         // TODO Auto-generated method stub
-        return null;
+
+    }
+
+    @Override
+    public ISwitchTuple getNextTuple() {
+        return super.getNextTuple();
     }
 
     @Override
     public void ack(Object msgId) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void handleSignal(TopologySignal signal) {
         // TODO Auto-generated method stub
-        
-    }
-    
-    /**
-     * Return the synchronization strategy.
-     * @return the synchronization strategy
-     */
-    public SeparatedINTSynchronizationStrategy getSynchronizationStrategy() {
-        return synchronizationStrategy;
+
     }
 
-    /**
-     * Set the synchronization strategy.
-     * @param synchronizationStrategy the synchronization strategy
-     */
-    public void setSynchronizationStrategy(SeparatedINTSynchronizationStrategy synchronizationStrategy) {
-        this.synchronizationStrategy = synchronizationStrategy;
-        strategies.put(synchronizationStrategy.getStrategyType(), synchronizationStrategy);
-    }
-    
-    
 }

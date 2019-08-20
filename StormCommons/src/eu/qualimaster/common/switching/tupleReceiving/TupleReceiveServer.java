@@ -1,4 +1,4 @@
-package eu.qualimaster.common.switching;
+package eu.qualimaster.common.switching.tupleReceiving;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -12,49 +12,22 @@ import eu.qualimaster.common.switching.tupleReceiving.ITupleReceiverHandler;
  * @author Cui Qin
  *
  */
-public class TupleReceiverServer implements Runnable {
-    private static final Logger LOGGER = Logger.getLogger(TupleReceiverServer.class);
+public class TupleReceiveServer implements Runnable {
+    private static final Logger LOGGER = Logger.getLogger(TupleReceiveServer.class);
     private ServerSocket serverSocket;
     private ITupleReceiverHandler handler;
-    private ITupleReceiveCreator creator;
+    private ITupleReceiveStrategy tupleReceiveStrategy;
     private boolean cont = true;
     private int port;
-    private boolean useSwitchHandler;
-    
-    /**
-     * Creates a socket server for receiving tuples.
-     * @param handler the handler for receiving tuples.
-     * @param port the port to create the socket server
-     */
-    @Deprecated
-    public TupleReceiverServer(ITupleReceiverHandler handler, int port) {
-        this.handler = handler;
-        this.port = port;
-        try {
-            serverSocket = new ServerSocket(port);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    /**
-     * Creates a socket server for receiving tuples.
-     * @param creator the tuple receive creator
-     * @param port the port to create the socket server
-     */
-    public TupleReceiverServer(ITupleReceiveCreator creator, int port) {
-        this(creator, port, false);
-    }
 
     /**
      * Creates a socket server for receiving tuples.
-     * @param creator the tuple receive creator
+     * @param tupleReceiveStrategy the tuple receive strategy
      * @param port the port to create the socket server
-     * @param useSwitchHandler use the switch handler or the general handler
      */
-    public TupleReceiverServer(ITupleReceiveCreator creator, int port, boolean useSwitchHandler) {
-        this.creator = creator;
+    public TupleReceiveServer(ITupleReceiveStrategy tupleReceiveStrategy, int port) {
+        this.tupleReceiveStrategy = tupleReceiveStrategy;
         this.port = port;
-        this.useSwitchHandler = useSwitchHandler;
         try {
             serverSocket = new ServerSocket(port);
         } catch (IOException e) {
@@ -77,8 +50,8 @@ public class TupleReceiverServer implements Runnable {
                 LOGGER.info("Accepting the socket connection....");
                 Socket socket = serverSocket.accept();
                 LOGGER.info("Socket connection accepted " + port);
-                if (null != creator) {
-                    handler = creator.create(useSwitchHandler);
+                if (null != tupleReceiveStrategy) {
+                    handler = tupleReceiveStrategy.createHandler();
                 }
                 handler.setSocket(socket);
                 new Thread(handler).start();

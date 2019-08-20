@@ -18,12 +18,6 @@ public interface ISignalStrategy extends IStrategy {
      */
     public void handleSignal(ParameterChangeSignal signal, String node, Serializable value);
     
-//    /**
-//     * Sets the value for the next signal to be sent.
-//     * @param value the value to be sent in next signals
-//     */
-//    public void setNextSignalValue(Serializable value);
-    
     /**
      * Initializes the signal handlers.
      */

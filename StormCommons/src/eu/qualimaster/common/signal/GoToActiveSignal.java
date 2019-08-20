@@ -5,8 +5,6 @@ import java.io.Serializable;
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
-import eu.qualimaster.common.switching.SwitchStrategies;
-import eu.qualimaster.common.switching.synchronization.SeparatedINTSynchronizationStrategy;
 
 /**
  * Provide a signal class for the "goToActive" signal.

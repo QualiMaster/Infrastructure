@@ -6,7 +6,7 @@ import org.apache.log4j.Logger;
 
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
 import eu.qualimaster.common.switching.SwitchStrategies;
-import eu.qualimaster.common.switching.synchronization.SeparatedINTSynchronizationStrategy;
+import eu.qualimaster.common.switching.synchronization.SeparatedTrgINTSynchronizationStrategy;
 import eu.qualimaster.common.switching.warmupDataSynchronizationVariant.WSDSSignalStrategy;
 
 /**
@@ -131,7 +131,7 @@ public class DisableSignal extends AbstractSignal {
      */
     public static class DisableTrgINTSignalHandler extends AbstractSignalHandler {
         private WSDSSignalStrategy signalStrategy;
-        private SeparatedINTSynchronizationStrategy synchronizationStrategy;
+        private SeparatedTrgINTSynchronizationStrategy synchronizationStrategy;
         
         /**
          * Constructor without parameters.
@@ -147,8 +147,8 @@ public class DisableSignal extends AbstractSignal {
         public DisableTrgINTSignalHandler(ParameterChangeSignal signal, String node, Serializable value) {
             signalStrategy = (WSDSSignalStrategy) SwitchStrategies.getInstance()
                     .getStrategies().get("signal");
-            synchronizationStrategy = (SeparatedINTSynchronizationStrategy) SwitchStrategies.getInstance()
-                    .getStrategies().get("synchronization");
+            synchronizationStrategy = (SeparatedTrgINTSynchronizationStrategy) SwitchStrategies.getInstance()
+                    .getStrategies().get(SeparatedTrgINTSynchronizationStrategy.STRATEGYTYPE);
         }
         
         @Override

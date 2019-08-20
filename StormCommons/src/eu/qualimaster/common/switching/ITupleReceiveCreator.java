@@ -1,4 +1,7 @@
 package eu.qualimaster.common.switching;
+
+import eu.qualimaster.common.switching.tupleReceiving.ITupleReceiverHandler;
+
 /**
  * Tuple receive creator.
  * @author Cui Qin
@@ -12,5 +15,5 @@ public interface ITupleReceiveCreator {
      * @return a tuple receive handler
      */
     public ITupleReceiverHandler create(boolean switchHandler);
-
+   
 }

@@ -12,6 +12,7 @@ import com.esotericsoftware.kryo.io.Input;
 import eu.qualimaster.base.algorithm.IGeneralTuple;
 import eu.qualimaster.base.serializer.IGeneralTupleSerializer;
 import eu.qualimaster.base.serializer.ISwitchTupleSerializer;
+import eu.qualimaster.common.switching.tupleReceiving.ITupleReceiverHandler;
 /**
  * Tuple handler for receiving tuples in both general and switch mode. 
  * @author Cui Qin

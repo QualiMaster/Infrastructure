@@ -1,4 +1,4 @@
-package eu.qualimaster.common.switching;
+package eu.qualimaster.common.switching.tupleReceiving;
 
 import java.io.IOException;
 import java.net.Socket;

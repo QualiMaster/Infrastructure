@@ -6,7 +6,7 @@ import org.apache.log4j.Logger;
 
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
 import eu.qualimaster.common.switching.SwitchStrategies;
-import eu.qualimaster.common.switching.synchronization.SeparatedINTSynchronizationStrategy;
+import eu.qualimaster.common.switching.synchronization.SeparatedTrgINTSynchronizationStrategy;
 
 /**
  * Provide a signal handler for the "transferred" signal.
@@ -34,7 +34,7 @@ public class TransferredSignal extends AbstractSignal {
      *
      */
     public static class TransferredTrgINTSignalHandler extends AbstractSignalHandler {
-        private SeparatedINTSynchronizationStrategy synchronizationStrategy;
+        private SeparatedTrgINTSynchronizationStrategy synchronizationStrategy;
         
         /**
          * Constructor without parameters.
@@ -48,8 +48,8 @@ public class TransferredSignal extends AbstractSignal {
          * @param value the value to be sent in next signals
          */
         public TransferredTrgINTSignalHandler(ParameterChangeSignal signal, String node, Serializable value) {
-            synchronizationStrategy = (SeparatedINTSynchronizationStrategy) SwitchStrategies.getInstance()
-                    .getStrategies().get("synchronization");
+            synchronizationStrategy = (SeparatedTrgINTSynchronizationStrategy) SwitchStrategies.getInstance()
+                    .getStrategies().get(SeparatedTrgINTSynchronizationStrategy.STRATEGYTYPE);
         }
         
         @Override

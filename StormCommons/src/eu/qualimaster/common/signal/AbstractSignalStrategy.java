@@ -8,6 +8,8 @@ import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import eu.qualimaster.common.switching.SwitchNodeNameInfo;
+
 /**
  * An abstract signal strategy.
  * @author Cui Qin
@@ -58,6 +60,17 @@ public abstract class AbstractSignalStrategy implements ISignalStrategy {
     @Override
     public String getStrategyType() {
         return STRATEGYTYPE;
+    }
+    
+    /**
+     * Synchronize the switch early.
+     */
+    public void synchronizeEarly() {
+        logger.info(System.currentTimeMillis()
+                + ", synchronizing the switch early and sending the synchronized signal to the preceding node.");
+        SynchronizedSignal.sendSignal(SwitchNodeNameInfo.getInstance().getTopologyName(),
+                SwitchNodeNameInfo.getInstance().getPrecedingNodeName(), true,
+                signalConnection);
     }
     
     /**

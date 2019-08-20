@@ -1,6 +1,7 @@
 package eu.qualimaster.common.switching;
 
 import eu.qualimaster.base.algorithm.IGeneralTuple;
+import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.common.signal.TopologySignal;
 
 /**
@@ -19,7 +20,7 @@ public interface ISwitchMechanism {
      * Returns the next tuple.
      * @return the next tuple
      */
-    public IGeneralTuple getNextTuple();
+    public ISwitchTuple getNextTuple();
     /**
      * Acknowledges the processed tuple.
      * @param msgId the message id

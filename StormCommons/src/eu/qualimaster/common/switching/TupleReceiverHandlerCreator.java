@@ -16,9 +16,12 @@
 package eu.qualimaster.common.switching;
 
 import eu.qualimaster.base.algorithm.IGeneralTuple;
+import eu.qualimaster.base.algorithm.ISwitchTuple;
+import eu.qualimaster.common.switching.tupleReceiving.ITupleReceiverHandler;
 
 /**
- * Implements the default tuple receiver creator for {@link TupleReceiverHandler}.
+ * Implements the default tuple receiver creator for
+ * {@link TupleReceiverHandler}.
  * 
  * @author Holger Eichelberger
  */
@@ -32,8 +35,10 @@ public class TupleReceiverHandlerCreator implements ITupleReceiveCreator {
     /**
      * Creates the creator.
      *
-     * @param genSer the serializer for the general tuple {@link IGeneralTuple}
-     * @param syn the queue for storing tuples
+     * @param genSer
+     *            the serializer for the general tuple {@link IGeneralTuple}
+     * @param syn
+     *            the queue for storing tuples
      */
     public TupleReceiverHandlerCreator(IGeneralTupleSerializerCreator genSer, SynchronizedQueue<IGeneralTuple> syn) {
         this.genSer = genSer;
@@ -43,13 +48,17 @@ public class TupleReceiverHandlerCreator implements ITupleReceiveCreator {
     /**
      * Creates the creator.
      *
-     * @param genSer the serializer for the general tuple {@link IGeneralTuple}
-     * @param swiSer the serializer for the switch tuple {@link ISwitchTuple}
-     * @param syn the general queue for storing tuples
-     * @param tmpSyn the temporary queue for storing tuples
+     * @param genSer
+     *            the serializer for the general tuple {@link IGeneralTuple}
+     * @param swiSer
+     *            the serializer for the switch tuple {@link ISwitchTuple}
+     * @param syn
+     *            the general queue for storing tuples
+     * @param tmpSyn
+     *            the temporary queue for storing tuples
      */
-    public TupleReceiverHandlerCreator(IGeneralTupleSerializerCreator genSer, ISwitchTupleSerializerCreator swiSer, 
-        SynchronizedQueue<IGeneralTuple> syn, SynchronizedQueue<IGeneralTuple> tmpSyn) {
+    public TupleReceiverHandlerCreator(IGeneralTupleSerializerCreator genSer, ISwitchTupleSerializerCreator swiSer,
+            SynchronizedQueue<IGeneralTuple> syn, SynchronizedQueue<IGeneralTuple> tmpSyn) {
         this.genSer = genSer;
         this.swiSer = swiSer;
         this.syn = syn;
@@ -63,13 +72,12 @@ public class TupleReceiverHandlerCreator implements ITupleReceiveCreator {
             result = new TupleReceiverHandler(swiSer.createSwitchTupleSerializer(), syn);
         } else {
             if (null != swiSer) {
-                result = new TupleReceiverHandler(genSer.createGeneralTupleSerializer(), 
-                    swiSer.createSwitchTupleSerializer(), syn, tmpSyn);
+                result = new TupleReceiverHandler(genSer.createGeneralTupleSerializer(),
+                        swiSer.createSwitchTupleSerializer(), syn, tmpSyn);
             } else {
                 result = new TupleReceiverHandler(genSer.createGeneralTupleSerializer(), syn);
             }
         }
         return result;
     }
- 
 }

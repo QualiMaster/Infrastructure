@@ -12,4 +12,9 @@ public interface ISynchronizationStrategy extends IStrategy {
      * Synchronize the queue state of both intermediary nodes.
      */
     public void doSynchronization();
+    
+    /**
+     * Transfer data.
+     */
+    public void doDataTransfer();
 }
