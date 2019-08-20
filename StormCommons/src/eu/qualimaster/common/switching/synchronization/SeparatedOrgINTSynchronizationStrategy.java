@@ -87,7 +87,7 @@ public class SeparatedOrgINTSynchronizationStrategy extends AbstractSynchronizat
             ISwitchTuple item = outQueue.poll();
             id = item.getId();
             if (id > lastProcessedId && id < headId) {
-                LOGGER.info(System.currentTimeMillis() + "outQueue--Transferring the missing items " + id);
+                LOGGER.info(System.currentTimeMillis() + ", outQueue--Transferring the missing items " + id);
                 sendToTarget(item);
             }
             if (id == headId) {
@@ -99,7 +99,7 @@ public class SeparatedOrgINTSynchronizationStrategy extends AbstractSynchronizat
             while (id < headId) {
                 ISwitchTuple item = inQueue.poll();
                 if (id > lastProcessedId) {
-                    LOGGER.info(System.currentTimeMillis() + "inQueue--Transferring the missing items " + id);
+                    LOGGER.info(System.currentTimeMillis() + ", inQueue--Transferring the missing items " + id);
                     sendToTarget(item);
                 }
                 id = item.getId();

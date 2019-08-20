@@ -49,6 +49,7 @@ public class GoToPassiveSignal extends AbstractSignal {
         @Override
         public void doSignal() {
             SignalStates.setEmittingOrgEND(false);
+            SignalStates.setActiveOrgEND(false);
         }
 
         @Override

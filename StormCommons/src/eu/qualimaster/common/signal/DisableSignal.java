@@ -104,8 +104,17 @@ public class DisableSignal extends AbstractSignal {
         
         @Override
         public void doSignal() {
-            // TODO change the both and emit state
+            // change the both and emit state to false
+            logger.info("Changing the states of the emit and both.");
+            SignalStates.setBothPRE(false);
+            SignalStates.setEmitPRE(false);
+            logger.info("Sending next signals...");
             nextSignals();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
@@ -130,7 +139,6 @@ public class DisableSignal extends AbstractSignal {
      *
      */
     public static class DisableTrgINTSignalHandler extends AbstractSignalHandler {
-        private WSDSSignalStrategy signalStrategy;
         private SeparatedTrgINTSynchronizationStrategy synchronizationStrategy;
         
         /**
@@ -145,8 +153,6 @@ public class DisableSignal extends AbstractSignal {
          * @param value the value to be sent in next signals
          */
         public DisableTrgINTSignalHandler(ParameterChangeSignal signal, String node, Serializable value) {
-            signalStrategy = (WSDSSignalStrategy) SwitchStrategies.getInstance()
-                    .getStrategies().get("signal");
             synchronizationStrategy = (SeparatedTrgINTSynchronizationStrategy) SwitchStrategies.getInstance()
                     .getStrategies().get(SeparatedTrgINTSynchronizationStrategy.STRATEGYTYPE);
         }

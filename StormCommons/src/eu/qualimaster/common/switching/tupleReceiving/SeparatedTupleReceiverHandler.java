@@ -16,6 +16,7 @@ import eu.qualimaster.common.signal.AbstractSignalStrategy;
 import eu.qualimaster.common.signal.SignalStates;
 import eu.qualimaster.common.switching.SwitchStrategies;
 import eu.qualimaster.common.switching.SynchronizedQueue;
+import eu.qualimaster.common.switching.synchronization.SeparatedTrgINTSynchronizationStrategy;
 
 /**
  * An handler for receiving tuples for the warm-up switch with data
@@ -35,6 +36,7 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
     private Input kryoInput = null;
     private boolean cont = true;
     private AbstractSignalStrategy signalStrategy;
+    private SeparatedTrgINTSynchronizationStrategy synchronizationStrategy;
 
     /**
      * Constructor for the tuple receiving handler for the warm-up switch with
@@ -57,6 +59,8 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
         this.synTmpQueue = synTmpQueue;
         this.serializer = (KryoSwitchTupleSerializer) serializer;
         signalStrategy = (AbstractSignalStrategy) SwitchStrategies.getInstance().getStrategies().get("signal");
+        synchronizationStrategy = (SeparatedTrgINTSynchronizationStrategy) SwitchStrategies.getInstance()
+                .getStrategies().get(SeparatedTrgINTSynchronizationStrategy.STRATEGYTYPE);
     }
 
     @Override
@@ -84,7 +88,7 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
                         if (switchTuple.getId() == SignalStates.getFirstId()) {
                             LOGGER.info(System.currentTimeMillis() + ", reached the last transferred data, firstId:"
                                     + SignalStates.getFirstId());
-                            // goToActive(); //TODO
+                            synchronizationStrategy.goToActive();
                         }
                     }
                 }

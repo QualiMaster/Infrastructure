@@ -147,10 +147,8 @@ public class SeparatedTrgINTSynchronizationStrategy extends AbstractSynchronizat
             goToActive();
         } else {
             SignalStates.setTransferringTrgINT(false);
-            // isActiveSpout = true;
+            SignalStates.setActiveTrgINT(true); // isActiveSpout = true;
             SignalStates.setFirstId(0); // firstId = 0;
-            // omitOnce = true;
-            // synOnce = true;
         }
     }
 
@@ -160,10 +158,8 @@ public class SeparatedTrgINTSynchronizationStrategy extends AbstractSynchronizat
     public void goToActive() {
         SignalStates.setPassivateTrgINT(false); // isPassivate = false;
         SignalStates.setTransferringTrgINT(false);
-        // isActiveSpout = true;
+        SignalStates.setActiveTrgINT(true); // isActiveSpout = true;
         SignalStates.setFirstId(0); // firstId = 0;
-        // omitOnce = true;
-        // synOnce = true;
         LOGGER.info(System.currentTimeMillis() + ", Go to active and inform the end bolt.");
         GoToActiveSignal.sendSignal(getNameInfo().getTopologyName(), getNameInfo().getTargetEndNodeName(), true,
                 getSignalConnection());

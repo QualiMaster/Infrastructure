@@ -11,6 +11,8 @@ public class SignalStates {
     private static SignalStates signalStatesInstance;
     private static boolean isActiveOrgINT = true;
     private static boolean isActiveTrgINT = false;
+    private static boolean isActiveOrgEND = true;
+    private static boolean isActiveTrgEND = false;
     private static boolean isPassivateTrgINT = false;
     private static boolean isPassivateOrgINT = false;
     private static boolean isTransferringTrgINT = false;
@@ -18,6 +20,8 @@ public class SignalStates {
     private static boolean isEmittingOrgEND = true;
     private static boolean isEmittingTrgEND = false;
     private static boolean isTransferAll = false;
+    private static boolean isBothPRE = false;
+    private static boolean isEmitPRE = true;
     private static long firstId = 0;
     private static int numTransferredData = 0;
     private static long lastProcessedId = 0;
@@ -51,6 +55,8 @@ public class SignalStates {
     public static void init() {
         isActiveOrgINT = true;
         isActiveTrgINT = false;
+        isActiveOrgEND = true;
+        isActiveTrgEND = false;
         isPassivateTrgINT = false;
         isPassivateOrgINT = false;
         isTransferringTrgINT = false;
@@ -58,6 +64,8 @@ public class SignalStates {
         isEmittingOrgEND = true; //initially the original end node emits
         isEmittingTrgEND = false; //initially the target end node is disabled to emit
         isTransferAll = false;
+        isBothPRE = false;
+        isEmitPRE = true;
         firstId = 0;
         numTransferredData = 0; 
         lastProcessedId = 0;
@@ -380,5 +388,68 @@ public class SignalStates {
         SignalStates.isActiveTrgINT = isActiveTrgINT;
     }
 
+    /**
+     * Return whether both algorithms emit data in parallel.
+     * @return <code>true</code> both algorithms emit data, otherwise <code>false</code>
+     */
+    public static boolean isBothPRE() {
+        return isBothPRE;
+    }
+    
+    /**
+     * Set the state of whether both algorithms emit data in parallel.
+     * @param isBothPRE <code>true</code> both algorithms emit data, otherwise <code>false</code>
+     */
+    public static void setBothPRE(boolean isBothPRE) {
+        SignalStates.isBothPRE = isBothPRE;
+    }
+
+    /**
+     * Return whether it shall emit data.
+     * @return <code>true</code> it shall emit data, otherwise <code>false</code>
+     */
+    public static boolean isEmitPRE() {
+        return isEmitPRE;
+    }
+
+    /**
+     * Set the state of whether it shall emit data.
+     * @param isEmitPRE <code>true</code> it shall emit data, otherwise <code>false</code>
+     */
+    public static void setEmitPRE(boolean isEmitPRE) {
+        SignalStates.isEmitPRE = isEmitPRE;
+    }
+
+    /**
+     * Return whether the original end node is active.
+     * @return <code>true</code> it is active, otherwise <code>false</code>
+     */
+    public static boolean isActiveOrgEND() {
+        return isActiveOrgEND;
+    }
+
+    /**
+     * Set the state of whether the original end node is active. 
+     * @param isActiveOrgEND <code>true</code> it is active, otherwise <code>false</code>
+     */
+    public static void setActiveOrgEND(boolean isActiveOrgEND) {
+        SignalStates.isActiveOrgEND = isActiveOrgEND;
+    }
+
+    /**
+     * Return whether the target end node is active.
+     * @return <code>true</code> it is active, otherwise <code>false</code>
+     */
+    public static boolean isActiveTrgEND() {
+        return isActiveTrgEND;
+    }
+
+    /**
+     * Set the state of whether the target end node is active.
+     * @param isActiveTrgEND <code>true</code> it is active, otherwise <code>false</code>
+     */
+    public static void setActiveTrgEND(boolean isActiveTrgEND) {
+        SignalStates.isActiveTrgEND = isActiveTrgEND;
+    }
     
 }

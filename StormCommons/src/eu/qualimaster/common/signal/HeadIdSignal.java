@@ -60,6 +60,7 @@ public class HeadIdSignal extends AbstractSignal {
        
         @Override
         public void doSignal() {
+            logger.info("Start transferring data...");
             synchronizationStrategy.doDataTransfer();
         }
 
