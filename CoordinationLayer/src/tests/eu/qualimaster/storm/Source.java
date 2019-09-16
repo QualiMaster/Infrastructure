@@ -11,6 +11,7 @@ import eu.qualimaster.dataManagement.DataManager;
 import eu.qualimaster.dataManagement.strategies.NoStorageStrategyDescriptor;
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.monitoring.events.AlgorithmChangedMonitoringEvent;
+import eu.qualimaster.reflection.ReflectionHelper;
 import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
@@ -58,7 +59,7 @@ public class Source<S extends ISrc> extends BaseSignalSourceSpout {
         this.collector = collector;
         if (Naming.defaultInitializeAlgorithms(stormConf)) {
             try {
-                source = srcClass.newInstance();
+                source = ReflectionHelper.createInstance(srcClass);
                 EventManager.send(new AlgorithmChangedMonitoringEvent(getPipeline(), Naming.NODE_SOURCE, "source"));
                 // for coordination level tests, there is no monitoring layer to support auto-connect
                 source.connect(); 

@@ -35,6 +35,7 @@ import eu.qualimaster.easy.extension.internal.AlgorithmProfileHelper.ProfileData
 import eu.qualimaster.events.EventManager;
 import eu.qualimaster.infrastructure.PipelineOptions;
 import eu.qualimaster.monitoring.events.SubTopologyMonitoringEvent;
+import eu.qualimaster.reflection.ReflectionHelper;
 import net.ssehub.easy.varModel.confModel.Configuration;
 import net.ssehub.easy.varModel.confModel.IDecisionVariable;
 import net.ssehub.easy.varModel.model.AbstractVariable;
@@ -190,7 +191,7 @@ public class StormUtils {
                 }
                 
                 Class<?> cls = loader.loadClass(topologyClass);
-                Object obj = cls.newInstance();
+                Object obj = ReflectionHelper.createInstance(cls);
                 if (obj instanceof IMainTopologyCreate) {
                     IMainTopologyCreate tCreator = (IMainTopologyCreate) obj;
                     TopologyOutput out = tCreator.createMainTopology();
