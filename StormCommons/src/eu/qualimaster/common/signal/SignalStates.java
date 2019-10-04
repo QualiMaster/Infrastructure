@@ -31,7 +31,7 @@ public class SignalStates {
     private static int targetPort  = 6027;
     private static KryoSwitchTupleSerializer kryoSerOrgINT = null;
     private static int synQueueSizeOrgINT = 10;
-    private static int synQueueSizeTrgINT = 100;
+    private static int synQueueSizeTrgINT = 50;
     
     /**
      * Constructor for the class.

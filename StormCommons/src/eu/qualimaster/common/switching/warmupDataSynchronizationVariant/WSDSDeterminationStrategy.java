@@ -8,7 +8,7 @@ import eu.qualimaster.common.signal.SignalStates;
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
 import eu.qualimaster.common.switching.SwitchStrategies;
 import eu.qualimaster.common.switching.determination.AbstractDeterminationStrategy;
-import eu.qualimaster.common.switching.determination.SlidingWindowBasedEarlyWarmupSafePoint;
+import eu.qualimaster.common.switching.determination.SlidingWindowBasedSwitchPoint;
 
 /**
  * The determination strategy for the "Warm-up Switch with Data Synchronization"
@@ -54,9 +54,9 @@ public class WSDSDeterminationStrategy extends AbstractDeterminationStrategy {
     @Override
     public void determineSwitchPoint() {
         if (0L != SignalStates.getAlgStartPoint() && 0L != switchArrivalPoint) {
-            SlidingWindowBasedEarlyWarmupSafePoint safepoint = new SlidingWindowBasedEarlyWarmupSafePoint(
-                    SignalStates.getAlgStartPoint(), switchArrivalPoint, warmupDuration, windowSize, slidingStep);
-            setSwitchPoint(safepoint.determineSafePoint());
+            SlidingWindowBasedSwitchPoint safepoint = new SlidingWindowBasedSwitchPoint(
+                    SignalStates.getAlgStartPoint(), switchArrivalPoint + warmupDuration, windowSize, slidingStep);
+            setSwitchPoint(safepoint.determineSwitchPoint());
         }
     }
 

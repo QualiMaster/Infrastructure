@@ -53,8 +53,7 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
      *             IO exception
      */
     public SeparatedTupleReceiverHandler(SynchronizedQueue<ISwitchTuple> synInQueue,
-            SynchronizedQueue<ISwitchTuple> synTmpQueue, ISwitchTupleSerializer serializer)
-                    throws IOException {
+            SynchronizedQueue<ISwitchTuple> synTmpQueue, ISwitchTupleSerializer serializer) throws IOException {
         this.synInQueue = synInQueue;
         this.synTmpQueue = synTmpQueue;
         this.serializer = (KryoSwitchTupleSerializer) serializer;
@@ -72,14 +71,18 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
                 kryoInput.readBytes(ser);
                 ISwitchTuple switchTuple = serializer.deserialize(ser);
                 if (switchTuple != null) {
-                    LOGGER.info(System.currentTimeMillis() + ", Received the data with id :" + switchTuple.getId()
-                            + ", firstId: " + SignalStates.getFirstId() + ", is transferred data? "
-                            + (switchTuple.getId() > SignalStates.getFirstId()));
+                    // LOGGER.info(System.currentTimeMillis() + ", Received the
+                    // data with id :" + switchTuple.getId()
+                    // + ", firstId: " + SignalStates.getFirstId() + ", is
+                    // transferred data? "
+                    // + (switchTuple.getId() > SignalStates.getFirstId()));
                     if (switchTuple.getId() > SignalStates.getFirstId() || switchTuple.getId() == 0) {
                         synInQueue.produce(switchTuple);
+                        LOGGER.info(System.currentTimeMillis() + ", inQueue-Received data with id: "
+                                + switchTuple.getId() + ", firstId:" + SignalStates.getFirstId());
                     } else { // will be only executed in the target one
                         synTmpQueue.produce(switchTuple);
-                        LOGGER.info(System.currentTimeMillis() + ", Received the transferred data with id: "
+                        LOGGER.info(System.currentTimeMillis() + ", tmpQueue-Received the transferred data with id: "
                                 + switchTuple.getId() + ", firstId:" + SignalStates.getFirstId());
                         if (synOnce) {
                             synOnce = false;
