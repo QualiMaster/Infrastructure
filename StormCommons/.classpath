@@ -23,14 +23,5 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="C:/Users/qin.SSE/.m2/repository/eu/qualimaster/StormCommons/0.5.0-SNAPSHOT/StormCommons-0.5.0-SNAPSHOT.jar" sourcepath="C:/Users/qin.SSE/.m2/repository/eu/qualimaster/StormCommons/0.5.0-SNAPSHOT/StormCommons-0.5.0-SNAPSHOT-sources.jar">
-		<attributes>
-			<attribute name="maven.pomderived" value="true"/>
-			<attribute name="maven.groupId" value="eu.qualimaster"/>
-			<attribute name="maven.artifactId" value="StormCommons"/>
-			<attribute name="maven.version" value="0.5.0-SNAPSHOT"/>
-			<attribute name="maven.scope" value="provided"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

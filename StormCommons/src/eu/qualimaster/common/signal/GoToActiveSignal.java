@@ -49,7 +49,7 @@ public class GoToActiveSignal extends AbstractSignal {
         
         @Override
         public void doSignal() {
-            SignalStates.setEmittingTrgEND(true);
+            SignalStates.setEmitTrgEND(true);
             SignalStates.setActiveTrgEND(true);
         }
 

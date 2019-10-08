@@ -55,7 +55,7 @@ public class DisableSignal extends AbstractSignal {
         
         @Override
         public void doSignal() {
-            SignalStates.setEmittingOrgEND(false); //stop emitting data
+            SignalStates.setEmitOrgEND(false); //stop emitting data
             nextSignals();
         }
 

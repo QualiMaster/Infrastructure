@@ -7,6 +7,7 @@ import eu.qualimaster.base.serializer.KryoSwitchTupleSerializer;
  * @author Cui Qin
  *
  */
+
 public class SignalStates {
     private static SignalStates signalStatesInstance;
     private static boolean isActiveOrgINT = true;
@@ -17,38 +18,44 @@ public class SignalStates {
     private static boolean isPassivateOrgINT = false;
     private static boolean isTransferringTrgINT = false;
     private static boolean isTransferringOrgINT = false;
-    private static boolean isEmittingOrgEND = true;
-    private static boolean isEmittingTrgEND = false;
+    private static boolean isEmitOrgEND = true;
+    private static boolean isEmitTrgEND = false;
     private static boolean isTransferAll = false;
+    private static boolean isEmitOrgPRE = true;
+    private static boolean isEmitTrgPRE = false;
+    // ---to be changed
     private static boolean isBothPRE = false;
     private static boolean isEmitPRE = true;
+    // ---to be changed
     private static long firstId = 0;
     private static int numTransferredData = 0;
     private static long lastProcessedId = 0;
     private static long lastEmittedId = 0;
     private static long headId = 0;
     private static long algStartPoint = 0;
-    private static int targetPort  = 6027;
+    private static int targetPort = 6027;
     private static KryoSwitchTupleSerializer kryoSerOrgINT = null;
     private static int synQueueSizeOrgINT = 10;
     private static int synQueueSizeTrgINT = 50;
-    
+
     /**
      * Constructor for the class.
      */
-    private SignalStates() {}
-    
+    private SignalStates() {
+    }
+
     /**
      * Returns the instance of the singleton class.
+     * 
      * @return the instance of the singleton class
      */
     public static SignalStates getInstance() {
         if (null == signalStatesInstance) {
             signalStatesInstance = new SignalStates();
-        } 
+        }
         return signalStatesInstance;
     }
-    
+
     /**
      * Initialize the initial values of the signal states.
      */
@@ -61,21 +68,25 @@ public class SignalStates {
         isPassivateOrgINT = false;
         isTransferringTrgINT = false;
         isTransferringOrgINT = false;
-        isEmittingOrgEND = true; //initially the original end node emits
-        isEmittingTrgEND = false; //initially the target end node is disabled to emit
+        isEmitOrgEND = true; // initially the original end node emits
+        isEmitTrgEND = false; // initially the target end node is disabled
+                                  // to emit
         isTransferAll = false;
+        isEmitOrgPRE = true;
+        isEmitTrgPRE = false;
         isBothPRE = false;
         isEmitPRE = true;
         firstId = 0;
-        numTransferredData = 0; 
+        numTransferredData = 0;
         lastProcessedId = 0;
         lastEmittedId = 0;
         headId = 0;
-        targetPort  = 6027;
+        targetPort = 6027;
     }
 
     /**
      * Return whether it is passivate in the target intermediary node.
+     * 
      * @return <code>true</code> it is passivate; otherwise <code>false</code>
      */
     public static boolean isPassivateTrgINT() {
@@ -84,7 +95,10 @@ public class SignalStates {
 
     /**
      * Set the state of whether it is passivate in the target intermediary node.
-     * @param isPassivateTrgINT <code>true</code> it is passivate; otherwise <code>false</code>
+     * 
+     * @param isPassivateTrgINT
+     *            <code>true</code> it is passivate; otherwise
+     *            <code>false</code>
      */
     public static void setPassivateTrgINT(boolean isPassivateTrgINT) {
         SignalStates.isPassivateTrgINT = isPassivateTrgINT;
@@ -92,6 +106,7 @@ public class SignalStates {
 
     /**
      * Return whether it is passivate in the original intermediary node.
+     * 
      * @return <code>true</code> it is passivate; otherwise <code>false</code>
      */
     public static boolean isPassivateOrgINT() {
@@ -99,8 +114,12 @@ public class SignalStates {
     }
 
     /**
-     * Set the state of whether it is passivate in the original intermediary node.
-     * @param isPassivateOrgINT <code>true</code> it is passivate; otherwise <code>false</code>
+     * Set the state of whether it is passivate in the original intermediary
+     * node.
+     * 
+     * @param isPassivateOrgINT
+     *            <code>true</code> it is passivate; otherwise
+     *            <code>false</code>
      */
     public static void setPassivateOrgINT(boolean isPassivateOrgINT) {
         SignalStates.isPassivateOrgINT = isPassivateOrgINT;
@@ -108,87 +127,113 @@ public class SignalStates {
 
     /**
      * Return whether it is transferring, used in the target intermediary node.
-     * @return <code>true</code> it is transferring; otherwise <code>false</code>
+     * 
+     * @return <code>true</code> it is transferring; otherwise
+     *         <code>false</code>
      */
     public static boolean isTransferringTrgINT() {
         return isTransferringTrgINT;
     }
-    
+
     /**
      * Set the state of transferring in the target intermediary node.
-     * @param isTransferringTrgINT <code>true</code> it is transferring; otherwise <code>false</code>
+     * 
+     * @param isTransferringTrgINT
+     *            <code>true</code> it is transferring; otherwise
+     *            <code>false</code>
      */
     public static void setTransferringTrgINT(boolean isTransferringTrgINT) {
         SignalStates.isTransferringTrgINT = isTransferringTrgINT;
     }
-    
+
     /**
-     * Return whether it is transferring, used in the original intermediary node.
-     * @return <code>true</code> it is transferring; otherwise <code>false</code>
+     * Return whether it is transferring, used in the original intermediary
+     * node.
+     * 
+     * @return <code>true</code> it is transferring; otherwise
+     *         <code>false</code>
      */
     public static boolean isTransferringOrgINT() {
         return isTransferringOrgINT;
     }
-    
+
     /**
      * Set the state of transferring in the original intermediary node.
-     * @param isTransferringOrgINT <code>true</code> it is transferring; otherwise <code>false</code>
+     * 
+     * @param isTransferringOrgINT
+     *            <code>true</code> it is transferring; otherwise
+     *            <code>false</code>
      */
     public static void setTransferringOrgINT(boolean isTransferringOrgINT) {
         SignalStates.isTransferringOrgINT = isTransferringOrgINT;
     }
-    
+
     /**
-     * Return the id of the first tuple to be transferred, used in the target intermediary node.
-     * @return the id of the first tuple to be transferred, used the target intermediary node
+     * Return the id of the first tuple to be transferred, used in the target
+     * intermediary node.
+     * 
+     * @return the id of the first tuple to be transferred, used the target
+     *         intermediary node
      */
     public static long getFirstId() {
         return firstId;
     }
-    
+
     /**
-     * Record the id of the first tuple to be transferred, used in the target intermediary node.
-     * @param firstId the id of the first tuple to be transferred, used in the target intermediary node
+     * Record the id of the first tuple to be transferred, used in the target
+     * intermediary node.
+     * 
+     * @param firstId
+     *            the id of the first tuple to be transferred, used in the
+     *            target intermediary node
      */
     public static void setFirstId(long firstId) {
         SignalStates.firstId = firstId;
     }
-    
+
     /**
      * Return whether it is emitting in the original end node.
+     * 
      * @return <code>true</code> it is emitting; otherwise <code>false</code>.
      */
-    public static boolean isEmittingOrgEND() {
-        return isEmittingOrgEND;
+    public static boolean isEmitOrgEND() {
+        return isEmitOrgEND;
     }
 
     /**
      * Sets the state of whether it is emitting in the original end node.
-     * @param isEmittingOrgEND <code>true</code> it is emitting; otherwise <code>false</code>.
+     * 
+     * @param isEmittingOrgEND
+     *            <code>true</code> it is emitting; otherwise <code>false</code>
+     *            .
      */
-    public static void setEmittingOrgEND(boolean isEmittingOrgEND) {
-        SignalStates.isEmittingOrgEND = isEmittingOrgEND;
-    }
-    
-    /**
-     * Return whether it is emitting in the target end node.
-     * @return <code>true</code> it is emitting; otherwise <code>false</code>.
-     */
-    public static boolean isEmittingTrgEND() {
-        return isEmittingTrgEND;
+    public static void setEmitOrgEND(boolean isEmittingOrgEND) {
+        SignalStates.isEmitOrgEND = isEmittingOrgEND;
     }
 
-    
+    /**
+     * Return whether it is emitting in the target end node.
+     * 
+     * @return <code>true</code> it is emitting; otherwise <code>false</code>.
+     */
+    public static boolean isEmitTrgEND() {
+        return isEmitTrgEND;
+    }
+
     /**
      * Sets the state of whether it is emitting in the target end node.
-     * @param isEmittingTrgEND <code>true</code> it is emitting; otherwise <code>false</code>.
+     * 
+     * @param isEmittingTrgEND
+     *            <code>true</code> it is emitting; otherwise <code>false</code>
+     *            .
      */
-    public static void setEmittingTrgEND(boolean isEmittingTrgEND) {
-        SignalStates.isEmittingTrgEND = isEmittingTrgEND;
+    public static void setEmitTrgEND(boolean isEmittingTrgEND) {
+        SignalStates.isEmitTrgEND = isEmittingTrgEND;
     }
-    
+
     /**
-     * Return the number of data items to be transferred. 
+     * Return the number of data items to be transferred.
+     * 
      * @return the number of data items to be transferred
      */
     public static int getNumTransferredData() {
@@ -196,13 +241,15 @@ public class SignalStates {
     }
 
     /**
-     * Sets the number of data items to be transferred. 
-     * @param numTransferredData the number of data items to be transferred
+     * Sets the number of data items to be transferred.
+     * 
+     * @param numTransferredData
+     *            the number of data items to be transferred
      */
     public static void setNumTransferredData(int numTransferredData) {
         SignalStates.numTransferredData = numTransferredData;
     }
-    
+
     /**
      * Return the id of the last processed tuple.
      * 
@@ -259,41 +306,54 @@ public class SignalStates {
     public static void setHeadId(long headId) {
         SignalStates.headId = headId;
     }
-    
+
     /**
      * Return whether it is transferring all tuples.
-     * @return <code>true</code> it is transferring all tuples; otherwise <code>false</code>
+     * 
+     * @return <code>true</code> it is transferring all tuples; otherwise
+     *         <code>false</code>
      */
     public static boolean isTransferAll() {
         return isTransferAll;
     }
-    
+
     /**
      * Set the state of whether it is transferring all tuples.
-     * @param isTransferAll <code>true</code> it is transferring all tuples; otherwise <code>false</code>
+     * 
+     * @param isTransferAll
+     *            <code>true</code> it is transferring all tuples; otherwise
+     *            <code>false</code>
      */
     public static void setTransferAll(boolean isTransferAll) {
         SignalStates.isTransferAll = isTransferAll;
     }
 
     /**
-     * Return the timestamp when the original algorithm is started to process tuples.
-     * @return the timestamp when the original algorithm is started to process tuples
+     * Return the timestamp when the original algorithm is started to process
+     * tuples.
+     * 
+     * @return the timestamp when the original algorithm is started to process
+     *         tuples
      */
     public static long getAlgStartPoint() {
         return algStartPoint;
     }
 
     /**
-     * Set the timestamp when the original algorithm is started to process tuples.
-     * @param algStartPoint the timestamp when the original algorithm is started to process tuples
+     * Set the timestamp when the original algorithm is started to process
+     * tuples.
+     * 
+     * @param algStartPoint
+     *            the timestamp when the original algorithm is started to
+     *            process tuples
      */
     public static void setAlgStartPoint(long algStartPoint) {
         SignalStates.algStartPoint = algStartPoint;
     }
-    
+
     /**
      * Return the port of the target node.
+     * 
      * @return the port of the target node
      */
     public static int getTargetPort() {
@@ -302,7 +362,9 @@ public class SignalStates {
 
     /**
      * Set the port of the target node.
-     * @param targetPort the port of the target node
+     * 
+     * @param targetPort
+     *            the port of the target node
      */
     public static void setTargetPort(int targetPort) {
         SignalStates.targetPort = targetPort;
@@ -310,6 +372,7 @@ public class SignalStates {
 
     /**
      * Return the kryo serializer for the original intermediary node.
+     * 
      * @return the kryo serializer
      */
     public static KryoSwitchTupleSerializer getKryoSerOrgINT() {
@@ -318,14 +381,18 @@ public class SignalStates {
 
     /**
      * Set the kryo serializer for the original intermediary node.
-     * @param kryoSerOrgINT the kryo serializer
+     * 
+     * @param kryoSerOrgINT
+     *            the kryo serializer
      */
     public static void setKryoSerOrgINT(KryoSwitchTupleSerializer kryoSerOrgINT) {
         SignalStates.kryoSerOrgINT = kryoSerOrgINT;
     }
 
     /**
-     * Return the size of the synchronized queue in the original intermediary node.
+     * Return the size of the synchronized queue in the original intermediary
+     * node.
+     * 
      * @return the size of the synchronized queue
      */
     public static int getSynQueueSizeOrgINT() {
@@ -334,14 +401,18 @@ public class SignalStates {
 
     /**
      * Set the size of the synchronized queue in the original intermediary node.
-     * @param synQueueSizeOrgINT the size of the synchronized queue
+     * 
+     * @param synQueueSizeOrgINT
+     *            the size of the synchronized queue
      */
     public static void setSynQueueSizeOrgINT(int synQueueSizeOrgINT) {
         SignalStates.synQueueSizeOrgINT = synQueueSizeOrgINT;
     }
 
     /**
-     * Return the size of the synchronized queue in the target intermediary node.
+     * Return the size of the synchronized queue in the target intermediary
+     * node.
+     * 
      * @return the size of the synchronized queue
      */
     public static int getSynQueueSizeTrgINT() {
@@ -350,14 +421,17 @@ public class SignalStates {
 
     /**
      * Set the size of the synchronized queue in the target intermediary node.
-     * @param synQueueSizeTrgINT the size of the synchronized queue
+     * 
+     * @param synQueueSizeTrgINT
+     *            the size of the synchronized queue
      */
     public static void setSynQueueSizeTrgINT(int synQueueSizeTrgINT) {
         SignalStates.synQueueSizeTrgINT = synQueueSizeTrgINT;
     }
-    
+
     /**
      * Return whether the original intermediary node is active.
+     * 
      * @return <code>true</code> it is active, otherwise <code>false</code>
      */
     public static boolean isActiveOrgINT() {
@@ -366,7 +440,9 @@ public class SignalStates {
 
     /**
      * Set the state of whether the original intermediary node is active.
-     * @param isActiveOrgINT <code>true</code> it is active, otherwise <code>false</code>
+     * 
+     * @param isActiveOrgINT
+     *            <code>true</code> it is active, otherwise <code>false</code>
      */
     public static void setActiveOrgINT(boolean isActiveOrgINT) {
         SignalStates.isActiveOrgINT = isActiveOrgINT;
@@ -374,6 +450,7 @@ public class SignalStates {
 
     /**
      * Return whether the target intermediary node is active.
+     * 
      * @return <code>true</code> it is active, otherwise <code>false</code>
      */
     public static boolean isActiveTrgINT() {
@@ -382,23 +459,74 @@ public class SignalStates {
 
     /**
      * Set the state of whether the target intermediary node is active.
-     * @param isActiveTrgINT <code>true</code> it is active, otherwise <code>false</code>
+     * 
+     * @param isActiveTrgINT
+     *            <code>true</code> it is active, otherwise <code>false</code>
      */
     public static void setActiveTrgINT(boolean isActiveTrgINT) {
         SignalStates.isActiveTrgINT = isActiveTrgINT;
     }
 
     /**
+     * Return whether the data stream to the original algorithm is enabled.
+     * 
+     * @return <code>true</code> the data stream to the original algorithm is
+     *         enabled, otherwise <code>false</code>
+     */
+    public static boolean isEmitOrgPRE() {
+        return isEmitOrgPRE;
+    }
+
+    /**
+     * Set the state of whether the data stream to the original algorithm is
+     * enabled.
+     * 
+     * @param isOrgEmitPRE
+     *            <code>true</code> the data stream to the original algorithm is
+     *            enabled, otherwise <code>false</code>
+     */
+    public static void setEmitOrgPRE(boolean isOrgEmitPRE) {
+        SignalStates.isEmitOrgPRE = isOrgEmitPRE;
+    }
+
+    /**
+     * Return whether the data stream to the target algorithm is enabled.
+     * 
+     * @return <code>true</code> the data stream to the target algorithm is
+     *         enabled, otherwise <code>false</code>
+     */
+    public static boolean isEmitTrgPRE() {
+        return isEmitTrgPRE;
+    }
+
+    /**
+     * Set the state of whether the data stream to the target algorithm is
+     * enabled.
+     * 
+     * @param isTrgEmitPRE
+     *            <code>true</code> the data stream to the target algorithm is
+     *            enabled, otherwise <code>false</code>
+     */
+    public static void setEmitTrgPRE(boolean isTrgEmitPRE) {
+        SignalStates.isEmitTrgPRE = isTrgEmitPRE;
+    }
+
+    /**
      * Return whether both algorithms emit data in parallel.
-     * @return <code>true</code> both algorithms emit data, otherwise <code>false</code>
+     * 
+     * @return <code>true</code> both algorithms emit data, otherwise
+     *         <code>false</code>
      */
     public static boolean isBothPRE() {
         return isBothPRE;
     }
-    
+
     /**
      * Set the state of whether both algorithms emit data in parallel.
-     * @param isBothPRE <code>true</code> both algorithms emit data, otherwise <code>false</code>
+     * 
+     * @param isBothPRE
+     *            <code>true</code> both algorithms emit data, otherwise
+     *            <code>false</code>
      */
     public static void setBothPRE(boolean isBothPRE) {
         SignalStates.isBothPRE = isBothPRE;
@@ -406,7 +534,9 @@ public class SignalStates {
 
     /**
      * Return whether it shall emit data.
-     * @return <code>true</code> it shall emit data, otherwise <code>false</code>
+     * 
+     * @return <code>true</code> it shall emit data, otherwise
+     *         <code>false</code>
      */
     public static boolean isEmitPRE() {
         return isEmitPRE;
@@ -414,7 +544,10 @@ public class SignalStates {
 
     /**
      * Set the state of whether it shall emit data.
-     * @param isEmitPRE <code>true</code> it shall emit data, otherwise <code>false</code>
+     * 
+     * @param isEmitPRE
+     *            <code>true</code> it shall emit data, otherwise
+     *            <code>false</code>
      */
     public static void setEmitPRE(boolean isEmitPRE) {
         SignalStates.isEmitPRE = isEmitPRE;
@@ -422,6 +555,7 @@ public class SignalStates {
 
     /**
      * Return whether the original end node is active.
+     * 
      * @return <code>true</code> it is active, otherwise <code>false</code>
      */
     public static boolean isActiveOrgEND() {
@@ -429,8 +563,10 @@ public class SignalStates {
     }
 
     /**
-     * Set the state of whether the original end node is active. 
-     * @param isActiveOrgEND <code>true</code> it is active, otherwise <code>false</code>
+     * Set the state of whether the original end node is active.
+     * 
+     * @param isActiveOrgEND
+     *            <code>true</code> it is active, otherwise <code>false</code>
      */
     public static void setActiveOrgEND(boolean isActiveOrgEND) {
         SignalStates.isActiveOrgEND = isActiveOrgEND;
@@ -438,6 +574,7 @@ public class SignalStates {
 
     /**
      * Return whether the target end node is active.
+     * 
      * @return <code>true</code> it is active, otherwise <code>false</code>
      */
     public static boolean isActiveTrgEND() {
@@ -446,10 +583,12 @@ public class SignalStates {
 
     /**
      * Set the state of whether the target end node is active.
-     * @param isActiveTrgEND <code>true</code> it is active, otherwise <code>false</code>
+     * 
+     * @param isActiveTrgEND
+     *            <code>true</code> it is active, otherwise <code>false</code>
      */
     public static void setActiveTrgEND(boolean isActiveTrgEND) {
         SignalStates.isActiveTrgEND = isActiveTrgEND;
     }
-    
+
 }

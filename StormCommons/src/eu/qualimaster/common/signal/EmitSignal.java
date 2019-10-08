@@ -54,7 +54,7 @@ public class EmitSignal extends AbstractSignal {
         
         @Override
         public void doSignal() {
-            SignalStates.setEmittingTrgEND(true); //enable the target node to emit
+            SignalStates.setEmitTrgEND(true); //enable the target node to emit
         }
 
         @Override
