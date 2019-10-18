@@ -16,7 +16,7 @@ public class SlidingWindowBasedSwitchPoint extends WindowBasedSwitchPoint {
     /**
      * Constructor for the switch point of the sliding window-based case.
      * @param algStart the starting point of the original algorithm
-     * @param determinationBegin the point in time when determination starts
+     * @param determinationBegin the point in time when determination starts (including warm-up time)
      * @param windowSize the sliding window size
      * @param slidingStep the sliding window step
      */

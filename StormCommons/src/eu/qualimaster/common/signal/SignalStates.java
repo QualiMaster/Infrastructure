@@ -23,6 +23,7 @@ public class SignalStates {
     private static boolean isTransferAll = false;
     private static boolean isEmitOrgPRE = true;
     private static boolean isEmitTrgPRE = false;
+    private static boolean isDataSynExisted = false;
     // ---to be changed
     private static boolean isBothPRE = false;
     private static boolean isEmitPRE = true;
@@ -71,6 +72,7 @@ public class SignalStates {
         isEmitOrgEND = true; // initially the original end node emits
         isEmitTrgEND = false; // initially the target end node is disabled
                                   // to emit
+        isDataSynExisted = false;
         isTransferAll = false;
         isEmitOrgPRE = true;
         isEmitTrgPRE = false;
@@ -590,5 +592,23 @@ public class SignalStates {
     public static void setActiveTrgEND(boolean isActiveTrgEND) {
         SignalStates.isActiveTrgEND = isActiveTrgEND;
     }
+
+    /**
+     * Return whether there is data synchronization existed in the switch variant.
+     * @return <code>true</code> it is existed, otherwise <code>false</code>
+     */
+    public static boolean isDataSynExisted() {
+        return isDataSynExisted;
+    }
+
+    /**
+     * Set the state of whether there is data transfer existed in the switch variant.
+     * @param isDataSynExisted <code>true</code> it is existed, otherwise <code>false</code>
+     */
+    public static void setDataSynExisted(boolean isDataSynExisted) {
+        SignalStates.isDataSynExisted = isDataSynExisted;
+    }
+    
+    
 
 }

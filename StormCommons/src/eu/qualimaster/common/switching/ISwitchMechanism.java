@@ -1,6 +1,5 @@
 package eu.qualimaster.common.switching;
 
-import eu.qualimaster.base.algorithm.IGeneralTuple;
 import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.common.signal.TopologySignal;
 
@@ -10,12 +9,16 @@ import eu.qualimaster.common.signal.TopologySignal;
  *
  */
 public interface ISwitchMechanism {
+//    /**
+//     * Switches from the algorithm <code>from</code> to the algorithm <code>to</code>.
+//     * @param from the original algorithm to be switched
+//     * @param to the target algorithm to switch to
+//     */
+//    void doSwitch(AbstractAlgorithm from, AbstractAlgorithm to);
     /**
-     * Switches from the algorithm <code>from</code> to the algorithm <code>to</code>.
-     * @param from the original algorithm to be switched
-     * @param to the target algorithm to switch to
+     * Reaction upon the switch event.
      */
-    void doSwitch(AbstractAlgorithm from, AbstractAlgorithm to);
+    public void onSwitch();
     /**
      * Returns the next tuple.
      * @return the next tuple
