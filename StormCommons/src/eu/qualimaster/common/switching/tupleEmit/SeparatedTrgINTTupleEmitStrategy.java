@@ -3,10 +3,10 @@ package eu.qualimaster.common.switching.tupleEmit;
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.base.algorithm.ISwitchTuple;
-import eu.qualimaster.common.signal.SignalStates;
 import eu.qualimaster.common.switching.QueueHolder;
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
 import eu.qualimaster.common.switching.SynchronizedQueue;
+import eu.qualimaster.common.switching.actions.SwitchStates;
 
 /**
  * Provide a tuple emit strategy for the target intermediary node.
@@ -28,8 +28,8 @@ public class SeparatedTrgINTTupleEmitStrategy extends AbstractTupleEmitStrategy 
      */
     public SeparatedTrgINTTupleEmitStrategy(QueueHolder queueHolder) {
         super(queueHolder);
-        synInQueue = new SynchronizedQueue<ISwitchTuple>(getInQueue(), SignalStates.getSynQueueSizeTrgINT());
-        synTmpQueue = new SynchronizedQueue<ISwitchTuple>(getTmpQueue(), SignalStates.getSynQueueSizeTrgINT());
+        synInQueue = new SynchronizedQueue<ISwitchTuple>(getInQueue(), SwitchStates.getSynQueueSizeTrgINT());
+        synTmpQueue = new SynchronizedQueue<ISwitchTuple>(getTmpQueue(), SwitchStates.getSynQueueSizeTrgINT());
     }
 
     @Override
@@ -40,11 +40,11 @@ public class SeparatedTrgINTTupleEmitStrategy extends AbstractTupleEmitStrategy 
     @Override
     public ISwitchTuple nextEmittedTuple() {
         ISwitchTuple result = null;
-        if (SignalStates.isTransferringTrgINT() || (!getTmpQueue().isEmpty()) && (!SignalStates.isPassivateTrgINT())) {
+        if (SwitchStates.isTransferringTrgINT() || (!getTmpQueue().isEmpty()) && (!SwitchStates.isPassivateTrgINT())) {
             if (!getTmpQueue().isEmpty()) {
                 result = synTmpQueue.consume();
             }
-        } else if ((!getInQueue().isEmpty()) && (!SignalStates.isPassivateTrgINT())) {
+        } else if ((!getInQueue().isEmpty()) && (!SwitchStates.isPassivateTrgINT())) {
             result = synInQueue.consume();
             if (result.getId() != 0L) { // queue only during the switch
                 getOutQueue().offer(result);

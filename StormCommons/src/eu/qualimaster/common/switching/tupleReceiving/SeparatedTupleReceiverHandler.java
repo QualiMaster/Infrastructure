@@ -3,6 +3,8 @@ package eu.qualimaster.common.switching.tupleReceiving;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -12,11 +14,12 @@ import com.esotericsoftware.kryo.io.Input;
 import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.base.serializer.ISwitchTupleSerializer;
 import eu.qualimaster.base.serializer.KryoSwitchTupleSerializer;
-import eu.qualimaster.common.signal.AbstractSignalStrategy;
-import eu.qualimaster.common.signal.SignalStates;
-import eu.qualimaster.common.switching.SwitchStrategies;
+import eu.qualimaster.common.signal.AbstractSignalConnection;
 import eu.qualimaster.common.switching.SynchronizedQueue;
-import eu.qualimaster.common.switching.synchronization.SeparatedTrgINTSynchronizationStrategy;
+import eu.qualimaster.common.switching.actions.GoToActiveINTAction;
+import eu.qualimaster.common.switching.actions.IAction;
+import eu.qualimaster.common.switching.actions.SwitchStates;
+import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
 
 /**
  * An handler for receiving tuples for the warm-up switch with data
@@ -31,12 +34,12 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
     private SynchronizedQueue<ISwitchTuple> synInQueue;
     private SynchronizedQueue<ISwitchTuple> synTmpQueue;
     private KryoSwitchTupleSerializer serializer;
+    private AbstractSignalConnection signalCon;
+    private Map<ActionState, List<IAction>> actionMap;
     private Socket socket;
     private InputStream in;
     private Input kryoInput = null;
     private boolean cont = true;
-    private AbstractSignalStrategy signalStrategy;
-    private SeparatedTrgINTSynchronizationStrategy synchronizationStrategy;
 
     /**
      * Constructor for the tuple receiving handler for the warm-up switch with
@@ -49,17 +52,19 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
      *            tuples
      * @param serializer
      *            the tuple serializer
+     * @param signalCon the signal connection used to send signals
+     * @param actionMap the map containing the switch actions
      * @throws IOException
      *             IO exception
      */
     public SeparatedTupleReceiverHandler(SynchronizedQueue<ISwitchTuple> synInQueue,
-            SynchronizedQueue<ISwitchTuple> synTmpQueue, ISwitchTupleSerializer serializer) throws IOException {
+            SynchronizedQueue<ISwitchTuple> synTmpQueue, ISwitchTupleSerializer serializer, 
+            AbstractSignalConnection signalCon, Map<ActionState, List<IAction>> actionMap) throws IOException {
         this.synInQueue = synInQueue;
         this.synTmpQueue = synTmpQueue;
         this.serializer = (KryoSwitchTupleSerializer) serializer;
-        signalStrategy = (AbstractSignalStrategy) SwitchStrategies.getInstance().getStrategies().get("signal");
-        synchronizationStrategy = (SeparatedTrgINTSynchronizationStrategy) SwitchStrategies.getInstance()
-                .getStrategies().get(SeparatedTrgINTSynchronizationStrategy.STRATEGYTYPE);
+        this.signalCon = signalCon;
+        this.actionMap = actionMap;
     }
 
     @Override
@@ -73,25 +78,25 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
                 if (switchTuple != null) {
                     // LOGGER.info(System.currentTimeMillis() + ", Received the
                     // data with id :" + switchTuple.getId()
-                    // + ", firstId: " + SignalStates.getFirstId() + ", is
+                    // + ", firstId: " + SwitchStates.getFirstId() + ", is
                     // transferred data? "
-                    // + (switchTuple.getId() > SignalStates.getFirstId()));
-                    if (switchTuple.getId() > SignalStates.getFirstId() || switchTuple.getId() == 0) {
+                    // + (switchTuple.getId() > SwitchStates.getFirstId()));
+                    if (switchTuple.getId() > SwitchStates.getFirstTupleId() || switchTuple.getId() == 0) {
                         synInQueue.produce(switchTuple);
                         LOGGER.info(System.currentTimeMillis() + ", inQueue-Received data with id: "
-                                + switchTuple.getId() + ", firstId:" + SignalStates.getFirstId());
+                                + switchTuple.getId() + ", firstId:" + SwitchStates.getFirstTupleId());
                     } else { // will be only executed in the target one
                         synTmpQueue.produce(switchTuple);
                         LOGGER.info(System.currentTimeMillis() + ", tmpQueue-Received the transferred data with id: "
-                                + switchTuple.getId() + ", firstId:" + SignalStates.getFirstId());
+                                + switchTuple.getId() + ", firstId:" + SwitchStates.getFirstTupleId());
                         if (synOnce) {
                             synOnce = false;
-                            signalStrategy.synchronizeEarly();
+                            SwitchStates.executeActions(ActionState.FIRST_TRANSFERRED_DATA_ARRIVED, actionMap, null);
                         }
-                        if (switchTuple.getId() == SignalStates.getFirstId()) {
+                        if (switchTuple.getId() == SwitchStates.getFirstTupleId()) {
                             LOGGER.info(System.currentTimeMillis() + ", reached the last transferred data, firstId:"
-                                    + SignalStates.getFirstId());
-                            synchronizationStrategy.goToActive();
+                                    + SwitchStates.getFirstTupleId());
+                            new GoToActiveINTAction(signalCon).execute();
                         }
                     }
                 }

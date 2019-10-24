@@ -98,12 +98,6 @@ public class WSDSSwitchMechanism extends AbstractSwitchMechanism {
     }
 
     @Override
-    public void doSwitch(AbstractAlgorithm from, AbstractAlgorithm to) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     public ISwitchTuple getNextTuple() {
         return super.getNextTuple();
     }

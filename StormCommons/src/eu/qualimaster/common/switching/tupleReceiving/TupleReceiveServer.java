@@ -6,7 +6,6 @@ import java.net.Socket;
 
 import org.apache.log4j.Logger;
 
-import eu.qualimaster.common.switching.tupleReceiving.ITupleReceiverHandler;
 /**
  * Creates a socket server for receiving tuples.
  * @author Cui Qin

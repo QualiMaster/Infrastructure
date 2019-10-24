@@ -1,6 +1,5 @@
 package eu.qualimaster.common.switching;
 
-import eu.qualimaster.base.algorithm.IGeneralTuple;
 import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.common.signal.TopologySignal;
 
@@ -18,12 +17,7 @@ public class ParallelTrackSwitchMechanism extends AbstractSwitchMechanism {
     public ParallelTrackSwitchMechanism(AbstractSwitchStrategy strategy) {
         this.strategy = strategy;
     }
-
-    @Override
-    public void doSwitch(AbstractAlgorithm from, AbstractAlgorithm to) {
-        
-    }
-
+    
     @Override
     public ISwitchTuple getNextTuple() {
         return (ISwitchTuple) strategy.produceTuple();
@@ -37,6 +31,6 @@ public class ParallelTrackSwitchMechanism extends AbstractSwitchMechanism {
     @Override
     public void ack(Object msgId) {
         strategy.ack(msgId);
-    }   
+    }  
 
 }

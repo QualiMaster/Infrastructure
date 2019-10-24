@@ -16,10 +16,6 @@ public interface ISwitchMechanism {
 //     */
 //    void doSwitch(AbstractAlgorithm from, AbstractAlgorithm to);
     /**
-     * Reaction upon the switch event.
-     */
-    public void onSwitch();
-    /**
      * Returns the next tuple.
      * @return the next tuple
      */

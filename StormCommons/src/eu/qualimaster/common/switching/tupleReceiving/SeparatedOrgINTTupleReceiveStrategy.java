@@ -1,16 +1,20 @@
 package eu.qualimaster.common.switching.tupleReceiving;
 
 import java.io.IOException;
-import java.net.Socket;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.base.serializer.ISwitchTupleSerializer;
-import eu.qualimaster.common.signal.SignalStates;
+import eu.qualimaster.common.signal.AbstractSignalConnection;
 import eu.qualimaster.common.switching.QueueHolder;
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
 import eu.qualimaster.common.switching.SynchronizedQueue;
+import eu.qualimaster.common.switching.actions.IAction;
+import eu.qualimaster.common.switching.actions.SwitchStates;
+import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
 
 /**
  * Provide a tuple receiving strategy for the original intermediary node in the
@@ -34,13 +38,16 @@ public class SeparatedOrgINTTupleReceiveStrategy extends AbstractTupleReceiveStr
      *            the queue holder
      * @param serializer
      *            the serializer for deserializing received data
+     * @param signalCon the signal connection used to send signals
+     * @param actionMap the map containing the switch actions
      */
-    public SeparatedOrgINTTupleReceiveStrategy(QueueHolder queueHolder, ISwitchTupleSerializer serializer) {
-        super(serializer);
+    public SeparatedOrgINTTupleReceiveStrategy(QueueHolder queueHolder, ISwitchTupleSerializer serializer,
+            AbstractSignalConnection signalCon, Map<ActionState, List<IAction>> actionMap) {
+        super(serializer, signalCon, actionMap);
         this.synInQueue = new SynchronizedQueue<ISwitchTuple>(queueHolder.getInQueue(),
-                SignalStates.getSynQueueSizeOrgINT());
+                SwitchStates.getSynQueueSizeOrgINT());
         this.synTmpQueue = new SynchronizedQueue<ISwitchTuple>(queueHolder.getTmpQueue(),
-                SignalStates.getSynQueueSizeOrgINT());
+                SwitchStates.getSynQueueSizeOrgINT());
     }
 
     @Override
@@ -53,7 +60,8 @@ public class SeparatedOrgINTTupleReceiveStrategy extends AbstractTupleReceiveStr
         ITupleReceiverHandler result = null;
         try {
             LOGGER.info("Creating a handler for tuple receive.");
-            result = new SeparatedTupleReceiverHandler(synInQueue, synTmpQueue, getSerializer());
+            result = new SeparatedTupleReceiverHandler(synInQueue, synTmpQueue, getSerializer(),
+                    getSignalCon(), getActionMap());
         } catch (IOException e) {
             e.printStackTrace();
         }

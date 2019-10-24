@@ -1,7 +1,5 @@
 package eu.qualimaster.common.switching.actions;
 
-import eu.qualimaster.common.signal.SignalStates;
-
 /**
  * Control streams via flags, i.e., disabling or enabling data streams by
  * switching off or on flags. In this class we list all the stream flows to be
@@ -15,13 +13,13 @@ public enum ControlStreamFlag {
         // disable the stream flow PRE -> ORGINT
         @Override
         public void disableStreamFlow() {
-            SignalStates.setEmitOrgPRE(false);
+            SwitchStates.setEmitOrgPRE(false);
         }
         
         // enable the stream flow PRE -> ORGINT
         @Override
         public void enableStreamFlow() {
-            SignalStates.setEmitOrgPRE(true);
+            SwitchStates.setEmitOrgPRE(true);
             
         }
     },
@@ -30,13 +28,13 @@ public enum ControlStreamFlag {
         // disable the stream flow PRE -> TGTINT
         @Override
         public void disableStreamFlow() {
-            SignalStates.setEmitTrgPRE(false);
+            SwitchStates.setEmitTrgPRE(false);
         }
 
         // enable the stream flow PRE -> TGTINT
         @Override
         public void enableStreamFlow() {
-            SignalStates.setEmitTrgPRE(true);
+            SwitchStates.setEmitTrgPRE(true);
         }
     },
 
@@ -44,13 +42,13 @@ public enum ControlStreamFlag {
         // disable the stream flow ORGINT ->Aold
         @Override
         public void disableStreamFlow() {
-            SignalStates.setPassivateOrgINT(false);
+            SwitchStates.setPassivateOrgINT(false);
         }
 
         // enable the stream flow ORGINT ->Aold
         @Override
         public void enableStreamFlow() {
-            SignalStates.setPassivateOrgINT(true);
+            SwitchStates.setPassivateOrgINT(true);
         }
     },
 
@@ -58,13 +56,13 @@ public enum ControlStreamFlag {
         // disable the stream flow TGTINT -> Anew
         @Override
         public void disableStreamFlow() {
-            SignalStates.setPassivateTrgINT(false);
+            SwitchStates.setPassivateTrgINT(false);
         }
 
         // enable the stream flow TGTINT -> Anew
         @Override
         public void enableStreamFlow() {
-            SignalStates.setPassivateTrgINT(true);
+            SwitchStates.setPassivateTrgINT(true);
         }
     },
 
@@ -72,13 +70,13 @@ public enum ControlStreamFlag {
         // disable the stream flow ORGEND -> SUC
         @Override
         public void disableStreamFlow() {
-            SignalStates.setEmitOrgEND(false);
+            SwitchStates.setEmitOrgEND(false);
         }
 
         // enable the stream flow ORGEND -> SUC
         @Override
         public void enableStreamFlow() {
-            SignalStates.setEmitOrgEND(true);
+            SwitchStates.setEmitOrgEND(true);
         }
     },
 
@@ -86,13 +84,13 @@ public enum ControlStreamFlag {
         // disable the stream flow TGTEND -> SUC
         @Override
         public void disableStreamFlow() {
-            SignalStates.setEmitTrgEND(false);
+            SwitchStates.setEmitTrgEND(false);
         }
 
         // disable the stream flow TGTEND -> SUC
         @Override
         public void enableStreamFlow() {
-            SignalStates.setEmitTrgEND(true);
+            SwitchStates.setEmitTrgEND(true);
         }
     };
 
