@@ -42,13 +42,13 @@ public enum ControlStreamFlag {
         // disable the stream flow ORGINT ->Aold
         @Override
         public void disableStreamFlow() {
-            SwitchStates.setPassivateOrgINT(false);
+            SwitchStates.setPassivateOrgINT(true);
         }
 
         // enable the stream flow ORGINT ->Aold
         @Override
         public void enableStreamFlow() {
-            SwitchStates.setPassivateOrgINT(true);
+            SwitchStates.setPassivateOrgINT(false);
         }
     },
 
@@ -56,13 +56,13 @@ public enum ControlStreamFlag {
         // disable the stream flow TGTINT -> Anew
         @Override
         public void disableStreamFlow() {
-            SwitchStates.setPassivateTrgINT(false);
+            SwitchStates.setPassivateTrgINT(true);
         }
 
         // enable the stream flow TGTINT -> Anew
         @Override
         public void enableStreamFlow() {
-            SwitchStates.setPassivateTrgINT(true);
+            SwitchStates.setPassivateTrgINT(false);
         }
     },
 

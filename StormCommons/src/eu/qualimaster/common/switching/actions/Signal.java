@@ -7,6 +7,7 @@ package eu.qualimaster.common.switching.actions;
 public enum Signal {
     ENACT("enact"), 
     DISABLE("disable"),
+    ENABLE("enable"),
     STOPPED("stopped"), 
     TRANSFERRED("transferred"),
     EMIT("emit"),

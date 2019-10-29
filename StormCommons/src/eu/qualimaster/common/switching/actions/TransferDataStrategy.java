@@ -1,5 +1,6 @@
 package eu.qualimaster.common.switching.actions;
 
+import java.io.PrintWriter;
 import java.util.Queue;
 
 import org.apache.log4j.Logger;
@@ -24,6 +25,18 @@ public class TransferDataStrategy implements ITransferDataStrategy {
     private TupleSender sender;
     private long lastProcessedId;
     private long headId;
+    private PrintWriter out;
+    
+    /**
+     * Creates a strategy for transferring data.
+     * @param queueHolder the queue holder carrying the input and output queues
+     * @param signalCon the signal connection
+     * @param out the log writer used to write logs into corresponding files
+     */
+    public TransferDataStrategy(QueueHolder queueHolder, AbstractSignalConnection signalCon, PrintWriter out) {
+        this(queueHolder, signalCon);
+        this.out = out;
+    }
     
     /**
      * Creates a strategy for transferring data.
@@ -42,6 +55,11 @@ public class TransferDataStrategy implements ITransferDataStrategy {
         headId = SwitchStates.getHeadId();
         host = getHost(getNameInfo().getTargetIntermediaryNodeName());
         sender = new TupleSender(host, SwitchStates.getTargetPort());
+        if (null != out) {
+            out.println("Transferring data to the host: " + host + ", the headId: " + headId + ", the lastProcessedId: "
+                    + lastProcessedId);
+            out.flush();
+        }
         LOGGER.info("Transferring data to the host: " + host + ", the headId: " + headId + ", the lastProcessedId: "
                 + lastProcessedId);
         if (lastProcessedId != 0) {
@@ -59,12 +77,21 @@ public class TransferDataStrategy implements ITransferDataStrategy {
      */
     public void transferMissingItemsOrgINT() {
         long id;
+        if (null != out) {
+            out.println("Transferring missing items with outQueue: " + outQueue.size() + ", inQueue:" + inQueue.size()
+                + ", lastProcessedId: " + lastProcessedId + ", headId: " + headId);
+            out.flush();
+        }
         LOGGER.info("Transferring missing items with outQueue: " + outQueue.size() + ", inQueue:" + inQueue.size()
                 + ", lastProcessedId: " + lastProcessedId + ", headId: " + headId);
         while (!outQueue.isEmpty()) {
             ISwitchTuple item = outQueue.poll();
             id = item.getId();
             if (id > lastProcessedId && id < headId) {
+                if (null != out) {
+                    out.println(System.currentTimeMillis() + ", outQueue--Transferring the missing items " + id);
+                    out.flush();
+                }
                 LOGGER.info(System.currentTimeMillis() + ", outQueue--Transferring the missing items " + id);
                 sendToTarget(item);
             }
@@ -77,11 +104,20 @@ public class TransferDataStrategy implements ITransferDataStrategy {
             while (id < headId) {
                 ISwitchTuple item = inQueue.poll();
                 if (id > lastProcessedId) {
+                    if (null != out) {
+                        out.println(System.currentTimeMillis() + ", inQueue--Transferring the missing items " + id);
+                        out.flush();
+                    }
                     LOGGER.info(System.currentTimeMillis() + ", inQueue--Transferring the missing items " + id);
                     sendToTarget(item);
                 }
                 id = item.getId();
             }
+        }
+        if (null != out) {
+            out.println("The end of transferring missing items with outQueue: " + outQueue.size() + ", inQueue:"
+                    + inQueue.size());
+            out.flush();
         }
         LOGGER.info("The end of transferring missing items with outQueue: " + outQueue.size() + ", inQueue:"
                 + inQueue.size());
@@ -90,8 +126,7 @@ public class TransferDataStrategy implements ITransferDataStrategy {
     /**
      * Transfers all data items in the original intermediary node.
      */
-    public void transferAllOrgINT() { // TODO: consider the case that there are
-                                      // some un-acked items
+    public void transferAllOrgINT() { // TODO: consider the case that there are some un-acked items
         long topId = 0;
         long tmpId = 0;
         long transferredId = 0;
@@ -101,10 +136,13 @@ public class TransferDataStrategy implements ITransferDataStrategy {
         } else if (!inQueue.isEmpty()) {
             topId = inQueue.peek().getId();
         }
+        if (null != out) {
+            out.println("Transfer all items to the target Spout with outQueue size:" + outQueue.size() 
+                + ", inQueue size:" + inQueue.size() + " Top id:" + topId);
+        }
         LOGGER.info("Transfer all items to the target Spout with outQueue size:" + outQueue.size() + ", inQueue size:"
                 + inQueue.size() + " Top id:" + topId);
-        // transferring data from the outQueue
-        while (!outQueue.isEmpty()) {
+        while (!outQueue.isEmpty()) { // transferring data from the outQueue
             ISwitchTuple item = outQueue.poll();
             tmpId = item.getId();
             if (tmpId > lastProcessedId) {
@@ -115,8 +153,7 @@ public class TransferDataStrategy implements ITransferDataStrategy {
                 count++;
             }
         }
-        // transferring data from the inQueue
-        while (!inQueue.isEmpty()) {
+        while (!inQueue.isEmpty()) { // transferring data from the inQueue
             ISwitchTuple item = inQueue.poll();
             tmpId = item.getId();
             if (tmpId > lastProcessedId) {
@@ -127,20 +164,34 @@ public class TransferDataStrategy implements ITransferDataStrategy {
                 count++;
             }
         }
-        if (count < SwitchStates.getNumTransferredData()) {
+        if (count <= SwitchStates.getNumTransferredData()) {
+            if (null != out) {
+                out.println(System.currentTimeMillis() + ", transferAll --Sent transferred signal with the number "
+                        + "of data: " + count);
+                out.flush();
+            }
             //sending a "transferred" signal with the count of the sent items
             new SendSignalAction(Signal.TRANSFERRED, getNameInfo().getTargetIntermediaryNodeName(),
                     count, signalCon).execute();
             LOGGER.info(System.currentTimeMillis() + ", transferAll --Sent transferred signal with the number of data: "
                     + count);
         }
-
         if (transferredId == 0) {
+            if (null != out) {
+                out.println(System.currentTimeMillis()
+                        + ", transferAll --Sending transferred signal with the last transferred Id: " + transferredId);
+                out.flush();
+            }
             LOGGER.info(System.currentTimeMillis()
                     + ", transferAll --Sending transferred signal with the last transferred Id: " + transferredId);
             //sending a "transferred" signal with the id of the last transferred items
             new SendSignalAction(Signal.TRANSFERRED, getNameInfo().getTargetIntermediaryNodeName(),
                     transferredId, signalCon).execute();
+        }
+        if (null != out) {
+            out.println("The end of transferring all items to the target Spout. with outQueue size:" + outQueue.size()
+                + ", inQueue size:" + inQueue.size());
+            out.flush();
         }
         LOGGER.info("The end of transferring all items to the target Spout. with outQueue size:" + outQueue.size()
                 + ", inQueue size:" + inQueue.size());
@@ -163,6 +214,10 @@ public class TransferDataStrategy implements ITransferDataStrategy {
         outQueue.clear();
         SwitchStates.setPassivateOrgINT(true); // isPassivate = true;
         SwitchStates.setTransferringOrgINT(false); // isTransferring = false;
+        if (null != out) {
+            out.println(System.currentTimeMillis() + ", Go to passive and inform the end bolt.");
+            out.flush();
+        }
         LOGGER.info(System.currentTimeMillis() + ", Go to passive and inform the end bolt.");
         //sending a "goToPassive" signal with the value of "true"
         new SendSignalAction(Signal.GOTOPASSIVE, getNameInfo().getOriginalEndNodeName(),

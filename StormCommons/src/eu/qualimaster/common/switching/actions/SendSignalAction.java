@@ -64,4 +64,12 @@ public class SendSignalAction implements IAction {
         }
     }
 
+    /**
+     * Returns the signal.
+     * @return the signal
+     */
+    public Signal getSignal() {
+        return signal;
+    }
+    
 }
