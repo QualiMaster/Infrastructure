@@ -5,36 +5,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import backtype.storm.spout.SpoutOutputCollector;
-import backtype.storm.task.TopologyContext;
-import eu.qualimaster.common.signal.BaseSignalSpout;
-import eu.qualimaster.common.signal.ParameterChangeSignal;
+import eu.qualimaster.common.signal.BaseSignalBolt;
 import eu.qualimaster.common.switching.actions.IAction;
 import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
-
 /**
- * Implements a basic switching Spout, acting as the intermediary source.
+ * Implements a basic switching Bolt, carrying the common parts for all switching-related bolts.
  * 
  * @author Cui Qin
  *
  */
 @SuppressWarnings("serial")
-public abstract class BaseSwitchSpout extends BaseSignalSpout {
-    private AbstractSwitchMechanism mechanism;
+public abstract class BaseSwitchBolt extends BaseSignalBolt {
     private Map<ActionState, List<IAction>> actionMap;
-    
     /**
-     * Creates a switch Spout.
+     * Creates a switch Bolt.
      * 
      * @param name
-     *            the name of the Spout
-     * @param namespace
-     *            the namespace, namely the name of the pipeline which the Spout belongs to
+     *            the name of the Bolt
+     * @param pipeline
+     *            the pipeline, namely the name of the pipeline which the Bolt belongs to
      * @param sendRegular whether this monitor shall care for sending regular events (<code>true</code>) or 
      *     not (<code>false</code>, for thrift-based monitoring)
      */
-    public BaseSwitchSpout(String name, String namespace, boolean sendRegular) {
-        super(name, namespace, sendRegular);
+    public BaseSwitchBolt(String name, String pipeline, boolean sendRegular) {
+        super(name, pipeline, sendRegular);
         actionMap = new HashMap<ActionState, List<IAction>>();
     }
     
@@ -62,30 +56,4 @@ public abstract class BaseSwitchSpout extends BaseSignalSpout {
     protected Map<ActionState, List<IAction>> getActionMap() {
         return this.actionMap;
     }
-    
-//    @SuppressWarnings("rawtypes")
-//    @Override
-//    public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
-//        super.open(conf, context, collector);
-//    }
-//    
-//    @Override
-//    public void notifyParameterChange(ParameterChangeSignal signal) {
-//        super.notifyParameterChange(signal);
-//        mechanism.handleSignal(signal);
-//    }
-//    
-//    @Override
-//    public void ack(Object msgId) {
-//        mechanism.ack(msgId);
-//    }
-    /**
-     * Sets the switch mechanism.
-     * @param mechanism the switch mechanism
-     */
-    @Deprecated
-    protected void setSwitchMechanism(AbstractSwitchMechanism mechanism) {
-        this.mechanism = mechanism;
-    }
-    
 }
