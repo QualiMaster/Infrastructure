@@ -9,7 +9,6 @@ import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.common.signal.AbstractSignalConnection;
 import eu.qualimaster.common.switching.QueueHolder;
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
-import eu.qualimaster.common.switching.actions.EnableSignalAction.EnableStreamSignal;
 
 /**
  * Provides a synchronization strategy.

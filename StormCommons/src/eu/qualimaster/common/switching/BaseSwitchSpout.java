@@ -1,5 +1,6 @@
 package eu.qualimaster.common.switching;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,8 +8,8 @@ import java.util.Map;
 
 import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.TopologyContext;
+import eu.qualimaster.common.logging.DataLogger;
 import eu.qualimaster.common.signal.BaseSignalSpout;
-import eu.qualimaster.common.signal.ParameterChangeSignal;
 import eu.qualimaster.common.switching.actions.IAction;
 import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
 
@@ -20,8 +21,9 @@ import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
  */
 @SuppressWarnings("serial")
 public abstract class BaseSwitchSpout extends BaseSignalSpout {
-    private AbstractSwitchMechanism mechanism;
+//    private AbstractSwitchMechanism mechanism;
     private Map<ActionState, List<IAction>> actionMap;
+    private transient PrintWriter logWriter = null;
     
     /**
      * Creates a switch Spout.
@@ -36,6 +38,14 @@ public abstract class BaseSwitchSpout extends BaseSignalSpout {
     public BaseSwitchSpout(String name, String namespace, boolean sendRegular) {
         super(name, namespace, sendRegular);
         actionMap = new HashMap<ActionState, List<IAction>>();
+    }
+    
+    @SuppressWarnings("rawtypes")
+    @Override
+    public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
+        super.open(conf, context, collector);
+        String logDir = (String) conf.get("LOG.DIRECTORY");
+        logWriter = DataLogger.getPrintWriter(logDir + getName() + ".log");
     }
     
     /**
@@ -63,12 +73,14 @@ public abstract class BaseSwitchSpout extends BaseSignalSpout {
         return this.actionMap;
     }
     
-//    @SuppressWarnings("rawtypes")
-//    @Override
-//    public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
-//        super.open(conf, context, collector);
-//    }
-//    
+    /**
+     * Returns the log writer.
+     * @return the log writer
+     */
+    protected PrintWriter getLogWriter() {
+        return logWriter;
+    }
+    
 //    @Override
 //    public void notifyParameterChange(ParameterChangeSignal signal) {
 //        super.notifyParameterChange(signal);
@@ -85,7 +97,7 @@ public abstract class BaseSwitchSpout extends BaseSignalSpout {
      */
     @Deprecated
     protected void setSwitchMechanism(AbstractSwitchMechanism mechanism) {
-        this.mechanism = mechanism;
+//        this.mechanism = mechanism;
     }
     
 }

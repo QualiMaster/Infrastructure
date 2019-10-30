@@ -1,10 +1,14 @@
 package eu.qualimaster.common.switching;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import backtype.storm.task.OutputCollector;
+import backtype.storm.task.TopologyContext;
+import eu.qualimaster.common.logging.DataLogger;
 import eu.qualimaster.common.signal.BaseSignalBolt;
 import eu.qualimaster.common.switching.actions.IAction;
 import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
@@ -17,6 +21,8 @@ import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
 @SuppressWarnings("serial")
 public abstract class BaseSwitchBolt extends BaseSignalBolt {
     private Map<ActionState, List<IAction>> actionMap;
+    private transient PrintWriter logWriter = null;
+    
     /**
      * Creates a switch Bolt.
      * 
@@ -30,6 +36,14 @@ public abstract class BaseSwitchBolt extends BaseSignalBolt {
     public BaseSwitchBolt(String name, String pipeline, boolean sendRegular) {
         super(name, pipeline, sendRegular);
         actionMap = new HashMap<ActionState, List<IAction>>();
+    }
+    
+    @Override
+    @SuppressWarnings("rawtypes")
+    public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
+        super.prepare(conf, context, collector);
+        String logDir = (String) conf.get("LOG.DIRECTORY");
+        logWriter = DataLogger.getPrintWriter(logDir + getName() + ".log");
     }
     
     /**
@@ -55,5 +69,13 @@ public abstract class BaseSwitchBolt extends BaseSignalBolt {
      */
     protected Map<ActionState, List<IAction>> getActionMap() {
         return this.actionMap;
+    }
+    
+    /**
+     * Returns the log writer.
+     * @return the log writer
+     */
+    protected PrintWriter getLogWriter() {
+        return logWriter;
     }
 }
