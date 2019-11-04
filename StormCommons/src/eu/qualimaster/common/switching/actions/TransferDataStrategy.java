@@ -140,14 +140,15 @@ public class TransferDataStrategy implements ITransferDataStrategy {
             out.println("Transfer all items to the target Spout with outQueue size:" + outQueue.size() 
                 + ", inQueue size:" + inQueue.size() + " Top id:" + topId);
         }
-        LOGGER.info("Transfer all items to the target Spout with outQueue size:" + outQueue.size() + ", inQueue size:"
-                + inQueue.size() + " Top id:" + topId);
         while (!outQueue.isEmpty()) { // transferring data from the outQueue
             ISwitchTuple item = outQueue.poll();
             tmpId = item.getId();
             if (tmpId > lastProcessedId) {
-                LOGGER.info(System.currentTimeMillis() + " Transferring the out queue to the target Spout: "
+                if (null != out) {
+                    out.println(System.currentTimeMillis() + " Transferring the out queue to the target Spout: "
                         + item.getId() + ", count: " + count);
+                    out.flush();
+                }
                 sendToTarget(item);
                 transferredId = tmpId;
                 count++;
@@ -157,8 +158,11 @@ public class TransferDataStrategy implements ITransferDataStrategy {
             ISwitchTuple item = inQueue.poll();
             tmpId = item.getId();
             if (tmpId > lastProcessedId) {
-                LOGGER.info(
+                if (null != out) {
+                    out.println(
                         System.currentTimeMillis() + " Transferring the in queue to the target Spout." + item.getId());
+                    out.flush();
+                }
                 sendToTarget(item);
                 transferredId = tmpId;
                 count++;
@@ -173,28 +177,24 @@ public class TransferDataStrategy implements ITransferDataStrategy {
             //sending a "transferred" signal with the count of the sent items
             new SendSignalAction(Signal.TRANSFERRED, getNameInfo().getTargetIntermediaryNodeName(),
                     count, signalCon).execute();
-            LOGGER.info(System.currentTimeMillis() + ", transferAll --Sent transferred signal with the number of data: "
-                    + count);
-        }
-        if (transferredId == 0) {
+        } else if (transferredId == 0) {
             if (null != out) {
                 out.println(System.currentTimeMillis()
                         + ", transferAll --Sending transferred signal with the last transferred Id: " + transferredId);
                 out.flush();
             }
-            LOGGER.info(System.currentTimeMillis()
-                    + ", transferAll --Sending transferred signal with the last transferred Id: " + transferredId);
             //sending a "transferred" signal with the id of the last transferred items
             new SendSignalAction(Signal.TRANSFERRED, getNameInfo().getTargetIntermediaryNodeName(),
                     transferredId, signalCon).execute();
+        } else {
+            new SendSignalAction(Signal.COMPLETED, SwitchNodeNameInfo.getInstance().getPrecedingNodeName(), 
+                    true, signalCon).execute();
         }
         if (null != out) {
             out.println("The end of transferring all items to the target Spout. with outQueue size:" + outQueue.size()
                 + ", inQueue size:" + inQueue.size());
             out.flush();
         }
-        LOGGER.info("The end of transferring all items to the target Spout. with outQueue size:" + outQueue.size()
-                + ", inQueue size:" + inQueue.size());
     }
 
     /**

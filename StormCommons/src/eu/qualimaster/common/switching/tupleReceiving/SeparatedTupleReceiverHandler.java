@@ -112,8 +112,6 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
                                     + switchTuple.getId() + ", firstId:" + SwitchStates.getFirstTupleId());
                             out.flush();
                         }
-                        LOGGER.info(System.currentTimeMillis() + ", inQueue-Received data with id: "
-                                + switchTuple.getId() + ", firstId:" + SwitchStates.getFirstTupleId());
                     } else { // will be only executed in the target one
                         synTmpQueue.produce(switchTuple);
                         if (null != out) {
@@ -122,8 +120,6 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
                                     + switchTuple.getId() + ", firstId:" + SwitchStates.getFirstTupleId());
                             out.flush();
                         }
-                        LOGGER.info(System.currentTimeMillis() + ", tmpQueue-Received the transferred data with id: "
-                                + switchTuple.getId() + ", firstId:" + SwitchStates.getFirstTupleId());
                         if (synOnce) {
                             synOnce = false;
                             SwitchStates.executeActions(ActionState.FIRST_TRANSFERRED_DATA_ARRIVED, actionMap, 
@@ -135,8 +131,6 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
                                         + SwitchStates.getFirstTupleId());
                                 out.flush();
                             }
-                            LOGGER.info(System.currentTimeMillis() + ", reached the last transferred data, firstId:"
-                                    + SwitchStates.getFirstTupleId());
                             new CompleteSwitchAction(signalCon).execute();
                         }
                     }

@@ -31,7 +31,7 @@ public class CompleteSwitchAction implements IAction {
      */
     private void completingSynchronization() {
         LOGGER.info(System.currentTimeMillis() + ", Sending the synchronized signal to the preceding node!");
-        new SendSignalAction(Signal.SYNCHRONIZED, SwitchNodeNameInfo.getInstance().getPrecedingNodeName(), 
+        new SendSignalAction(Signal.COMPLETED, SwitchNodeNameInfo.getInstance().getPrecedingNodeName(), 
                 true, signalCon).execute();
         if (!SwitchStates.isPassivateTrgINT()) {
             new GoToActiveINTAction(signalCon).execute();

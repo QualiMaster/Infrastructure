@@ -16,7 +16,8 @@ public enum Signal {
     HEADID("headId"),
     GOTOPASSIVE("goToPassive"),
     GOTOACTIVE("goToActive"),
-    SYNCHRONIZED("synchronized");
+    //SYNCHRONIZED("synchronized"),
+    COMPLETED("completed");
     
     private String signalName;
     

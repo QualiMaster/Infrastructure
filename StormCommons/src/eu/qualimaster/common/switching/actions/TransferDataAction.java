@@ -18,6 +18,7 @@ public class TransferDataAction implements IAction {
     
     @Override
     public void execute() {
+        SwitchStates.setTransferringOrgINT(true);
         transferStrategy.transferData();
     }
 }

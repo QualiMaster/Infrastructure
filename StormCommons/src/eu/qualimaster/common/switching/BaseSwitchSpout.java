@@ -66,6 +66,11 @@ public abstract class BaseSwitchSpout extends BaseSignalSpout {
     }
     
     /**
+     * Adds the switch actions.
+     */
+    public void addSwitchActions() {}
+    
+    /**
      * Returns the action map.
      * @return the action map
      */

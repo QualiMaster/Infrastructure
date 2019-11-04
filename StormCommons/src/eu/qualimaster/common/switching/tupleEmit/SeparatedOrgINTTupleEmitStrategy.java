@@ -96,8 +96,6 @@ public class SeparatedOrgINTTupleEmitStrategy extends AbstractTupleEmitStrategy 
                         + System.currentTimeMillis());
                 out.flush();
             }
-            LOGGER.info("Set the starting point when the original algorithm starts to process: "
-                    + System.currentTimeMillis());
             SwitchStates.setAlgStartPoint(System.currentTimeMillis());
         }
         return result;

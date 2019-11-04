@@ -100,8 +100,6 @@ public class SynchronizationStrategy implements ISynchronizationStrategy {
                         + ", Sending the transfer signal to the original intermediary node!");
                 out.flush();
             }
-            LOGGER.info(
-                    System.currentTimeMillis() + ", Sending the transfer signal to the original intermediary node!");
             new SendSignalAction(Signal.TRANSFER, getNameInfo().getOriginalIntermediaryNodeName(), numTransferredData,
                     signalCon).execute();
             SwitchStates.setTransferAll(true); // record that it is set to send all tuples
@@ -115,8 +113,6 @@ public class SynchronizationStrategy implements ISynchronizationStrategy {
                         + " with the last processed id of the previous alg:" + lastProcessedId);
                 out.flush();
             }
-            LOGGER.info(System.currentTimeMillis() + ", Synchronizing the last id of the current alg: " + id
-                    + " with the last processed id of the previous alg:" + lastProcessedId);
             if (id > lastProcessedId) { // the current alg is faster than the
                                         // previous alg
                 numTransferredData = (int) (id - lastProcessedId) - 1;
@@ -125,8 +121,6 @@ public class SynchronizationStrategy implements ISynchronizationStrategy {
                             + "node with id:" + id + ", lastProcessedId: " + lastProcessedId);
                     out.flush();
                 }
-                LOGGER.info(System.currentTimeMillis() + ", Sending the headId signal to the original intermediary "
-                        + "node with id:" + id + ", lastProcessedId: " + lastProcessedId);
                 firstId = id - 1;
                 String headIdValue = String.valueOf(id) + "," + String.valueOf(lastProcessedId);
                 new SendSignalAction(Signal.HEADID, getNameInfo().getOriginalIntermediaryNodeName(), headIdValue,
@@ -141,9 +135,6 @@ public class SynchronizationStrategy implements ISynchronizationStrategy {
                     out.println(System.currentTimeMillis() + ", Completing the synchronization.");
                     out.flush();
                 }
-                LOGGER.info(System.currentTimeMillis() + ", Skipped tuples until the id:" + id
-                        + ", with input queue size:" + inQueue.size());
-                LOGGER.info(System.currentTimeMillis() + ", Completing the synchronization.");
                 new CompleteSwitchAction(signalCon).execute();
             }
         }
@@ -151,7 +142,6 @@ public class SynchronizationStrategy implements ISynchronizationStrategy {
             out.println(System.currentTimeMillis() + ", Sending the enable signal to the target end node!");
             out.flush();
         }
-        LOGGER.info(System.currentTimeMillis() + ", Sending the enalbe signal to the target end node!");
         new SendSignalAction(Signal.ENABLE, getNameInfo().getTargetEndNodeName(), true, signalCon).execute();
         // record the number of data items to be transferred
         SwitchStates.setNumTransferredData(numTransferredData);
