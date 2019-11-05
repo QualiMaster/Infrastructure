@@ -1,6 +1,5 @@
 package eu.qualimaster.common.switching.actions;
 
-import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +8,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.base.serializer.KryoSwitchTupleSerializer;
+import switching.logging.LogProtocol;
 /**
  * Records the states used in the switch.
  * @author Cui Qin
@@ -85,31 +85,27 @@ public class SwitchStates {
      * @param state the action state
      * @param actionMap the action map containing the action list for each action state
      * @param value the value to be updated at runtime if given (only for <code>SendSignalAction</code>)
-     * @param out the log writer used to write logs to corresponding files.
+     * @param logProtocol the log protocol used to write logs to corresponding files.
      */
     public static void executeActions(ActionState state, Map<ActionState, List<IAction>> actionMap, 
-            Serializable value, PrintWriter out) {
+            Serializable value, LogProtocol logProtocol) {
         List<IAction> actionList = new ArrayList<IAction>();
         if (actionMap.containsKey(state)) {
             actionList = actionMap.get(state);
         }
         for (int i = 0; i < actionList.size(); i++) {
-            if (null != out) {
-                out.println("Executing actions: " + actionList.get(i) + ", is a send signal action?"
+            if (null != logProtocol) {
+                logProtocol.createGENLog("Executing actions: " + actionList.get(i) + ", is a send signal action?"
                         + (actionList.get(i) instanceof SendSignalAction));
-                out.flush();
             }
             LOGGER.info("Executing actions: " + actionList.get(i) + ", is a send signal action?"
                     + (actionList.get(i) instanceof SendSignalAction));
             if (null != value & (actionList.get(i) instanceof SendSignalAction)) {
                 SendSignalAction action = (SendSignalAction) actionList.get(i);
-                if (null != out) {
-                    out.println("Executing a send signal action with runtime value to be updated, the signal: " 
-                            + action.getSignal().getSignalName());
-                    out.flush();
+                if (null != logProtocol) {
+                    logProtocol.createGENLog("Executing a send signal action with runtime value to be updated, "
+                            + "the signal: " + action.getSignal().getSignalName());
                 }
-                LOGGER.info("Executing a send signal action with runtime value to be updated, the signal: " 
-                        + action.getSignal().getSignalName());
                 action.updateValue(value);
                 action.execute();
             } else {

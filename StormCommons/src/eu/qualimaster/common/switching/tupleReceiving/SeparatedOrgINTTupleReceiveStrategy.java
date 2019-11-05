@@ -1,7 +1,6 @@
 package eu.qualimaster.common.switching.tupleReceiving;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +15,7 @@ import eu.qualimaster.common.switching.SynchronizedQueue;
 import eu.qualimaster.common.switching.actions.IAction;
 import eu.qualimaster.common.switching.actions.SwitchStates;
 import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
+import switching.logging.LogProtocol;
 
 /**
  * Provide a tuple receiving strategy for the original intermediary node in the
@@ -30,8 +30,8 @@ public class SeparatedOrgINTTupleReceiveStrategy extends AbstractTupleReceiveStr
     private static final Logger LOGGER = Logger.getLogger(SeparatedOrgINTTupleReceiveStrategy.class);
     private SynchronizedQueue<ISwitchTuple> synInQueue;
     private SynchronizedQueue<ISwitchTuple> synTmpQueue;
-    private PrintWriter out;
-
+    private LogProtocol logProtocol;
+    
     /**
      * Constructor for the tuple receiving strategy in the original intermediary
      * node.
@@ -42,12 +42,12 @@ public class SeparatedOrgINTTupleReceiveStrategy extends AbstractTupleReceiveStr
      *            the serializer for deserializing received data
      * @param signalCon the signal connection used to send signals
      * @param actionMap the map containing the switch actions
-     * @param out the log writer used to write logs into corresponding files
+     * @param logProtocol the log protocol used to write logs into corresponding files
      */
     public SeparatedOrgINTTupleReceiveStrategy(QueueHolder queueHolder, ISwitchTupleSerializer serializer,
-            AbstractSignalConnection signalCon, Map<ActionState, List<IAction>> actionMap, PrintWriter out) {
+            AbstractSignalConnection signalCon, Map<ActionState, List<IAction>> actionMap, LogProtocol logProtocol) {
         this(queueHolder, serializer, signalCon, actionMap);
-        this.out = out;
+        this.logProtocol = logProtocol;
     }
     
     /**
@@ -81,7 +81,7 @@ public class SeparatedOrgINTTupleReceiveStrategy extends AbstractTupleReceiveStr
         try {
             LOGGER.info("Creating a handler for tuple receive.");
             result = new SeparatedTupleReceiverHandler(synInQueue, synTmpQueue, getSerializer(),
-                    getSignalCon(), getActionMap(), out);
+                        getSignalCon(), getActionMap(), logProtocol); 
         } catch (IOException e) {
             e.printStackTrace();
         }

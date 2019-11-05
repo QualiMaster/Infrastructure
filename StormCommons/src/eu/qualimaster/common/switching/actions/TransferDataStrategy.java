@@ -1,9 +1,6 @@
 package eu.qualimaster.common.switching.actions;
 
-import java.io.PrintWriter;
 import java.util.Queue;
-
-import org.apache.log4j.Logger;
 
 import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.base.pipeline.NodeHostStorm;
@@ -11,13 +8,15 @@ import eu.qualimaster.common.signal.AbstractSignalConnection;
 import eu.qualimaster.common.switching.QueueHolder;
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
 import eu.qualimaster.common.switching.TupleSender;
+import switching.logging.LogProtocol;
+import switching.logging.QueueStatus;
+import switching.logging.SignalName;
 /**
  * Provides a concrete strategy to transfer data.
  * @author Cui Qin
  *
  */
 public class TransferDataStrategy implements ITransferDataStrategy {
-    private static final Logger LOGGER = Logger.getLogger(TransferDataStrategy.class);
     private Queue<ISwitchTuple> inQueue;
     private Queue<ISwitchTuple> outQueue;
     private AbstractSignalConnection signalCon;
@@ -25,17 +24,17 @@ public class TransferDataStrategy implements ITransferDataStrategy {
     private TupleSender sender;
     private long lastProcessedId;
     private long headId;
-    private PrintWriter out;
+    private LogProtocol logProtocol;
     
     /**
      * Creates a strategy for transferring data.
      * @param queueHolder the queue holder carrying the input and output queues
      * @param signalCon the signal connection
-     * @param out the log writer used to write logs into corresponding files
+     * @param logProtocol the log protocol used to write logs into corresponding files
      */
-    public TransferDataStrategy(QueueHolder queueHolder, AbstractSignalConnection signalCon, PrintWriter out) {
+    public TransferDataStrategy(QueueHolder queueHolder, AbstractSignalConnection signalCon, LogProtocol logProtocol) {
         this(queueHolder, signalCon);
-        this.out = out;
+        this.logProtocol = logProtocol;
     }
     
     /**
@@ -55,13 +54,10 @@ public class TransferDataStrategy implements ITransferDataStrategy {
         headId = SwitchStates.getHeadId();
         host = getHost(getNameInfo().getTargetIntermediaryNodeName());
         sender = new TupleSender(host, SwitchStates.getTargetPort());
-        if (null != out) {
-            out.println("Transferring data to the host: " + host + ", the headId: " + headId + ", the lastProcessedId: "
-                    + lastProcessedId);
-            out.flush();
+        if (null != logProtocol) {
+            logProtocol.createGENLog("Transferring data to the host: " + host + ", the headId: " + headId 
+                    + ", the lastProcessedId: " + lastProcessedId);
         }
-        LOGGER.info("Transferring data to the host: " + host + ", the headId: " + headId + ", the lastProcessedId: "
-                + lastProcessedId);
         if (lastProcessedId != 0) {
             if (SwitchStates.isTransferAll()) {
                 transferAllOrgINT();
@@ -77,22 +73,17 @@ public class TransferDataStrategy implements ITransferDataStrategy {
      */
     public void transferMissingItemsOrgINT() {
         long id;
-        if (null != out) {
-            out.println("Transferring missing items with outQueue: " + outQueue.size() + ", inQueue:" + inQueue.size()
-                + ", lastProcessedId: " + lastProcessedId + ", headId: " + headId);
-            out.flush();
+        if (null != logProtocol) {
+            logProtocol.createGENLog("Transferring missing items with outQueue: " + outQueue.size() 
+                + ", inQueue:" + inQueue.size() + ", lastProcessedId: " + lastProcessedId + ", headId: " + headId);
         }
-        LOGGER.info("Transferring missing items with outQueue: " + outQueue.size() + ", inQueue:" + inQueue.size()
-                + ", lastProcessedId: " + lastProcessedId + ", headId: " + headId);
         while (!outQueue.isEmpty()) {
             ISwitchTuple item = outQueue.poll();
             id = item.getId();
             if (id > lastProcessedId && id < headId) {
-                if (null != out) {
-                    out.println(System.currentTimeMillis() + ", outQueue--Transferring the missing items " + id);
-                    out.flush();
+                if (null != logProtocol) {
+                    logProtocol.createTRANSFERLog(QueueStatus.OUTPUT, id);
                 }
-                LOGGER.info(System.currentTimeMillis() + ", outQueue--Transferring the missing items " + id);
                 sendToTarget(item);
             }
             if (id == headId) {
@@ -104,23 +95,19 @@ public class TransferDataStrategy implements ITransferDataStrategy {
             while (id < headId) {
                 ISwitchTuple item = inQueue.poll();
                 if (id > lastProcessedId) {
-                    if (null != out) {
-                        out.println(System.currentTimeMillis() + ", inQueue--Transferring the missing items " + id);
-                        out.flush();
+                    if (null != logProtocol) {
+                        logProtocol.createTRANSFERLog(QueueStatus.INPUT, id);
                     }
-                    LOGGER.info(System.currentTimeMillis() + ", inQueue--Transferring the missing items " + id);
                     sendToTarget(item);
                 }
                 id = item.getId();
             }
         }
-        if (null != out) {
-            out.println("The end of transferring missing items with outQueue: " + outQueue.size() + ", inQueue:"
-                    + inQueue.size());
-            out.flush();
+        if (null != logProtocol) {
+            logProtocol.createGENLog("Reached the end of transferring missing items.");
+            logProtocol.createQUEUELog(QueueStatus.INPUT, inQueue.size());
+            logProtocol.createQUEUELog(QueueStatus.OUTPUT, outQueue.size());
         }
-        LOGGER.info("The end of transferring missing items with outQueue: " + outQueue.size() + ", inQueue:"
-                + inQueue.size());
     }
 
     /**
@@ -136,52 +123,49 @@ public class TransferDataStrategy implements ITransferDataStrategy {
         } else if (!inQueue.isEmpty()) {
             topId = inQueue.peek().getId();
         }
-        if (null != out) {
-            out.println("Transfer all items to the target Spout with outQueue size:" + outQueue.size() 
-                + ", inQueue size:" + inQueue.size() + " Top id:" + topId);
+        if (null != logProtocol) {
+            logProtocol.createGENLog("Transfer all items to the target Spout with the top id:" + topId);
+            logProtocol.createQUEUELog(QueueStatus.INPUT, inQueue.size());
+            logProtocol.createQUEUELog(QueueStatus.OUTPUT, outQueue.size());
         }
         while (!outQueue.isEmpty()) { // transferring data from the outQueue
             ISwitchTuple item = outQueue.poll();
             tmpId = item.getId();
             if (tmpId > lastProcessedId) {
-                if (null != out) {
-                    out.println(System.currentTimeMillis() + " Transferring the out queue to the target Spout: "
-                        + item.getId() + ", count: " + count);
-                    out.flush();
-                }
                 sendToTarget(item);
                 transferredId = tmpId;
                 count++;
+                if (null != logProtocol) {
+                    logProtocol.createTRANSFERLog(QueueStatus.OUTPUT, item.getId());
+                    logProtocol.createGENLog("The count of the transferred data: " + count);
+                }
             }
         }
         while (!inQueue.isEmpty()) { // transferring data from the inQueue
             ISwitchTuple item = inQueue.poll();
             tmpId = item.getId();
             if (tmpId > lastProcessedId) {
-                if (null != out) {
-                    out.println(
-                        System.currentTimeMillis() + " Transferring the in queue to the target Spout." + item.getId());
-                    out.flush();
-                }
                 sendToTarget(item);
                 transferredId = tmpId;
                 count++;
+                if (null != logProtocol) {
+                    logProtocol.createTRANSFERLog(QueueStatus.INPUT, item.getId());
+                    logProtocol.createGENLog("The count of the transferred data: " + count);
+                }
             }
         }
         if (count <= SwitchStates.getNumTransferredData()) {
-            if (null != out) {
-                out.println(System.currentTimeMillis() + ", transferAll --Sent transferred signal with the number "
-                        + "of data: " + count);
-                out.flush();
+            if (null != logProtocol) {
+                logProtocol.createSignalSENDLog(SignalName.TRANSFERRED, count
+                        , getNameInfo().getTargetIntermediaryNodeName());
             }
             //sending a "transferred" signal with the count of the sent items
             new SendSignalAction(Signal.TRANSFERRED, getNameInfo().getTargetIntermediaryNodeName(),
                     count, signalCon).execute();
         } else if (transferredId == 0) {
-            if (null != out) {
-                out.println(System.currentTimeMillis()
-                        + ", transferAll --Sending transferred signal with the last transferred Id: " + transferredId);
-                out.flush();
+            if (null != logProtocol) {
+                logProtocol.createSignalSENDLog(SignalName.TRANSFERRED, transferredId
+                        , getNameInfo().getTargetIntermediaryNodeName());
             }
             //sending a "transferred" signal with the id of the last transferred items
             new SendSignalAction(Signal.TRANSFERRED, getNameInfo().getTargetIntermediaryNodeName(),
@@ -190,10 +174,10 @@ public class TransferDataStrategy implements ITransferDataStrategy {
             new SendSignalAction(Signal.COMPLETED, SwitchNodeNameInfo.getInstance().getPrecedingNodeName(), 
                     true, signalCon).execute();
         }
-        if (null != out) {
-            out.println("The end of transferring all items to the target Spout. with outQueue size:" + outQueue.size()
-                + ", inQueue size:" + inQueue.size());
-            out.flush();
+        if (null != logProtocol) {
+            logProtocol.createGENLog("The end of transferring all items to the target Spout.");
+            logProtocol.createQUEUELog(QueueStatus.INPUT, inQueue.size());
+            logProtocol.createQUEUELog(QueueStatus.OUTPUT, outQueue.size());
         }
     }
 
@@ -214,11 +198,9 @@ public class TransferDataStrategy implements ITransferDataStrategy {
         outQueue.clear();
         SwitchStates.setPassivateOrgINT(true); // isPassivate = true;
         SwitchStates.setTransferringOrgINT(false); // isTransferring = false;
-        if (null != out) {
-            out.println(System.currentTimeMillis() + ", Go to passive and inform the end bolt.");
-            out.flush();
+        if (null != logProtocol) {
+            logProtocol.createGENLog("Go to passive and inform the end bolt.");
         }
-        LOGGER.info(System.currentTimeMillis() + ", Go to passive and inform the end bolt.");
         //sending a "goToPassive" signal with the value of "true"
         new SendSignalAction(Signal.GOTOPASSIVE, getNameInfo().getOriginalEndNodeName(),
                 true, signalCon).execute();
@@ -232,7 +214,6 @@ public class TransferDataStrategy implements ITransferDataStrategy {
      * @return the name of the host to be connected to.
      */
     private static String getHost(String nodeName) {
-        LOGGER.info("Getting the host, " + getNameInfo().getTopologyName() + ", " + nodeName);
         String host = NodeHostStorm.getHost(getNameInfo().getTopologyName(), nodeName);
         return host;
     }

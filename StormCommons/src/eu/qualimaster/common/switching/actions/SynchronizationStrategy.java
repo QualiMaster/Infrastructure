@@ -1,6 +1,5 @@
 package eu.qualimaster.common.switching.actions;
 
-import java.io.PrintWriter;
 import java.util.Queue;
 
 import org.apache.log4j.Logger;
@@ -9,6 +8,8 @@ import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.common.signal.AbstractSignalConnection;
 import eu.qualimaster.common.switching.QueueHolder;
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
+import switching.logging.LogProtocol;
+import switching.logging.SignalName;
 
 /**
  * Provides a synchronization strategy.
@@ -24,7 +25,7 @@ public class SynchronizationStrategy implements ISynchronizationStrategy {
     private int overloadSize;
     private long lastProcessedId;
     private long lastEmittedId;
-    private PrintWriter out;
+    private LogProtocol logProtocol;
     
     /**
      * Creates a synchronization strategy.
@@ -34,12 +35,12 @@ public class SynchronizationStrategy implements ISynchronizationStrategy {
      * @param signalCon
      *            the signal connection
      * @param overloadSize the size indicating queues are overloaded
-     * @param out the log writer used to write logs into corresponding files
+     * @param logProtocol the log protocol used to write logs into corresponding files
      */
     public SynchronizationStrategy(QueueHolder queueHolder, AbstractSignalConnection signalCon, int overloadSize,
-            PrintWriter out) {
+            LogProtocol logProtocol) {
         this(queueHolder, signalCon, overloadSize);
-        this.out = out;
+        this.logProtocol = logProtocol;
     }
     
     /**
@@ -67,9 +68,8 @@ public class SynchronizationStrategy implements ISynchronizationStrategy {
             if (lastProcessedId == lastEmittedId || outQueue.size() > overloadSize
                     || (lastEmittedId - lastProcessedId) > overloadSize) {
                 outQueue.clear();
-                if (null != out) {
-                    out.println(System.currentTimeMillis() + ", Enable v2, v4 and v8!");
-                    out.flush();
+                if (null != logProtocol) {
+                    logProtocol.createGENLog("Enable v2, v4 and v8!");
                 }
                 LOGGER.info(System.currentTimeMillis() + ", Enable v2, v4 and v8!");
                 new SendSignalAction(Signal.ENABLE, getNameInfo().getTargetEndNodeName(), true, signalCon).execute();
@@ -95,10 +95,9 @@ public class SynchronizationStrategy implements ISynchronizationStrategy {
             LOGGER.info(System.currentTimeMillis() + ", Request to send all tuples.");
             numTransferredData = (int) (lastEmittedId - lastProcessedId);
             firstId = lastEmittedId;
-            if (null != out) {
-                out.println(System.currentTimeMillis() 
-                        + ", Sending the transfer signal to the original intermediary node!");
-                out.flush();
+            if (null != logProtocol) {
+                logProtocol.createSignalSENDLog(SignalName.TRANSFER, numTransferredData, 
+                        getNameInfo().getOriginalIntermediaryNodeName());
             }
             new SendSignalAction(Signal.TRANSFER, getNameInfo().getOriginalIntermediaryNodeName(), numTransferredData,
                     signalCon).execute();
@@ -108,39 +107,35 @@ public class SynchronizationStrategy implements ISynchronizationStrategy {
             if (!inQueue.isEmpty()) {
                 id = inQueue.peek().getId();
             }
-            if (null != out) {
-                out.println(System.currentTimeMillis() + ", Synchronizing the last id of the current alg: " + id
+            if (null != logProtocol) {
+                logProtocol.createGENLog("Synchronizing the last id of the current alg: " + id
                         + " with the last processed id of the previous alg:" + lastProcessedId);
-                out.flush();
             }
             if (id > lastProcessedId) { // the current alg is faster than the
                                         // previous alg
                 numTransferredData = (int) (id - lastProcessedId) - 1;
-                if (null != out) {
-                    out.println(System.currentTimeMillis() + ", Sending the headId signal to the original intermediary "
-                            + "node with id:" + id + ", lastProcessedId: " + lastProcessedId);
-                    out.flush();
-                }
                 firstId = id - 1;
                 String headIdValue = String.valueOf(id) + "," + String.valueOf(lastProcessedId);
+                if (null != logProtocol) {
+                    logProtocol.createSignalSENDLog(SignalName.HEADID, headIdValue, 
+                            getNameInfo().getOriginalIntermediaryNodeName());
+                }
                 new SendSignalAction(Signal.HEADID, getNameInfo().getOriginalIntermediaryNodeName(), headIdValue,
                         signalCon).execute();
             } else {
                 while (id < lastProcessedId && !inQueue.isEmpty()) {
                     id = inQueue.poll().getId();
                 }
-                if (null != out) {
-                    out.println(System.currentTimeMillis() + ", Skipped tuples until the id:" + id
+                if (null != logProtocol) {
+                    logProtocol.createGENLog("Skipped tuples until the id:" + id
                             + ", with input queue size:" + inQueue.size());
-                    out.println(System.currentTimeMillis() + ", Completing the synchronization.");
-                    out.flush();
+                    logProtocol.createGENLog("Completing the synchronization.");
                 }
                 new CompleteSwitchAction(signalCon).execute();
             }
         }
-        if (null != out) {
-            out.println(System.currentTimeMillis() + ", Sending the enable signal to the target end node!");
-            out.flush();
+        if (null != logProtocol) {
+            logProtocol.createSignalSENDLog(SignalName.ENABLE, Boolean.TRUE, getNameInfo().getTargetEndNodeName());
         }
         new SendSignalAction(Signal.ENABLE, getNameInfo().getTargetEndNodeName(), true, signalCon).execute();
         // record the number of data items to be transferred

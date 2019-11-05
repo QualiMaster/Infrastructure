@@ -1,10 +1,7 @@
 package eu.qualimaster.common.switching.tupleEmit;
 
-import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.log4j.Logger;
 
 import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.common.switching.QueueHolder;
@@ -13,6 +10,7 @@ import eu.qualimaster.common.switching.SynchronizedQueue;
 import eu.qualimaster.common.switching.actions.IAction;
 import eu.qualimaster.common.switching.actions.SwitchStates;
 import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
+import switching.logging.LogProtocol;
 
 /**
  * Provide a tuple emit strategy for the case of using separated intermediary
@@ -24,10 +22,9 @@ import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
 public class SeparatedOrgINTTupleEmitStrategy extends AbstractTupleEmitStrategy {
     public static final String STRATEGYTYPE = AbstractTupleEmitStrategy.STRATEGYTYPE
             + SwitchNodeNameInfo.ORIGINALINTERMEDIARYNODE;
-    private static final Logger LOGGER = Logger.getLogger(SeparatedOrgINTTupleEmitStrategy.class);
     private SynchronizedQueue<ISwitchTuple> synInQueue;
     private Map<ActionState, List<IAction>> actionMap;
-    private PrintWriter out = null;
+    private LogProtocol logProtocol = null;
     private boolean flag = true;
     private boolean isDetermined = false;
     
@@ -37,12 +34,12 @@ public class SeparatedOrgINTTupleEmitStrategy extends AbstractTupleEmitStrategy 
      * @param queueHolder
      *            the queue holder.
      * @param actionMap the map containing the switch actions.
-     * @param out the <code>PrintWriter</code> instance used to write logs into corresponding files.
+     * @param logProtocol the log protocol used to write logs into corresponding files.
      */
     public SeparatedOrgINTTupleEmitStrategy(QueueHolder queueHolder, Map<ActionState, List<IAction>> actionMap, 
-            PrintWriter out) {
+            LogProtocol logProtocol) {
         this(queueHolder, actionMap);
-        this.out = out;
+        this.logProtocol = logProtocol;
     }
     
     /**
@@ -69,12 +66,10 @@ public class SeparatedOrgINTTupleEmitStrategy extends AbstractTupleEmitStrategy 
         
         if (!isDetermined && SwitchStates.getSwitchPoint() != 0L 
                 && System.currentTimeMillis() >= SwitchStates.getSwitchPoint()) {
-            if (null != out) { //write logs into a file.
-                out.println("The switch point is reached and executing the next actions.");
-                out.flush();
+            if (null != logProtocol) { //write logs into a file.
+                logProtocol.createSAFEPOINTLog();
             }
-            LOGGER.info("The switch point is reached and executing the next actions.");
-            SwitchStates.executeActions(ActionState.SWITCH_POINT_REACHED, actionMap, null, out);
+            SwitchStates.executeActions(ActionState.SWITCH_POINT_REACHED, actionMap, null, logProtocol);
             isDetermined = true;
         }
         
@@ -82,19 +77,16 @@ public class SeparatedOrgINTTupleEmitStrategy extends AbstractTupleEmitStrategy 
             result = synInQueue.consume();
             if (result.getId() != 0L) { // queue only during the switch
                 getOutQueue().offer(result);
-                if (null != out) {
-                    out.println("Store the tuple in the outQueue: " + getOutQueue().size());
-                    out.flush();
+                if (null != logProtocol) {
+                    logProtocol.createGENLog("Store the tuple in the outQueue and its size: " + getOutQueue().size());
                 }
-                LOGGER.info("Store the tuple in the outQueue: " + getOutQueue().size());
             }
         }
         if (flag) {
             flag = false;
-            if (null != out) {
-                out.println("Set the starting point when the original algorithm starts to process: "
+            if (null != logProtocol) {
+                logProtocol.createGENLog("Set the starting point when the original algorithm starts to process: "
                         + System.currentTimeMillis());
-                out.flush();
             }
             SwitchStates.setAlgStartPoint(System.currentTimeMillis());
         }

@@ -2,7 +2,6 @@ package eu.qualimaster.common.switching.tupleReceiving;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
 import java.util.Map;
@@ -18,10 +17,10 @@ import eu.qualimaster.base.serializer.KryoSwitchTupleSerializer;
 import eu.qualimaster.common.signal.AbstractSignalConnection;
 import eu.qualimaster.common.switching.SynchronizedQueue;
 import eu.qualimaster.common.switching.actions.CompleteSwitchAction;
-import eu.qualimaster.common.switching.actions.GoToActiveINTAction;
 import eu.qualimaster.common.switching.actions.IAction;
 import eu.qualimaster.common.switching.actions.SwitchStates;
 import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
+import switching.logging.LogProtocol;
 
 /**
  * An handler for receiving tuples for the warm-up switch with data
@@ -42,8 +41,8 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
     private InputStream in;
     private Input kryoInput = null;
     private boolean cont = true;
-    private PrintWriter out;
-
+    private LogProtocol logProtocol;
+    
     /**
      * Constructor for the tuple receiving handler for the warm-up switch with
      * data synchronization.
@@ -57,16 +56,16 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
      *            the tuple serializer
      * @param signalCon the signal connection used to send signals
      * @param actionMap the map containing the switch actions
-     * @param out the log writer used to write logs into corresponding files
+     * @param logProtocol the log protocol used to write logs into corresponding files
      * @throws IOException
      *             IO exception
      */
     public SeparatedTupleReceiverHandler(SynchronizedQueue<ISwitchTuple> synInQueue,
             SynchronizedQueue<ISwitchTuple> synTmpQueue, ISwitchTupleSerializer serializer, 
             AbstractSignalConnection signalCon, Map<ActionState, List<IAction>> actionMap, 
-            PrintWriter out) throws IOException {
+            LogProtocol logProtocol) throws IOException {
         this(synInQueue, synTmpQueue, serializer, signalCon, actionMap);
-        this.out = out;
+        this.logProtocol = logProtocol;
     }
     
     /**
@@ -106,37 +105,34 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
                 if (switchTuple != null) {
                     if (switchTuple.getId() > SwitchStates.getFirstTupleId() || switchTuple.getId() == 0) {
                         synInQueue.produce(switchTuple);
-                        if (null != out) {
-                            out.println(
-                                    System.currentTimeMillis() + ", inQueue-Received data with id: "
+                        if (null != logProtocol) {
+                            logProtocol.createGENLog("inQueue-Received data with id: "
                                     + switchTuple.getId() + ", firstId:" + SwitchStates.getFirstTupleId());
-                            out.flush();
                         }
                     } else { // will be only executed in the target one
                         synTmpQueue.produce(switchTuple);
-                        if (null != out) {
-                            out.println(
-                                    System.currentTimeMillis() + ", tmpQueue-Received the transferred data with id: "
+                        if (null != logProtocol) {
+                            logProtocol.createGENLog("tmpQueue-Received the transferred data with id: "
                                     + switchTuple.getId() + ", firstId:" + SwitchStates.getFirstTupleId());
-                            out.flush();
                         }
                         if (synOnce) {
                             synOnce = false;
                             SwitchStates.executeActions(ActionState.FIRST_TRANSFERRED_DATA_ARRIVED, actionMap, 
-                                    null, out);
+                                    null, logProtocol);
                         }
                         if (switchTuple.getId() == SwitchStates.getFirstTupleId()) {
-                            if (null != out) {
-                                out.println(System.currentTimeMillis() + ", reached the last transferred data, firstId:"
+                            if (null != logProtocol) {
+                                logProtocol.createGENLog("reached the last transferred data, firstId:"
                                         + SwitchStates.getFirstTupleId());
-                                out.flush();
+                                logProtocol.createSynENDLog();
                             }
                             new CompleteSwitchAction(signalCon).execute();
                         }
                     }
                 }
-
             } catch (KryoException e) {
+                e.printStackTrace();
+            } catch (NegativeArraySizeException e) {
                 e.printStackTrace();
             }
         }
