@@ -12,7 +12,6 @@ import eu.qualimaster.common.logging.DataLogger;
 import eu.qualimaster.common.signal.BaseSignalSpout;
 import eu.qualimaster.common.switching.actions.IAction;
 import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
-import switching.logging.LogWriter;
 
 /**
  * Implements a basic switching Spout, acting as the intermediary source.

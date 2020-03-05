@@ -12,7 +12,6 @@ import eu.qualimaster.common.logging.DataLogger;
 import eu.qualimaster.common.signal.BaseSignalBolt;
 import eu.qualimaster.common.switching.actions.IAction;
 import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
-import switching.logging.LogWriter;
 /**
  * Implements a basic switching Bolt, carrying the common parts for all switching-related bolts.
  * 
