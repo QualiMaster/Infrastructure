@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.log4j.Logger;
 
@@ -94,22 +96,71 @@ public class SwitchStates {
             actionList = actionMap.get(state);
         }
         for (int i = 0; i < actionList.size(); i++) {
-            if (null != logProtocol) {
-                logProtocol.createGENLog("Executing actions: " + actionList.get(i) + ", is a send signal action?"
-                        + (actionList.get(i) instanceof SendSignalAction));
-            }
-            LOGGER.info("Executing actions: " + actionList.get(i) + ", is a send signal action?"
-                    + (actionList.get(i) instanceof SendSignalAction));
-            if (null != value & (actionList.get(i) instanceof SendSignalAction)) {
+//            if (null != logProtocol) {
+//                logProtocol.createGENLog("Executing actions: " + actionList.get(i) + ", is a send signal action?"
+//                        + (actionList.get(i) instanceof SendSignalAction));
+//            }
+            if (null != value && (actionList.get(i) instanceof SendSignalAction)) {
                 SendSignalAction action = (SendSignalAction) actionList.get(i);
-                if (null != logProtocol) {
-                    logProtocol.createGENLog("Executing a send signal action with runtime value to be updated, "
-                            + "the signal: " + action.getSignal().getSignalName());
-                }
+//                if (null != logProtocol) {
+//                    logProtocol.createGENLog("Executing a send signal action with runtime value to be updated, "
+//                            + "the signal: " + action.getSignal().getSignalName());
+//                }
                 action.updateValue(value);
                 action.execute();
             } else {
                 actionList.get(i).execute();
+//                if (null != logProtocol) {
+//                    logProtocol.createGENLog("The action is executed.");
+//                }
+            }
+        }
+    }
+    
+    /**
+     * Executes actions found in the action map.
+     * @param state the action state
+     * @param actionMap the action map containing the action list for each action state
+     * @param value the value to be updated at runtime if given (only for <code>SendSignalAction</code>)
+     * @param useThreadPool whether it uses the thread pool to execute the actions.
+     * @param logProtocol the log protocol used to write logs to corresponding files.
+     */
+    public static void executeActions(ActionState state, Map<ActionState, List<IAction>> actionMap, 
+            Serializable value, boolean useThreadPool, LogProtocol logProtocol) {
+        ExecutorService executor = null;
+        List<IAction> actionList = new ArrayList<IAction>();
+        if (actionMap.containsKey(state)) {
+            actionList = actionMap.get(state);
+        }
+        if (useThreadPool) {
+            executor = Executors.newFixedThreadPool(10);
+        }
+        for (int i = 0; i < actionList.size(); i++) {
+//            if (null != logProtocol) {
+//                logProtocol.createGENLog("Executing actions: " + actionList.get(i) + ", is a send signal action?"
+//                        + (actionList.get(i) instanceof SendSignalAction));
+//            }
+            if (null != value && (actionList.get(i) instanceof SendSignalAction)) {
+                SendSignalAction action = (SendSignalAction) actionList.get(i);
+//                if (null != logProtocol) {
+//                    logProtocol.createGENLog("Executing a send signal action with runtime value to be updated, "
+//                            + "the signal: " + action.getSignal().getSignalName());
+//                }
+                action.updateValue(value);
+                if (useThreadPool) {
+                    executor.execute(new RunnableAction(action));
+                } else {
+                    action.execute();
+                }
+            } else {
+                if (useThreadPool) {
+                    executor.execute(new RunnableAction(actionList.get(i)));
+                } else {
+                    actionList.get(i).execute();
+                }
+//                if (null != logProtocol) {
+//                    logProtocol.createGENLog("The action is executed.");
+//                }
             }
         }
     }

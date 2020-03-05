@@ -13,6 +13,8 @@ public class LogProtocol {
     private NodeType nodeType;
     private String nodeName;
     private PrintWriter out;
+//    private LogWriter logWriter;
+//    private boolean isStarted;
 
     /**
      * Constructor of the log protocol.
@@ -43,6 +45,24 @@ public class LogProtocol {
         this.out = out;
     }
 
+//    /**
+//     * Constructor of the log protocol.
+//     * 
+//     * @param nodeType
+//     *            the node type
+//     * @param nodeName
+//     *            the node name
+//     * @param logWriter
+//     *            the log writer
+//     */
+//    public LogProtocol(NodeType nodeType, String nodeName, LogWriter logWriter) {
+//        this.nodeType = nodeType;
+//        this.nodeName = nodeName;
+//        this.logWriter = logWriter;
+////        this.logWriter.start();
+//        isStarted = false;
+//    }
+    
     /**
      * Creates a log prefix.
      * 
@@ -65,7 +85,27 @@ public class LogProtocol {
         writeLog(result);
         return result;
     }
-
+    
+    /**
+     * Creates the log indicating the switch is requested.
+     * @return the switch request log
+     */
+    public String createSWRequestLog() {
+        String result = LogType.SWITCH_REQUEST + createLogPrefix() + "The switch is requested!";
+        writeLog(result);
+        return result;
+    }
+    
+    /**
+     * Creates the log indicating the switch is completed.
+     * @return the switch completed log
+     */
+    public String createSWCompletedLog() {
+        String result = LogType.SWITCH_COMPLETED + createLogPrefix() + "The switch is completed!";
+        writeLog(result);
+        return result;
+    }
+    
     /**
      * Creates a signal receiving related log.
      * 
@@ -194,6 +234,19 @@ public class LogProtocol {
      * 
      * @return the safe point related log
      */
+    public String createSWDeterminedLog() {
+        String result;
+        String logBody = "The switch is determined!";
+        result = LogType.SWITCH_DETERMINED + createLogPrefix() + logBody;
+        writeLog(result);
+        return result;
+    }
+
+    /**
+     * Creates the safe point related log.
+     * 
+     * @return the safe point related log
+     */
     public String createSAFEPOINTLog() {
         String result;
         String logBody = "Handling the safepoint!";
@@ -201,7 +254,7 @@ public class LogProtocol {
         writeLog(result);
         return result;
     }
-
+    
     /**
      * Creates the log indicating the end of the synchronization phase.
      * 
@@ -242,5 +295,33 @@ public class LogProtocol {
             out.println(log);
             out.flush();
         }
+//        if (null != logWriter) {
+//            logWriter.pushLog(log);
+//        }
     }
+    
+//    /**
+//     * Return whether the log writer is started.
+//     * @return <code>true</code> if it is started, otherwise <code>false</code>
+//     */
+//    public boolean isStarted() {
+//        return isStarted;
+//    }
+//    
+//    /**
+//     * Starts the log writer.
+//     */
+//    public void start() {
+//        logWriter.start();
+//        isStarted = true;
+//    }
+//    
+//    
+//    /**
+//     * Stops the log writer.
+//     */
+//    public void stop() {
+//        logWriter.stop();
+//        isStarted = false;
+//    }
 }

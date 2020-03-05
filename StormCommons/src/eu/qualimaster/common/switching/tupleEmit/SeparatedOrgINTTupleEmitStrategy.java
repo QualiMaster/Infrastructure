@@ -67,6 +67,7 @@ public class SeparatedOrgINTTupleEmitStrategy extends AbstractTupleEmitStrategy 
         if (!isDetermined && SwitchStates.getSwitchPoint() != 0L 
                 && System.currentTimeMillis() >= SwitchStates.getSwitchPoint()) {
             if (null != logProtocol) { //write logs into a file.
+                logProtocol.createSWDeterminedLog();
                 logProtocol.createSAFEPOINTLog();
             }
             SwitchStates.executeActions(ActionState.SWITCH_POINT_REACHED, actionMap, null, logProtocol);

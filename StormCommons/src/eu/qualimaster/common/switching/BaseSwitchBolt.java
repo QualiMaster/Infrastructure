@@ -12,6 +12,7 @@ import eu.qualimaster.common.logging.DataLogger;
 import eu.qualimaster.common.signal.BaseSignalBolt;
 import eu.qualimaster.common.switching.actions.IAction;
 import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
+import switching.logging.LogWriter;
 /**
  * Implements a basic switching Bolt, carrying the common parts for all switching-related bolts.
  * 
@@ -22,6 +23,7 @@ import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
 public abstract class BaseSwitchBolt extends BaseSignalBolt {
     private Map<ActionState, List<IAction>> actionMap;
     private transient PrintWriter logWriter = null;
+//    private transient LogWriter logWriter = null;
     
     /**
      * Creates a switch Bolt.
@@ -43,6 +45,7 @@ public abstract class BaseSwitchBolt extends BaseSignalBolt {
     public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
         super.prepare(conf, context, collector);
         String logDir = (String) conf.get("LOG.DIRECTORY");
+//        logWriter = new LogWriter(DataLogger.getPrintWriter(logDir + getName() + ".log"));
         logWriter = DataLogger.getPrintWriter(logDir + getName() + ".log");
     }
     
@@ -75,6 +78,14 @@ public abstract class BaseSwitchBolt extends BaseSignalBolt {
     protected Map<ActionState, List<IAction>> getActionMap() {
         return this.actionMap;
     }
+    
+//    /**
+//     * Returns the log writer.
+//     * @return the log writer
+//     */
+//    protected LogWriter getLogWriter() {
+//        return logWriter;
+//    }
     
     /**
      * Returns the log writer.

@@ -12,6 +12,7 @@ import eu.qualimaster.common.logging.DataLogger;
 import eu.qualimaster.common.signal.BaseSignalSpout;
 import eu.qualimaster.common.switching.actions.IAction;
 import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
+import switching.logging.LogWriter;
 
 /**
  * Implements a basic switching Spout, acting as the intermediary source.
@@ -23,6 +24,7 @@ import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
 public abstract class BaseSwitchSpout extends BaseSignalSpout {
 //    private AbstractSwitchMechanism mechanism;
     private Map<ActionState, List<IAction>> actionMap;
+//    private transient LogWriter logWriter = null;
     private transient PrintWriter logWriter = null;
     
     /**
@@ -45,6 +47,7 @@ public abstract class BaseSwitchSpout extends BaseSignalSpout {
     public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
         super.open(conf, context, collector);
         String logDir = (String) conf.get("LOG.DIRECTORY");
+//        logWriter = new LogWriter(DataLogger.getPrintWriter(logDir + getName() + ".log"));
         logWriter = DataLogger.getPrintWriter(logDir + getName() + ".log");
     }
     
@@ -77,6 +80,14 @@ public abstract class BaseSwitchSpout extends BaseSignalSpout {
     protected Map<ActionState, List<IAction>> getActionMap() {
         return this.actionMap;
     }
+    
+//    /**
+//     * Returns the log writer.
+//     * @return the log writer
+//     */
+//    protected LogWriter getLogWriter() {
+//        return logWriter;
+//    }
     
     /**
      * Returns the log writer.
