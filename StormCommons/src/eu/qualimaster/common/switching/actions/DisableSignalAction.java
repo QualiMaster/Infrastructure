@@ -59,7 +59,7 @@ public class DisableSignalAction implements IAction {
      * Sends a disable signal.
      * @param nodeName the node to be sent to
      */
-    public void sendDisableSignal(String nodeName) {
+    private void sendDisableSignal(String nodeName) {
         DisableSignal.sendSignal(getNameInfoInstance().getTopologyName(), nodeName, false, signalCon);
     }
     

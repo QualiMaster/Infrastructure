@@ -56,7 +56,7 @@ public class EnableSignalAction implements IAction {
      * Sends a disable signal.
      * @param nodeName the node to be sent to
      */
-    public void sendEnableSignal(String nodeName) {
+    private void sendEnableSignal(String nodeName) {
         EnableSignal.sendSignal(getNameInfoInstance().getTopologyName(), nodeName, true, signalCon);
     }
     
