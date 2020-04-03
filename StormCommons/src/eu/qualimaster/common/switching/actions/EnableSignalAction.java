@@ -1,7 +1,6 @@
 package eu.qualimaster.common.switching.actions;
 
 import eu.qualimaster.common.signal.AbstractSignalConnection;
-import eu.qualimaster.common.signal.EnableSignal;
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
 /**
  * Actions for enabling data streams via signal.
@@ -9,22 +8,15 @@ import eu.qualimaster.common.switching.SwitchNodeNameInfo;
  *
  */
 public class EnableSignalAction implements IAction {
-    /**
-     * Lists all the stream flows to be enabled by sending a signal.
-     */
-    public enum EnableStreamSignal {
-        PRE_v8, ORGINT_v2, ORGINT_v8, TGTINT_v2, TGTINT_v8
-    }
-    
     private AbstractSignalConnection signalCon;
-    private EnableStreamSignal streamFlow;
+    private StreamFlowSignal streamFlow;
 
     /**
      * Constructor.
      * @param signalCon the signal connection used to send signals
      * @param streamFlow the stream flow to be enabled via a signal.
      */
-    public EnableSignalAction(AbstractSignalConnection signalCon, EnableStreamSignal streamFlow) {
+    public EnableSignalAction(AbstractSignalConnection signalCon, StreamFlowSignal streamFlow) {
         this.signalCon = signalCon;
         this.streamFlow = streamFlow;
     }
@@ -57,7 +49,7 @@ public class EnableSignalAction implements IAction {
      * @param nodeName the node to be sent to
      */
     private void sendEnableSignal(String nodeName) {
-        EnableSignal.sendSignal(getNameInfoInstance().getTopologyName(), nodeName, true, signalCon);
+        new SendSignalAction(Signal.ENABLE, nodeName, true, signalCon).execute();
     }
     
     /**

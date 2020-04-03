@@ -8,7 +8,7 @@ package eu.qualimaster.common.switching.actions;
  * @author Cui Qin
  *
  */
-public enum ControlStreamFlag {
+public enum StreamFlowFlag {
     PRE_v1 {
         // disable the stream flow PRE -> ORGINT
         @Override

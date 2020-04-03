@@ -74,7 +74,7 @@ public class SynchronizationStrategy implements ISynchronizationStrategy {
                 LOGGER.info(System.currentTimeMillis() + ", Enable v2, v4 and v8!");
                 new SendSignalAction(Signal.ENABLE, getNameInfo().getTargetEndNodeName(), true, signalCon).execute();
                 new SendSignalAction(Signal.ENABLE, getNameInfo().getPrecedingNodeName(), true, signalCon).execute();
-                new EnableFlagAction(ControlStreamFlag.TGTINT_v4).execute();
+                new EnableFlagAction(StreamFlowFlag.TGTINT_v4).execute();
                 new CompleteSwitchAction(signalCon).execute();
             } else {
                 SwitchStates.setTransferringTrgINT(true); // it is in the

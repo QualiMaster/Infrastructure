@@ -4,7 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import eu.qualimaster.common.signal.SignalStates;
-import eu.qualimaster.common.switching.actions.ControlStreamFlag;
+import eu.qualimaster.common.switching.actions.StreamFlowFlag;
 import eu.qualimaster.common.switching.actions.DisableFlagAction;
 import eu.qualimaster.common.switching.actions.EnableFlagAction;
 /**
@@ -18,7 +18,7 @@ public class StreamControlFlagActionTest {
      */
     @Test
     public void testDisableFlagAction() {
-        DisableFlagAction flagAction = new DisableFlagAction(ControlStreamFlag.PRE_v1);
+        DisableFlagAction flagAction = new DisableFlagAction(StreamFlowFlag.PRE_v1);
         flagAction.execute();
         Assert.assertEquals(SignalStates.isEmitOrgPRE(), false);
     }
@@ -28,7 +28,7 @@ public class StreamControlFlagActionTest {
      */
     @Test
     public void testEnableFlagAction() {
-        EnableFlagAction flagAction = new EnableFlagAction(ControlStreamFlag.PRE_v1);
+        EnableFlagAction flagAction = new EnableFlagAction(StreamFlowFlag.PRE_v1);
         flagAction.execute();
         Assert.assertEquals(SignalStates.isEmitOrgPRE(), true);
     }
