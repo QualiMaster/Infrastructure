@@ -3,9 +3,6 @@ package eu.qualimaster.common.switching.tupleReceiving;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.log4j.Logger;
 
 import com.esotericsoftware.kryo.KryoException;
@@ -17,7 +14,7 @@ import eu.qualimaster.base.serializer.KryoSwitchTupleSerializer;
 import eu.qualimaster.common.signal.AbstractSignalConnection;
 import eu.qualimaster.common.switching.SynchronizedQueue;
 import eu.qualimaster.common.switching.actions.CompleteSwitchAction;
-import eu.qualimaster.common.switching.actions.IAction;
+import eu.qualimaster.common.switching.actions.SwitchActionMap;
 import eu.qualimaster.common.switching.actions.SwitchStates;
 import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
 import switching.logging.LogProtocol;
@@ -36,7 +33,7 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
     private SynchronizedQueue<ISwitchTuple> synTmpQueue;
     private KryoSwitchTupleSerializer serializer;
     private AbstractSignalConnection signalCon;
-    private Map<ActionState, List<IAction>> actionMap;
+    private SwitchActionMap switchActionMap;
     private Socket socket;
     private InputStream in;
     private Input kryoInput = null;
@@ -55,16 +52,16 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
      * @param serializer
      *            the tuple serializer
      * @param signalCon the signal connection used to send signals
-     * @param actionMap the map containing the switch actions
+     * @param switchActionMap the map containing the switch actions
      * @param logProtocol the log protocol used to write logs into corresponding files
      * @throws IOException
      *             IO exception
      */
     public SeparatedTupleReceiverHandler(SynchronizedQueue<ISwitchTuple> synInQueue,
             SynchronizedQueue<ISwitchTuple> synTmpQueue, ISwitchTupleSerializer serializer, 
-            AbstractSignalConnection signalCon, Map<ActionState, List<IAction>> actionMap, 
+            AbstractSignalConnection signalCon, SwitchActionMap switchActionMap, 
             LogProtocol logProtocol) throws IOException {
-        this(synInQueue, synTmpQueue, serializer, signalCon, actionMap);
+        this(synInQueue, synTmpQueue, serializer, signalCon, switchActionMap);
         this.logProtocol = logProtocol;
     }
     
@@ -80,18 +77,18 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
      * @param serializer
      *            the tuple serializer
      * @param signalCon the signal connection used to send signals
-     * @param actionMap the map containing the switch actions
+     * @param switchActionMap the map containing the switch actions
      * @throws IOException
      *             IO exception
      */
     public SeparatedTupleReceiverHandler(SynchronizedQueue<ISwitchTuple> synInQueue,
             SynchronizedQueue<ISwitchTuple> synTmpQueue, ISwitchTupleSerializer serializer, 
-            AbstractSignalConnection signalCon, Map<ActionState, List<IAction>> actionMap) throws IOException {
+            AbstractSignalConnection signalCon, SwitchActionMap switchActionMap) throws IOException {
         this.synInQueue = synInQueue;
         this.synTmpQueue = synTmpQueue;
         this.serializer = (KryoSwitchTupleSerializer) serializer;
         this.signalCon = signalCon;
-        this.actionMap = actionMap;
+        this.switchActionMap = switchActionMap;
     }
 
     @Override
@@ -117,8 +114,8 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
                         }
                         if (synOnce) {
                             synOnce = false;
-                            SwitchStates.executeActions(ActionState.FIRST_TRANSFERRED_DATA_ARRIVED, actionMap, 
-                                    null, logProtocol);
+                            switchActionMap.executeActions(ActionState.FIRST_TRANSFERRED_DATA_ARRIVED, null, 
+                                  true, logProtocol);
                         }
                         if (switchTuple.getId() == SwitchStates.getFirstTupleId()) {
                             if (null != logProtocol) {

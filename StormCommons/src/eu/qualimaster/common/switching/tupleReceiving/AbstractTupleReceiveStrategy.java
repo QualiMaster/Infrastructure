@@ -1,14 +1,10 @@
 package eu.qualimaster.common.switching.tupleReceiving;
 
-import java.util.List;
-import java.util.Map;
-
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.base.serializer.ISwitchTupleSerializer;
 import eu.qualimaster.common.signal.AbstractSignalConnection;
-import eu.qualimaster.common.switching.actions.IAction;
-import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
+import eu.qualimaster.common.switching.actions.SwitchActionMap;
 
 /**
  * Provide an abstract strategy for tuple receiving.
@@ -20,19 +16,19 @@ public abstract class AbstractTupleReceiveStrategy implements ITupleReceiveStrat
     private static final Logger LOGGER = Logger.getLogger(AbstractTupleReceiveStrategy.class);
     private ISwitchTupleSerializer serializer;
     private AbstractSignalConnection signalCon;
-    private Map<ActionState, List<IAction>> actionMap;
+    private SwitchActionMap switchActionMap;
     
     /**
      * Constructor of the abstract strategy of tuple receiving.
      * @param serializer the tuple serializer
      * @param signalCon the signal connection used to send signals
-     * @param actionMap the map containing the switch actions
+     * @param switchActionMap the map containing the switch actions
      */
     public AbstractTupleReceiveStrategy(ISwitchTupleSerializer serializer, AbstractSignalConnection signalCon, 
-            Map<ActionState, List<IAction>> actionMap) {
+    		SwitchActionMap switchActionMap) {
         this.serializer = serializer;
         this.signalCon = signalCon;
-        this.actionMap = actionMap;
+        this.switchActionMap = switchActionMap;
     }
     
     @Override
@@ -57,11 +53,11 @@ public abstract class AbstractTupleReceiveStrategy implements ITupleReceiveStrat
     }
     
     /**
-     * Returns the action map.
-     * @return the action map
+     * Returns the switch action map.
+     * @return the switch action map
      */
-    public Map<ActionState, List<IAction>> getActionMap() {
-        return actionMap;
+    public SwitchActionMap getActionMap() {
+        return switchActionMap;
     }
 
     @Override

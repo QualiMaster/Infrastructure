@@ -52,8 +52,7 @@ public class TransferDataStrategy implements ITransferDataStrategy {
     public void transferData() {
         lastProcessedId = SwitchStates.getLastProcessedId();
         headId = SwitchStates.getHeadId();
-        host = getHost(getNameInfo().getTargetIntermediaryNodeName());
-        sender = new TupleSender(host, SwitchStates.getTargetPort());
+        connectTargetNode();
         if (null != logProtocol) {
             logProtocol.createGENLog("Transferring data to the host: " + host + ", the headId: " + headId 
                     + ", the lastProcessedId: " + lastProcessedId);
@@ -66,6 +65,14 @@ public class TransferDataStrategy implements ITransferDataStrategy {
             }
             goToPassive(); // the original intermediary node goes to passive
         }
+    }
+    
+    /**
+     * Connect the target node.
+     */
+    private void connectTargetNode() {
+    	host = getHost(getNameInfo().getTargetIntermediaryNodeName());
+        sender = new TupleSender(host, SwitchStates.getTargetPort());
     }
     
     /**

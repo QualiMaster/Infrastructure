@@ -45,6 +45,9 @@ public class SlidingWindowBasedSwitchPoint extends AbstractWindowBasedSwitchPoin
         if (0 == determinationBegin) {
             determinationBegin = SwitchStates.getDeterminationBegin();
         }
+        if (0 == algStart) {
+        	algStart = SwitchStates.getAlgStartPoint();
+        }
         if (0 != algStart && 0 != determinationBegin) {
             //determine the end point in the current window
             long windowEnd = determineWindowEnd();
