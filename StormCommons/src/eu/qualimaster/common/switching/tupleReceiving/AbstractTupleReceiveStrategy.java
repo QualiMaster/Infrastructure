@@ -1,5 +1,7 @@
 package eu.qualimaster.common.switching.tupleReceiving;
 
+import java.io.IOException;
+
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.base.serializer.ISwitchTupleSerializer;
@@ -17,6 +19,7 @@ public abstract class AbstractTupleReceiveStrategy implements ITupleReceiveStrat
     private ISwitchTupleSerializer serializer;
     private AbstractSignalConnection signalCon;
     private SwitchActionMap switchActionMap;
+    private TupleReceiveServer server;
     
     /**
      * Constructor of the abstract strategy of tuple receiving.
@@ -63,7 +66,17 @@ public abstract class AbstractTupleReceiveStrategy implements ITupleReceiveStrat
     @Override
     public void initTupleReceiveServer(int port) {
         LOGGER.info("Creating a socket server with the port:" + port);
-        TupleReceiveServer server = new TupleReceiveServer(this, port);
+        server = new TupleReceiveServer(this, port);
         server.start();
+    }
+    
+    @Override
+    public void stopTupleReceiveServer() {
+    	LOGGER.info("Stopping the tuple receive server....");
+    	try {
+			server.stop();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
     }
 }
