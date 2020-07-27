@@ -33,7 +33,7 @@ public class TupleSender {
      * Connects the host server.
      * @return true if connected, otherwise false
      */
-    private boolean connect() {
+    public boolean connect() {
         Socket s = null;
         if (null == socket) {
             try {
