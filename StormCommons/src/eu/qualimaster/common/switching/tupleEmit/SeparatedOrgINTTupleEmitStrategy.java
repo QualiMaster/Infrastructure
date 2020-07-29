@@ -69,15 +69,16 @@ public class SeparatedOrgINTTupleEmitStrategy extends AbstractTupleEmitStrategy 
             switchActionMap.executeActions(ActionState.SWITCH_POINT_REACHED, null, true, logProtocol);
             SwitchStates.setDetermined(true);
         }
-        
+
         if ((!getInQueue().isEmpty()) && (!SwitchStates.isPassivateOrgINT())) {
             result = synInQueue.consume();
-            if (result.getId() != 0L) { // queue only during the switch
-                getOutQueue().offer(result);
-                if (null != logProtocol) {
-                    logProtocol.createGENLog("Store the tuple in the outQueue and its size: " + getOutQueue().size());
-                }
-            }
+            //!!!this part moved to the pipeline to ensure the stored tuples are really emitted to the algorithm
+//            if (result.getId() != 0L) { // queue only during the switch
+//                getOutQueue().offer(result);
+//                if (null != logProtocol) {
+//                    logProtocol.createGENLog("Store the tuple in the outQueue and its size: " + getOutQueue().size());
+//                }
+//            }
         }
         if (flag) {
             flag = false;
