@@ -1,9 +1,13 @@
 package eu.qualimaster.common.logging;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Writer;
 
 import eu.qualimaster.file.Utils;
 
@@ -20,16 +24,18 @@ public class DataLogger {
      */
     public static PrintWriter getPrintWriter(String filePath) {
         PrintWriter writer = null;
-        FileOutputStream fileOut = null;
+        Writer fileOut = null;
         try {
             File file = new File(filePath);
             file.setReadable(true, false);
             file.setWritable(true, false);
-            fileOut = Utils.createFileOutputStream(file, false);
-            writer = new PrintWriter(fileOut);
+//            fileOut = Utils.createFileOutputStream(file, false);
+            writer = new PrintWriter(new BufferedWriter(new FileWriter(file)));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        }
+        } catch (IOException e) {
+			e.printStackTrace();
+		}
         return writer;
     }
     
