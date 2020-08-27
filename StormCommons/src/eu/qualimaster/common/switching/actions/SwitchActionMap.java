@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
+import eu.qualimaster.common.switching.actions.ActionState;
 import switching.logging.LogProtocol;
 /**
  * Create a map of switch actions equipped with switch states.
@@ -59,10 +59,6 @@ public class SwitchActionMap {
 			actionList = actionMap.get(state);
 		}
 		for (int i = 0; i < actionList.size(); i++) {
-//            if (null != logProtocol) {
-//                logProtocol.createGENLog("Executing actions: " + actionList.get(i) + ", is a send signal action?"
-//                        + (actionList.get(i) instanceof SendSignalAction));
-//            }
 			if (null != value && (actionList.get(i) instanceof SendSignalAction)) {
 				SendSignalAction action = (SendSignalAction) actionList.get(i);
 //                if (null != logProtocol) {
@@ -97,36 +93,29 @@ public class SwitchActionMap {
 		if (actionMap.containsKey(state)) {
 			actionList = actionMap.get(state);
 		}
-		if (useThreadPool) {
+//		if (useThreadPool) {
 			executor = Executors.newFixedThreadPool(10);
-		}
+//		}
 		for (int i = 0; i < actionList.size(); i++) {
-			if (null != logProtocol) {
-				logProtocol.createGENLog("Executing actions: " + actionList.get(i) + ", is a send signal action?"
-						+ (actionList.get(i) instanceof SendSignalAction));
-			}
 			if (null != value && (actionList.get(i) instanceof SendSignalAction)) {
 				SendSignalAction action = (SendSignalAction) actionList.get(i);
-//                if (null != logProtocol) {
-//                    logProtocol.createGENLog("Executing a send signal action with runtime value to be updated, "
-//                            + "the signal: " + action.getSignal().getSignalName());
-//                }
 				action.updateValue(value);
-				if (useThreadPool) {
+//				if (useThreadPool) {
 					executor.execute(new RunnableAction(action));
-				} else {
-					action.execute();
-				}
+//				} else {
+//					action.execute();
+//				}
 			} else {
-				if (useThreadPool) {
+//				if (useThreadPool) {
 					executor.execute(new RunnableAction(actionList.get(i)));
-				} else {
-					actionList.get(i).execute();
-				}
-//                if (null != logProtocol) {
-//                    logProtocol.createGENLog("The action is executed.");
-//                }
+//				} else {
+//					actionList.get(i).execute();
+//				}
 			}
+			
+//			if (null != logProtocol) {
+//				logProtocol.createGENLog("Executed actions: " + actionList.get(i));
+//			}
 		}
 	}
 	

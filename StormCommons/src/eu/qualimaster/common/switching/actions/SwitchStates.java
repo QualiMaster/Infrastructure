@@ -6,44 +6,7 @@ import eu.qualimaster.base.serializer.KryoSwitchTupleSerializer;
  * @author Cui Qin
  *
  */
-public class SwitchStates {
-    /**
-     * An enumeration listing all action-related states.
-     * @author Cui Qin
-     *
-     */
-    public enum ActionState {
-        ALGORITHM_CHANGE,
-        SWITCH_POINT_REACHED,
-        WARMUP_OVER,
-        WAITING_AFTER_WARMUP_OVER,
-        WAITING_AFTER_WARMUP_OVER_COMPLETED_SIGNAL_ARRIVED,
-        WAITING_AFTER_WARMUP_OVER_ENABLE_SIGNAL_ARRIVED,
-        DISABLE_SIGNAL_ARRIVED,
-        ENACT_SIGNAL_ARRIVED,
-        LASTPROCESSEDID_SIGNAL_ARRIVED,
-        DISABLE_LASTPROCESSEDID_SIGNAL_ARRIVED,
-        STOPPED_SIGNAL_ARRIVED,
-        HEADID_SIGNAL_ARRIVED,
-        TRANSFER_SIGNAL_ARRIVED,
-        TRANSFERRED_SIGNAL_ARRIVED,
-        EMIT_SIGNAL_ARRIVED,
-        ENABLE_SIGNAL_ARRIVED,
-        COMPLETED_SIGNAL_ARRIVED,
-        //SYNCHRONIZED_SIGNAL_ARRIVED,
-        GOTOPASSIVE_SIGNAL_ARRIVED,
-        GOTOACTIVE_SIGNAL_ARRIVED,
-        WAITING_AFTER_DIABLE_SIGNAL_OVER,
-        FIRST_TRANSFERRED_DATA_ARRIVED,
-        DATA_TRANSFERRED,
-        DATA_SYNCHRONIZED,
-        DATA_JUST_ARRIVED,
-        OLD_ALG_DRAINED,
-        OLD_ALG_DRAINED_DATA_TRANSFERRED,
-        WAITING_AFTER_SWITCH_POINT_OVER,
-        OUTPUT_PRODUCED
-    };
-    
+public class SwitchStates {   
     private static long lastProcessedId = 0;
     private static long lastEmittedId = 0;
     private static long headId = 0;

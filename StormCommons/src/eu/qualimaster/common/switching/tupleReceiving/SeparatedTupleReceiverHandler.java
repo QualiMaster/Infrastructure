@@ -16,7 +16,7 @@ import eu.qualimaster.common.switching.SynchronizedQueue;
 import eu.qualimaster.common.switching.actions.CompleteSwitchAction;
 import eu.qualimaster.common.switching.actions.SwitchActionMap;
 import eu.qualimaster.common.switching.actions.SwitchStates;
-import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
+import eu.qualimaster.common.switching.actions.ActionState;
 import switching.logging.LogProtocol;
 
 /**
