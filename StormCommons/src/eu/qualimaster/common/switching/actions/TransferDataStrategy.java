@@ -58,12 +58,15 @@ public class TransferDataStrategy implements ITransferDataStrategy {
                     + ", the lastProcessedId: " + lastProcessedId);
         }
         if (lastProcessedId != 0) {
-            if (SwitchStates.isTransferAll()) {
+        	logProtocol.createGENLog("isTransferAll:" + SwitchStates.isTransferAll());
+            if (headId == 0 || SwitchStates.isTransferAll()) {
                 transferAllOrgINT();
             } else if (headId != 0) {
                 transferMissingItemsOrgINT();
             }
             goToPassive(); // the original intermediary node goes to passive
+        } else {
+        	logProtocol.createGENLog("Error: the lastProcessedId is ZERO!!!");
         }
     }
     

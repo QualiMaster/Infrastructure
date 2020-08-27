@@ -95,13 +95,13 @@ public class SynchronizationStrategy implements ISynchronizationStrategy {
             LOGGER.info(System.currentTimeMillis() + ", Request to send all tuples.");
             numTransferredData = (int) (lastEmittedId - lastProcessedId);
             firstId = lastEmittedId;
+            SwitchStates.setTransferAll(true); // record that it is set to send all tuples
             if (null != logProtocol) {
                 logProtocol.createSignalSENDLog(SignalName.TRANSFER, numTransferredData, 
                         getNameInfo().getOriginalIntermediaryNodeName());
             }
             new SendSignalAction(Signal.TRANSFER, getNameInfo().getOriginalIntermediaryNodeName(), numTransferredData,
                     signalCon).execute();
-            SwitchStates.setTransferAll(true); // record that it is set to send all tuples
         } else {
             long id = lastProcessedId;
             if (!inQueue.isEmpty()) {

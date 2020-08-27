@@ -29,6 +29,7 @@ import switching.logging.LogProtocol;
 public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
     private static final Logger LOGGER = Logger.getLogger(SeparatedTupleReceiverHandler.class);
     private static boolean synOnce = true;
+    private static int tmpCount = 0;
     private SynchronizedQueue<ISwitchTuple> synInQueue;
     private SynchronizedQueue<ISwitchTuple> synTmpQueue;
     private KryoSwitchTupleSerializer serializer;
@@ -108,20 +109,24 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
                         }
                     } else { // will be only executed in the target one
                         synTmpQueue.produce(switchTuple);
+                        tmpCount++;
                         if (null != logProtocol) {
                             logProtocol.createGENLog("tmpQueue-Received the transferred data with id: "
                                     + switchTuple.getId() + ", firstId:" + SwitchStates.getFirstTupleId());
                         }
                         if (synOnce) {
                             synOnce = false;
+                            logProtocol.createSynENDLog();
+                            logProtocol.createGENLog("FIRST_TRANSFERRED_DATA_ARRIVED: The first transferred data is arrived!");
                             switchActionMap.executeActions(ActionState.FIRST_TRANSFERRED_DATA_ARRIVED, null, 
                                   true, logProtocol);
                         }
-                        if (switchTuple.getId() == SwitchStates.getFirstTupleId()) {
+                        if (tmpCount == SwitchStates.getNumTransferredData() || switchTuple.getId() == SwitchStates.getFirstTupleId()) {
                             if (null != logProtocol) {
                                 logProtocol.createGENLog("reached the last transferred data, firstId:"
                                         + SwitchStates.getFirstTupleId());
-                                logProtocol.createSynENDLog();
+                                //logProtocol.createSynENDLog();
+                                logProtocol.createGENLog("ALL_SYN_END: All the transferred data is arrived!");
                             }
                             new CompleteSwitchAction(signalCon).execute();
                         }
