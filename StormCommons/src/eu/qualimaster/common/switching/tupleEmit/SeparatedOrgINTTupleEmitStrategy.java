@@ -82,11 +82,13 @@ public class SeparatedOrgINTTupleEmitStrategy extends AbstractTupleEmitStrategy 
         }
         if (flag) {
             flag = false;
-            if (null != logProtocol) {
-                logProtocol.createGENLog("Set the starting point when the original algorithm starts to process: "
-                        + System.currentTimeMillis());
+            if (SwitchStates.getAlgStartPoint() == 0)  {
+	            SwitchStates.setAlgStartPoint(System.currentTimeMillis());
+	            if (null != logProtocol) {
+	                logProtocol.createGENLog(System.currentTimeMillis() + ", Set the starting point when the original algorithm starts to process: "
+	                        + SwitchStates.getAlgStartPoint());
+	            }
             }
-            SwitchStates.setAlgStartPoint(System.currentTimeMillis());
         }
         return result;
     }

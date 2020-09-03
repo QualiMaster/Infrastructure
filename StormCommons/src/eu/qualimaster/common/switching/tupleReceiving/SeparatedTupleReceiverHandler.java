@@ -112,7 +112,7 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
                         tmpCount++;
                         if (null != logProtocol) {
                             logProtocol.createGENLog("tmpQueue-Received the transferred data with id: "
-                                    + switchTuple.getId() + ", firstId:" + SwitchStates.getFirstTupleId());
+                                    + switchTuple.getId() + ", firstId:" + SwitchStates.getFirstTupleId() + ", the expected count:" + SwitchStates.getNumTransferredData() + ", the actual count:" + tmpCount);
                         }
                         if (synOnce) {
                             synOnce = false;
