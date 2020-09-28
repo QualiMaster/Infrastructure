@@ -1,5 +1,6 @@
 package eu.qualimaster.common.switching.actions;
 
+import java.util.List;
 import java.util.Queue;
 
 import eu.qualimaster.base.algorithm.ISwitchTuple;
@@ -24,6 +25,7 @@ public class TransferDataStrategy implements ITransferDataStrategy {
     private KryoSwitchTupleSerializer serializer;
     private String host;
     private TupleSender sender;
+    private List<TupleSender> senders = null;
     private long lastProcessedId;
     private long headId;
     private LogProtocol logProtocol;
@@ -58,7 +60,8 @@ public class TransferDataStrategy implements ITransferDataStrategy {
     public void transferData() {
         lastProcessedId = SwitchStates.getLastProcessedId();
         headId = SwitchStates.getHeadId();
-        connectTargetNode();
+        //connectTargetNode();
+        connectMultiTargetNodes();
         if (null != logProtocol) {
             logProtocol.createGENLog("Transferring data to the host: " + host + ", the headId: " + headId 
                     + ", the lastProcessedId: " + lastProcessedId);
@@ -85,6 +88,14 @@ public class TransferDataStrategy implements ITransferDataStrategy {
     }
     
     /**
+     * Connect a list of target nodes in case of parallelism.
+     */
+    private void connectMultiTargetNodes() {
+    	senders = NodeHostStorm.createTupleSenders(getNameInfo().getTopologyName(), 
+    			getNameInfo().getTargetIntermediaryNodeName(), SwitchStates.getTargetPort());
+    }
+    
+    /**
      * Transfers the missing data items in the original intermediary node.
      */
     public void transferMissingItemsOrgINT() {
@@ -100,7 +111,7 @@ public class TransferDataStrategy implements ITransferDataStrategy {
                 if (null != logProtocol) {
                     logProtocol.createTRANSFERLog(QueueStatus.OUTPUT, id);
                 }
-                sendToTarget(item);
+                sendToTargetShuffle(item);
             }
             if (id == headId) {
                 break;
@@ -114,7 +125,7 @@ public class TransferDataStrategy implements ITransferDataStrategy {
                     if (null != logProtocol) {
                         logProtocol.createTRANSFERLog(QueueStatus.INPUT, id);
                     }
-                    sendToTarget(item);
+                    sendToTargetShuffle(item);
                 }
                 id = item.getId();
             }
@@ -148,7 +159,7 @@ public class TransferDataStrategy implements ITransferDataStrategy {
             ISwitchTuple item = outQueue.poll();
             tmpId = item.getId();
             if (tmpId > lastProcessedId) {
-                sendToTarget(item);
+                sendToTargetShuffle(item);
                 transferredId = tmpId;
                 count++;
                 if (null != logProtocol) {
@@ -161,7 +172,7 @@ public class TransferDataStrategy implements ITransferDataStrategy {
             ISwitchTuple item = inQueue.poll();
             tmpId = item.getId();
             if (tmpId > lastProcessedId) {
-                sendToTarget(item);
+                sendToTargetShuffle(item);
                 transferredId = tmpId;
                 count++;
                 if (null != logProtocol) {
@@ -221,6 +232,16 @@ public class TransferDataStrategy implements ITransferDataStrategy {
      */
     private void sendToTarget(ISwitchTuple item) {
         sender.send(serializer.serialize(item));
+    }
+    
+    /**
+     * Send the tuple to a target node randomly shuffled from a list of target nodes.
+     * 
+     * @param item
+     *            the tuple
+     */
+    private void sendToTargetShuffle(ISwitchTuple item) {
+        NodeHostStorm.shuffleSender(senders).send(serializer.serialize(item));
     }
 
     /**
