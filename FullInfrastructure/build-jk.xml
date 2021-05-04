@@ -91,8 +91,9 @@
         <copy file="${eu.qualimaster:SpassMeterIntegration:jar}" tofile="build/base/qm-libs/spass-meter-rt.jar"/>
         <copy file="${eu.qualimaster.easyProducer.runtime:EASy.QualiMaster:jar}" todir="build/base/qm-libs"/>
         <copy file="${eu.qualimaster.easyProducer.runtime:Eclipse.QualiMaster:jar}" todir="build/base/qm-libs"/>
-        <copy file="${org.eclipse.equinox:common:jar}" todir="build/base/qm-libs"/>
-        <copy file="${org.eclipse.equinox:preferences:jar}" todir="build/base/qm-libs"/>
+        <copy file="${org.eclipse.platform:org.eclipse.equinox.common:jar}" todir="build/base/qm-libs"/>
+        <copy file="${org.eclipse.platform:org.eclipse.equinox.preferences:jar}" todir="build/base/qm-libs"/>
+    	<copy file="${org.eclipse.platform:org.eclipse.equinox.registry:jar}" todir="build/base/qm-libs"/>
     	<copy file="${org.apache.commons:commons-math3:jar}" todir="build/base/qm-libs"/>
     	<copy file="${pentaho.weka:pdm-timeseriesforecasting-ce:jar}" todir="build/base/qm-libs"/>
         <copy file="${org.pentaho.pentaho-commons:pentaho-package-manager:jar}" todir="build/base/qm-libs"/>
