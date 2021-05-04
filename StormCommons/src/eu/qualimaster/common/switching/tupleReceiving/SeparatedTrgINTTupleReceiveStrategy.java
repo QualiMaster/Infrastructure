@@ -1,9 +1,6 @@
 package eu.qualimaster.common.switching.tupleReceiving;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.log4j.Logger;
 
 import eu.qualimaster.base.algorithm.ISwitchTuple;
@@ -12,9 +9,8 @@ import eu.qualimaster.common.signal.AbstractSignalConnection;
 import eu.qualimaster.common.switching.QueueHolder;
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
 import eu.qualimaster.common.switching.SynchronizedQueue;
-import eu.qualimaster.common.switching.actions.IAction;
+import eu.qualimaster.common.switching.actions.SwitchActionMap;
 import eu.qualimaster.common.switching.actions.SwitchStates;
-import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
 import switching.logging.LogProtocol;
 
 /**
@@ -37,12 +33,12 @@ public class SeparatedTrgINTTupleReceiveStrategy extends AbstractTupleReceiveStr
      * @param queueHolder the queue holder
      * @param serializer the serializer for deserializing received data
      * @param signalCon the signal connection used to send signals
-     * @param actionMap the map containing the switch actions
+     * @param switchActionMap the map containing the switch actions
      * @param logProtocol the log protocol used to write logs into files
      */
     public SeparatedTrgINTTupleReceiveStrategy(QueueHolder queueHolder, ISwitchTupleSerializer serializer,
-            AbstractSignalConnection signalCon, Map<ActionState, List<IAction>> actionMap, LogProtocol logProtocol) {
-        this(queueHolder, serializer, signalCon, actionMap);
+            AbstractSignalConnection signalCon, SwitchActionMap switchActionMap, LogProtocol logProtocol) {
+        this(queueHolder, serializer, signalCon, switchActionMap);
         this.logProtocol = logProtocol;
     }
     
@@ -51,11 +47,11 @@ public class SeparatedTrgINTTupleReceiveStrategy extends AbstractTupleReceiveStr
      * @param queueHolder the queue holder
      * @param serializer the serializer for deserializing received data
      * @param signalCon the signal connection used to send signals
-     * @param actionMap the map containing the switch actions
+     * @param switchActionMap the map containing the switch actions
      */
     public SeparatedTrgINTTupleReceiveStrategy(QueueHolder queueHolder, ISwitchTupleSerializer serializer,
-            AbstractSignalConnection signalCon, Map<ActionState, List<IAction>> actionMap) {
-        super(serializer, signalCon, actionMap);
+            AbstractSignalConnection signalCon, SwitchActionMap switchActionMap) {
+        super(serializer, signalCon, switchActionMap);
         this.synInQueue = new SynchronizedQueue<ISwitchTuple>(queueHolder.getInQueue(),
                 SwitchStates.getSynQueueSizeTrgINT());
         this.synTmpQueue = new SynchronizedQueue<ISwitchTuple>(queueHolder.getTmpQueue(),

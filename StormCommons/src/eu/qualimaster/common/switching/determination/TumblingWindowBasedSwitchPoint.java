@@ -9,8 +9,9 @@ import eu.qualimaster.common.switching.actions.SwitchStates;
  * @author Cui Qin
  *
  */
-public class TumblingWindowBasedSwitchPoint extends WindowBasedSwitchPoint {
+public class TumblingWindowBasedSwitchPoint extends AbstractWindowBasedSwitchPoint {
     private static Logger logger = Logger.getLogger(TumblingWindowBasedSwitchPoint.class);
+    private long windowSize;
     private long algStart;
     private long determinationBegin;
     
@@ -19,7 +20,7 @@ public class TumblingWindowBasedSwitchPoint extends WindowBasedSwitchPoint {
      * @param windowSize the sliding window size
      */
     public TumblingWindowBasedSwitchPoint(long windowSize) {
-        super(windowSize);
+    	this.windowSize = windowSize;
     }
     
     /**
@@ -29,27 +30,34 @@ public class TumblingWindowBasedSwitchPoint extends WindowBasedSwitchPoint {
      * @param windowSize the sliding window size
      */
     public TumblingWindowBasedSwitchPoint(long algStart, long determinationBegin, long windowSize) {
-        super(windowSize);
+    	this.windowSize = windowSize;
         this.algStart = algStart;
         this.determinationBegin = determinationBegin;
     }
 
+    
     @Override
     public long determineSwitchPoint() {
-        long switchPoint = 0;
-        if (0 == algStart) {
+        return determineWindowEnd();
+    }
+
+	@Override
+	protected long determineWindowEnd() {
+		long endPoint = 0;
+		if (0 == algStart) {
             algStart = SwitchStates.getAlgStartPoint();
         }
         if (0 == determinationBegin) {
             determinationBegin = SwitchStates.getDeterminationBegin();
         }
         if (0 != algStart && 0 != determinationBegin) {
-            //The safepoint for the tumbling window-based case is at the end of the window.
-            switchPoint = determineWindowEndPoint(algStart, determinationBegin);
+        	double m = Math.ceil((Double.valueOf(String.valueOf(determinationBegin)) 
+                    - Double.valueOf(String.valueOf(algStart))) / windowSize);
+            endPoint = (long) (algStart + m * windowSize);
         } else {
             logger.error("The algorithm start point or the determination begin point is not initialized!");
         }
-        return switchPoint;
-    }
+		return endPoint;
+	}
 
 }

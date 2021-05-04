@@ -6,13 +6,13 @@ package eu.qualimaster.common.switching.actions;
  *
  */
 public class DisableFlagAction implements IAction {
-    private ControlStreamFlag streamFlow;
+    private StreamFlowFlag streamFlow;
     
     /**
      * Constructor.
      * @param streamFlow the stream flow to be disabled via a flag 
      */
-    public DisableFlagAction(ControlStreamFlag streamFlow) {
+    public DisableFlagAction(StreamFlowFlag streamFlow) {
         this.streamFlow = streamFlow;
     }
     

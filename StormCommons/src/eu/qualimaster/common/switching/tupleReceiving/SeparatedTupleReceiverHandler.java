@@ -3,9 +3,6 @@ package eu.qualimaster.common.switching.tupleReceiving;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.log4j.Logger;
 
 import com.esotericsoftware.kryo.KryoException;
@@ -17,9 +14,9 @@ import eu.qualimaster.base.serializer.KryoSwitchTupleSerializer;
 import eu.qualimaster.common.signal.AbstractSignalConnection;
 import eu.qualimaster.common.switching.SynchronizedQueue;
 import eu.qualimaster.common.switching.actions.CompleteSwitchAction;
-import eu.qualimaster.common.switching.actions.IAction;
+import eu.qualimaster.common.switching.actions.SwitchActionMap;
 import eu.qualimaster.common.switching.actions.SwitchStates;
-import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
+import eu.qualimaster.common.switching.actions.ActionState;
 import switching.logging.LogProtocol;
 
 /**
@@ -32,11 +29,12 @@ import switching.logging.LogProtocol;
 public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
     private static final Logger LOGGER = Logger.getLogger(SeparatedTupleReceiverHandler.class);
     private static boolean synOnce = true;
+    private static int tmpCount = 0;
     private SynchronizedQueue<ISwitchTuple> synInQueue;
     private SynchronizedQueue<ISwitchTuple> synTmpQueue;
     private KryoSwitchTupleSerializer serializer;
     private AbstractSignalConnection signalCon;
-    private Map<ActionState, List<IAction>> actionMap;
+    private SwitchActionMap switchActionMap;
     private Socket socket;
     private InputStream in;
     private Input kryoInput = null;
@@ -55,16 +53,16 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
      * @param serializer
      *            the tuple serializer
      * @param signalCon the signal connection used to send signals
-     * @param actionMap the map containing the switch actions
+     * @param switchActionMap the map containing the switch actions
      * @param logProtocol the log protocol used to write logs into corresponding files
      * @throws IOException
      *             IO exception
      */
     public SeparatedTupleReceiverHandler(SynchronizedQueue<ISwitchTuple> synInQueue,
             SynchronizedQueue<ISwitchTuple> synTmpQueue, ISwitchTupleSerializer serializer, 
-            AbstractSignalConnection signalCon, Map<ActionState, List<IAction>> actionMap, 
+            AbstractSignalConnection signalCon, SwitchActionMap switchActionMap, 
             LogProtocol logProtocol) throws IOException {
-        this(synInQueue, synTmpQueue, serializer, signalCon, actionMap);
+        this(synInQueue, synTmpQueue, serializer, signalCon, switchActionMap);
         this.logProtocol = logProtocol;
     }
     
@@ -80,18 +78,18 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
      * @param serializer
      *            the tuple serializer
      * @param signalCon the signal connection used to send signals
-     * @param actionMap the map containing the switch actions
+     * @param switchActionMap the map containing the switch actions
      * @throws IOException
      *             IO exception
      */
     public SeparatedTupleReceiverHandler(SynchronizedQueue<ISwitchTuple> synInQueue,
             SynchronizedQueue<ISwitchTuple> synTmpQueue, ISwitchTupleSerializer serializer, 
-            AbstractSignalConnection signalCon, Map<ActionState, List<IAction>> actionMap) throws IOException {
+            AbstractSignalConnection signalCon, SwitchActionMap switchActionMap) throws IOException {
         this.synInQueue = synInQueue;
         this.synTmpQueue = synTmpQueue;
         this.serializer = (KryoSwitchTupleSerializer) serializer;
         this.signalCon = signalCon;
-        this.actionMap = actionMap;
+        this.switchActionMap = switchActionMap;
     }
 
     @Override
@@ -111,20 +109,24 @@ public class SeparatedTupleReceiverHandler implements ITupleReceiverHandler {
                         }
                     } else { // will be only executed in the target one
                         synTmpQueue.produce(switchTuple);
+                        tmpCount++;
                         if (null != logProtocol) {
                             logProtocol.createGENLog("tmpQueue-Received the transferred data with id: "
-                                    + switchTuple.getId() + ", firstId:" + SwitchStates.getFirstTupleId());
+                                    + switchTuple.getId() + ", firstId:" + SwitchStates.getFirstTupleId() + ", the expected count:" + SwitchStates.getNumTransferredData() + ", the actual count:" + tmpCount);
                         }
                         if (synOnce) {
                             synOnce = false;
-                            SwitchStates.executeActions(ActionState.FIRST_TRANSFERRED_DATA_ARRIVED, actionMap, 
-                                    null, logProtocol);
+                            logProtocol.createSynENDLog();
+                            logProtocol.createGENLog("FIRST_TRANSFERRED_DATA_ARRIVED: The first transferred data is arrived!");
+                            switchActionMap.executeActions(ActionState.FIRST_TRANSFERRED_DATA_ARRIVED, null, 
+                                  true, logProtocol);
                         }
-                        if (switchTuple.getId() == SwitchStates.getFirstTupleId()) {
+                        if (tmpCount == SwitchStates.getNumTransferredData() || switchTuple.getId() == SwitchStates.getFirstTupleId()) {
                             if (null != logProtocol) {
                                 logProtocol.createGENLog("reached the last transferred data, firstId:"
                                         + SwitchStates.getFirstTupleId());
-                                logProtocol.createSynENDLog();
+                                //logProtocol.createSynENDLog();
+                                logProtocol.createGENLog("ALL_SYN_END: All the transferred data is arrived!");
                             }
                             new CompleteSwitchAction(signalCon).execute();
                         }

@@ -98,11 +98,11 @@ public class CollectingTopologyInfo {
     }
 
     /**
-     * Returns the host of the specific executor in the pipeline.
+     * Returns the list of the host of the specific executor in the pipeline.
      * 
-     * @return the host of the executor (or <b>null</b> if not found)
+     * @return the list of the host of the executor (or <b>null</b> if not found)
      */
-    public String getExecutorHost() {
+    public List<String> getExecutorHostList() {
         List<String> hosts = new ArrayList<String>();
         TopologyInfo topologyInfo = getTopologyInfo(pipelineName);
         if (topologyInfo != null) {
@@ -115,7 +115,16 @@ public class CollectingTopologyInfo {
                 }
             }
         }
-        return shuffleHost(hosts);
+        return hosts;
+    }
+    
+    /**
+     * Returns the host of the specific executor in the pipeline.
+     * 
+     * @return the host of the executor (or <b>null</b> if not found)
+     */
+    public String getExecutorHost() {
+        return shuffleHost(getExecutorHostList());
     }
 
     /**

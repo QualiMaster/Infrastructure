@@ -33,7 +33,7 @@ public class TupleSender {
      * Connects the host server.
      * @return true if connected, otherwise false
      */
-    private boolean connect() {
+    public boolean connect() {
         Socket s = null;
         if (null == socket) {
             try {
@@ -74,7 +74,8 @@ public class TupleSender {
                 output.writeBytes(bytes);
                 output.flush();
             } catch (KryoException e) {
-                stop();
+                connect();//try to connect again
+                //stop();
             }
         }
     }
@@ -121,7 +122,7 @@ public class TupleSender {
     public void stop() {
         System.out.println("Stopping the sender...");
         if (null != output) {
-            output.writeInt(DataFlag.EOD_FLAG);
+            //output.writeInt(DataFlag.EOD_FLAG);
             output.close();
         }
         if ( null != socket) {

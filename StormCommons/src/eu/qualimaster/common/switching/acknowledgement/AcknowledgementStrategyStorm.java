@@ -67,5 +67,31 @@ public class AcknowledgementStrategyStorm extends AbstractAcknowledgementStrateg
         }
         return lastProcessedId;
     }
-
+    
+    /**
+     * Acknowledge all the tuples in case of duplicates in the outQueue.
+     * @param msgId the message id of the tuple acknowledged
+     * @return the id of the last processed tuple
+     */
+    public long ackAll(Object msgId) {
+        long lastProcessedId = 0;
+        if (null != logProtocol) {
+            logProtocol.createQUEUELog(QueueStatus.OUTPUT, outQueue.size());
+        }
+        if (outQueue != null && !outQueue.isEmpty()) {
+            ISwitchTuple ackItem;
+            iterator = outQueue.iterator();
+            while (iterator.hasNext()) {
+                ackItem = iterator.next();
+                if (msgId.equals(ackItem.getId())) {
+                    lastProcessedId = ackItem.getId();
+                    outQueue.remove(ackItem);
+                }
+            }
+        } else if (null == outQueue) {
+            LOGGER.warn("The output queue is null!");
+        }
+        return lastProcessedId;
+    }
+    
 }

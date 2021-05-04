@@ -1,60 +1,12 @@
 package eu.qualimaster.common.switching.actions;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import org.apache.log4j.Logger;
-
 import eu.qualimaster.base.serializer.KryoSwitchTupleSerializer;
-import switching.logging.LogProtocol;
 /**
  * Records the states used in the switch.
  * @author Cui Qin
  *
  */
-public class SwitchStates {
-    private static final Logger LOGGER = Logger.getLogger(SwitchStates.class);
-    /**
-     * An enumeration listing all action-related states.
-     * @author Cui Qin
-     *
-     */
-    public enum ActionState {
-        ALGORITHM_CHANGE,
-        SWITCH_POINT_REACHED,
-        WARMUP_OVER,
-        WAITING_AFTER_WARMUP_OVER,
-        WAITING_AFTER_WARMUP_OVER_COMPLETED_SIGNAL_ARRIVED,
-        WAITING_AFTER_WARMUP_OVER_ENABLE_SIGNAL_ARRIVED,
-        DISABLE_SIGNAL_ARRIVED,
-        ENACT_SIGNAL_ARRIVED,
-        LASTPROCESSEDID_SIGNAL_ARRIVED,
-        DISABLE_LASTPROCESSEDID_SIGNAL_ARRIVED,
-        STOPPED_SIGNAL_ARRIVED,
-        HEADID_SIGNAL_ARRIVED,
-        TRANSFER_SIGNAL_ARRIVED,
-        TRANSFERRED_SIGNAL_ARRIVED,
-        EMIT_SIGNAL_ARRIVED,
-        ENABLE_SIGNAL_ARRIVED,
-        COMPLETED_SIGNAL_ARRIVED,
-        //SYNCHRONIZED_SIGNAL_ARRIVED,
-        GOTOPASSIVE_SIGNAL_ARRIVED,
-        GOTOACTIVE_SIGNAL_ARRIVED,
-        WAITING_AFTER_DIABLE_SIGNAL_OVER,
-        FIRST_TRANSFERRED_DATA_ARRIVED,
-        DATA_TRANSFERRED,
-        DATA_SYNCHRONIZED,
-        DATA_JUST_ARRIVED,
-        OLD_ALG_DRAINED,
-        OLD_ALG_DRAINED_DATA_TRANSFERRED,
-        WAITING_AFTER_SWITCH_POINT_OVER,
-        OUTPUT_PRODUCED
-    };
-    
+public class SwitchStates {   
     private static long lastProcessedId = 0;
     private static long lastEmittedId = 0;
     private static long headId = 0;
@@ -77,93 +29,11 @@ public class SwitchStates {
     private static boolean isEmitTrgPRE = false;
     private static boolean isEmitOrgEND = true;
     private static boolean isEmitTrgEND = false;
+    private static boolean isDetermined = false;
     private static int targetPort = 6027;
     private static int synQueueSizeOrgINT = 10;
     private static int synQueueSizeTrgINT = 50;
     private static KryoSwitchTupleSerializer kryoSerOrgINT = null;
-    
-    /**
-     * Executes actions found in the action map.
-     * @param state the action state
-     * @param actionMap the action map containing the action list for each action state
-     * @param value the value to be updated at runtime if given (only for <code>SendSignalAction</code>)
-     * @param logProtocol the log protocol used to write logs to corresponding files.
-     */
-    public static void executeActions(ActionState state, Map<ActionState, List<IAction>> actionMap, 
-            Serializable value, LogProtocol logProtocol) {
-        List<IAction> actionList = new ArrayList<IAction>();
-        if (actionMap.containsKey(state)) {
-            actionList = actionMap.get(state);
-        }
-        for (int i = 0; i < actionList.size(); i++) {
-//            if (null != logProtocol) {
-//                logProtocol.createGENLog("Executing actions: " + actionList.get(i) + ", is a send signal action?"
-//                        + (actionList.get(i) instanceof SendSignalAction));
-//            }
-            if (null != value && (actionList.get(i) instanceof SendSignalAction)) {
-                SendSignalAction action = (SendSignalAction) actionList.get(i);
-//                if (null != logProtocol) {
-//                    logProtocol.createGENLog("Executing a send signal action with runtime value to be updated, "
-//                            + "the signal: " + action.getSignal().getSignalName());
-//                }
-                action.updateValue(value);
-                action.execute();
-            } else {
-                actionList.get(i).execute();
-//                if (null != logProtocol) {
-//                    logProtocol.createGENLog("The action is executed.");
-//                }
-            }
-        }
-    }
-    
-    /**
-     * Executes actions found in the action map.
-     * @param state the action state
-     * @param actionMap the action map containing the action list for each action state
-     * @param value the value to be updated at runtime if given (only for <code>SendSignalAction</code>)
-     * @param useThreadPool whether it uses the thread pool to execute the actions.
-     * @param logProtocol the log protocol used to write logs to corresponding files.
-     */
-    public static void executeActions(ActionState state, Map<ActionState, List<IAction>> actionMap, 
-            Serializable value, boolean useThreadPool, LogProtocol logProtocol) {
-        ExecutorService executor = null;
-        List<IAction> actionList = new ArrayList<IAction>();
-        if (actionMap.containsKey(state)) {
-            actionList = actionMap.get(state);
-        }
-        if (useThreadPool) {
-            executor = Executors.newFixedThreadPool(10);
-        }
-        for (int i = 0; i < actionList.size(); i++) {
-//            if (null != logProtocol) {
-//                logProtocol.createGENLog("Executing actions: " + actionList.get(i) + ", is a send signal action?"
-//                        + (actionList.get(i) instanceof SendSignalAction));
-//            }
-            if (null != value && (actionList.get(i) instanceof SendSignalAction)) {
-                SendSignalAction action = (SendSignalAction) actionList.get(i);
-//                if (null != logProtocol) {
-//                    logProtocol.createGENLog("Executing a send signal action with runtime value to be updated, "
-//                            + "the signal: " + action.getSignal().getSignalName());
-//                }
-                action.updateValue(value);
-                if (useThreadPool) {
-                    executor.execute(new RunnableAction(action));
-                } else {
-                    action.execute();
-                }
-            } else {
-                if (useThreadPool) {
-                    executor.execute(new RunnableAction(actionList.get(i)));
-                } else {
-                    actionList.get(i).execute();
-                }
-//                if (null != logProtocol) {
-//                    logProtocol.createGENLog("The action is executed.");
-//                }
-            }
-        }
-    }
     
     /**
      * Returns the number of data items to be transferred.
@@ -678,4 +548,22 @@ public class SwitchStates {
     public static void setEmitTrgEND(boolean isEmittingTrgEND) {
         SwitchStates.isEmitTrgEND = isEmittingTrgEND;
     }
+
+    /**
+     * Return whether the switch is determined.
+     * @return whether the switch is determined
+     */
+	public static boolean isDetermined() {
+		return isDetermined;
+	}
+
+	/**
+	 * Sets the state of whether the switch is determined.
+	 * @param isDetermined <code>true</code> determined; otherwise <code>false</code>
+	 */
+	public static void setDetermined(boolean isDetermined) {
+		SwitchStates.isDetermined = isDetermined;
+	}
+    
+    
 }

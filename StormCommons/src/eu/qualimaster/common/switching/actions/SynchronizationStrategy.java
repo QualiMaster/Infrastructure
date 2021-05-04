@@ -74,7 +74,7 @@ public class SynchronizationStrategy implements ISynchronizationStrategy {
                 LOGGER.info(System.currentTimeMillis() + ", Enable v2, v4 and v8!");
                 new SendSignalAction(Signal.ENABLE, getNameInfo().getTargetEndNodeName(), true, signalCon).execute();
                 new SendSignalAction(Signal.ENABLE, getNameInfo().getPrecedingNodeName(), true, signalCon).execute();
-                new EnableFlagAction(ControlStreamFlag.TGTINT_v4).execute();
+                new EnableFlagAction(StreamFlowFlag.TGTINT_v4).execute();
                 new CompleteSwitchAction(signalCon).execute();
             } else {
                 SwitchStates.setTransferringTrgINT(true); // it is in the
@@ -95,13 +95,13 @@ public class SynchronizationStrategy implements ISynchronizationStrategy {
             LOGGER.info(System.currentTimeMillis() + ", Request to send all tuples.");
             numTransferredData = (int) (lastEmittedId - lastProcessedId);
             firstId = lastEmittedId;
+            SwitchStates.setTransferAll(true); // record that it is set to send all tuples
             if (null != logProtocol) {
                 logProtocol.createSignalSENDLog(SignalName.TRANSFER, numTransferredData, 
                         getNameInfo().getOriginalIntermediaryNodeName());
             }
             new SendSignalAction(Signal.TRANSFER, getNameInfo().getOriginalIntermediaryNodeName(), numTransferredData,
                     signalCon).execute();
-            SwitchStates.setTransferAll(true); // record that it is set to send all tuples
         } else {
             long id = lastProcessedId;
             if (!inQueue.isEmpty()) {

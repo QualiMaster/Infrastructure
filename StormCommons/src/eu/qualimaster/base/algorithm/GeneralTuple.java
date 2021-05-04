@@ -33,7 +33,11 @@ public class GeneralTuple implements IGeneralTuple {
 
     @Override
     public Object getValue(int index) {
-        return values.get(index);
+    	if(!values.isEmpty()) {
+    		return values.get(index);
+    	} else {
+    		return null;
+    	}
     }
     
     @Override

@@ -19,4 +19,9 @@ public interface ITupleReceiveStrategy extends IStrategy {
      * @param port the server port
      */
     public void initTupleReceiveServer(int port);
+    
+    /**
+     * Stop the tuple receive server.
+     */
+    public void stopTupleReceiveServer();
 }

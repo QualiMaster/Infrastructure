@@ -1,9 +1,11 @@
 package eu.qualimaster.common.switching.actions;
 
+import java.util.List;
 import java.util.Queue;
 
 import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.base.pipeline.NodeHostStorm;
+import eu.qualimaster.base.serializer.KryoSwitchTupleSerializer;
 import eu.qualimaster.common.signal.AbstractSignalConnection;
 import eu.qualimaster.common.switching.QueueHolder;
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
@@ -20,20 +22,24 @@ public class TransferDataStrategy implements ITransferDataStrategy {
     private Queue<ISwitchTuple> inQueue;
     private Queue<ISwitchTuple> outQueue;
     private AbstractSignalConnection signalCon;
+    private KryoSwitchTupleSerializer serializer;
     private String host;
     private TupleSender sender;
+    private List<TupleSender> senders = null;
     private long lastProcessedId;
     private long headId;
     private LogProtocol logProtocol;
+    private static boolean sendOnce = false;
     
     /**
      * Creates a strategy for transferring data.
      * @param queueHolder the queue holder carrying the input and output queues
      * @param signalCon the signal connection
+     * @param serializer the kryro serializer to serialize the transferred data
      * @param logProtocol the log protocol used to write logs into corresponding files
      */
-    public TransferDataStrategy(QueueHolder queueHolder, AbstractSignalConnection signalCon, LogProtocol logProtocol) {
-        this(queueHolder, signalCon);
+    public TransferDataStrategy(QueueHolder queueHolder, AbstractSignalConnection signalCon, KryoSwitchTupleSerializer serializer, LogProtocol logProtocol) {
+        this(queueHolder, signalCon, serializer);
         this.logProtocol = logProtocol;
     }
     
@@ -41,31 +47,52 @@ public class TransferDataStrategy implements ITransferDataStrategy {
      * Creates a strategy for transferring data.
      * @param queueHolder the queue holder carrying the input and output queues
      * @param signalCon the signal connection
+     * @param serializer the kryro serializer to serialize the transferred data
      */
-    public TransferDataStrategy(QueueHolder queueHolder, AbstractSignalConnection signalCon) {
+    public TransferDataStrategy(QueueHolder queueHolder, AbstractSignalConnection signalCon, KryoSwitchTupleSerializer serializer) {
         this.inQueue = queueHolder.getInQueue();
         this.outQueue = queueHolder.getOutQueue();
         this.signalCon = signalCon;
+        this.serializer = serializer;
     }
     
     @Override
     public void transferData() {
         lastProcessedId = SwitchStates.getLastProcessedId();
         headId = SwitchStates.getHeadId();
-        host = getHost(getNameInfo().getTargetIntermediaryNodeName());
-        sender = new TupleSender(host, SwitchStates.getTargetPort());
+        //connectTargetNode();
+        connectMultiTargetNodes();
         if (null != logProtocol) {
             logProtocol.createGENLog("Transferring data to the host: " + host + ", the headId: " + headId 
                     + ", the lastProcessedId: " + lastProcessedId);
         }
         if (lastProcessedId != 0) {
-            if (SwitchStates.isTransferAll()) {
+        	logProtocol.createGENLog("isTransferAll:" + SwitchStates.isTransferAll());
+            if (headId == 0 || SwitchStates.isTransferAll()) {
                 transferAllOrgINT();
             } else if (headId != 0) {
                 transferMissingItemsOrgINT();
             }
             goToPassive(); // the original intermediary node goes to passive
+        } else {
+        	logProtocol.createGENLog("Error: the lastProcessedId is ZERO!!!");
         }
+    }
+    
+    /**
+     * Connect the target node.
+     */
+    private void connectTargetNode() {
+    	host = getHost(getNameInfo().getTargetIntermediaryNodeName());
+        sender = new TupleSender(host, SwitchStates.getTargetPort());
+    }
+    
+    /**
+     * Connect a list of target nodes in case of parallelism.
+     */
+    private void connectMultiTargetNodes() {
+    	senders = NodeHostStorm.createTupleSenders(getNameInfo().getTopologyName(), 
+    			getNameInfo().getTargetIntermediaryNodeName(), SwitchStates.getTargetPort());
     }
     
     /**
@@ -84,7 +111,7 @@ public class TransferDataStrategy implements ITransferDataStrategy {
                 if (null != logProtocol) {
                     logProtocol.createTRANSFERLog(QueueStatus.OUTPUT, id);
                 }
-                sendToTarget(item);
+                sendToTargetShuffle(item);
             }
             if (id == headId) {
                 break;
@@ -98,7 +125,7 @@ public class TransferDataStrategy implements ITransferDataStrategy {
                     if (null != logProtocol) {
                         logProtocol.createTRANSFERLog(QueueStatus.INPUT, id);
                     }
-                    sendToTarget(item);
+                    sendToTargetShuffle(item);
                 }
                 id = item.getId();
             }
@@ -132,7 +159,7 @@ public class TransferDataStrategy implements ITransferDataStrategy {
             ISwitchTuple item = outQueue.poll();
             tmpId = item.getId();
             if (tmpId > lastProcessedId) {
-                sendToTarget(item);
+                sendToTargetShuffle(item);
                 transferredId = tmpId;
                 count++;
                 if (null != logProtocol) {
@@ -145,7 +172,7 @@ public class TransferDataStrategy implements ITransferDataStrategy {
             ISwitchTuple item = inQueue.poll();
             tmpId = item.getId();
             if (tmpId > lastProcessedId) {
-                sendToTarget(item);
+                sendToTargetShuffle(item);
                 transferredId = tmpId;
                 count++;
                 if (null != logProtocol) {
@@ -154,26 +181,42 @@ public class TransferDataStrategy implements ITransferDataStrategy {
                 }
             }
         }
-        if (count <= SwitchStates.getNumTransferredData()) {
-            if (null != logProtocol) {
-                logProtocol.createSignalSENDLog(SignalName.TRANSFERRED, count
-                        , getNameInfo().getTargetIntermediaryNodeName());
-            }
-            //sending a "transferred" signal with the count of the sent items
-            new SendSignalAction(Signal.TRANSFERRED, getNameInfo().getTargetIntermediaryNodeName(),
-                    count, signalCon).execute();
-        } else if (transferredId == 0) {
-            if (null != logProtocol) {
-                logProtocol.createSignalSENDLog(SignalName.TRANSFERRED, transferredId
-                        , getNameInfo().getTargetIntermediaryNodeName());
-            }
-            //sending a "transferred" signal with the id of the last transferred items
-            new SendSignalAction(Signal.TRANSFERRED, getNameInfo().getTargetIntermediaryNodeName(),
-                    transferredId, signalCon).execute();
-        } else {
-            new SendSignalAction(Signal.COMPLETED, SwitchNodeNameInfo.getInstance().getPrecedingNodeName(), 
-                    true, signalCon).execute();
+        
+        if (!sendOnce && inQueue.isEmpty() && outQueue.isEmpty()) {
+        	//send a TRANSFERRED signal to inform the actual number of items transferred.
+        	sendOnce = true;
+	        if (null != logProtocol) {
+	            logProtocol.createSignalSENDLog(SignalName.TRANSFERRED, count
+	                    , getNameInfo().getTargetIntermediaryNodeName());
+	        }
+	        //sending a "transferred" signal with the count of the sent items
+	        new SendSignalAction(Signal.TRANSFERRED, getNameInfo().getTargetIntermediaryNodeName(),
+	                count, signalCon).execute();
         }
+//        if (count <= SwitchStates.getNumTransferredData()) {
+//            if (null != logProtocol) {
+//                logProtocol.createSignalSENDLog(SignalName.TRANSFERRED, count
+//                        , getNameInfo().getTargetIntermediaryNodeName());
+//            }
+//            //sending a "transferred" signal with the count of the sent items
+//            new SendSignalAction(Signal.TRANSFERRED, getNameInfo().getTargetIntermediaryNodeName(),
+//                    count, signalCon).execute();
+//        } else if (transferredId == 0) {
+//            if (null != logProtocol) {
+//                logProtocol.createSignalSENDLog(SignalName.TRANSFERRED, transferredId
+//                        , getNameInfo().getTargetIntermediaryNodeName());
+//            }
+//            //sending a "transferred" signal with the id of the last transferred items
+//            new SendSignalAction(Signal.TRANSFERRED, getNameInfo().getTargetIntermediaryNodeName(),
+//                    transferredId, signalCon).execute();
+//        } else {
+//        	if (null != logProtocol) {
+//                logProtocol.createSignalSENDLog(SignalName.COMPLETED, null
+//                        , getNameInfo().getTargetIntermediaryNodeName());
+//            }
+//            new SendSignalAction(Signal.COMPLETED, SwitchNodeNameInfo.getInstance().getPrecedingNodeName(), 
+//                    true, signalCon).execute();
+//        }
         if (null != logProtocol) {
             logProtocol.createGENLog("The end of transferring all items to the target Spout.");
             logProtocol.createQUEUELog(QueueStatus.INPUT, inQueue.size());
@@ -188,7 +231,17 @@ public class TransferDataStrategy implements ITransferDataStrategy {
      *            the tuple
      */
     private void sendToTarget(ISwitchTuple item) {
-        sender.send(SwitchStates.getKryoSerOrgINT().serialize(item));
+        sender.send(serializer.serialize(item));
+    }
+    
+    /**
+     * Send the tuple to a target node randomly shuffled from a list of target nodes.
+     * 
+     * @param item
+     *            the tuple
+     */
+    private void sendToTargetShuffle(ISwitchTuple item) {
+        NodeHostStorm.shuffleSender(senders).send(serializer.serialize(item));
     }
 
     /**

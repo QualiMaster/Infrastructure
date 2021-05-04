@@ -1,15 +1,12 @@
 package eu.qualimaster.common.switching.tupleEmit;
 
-import java.util.List;
-import java.util.Map;
-
 import eu.qualimaster.base.algorithm.ISwitchTuple;
 import eu.qualimaster.common.switching.QueueHolder;
 import eu.qualimaster.common.switching.SwitchNodeNameInfo;
 import eu.qualimaster.common.switching.SynchronizedQueue;
-import eu.qualimaster.common.switching.actions.IAction;
+import eu.qualimaster.common.switching.actions.SwitchActionMap;
 import eu.qualimaster.common.switching.actions.SwitchStates;
-import eu.qualimaster.common.switching.actions.SwitchStates.ActionState;
+import eu.qualimaster.common.switching.actions.ActionState;
 import switching.logging.LogProtocol;
 
 /**
@@ -23,22 +20,21 @@ public class SeparatedOrgINTTupleEmitStrategy extends AbstractTupleEmitStrategy 
     public static final String STRATEGYTYPE = AbstractTupleEmitStrategy.STRATEGYTYPE
             + SwitchNodeNameInfo.ORIGINALINTERMEDIARYNODE;
     private SynchronizedQueue<ISwitchTuple> synInQueue;
-    private Map<ActionState, List<IAction>> actionMap;
+    private SwitchActionMap switchActionMap;
     private LogProtocol logProtocol = null;
     private boolean flag = true;
-    private boolean isDetermined = false;
     
     /**
      * Constructor for the tuple emit strategy in the original intermediary node.
      * 
      * @param queueHolder
      *            the queue holder.
-     * @param actionMap the map containing the switch actions.
+     * @param switchActionMap the map containing the switch actions.
      * @param logProtocol the log protocol used to write logs into corresponding files.
      */
-    public SeparatedOrgINTTupleEmitStrategy(QueueHolder queueHolder, Map<ActionState, List<IAction>> actionMap, 
+    public SeparatedOrgINTTupleEmitStrategy(QueueHolder queueHolder, SwitchActionMap switchActionMap, 
             LogProtocol logProtocol) {
-        this(queueHolder, actionMap);
+        this(queueHolder, switchActionMap);
         this.logProtocol = logProtocol;
     }
     
@@ -47,12 +43,12 @@ public class SeparatedOrgINTTupleEmitStrategy extends AbstractTupleEmitStrategy 
      * 
      * @param queueHolder
      *            the queue holder.
-     * @param actionMap the map containing the switch actions.
+     * @param switchActionMap the map containing the switch actions.
      */
-    public SeparatedOrgINTTupleEmitStrategy(QueueHolder queueHolder, Map<ActionState, List<IAction>> actionMap) {
+    public SeparatedOrgINTTupleEmitStrategy(QueueHolder queueHolder, SwitchActionMap switchActionMap) {
         super(queueHolder);
         synInQueue = new SynchronizedQueue<ISwitchTuple>(getInQueue(), SwitchStates.getSynQueueSizeOrgINT());
-        this.actionMap = actionMap;
+        this.switchActionMap = switchActionMap;
     }
     
     @Override
@@ -64,32 +60,35 @@ public class SeparatedOrgINTTupleEmitStrategy extends AbstractTupleEmitStrategy 
     public ISwitchTuple nextEmittedTuple() {
         ISwitchTuple result = null;
         
-        if (!isDetermined && SwitchStates.getSwitchPoint() != 0L 
+        if (!SwitchStates.isDetermined() && SwitchStates.getSwitchPoint() != 0L 
                 && System.currentTimeMillis() >= SwitchStates.getSwitchPoint()) {
             if (null != logProtocol) { //write logs into a file.
                 logProtocol.createSWDeterminedLog();
                 logProtocol.createSAFEPOINTLog();
             }
-            SwitchStates.executeActions(ActionState.SWITCH_POINT_REACHED, actionMap, null, logProtocol);
-            isDetermined = true;
+            switchActionMap.executeActions(ActionState.SWITCH_POINT_REACHED, null, true, logProtocol);
+            SwitchStates.setDetermined(true);
         }
-        
+
         if ((!getInQueue().isEmpty()) && (!SwitchStates.isPassivateOrgINT())) {
             result = synInQueue.consume();
-            if (result.getId() != 0L) { // queue only during the switch
-                getOutQueue().offer(result);
-                if (null != logProtocol) {
-                    logProtocol.createGENLog("Store the tuple in the outQueue and its size: " + getOutQueue().size());
-                }
-            }
+            //!!!this part moved to the pipeline to ensure the stored tuples are really emitted to the algorithm
+//            if (result.getId() != 0L) { // queue only during the switch
+//                getOutQueue().offer(result);
+//                if (null != logProtocol) {
+//                    logProtocol.createGENLog("Store the tuple in the outQueue and its size: " + getOutQueue().size());
+//                }
+//            }
         }
         if (flag) {
             flag = false;
-            if (null != logProtocol) {
-                logProtocol.createGENLog("Set the starting point when the original algorithm starts to process: "
-                        + System.currentTimeMillis());
+            if (SwitchStates.getAlgStartPoint() == 0)  {
+	            SwitchStates.setAlgStartPoint(System.currentTimeMillis());
+	            if (null != logProtocol) {
+	                logProtocol.createGENLog(System.currentTimeMillis() + ", Set the starting point when the original algorithm starts to process: "
+	                        + SwitchStates.getAlgStartPoint());
+	            }
             }
-            SwitchStates.setAlgStartPoint(System.currentTimeMillis());
         }
         return result;
     }
