@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
-import javax.annotation.Generated;
 import eu.qualimaster.dataManagement.strategies.*;
 import eu.qualimaster.dataManagement.serialization.*;
 import eu.qualimaster.observables.*;
@@ -22,7 +21,6 @@ import eu.qualimaster.dataManagement.sources.IHistoricalDataProvider;
 /**
 * Implements the data source class for profiling (GEN).
 **/
-@Generated("by QM")
 public class TestSourceProfilingProfiling extends TestSourceProfiling {
     private static final int MAXIMUM_DATA_ENTRIES = 400000;
     private GenericMultiSourceHandler handler = new GenericMultiSourceHandler(2);
