@@ -98,6 +98,10 @@ public class TestTracerFactory extends TracerFactory {
         }
 
         @Override
+        public void traceWarning(String arg0) {
+        }
+
+        @Override
         public void traceMessage(String arg0) {
         }
 
