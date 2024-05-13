@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="AdaptationLayer" default="jar" basedir="." xmlns:jacoco="antlib:org.jacoco.ant"
+<project name="AdaptationLayer" default="all" basedir="." xmlns:jacoco="antlib:org.jacoco.ant"
 	xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	<!-- import of the global Jenkins properties -->
 	<property file="${user.home}/global-build.properties"/>
     <property file="${user.home}/qualimaster-build.properties"/>
 
     <include file="${user.home}/macros.xml"/>
+	<property name="absolute.basedir" location="${basedir}"/>
 
 	<!-- Settings for the project -->
 	<property name="src.dir" value="src"/>
@@ -120,5 +121,11 @@
         <mvnDeploy folderName="${ant.project.name}-external" jarFolder="${build.jar.dir}" 
         	jarFile="adaptationLayer-external.jar" pomFile="${build.jar.dir}/pom.xml"/>
 	</target>
+	
+    <target name="all">
+        <echo file="testdata.dir" append="false">${absolute.basedir}/testdata</echo>
+        <maven pomFile="pom.xml" goal="deploy"/>
+        <delete failonerror="false" dir="target"/>
+    </target>   	
 	
 </project>
