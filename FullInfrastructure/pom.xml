@@ -80,9 +80,29 @@
          <artifactId>QualiMaster.Events</artifactId>
        </dependency>
        <dependency>
-         <groupId>eu.qualimaster.easyProducer.runtime</groupId>
-         <artifactId>EASy.QualiMaster</artifactId>
-       </dependency>
+            <groupId>net.ssehub.easy</groupId>
+            <artifactId>net.ssehub.easy.producer.core</artifactId>
+        </dependency>
+       <dependency>
+            <groupId>net.ssehub.easy</groupId>
+            <artifactId>net.ssehub.easy.varModel</artifactId>
+        </dependency>
+       <dependency>
+            <groupId>net.ssehub.easy</groupId>
+            <artifactId>net.ssehub.easy.reasoning.sseReasoner</artifactId>
+        </dependency>
+       <dependency>
+            <groupId>net.ssehub.easy</groupId>
+            <artifactId>de.uni-hildesheim.sse.easy.instantiatorCore.rt</artifactId>
+        </dependency>
+       <dependency>
+            <groupId>net.ssehub.easy</groupId>
+            <artifactId>de.uni_hildesheim.sse.vil.rt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.ssehub.easy</groupId>
+            <artifactId>net.ssehub.easy.loader</artifactId>
+        </dependency>
        <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-math3</artifactId>
