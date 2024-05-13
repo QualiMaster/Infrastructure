@@ -113,6 +113,7 @@
     </target>
 	
 	<target name="all">
+		<echo file="testdata.dir" append="false">${projects.QualiMaster.Events.dir}/testdata</echo>
 		<maven pomFile="pom.xml" goal="deploy"/>
 		<delete failonerror="false" dir="target"/>
     </target>
