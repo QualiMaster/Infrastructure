@@ -344,6 +344,7 @@ public class EventManager {
      */
     private void doHandleLocal(IEvent event) {
         if (null != executor) {
+            ExecutorService exec = executor;
             Set<EventHandler<? extends IEvent>> handlers = getHandlers(event.getClass(), event.getChannel(), null);
             if (null != handlers) {
                 try {
@@ -354,7 +355,7 @@ public class EventManager {
                             LOGGER.info((consume ? "consumed" : "dispatching") + " " + event);
                         }
                         if (!consume) {
-                            executor.execute(new DispatchRunnable(handler, event));
+                            exec.execute(new DispatchRunnable(handler, event));
                         }
                     }
                 } catch (ConcurrentModificationException e) {

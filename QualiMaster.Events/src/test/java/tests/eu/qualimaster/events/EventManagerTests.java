@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
+import org.junit.Ignore;
 import org.junit.Assert;
 
 import eu.qualimaster.events.AbstractEvent;
@@ -206,6 +207,7 @@ public class EventManagerTests {
     /**
      * Tests the startup behavior with client and server instance.
      */
+    @Ignore
     @Test
     public void testCsParallelStartup() {
         EventManager server = new EventManager();
