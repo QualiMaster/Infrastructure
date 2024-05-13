@@ -1,3 +1,0 @@
-Manifest-Version: 1.0
-Created-By: 1.8.0_20-ea-b05 (Oracle Corporation) 
-QM-Plugins: tests.eu.qualimaster.plugins.testPlugins.BasicPlugin[TEST1,TEST2], tests.eu.qualimaster.plugins.testPlugins.LifecyclePlugin, tests.eu.qualimaster.plugins.testPlugins.FailPlugin1[TEST2, TEST3], tests.eu.qualimaster.plugins.testPlugins.FailPlugin2[TEST2, TEST3], tests.eu.qualimaster.plugins.testPlugins.FailPlugin3[TEST1, TEST2]
