@@ -7,7 +7,6 @@
 	<packaging>jar</packaging>
 
 	<build>
-		<sourceDirectory>${basedir}/src/main/java</sourceDirectory>
 		<plugins>
 			<plugin>
 				<artifactId>maven-install-plugin</artifactId>
@@ -44,12 +43,53 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.0</version>
+				<version>3.13.0</version>
 				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
+					<source>8</source>
+					<target>8</target>
 				</configuration>
 			</plugin>
+	
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.2</version>
+                <executions>
+                  <execution>
+                    <id>default-test</id>
+                    <phase>test</phase>
+                    <goals>
+                      <goal>test</goal>
+                    </goals>
+                    <configuration>
+                      <includes> <!-- suites only, allow for multiple suites (Spring binders)  -->
+                        <include>**/AllTests*.class</include>
+                      </includes>
+                    </configuration>
+                  </execution>
+                </executions>
+              </plugin>     
+              
+         <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.8.8</version>
+            <executions>
+                <execution>
+                    <phase>process-test-classes</phase>
+                    <goals>
+                        <goal>prepare-agent</goal>
+                    </goals>
+                </execution>
+                <execution>
+                    <id>report</id>
+                    <phase>prepare-package</phase>
+                    <goals>
+                        <goal>report</goal>
+                    </goals>
+                </execution>
+            </executions>
+          </plugin>   
+			
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
@@ -57,13 +97,28 @@
 				<executions>
 					<execution>
 						<id>attach-sources</id>
-						<phase>verify</phase>
+						<phase>package</phase>
 						<goals>
 							<goal>jar</goal>
+                            <goal>jar-no-fork</goal>
+                            <goal>test-jar</goal>
 						</goals>
 					</execution>
 				</executions>
 			</plugin>
+			
+             <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-jar-plugin</artifactId>
+               <version>3.0.2</version>
+               <executions>
+                 <execution>
+                   <goals>
+                     <goal>test-jar</goal>
+                   </goals>
+                 </execution>
+               </executions>
+             </plugin>			
 
 			<plugin>
 				<artifactId>maven-clean-plugin</artifactId>
@@ -83,7 +138,7 @@
 
 
             <!--  disabled due to local dependency -->
-			<plugin>
+			<!--  <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<version>2.1</version>
@@ -102,8 +157,13 @@
 						</configuration>
 					</execution>
 				</executions>
-			</plugin>
-
+			</plugin>-->
+			
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <version>3.1.1</version>
+          </plugin> 			
 		</plugins>
 
 		<pluginManagement>
@@ -135,7 +195,27 @@
 			</plugins>
 		</pluginManagement>
 
+        <extensions>
+          <!-- Enabling the use of SSH -->
+          <extension>
+            <groupId>org.apache.maven.wagon</groupId>
+             <artifactId>wagon-ssh-external</artifactId>
+             <version>1.0-beta-6</version>
+          </extension>
+        </extensions>   
 	</build>
+
+  <distributionManagement>
+    <repository>
+      <id>sse-projects</id>
+      <url>scpexe://projects.sse.uni-hildesheim.de/var/www/qm/maven/</url>
+    </repository>
+    <snapshotRepository>
+      <id>sse-projects</id>
+      <url>scpexe://projects.sse.uni-hildesheim.de/var/www/qm/maven/</url>
+    </snapshotRepository>
+  </distributionManagement>    
+
 
 	<repositories>
 		<repository>
@@ -148,12 +228,12 @@
 		<repository>
 		    <id>mvnrepository</id>
 		    <name>mvnrepository</name>
-		    <url>http://repo1.maven.org/maven2</url>
+		    <url>https://repo1.maven.org/maven2</url>
 		</repository>
         <repository>
             <id>mvnrepository.com</id>
             <name>mvnrepository.com</name>
-            <url>http://www.mvnrepository.com/artifact</url>
+            <url>https://www.mvnrepository.com/artifact</url>
         </repository>		
 	</repositories>
 	
