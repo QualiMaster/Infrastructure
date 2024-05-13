@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="CoordinationLayer" default="jar" basedir="." xmlns:jacoco="antlib:org.jacoco.ant"
+<project name="CoordinationLayer" default="all" basedir="." xmlns:jacoco="antlib:org.jacoco.ant"
     xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	<!-- import of the global Jenkins properties -->
+	<property file="${user.home}/migration.properties"/>
 	<property file="${user.home}/global-build.properties"/>
     <property file="${user.home}/qualimaster-build.properties"/>
 
@@ -112,5 +113,11 @@
         
         <mvnDeploy folderName="${ant.project.name}" jarFolder="${build.jar.dir}" jarFile="${ant.project.name}.jar"/>
     </target>
+	
+    <target name="all">
+        <echo file="testdata.dir" append="false">${projects.CoordinationLayer.dir}/testdata</echo>
+        <maven pomFile="pom.xml" goal="deploy"/>
+        <delete failonerror="false" dir="target"/>
+    </target>	
 	
 </project>

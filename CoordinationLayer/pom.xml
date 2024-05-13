@@ -6,88 +6,164 @@
   <packaging>jar</packaging>
   
   <build>
-      <sourceDirectory>${basedir}/src</sourceDirectory>
         <plugins>
-      <plugin>
-        <artifactId>maven-resources-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-resources</id>
-            <phase>compile</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${basedir}/target/classes</outputDirectory>
-              <resources>          
-                <resource>
-                  <directory>${basedir}/resources</directory>
-                  <filtering>true</filtering>
-                </resource>
-              </resources>              
-            </configuration>            
-          </execution>
-        </executions>
-      </plugin>        
+          <plugin>
+            <artifactId>maven-resources-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>copy-resources</id>
+                <phase>compile</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${basedir}/target/classes</outputDirectory>
+                  <resources>          
+                    <resource>
+                      <directory>${basedir}/resources</directory>
+                      <filtering>true</filtering>
+                    </resource>
+                  </resources>              
+                </configuration>            
+              </execution>
+            </executions>
+          </plugin>        
+      
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.0</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>17</source>
+                    <target>17</target>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.2</version>
+                <executions>
+                  <execution>
+                    <id>default-test</id>
+                    <phase>test</phase>
+                    <goals>
+                      <goal>test</goal>
+                    </goals>
+                    <configuration>
+                      <includes> <!-- suites only, allow for multiple suites (Spring binders)  -->
+                        <include>**/AllTests*.class</include>
+                      </includes>
+                    </configuration>
+                  </execution>
+                </executions>
+              </plugin>            
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                            <goal>jar-no-fork</goal>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            
+             <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-jar-plugin</artifactId>
+               <version>3.0.2</version>
+               <executions>
+                 <execution>
+                   <goals>
+                     <goal>test-jar</goal>
+                   </goals>
+                 </execution>
+               </executions>
+             </plugin>              
+            
          <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>2.3</version>
+          <version>3.5.3</version>
           <executions>
             <execution>
-            <phase>package</phase>
-            <goals>
-                <goal>shade</goal>
-            </goals>
-            <configuration>
-            <filters>
-              <filter>
-                <artifact>*:*</artifact>
-                <excludes>
-                  <exclude>tests/**</exclude>
-                </excludes>
-              </filter>
-            </filters>
-            </configuration>
+                <phase>package</phase>
+                <id>tests</id>
+                <goals>
+                    <goal>shade</goal>
+                </goals>
+                <configuration>
+                <filters>
+                  <filter>
+                    <artifact>*:*</artifact>
+                    <excludes>
+                      <exclude>tests/**</exclude>
+                    </excludes>
+                  </filter>
+                </filters>
+                <skip>true</skip> <!-- unclear, still needed? -->
+                </configuration>
               </execution>
           </executions>
         </plugin>            
-         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-shade-plugin</artifactId>
-          <version>2.3</version>
-          <executions>
+
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.8</version>
+        <executions>
             <execution>
-            <phase>package</phase>
-            <goals>
-                <goal>shade</goal>
-            </goals>
-            <configuration>
-            <finalName>${project.build.finalName}-tests</finalName>
-            <filters>
-              <filter>
-                <artifact>*:*</artifact>
-                <excludes>
-                  <exclude>eu/**</exclude>
-                </excludes>
-              </filter>
-            </filters>
-            </configuration>
-              </execution>
-          </executions>
-        </plugin> 
+                <phase>process-test-classes</phase>
+                <goals>
+                    <goal>prepare-agent</goal>
+                </goals>
+            </execution>
+            <execution>
+                <id>report</id>
+                <phase>prepare-package</phase>
+                <goals>
+                    <goal>report</goal>
+                </goals>
+            </execution>
+        </executions>
+      </plugin>   
+                 
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>3.1.1</version>
+      </plugin>                  
                    
         </plugins>
+
+    <extensions>
+      <!-- Enabling the use of SSH -->
+      <extension>
+        <groupId>org.apache.maven.wagon</groupId>
+         <artifactId>wagon-ssh-external</artifactId>
+         <version>1.0-beta-6</version>
+      </extension>
+    </extensions>        
+        
   </build>
+  
+  <distributionManagement>
+    <repository>
+      <id>sse-projects</id>
+      <url>scpexe://projects.sse.uni-hildesheim.de/var/www/qm/maven/</url>
+    </repository>
+    <snapshotRepository>
+      <id>sse-projects</id>
+      <url>scpexe://projects.sse.uni-hildesheim.de/var/www/qm/maven/</url>
+    </snapshotRepository>
+  </distributionManagement>    
     
   <repositories>       
     <repository>
@@ -130,8 +206,36 @@
          <artifactId>DataManagementLayer</artifactId>
        </dependency>
        <dependency>
-         <groupId>eu.qualimaster.easyProducer.runtime</groupId>
-         <artifactId>EASy.QualiMaster</artifactId>
+            <groupId>net.ssehub.easy</groupId>
+            <artifactId>net.ssehub.easy.producer.core</artifactId>
+        </dependency>
+       <dependency>
+            <groupId>net.ssehub.easy</groupId>
+            <artifactId>net.ssehub.easy.varModel</artifactId>
+        </dependency>
+       <dependency>
+            <groupId>net.ssehub.easy</groupId>
+            <artifactId>net.ssehub.easy.instantiation.core</artifactId>
+        </dependency>
+       <dependency>
+            <groupId>net.ssehub.easy</groupId>
+            <artifactId>net.ssehub.easy.reasoning.sseReasoner</artifactId>
+        </dependency>
+       <dependency>
+            <groupId>net.ssehub.easy</groupId>
+            <artifactId>de.uni-hildesheim.sse.easy.instantiatorCore.rt</artifactId>
+        </dependency>
+       <dependency>
+            <groupId>net.ssehub.easy</groupId>
+            <artifactId>de.uni_hildesheim.sse.vil.rt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.ssehub.easy</groupId>
+            <artifactId>net.ssehub.easy.loader</artifactId>
+        </dependency>
+       <dependency>
+         <groupId>eu.qualimaster</groupId>
+         <artifactId>QualiMaster.Extension</artifactId>
        </dependency>
        <dependency>
          <groupId>eu.qualimaster</groupId>
