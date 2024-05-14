@@ -31,6 +31,8 @@
                   <includes> <!-- suites only, allow for multiple suites (Spring binders)  -->
                     <include>**/AllTests*.class</include>
                   </includes>
+                  <reuseForks>false</reuseForks>
+                  <forkedProcessTimeoutInSeconds>3600</forkedProcessTimeoutInSeconds>
                 </configuration>
               </execution>
             </executions>
