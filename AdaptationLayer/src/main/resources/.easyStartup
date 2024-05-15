@@ -5,3 +5,4 @@ DS:de.uni_hildesheim.sse.vil.templatelang.VtlExpressionParser
 DS:de.uni_hildesheim.sse.VilExpressionParser
 DS:de.uni_hildesheim.sse.vil.rt.RtVilExpressionParser
 DS:eu.qualimaster.easy.extension.internal.Registration
+DS:net.ssehub.easy.instantiation.maven.Registration
