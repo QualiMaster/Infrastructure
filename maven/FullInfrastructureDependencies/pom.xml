@@ -101,11 +101,6 @@
         </dependency>
        <dependency>
             <groupId>net.ssehub.easy</groupId>
-            <artifactId>de.uni-hildesheim.sse.easy.instantiatorCore.rt</artifactId>
-            <version>${easy.version}</version>
-        </dependency>
-       <dependency>
-            <groupId>net.ssehub.easy</groupId>
             <artifactId>de.uni_hildesheim.sse.vil.rt</artifactId>
             <version>${easy.version}</version>
         </dependency>
@@ -129,6 +124,11 @@
             <artifactId>net.ssehub.easy.instantiation.maven</artifactId>
             <version>${easy.version}</version>
         </dependency>
+       <dependency>
+          <groupId>net.ssehub.easy</groupId>
+          <artifactId>CommandLine</artifactId>
+          <version>${easy.version}</version>
+       </dependency>        
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>QualiMaster.Extension</artifactId>
