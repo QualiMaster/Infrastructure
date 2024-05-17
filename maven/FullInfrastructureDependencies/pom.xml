@@ -128,16 +128,16 @@
           <groupId>net.ssehub.easy</groupId>
           <artifactId>CommandLine</artifactId>
           <version>${easy.version}</version>
-       </dependency>        
+       </dependency>
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>QualiMaster.Extension</artifactId>
-         <version>0.5.0-SNAPSHOT</version>
+         <version>${project.version}</version>
        </dependency>        
         <dependency>
             <groupId>eu.qualimaster</groupId>
             <artifactId>InfrastructureDependencies</artifactId>
-            <version>0.5.0-SNAPSHOT</version>
+            <version>${project.version}</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -147,35 +147,35 @@
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>AdaptationLayer</artifactId>
-         <version>0.5.0-SNAPSHOT</version>
+         <version>${project.version}</version>
          <type>test-jar</type>
          <scope>provided</scope>
        </dependency>
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>MonitoringLayer</artifactId>
-         <version>0.5.0-SNAPSHOT</version>
+         <version>${project.version}</version>
          <type>test-jar</type>
          <scope>provided</scope>
        </dependency>
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>CoordinationLayer</artifactId>
-         <version>0.5.0-SNAPSHOT</version>
+         <version>${project.version}</version>
          <type>test-jar</type>
          <scope>provided</scope>
        </dependency>
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>DataManagementLayer</artifactId>
-         <version>0.5.0-SNAPSHOT</version>
+         <version>${project.version}</version>
          <type>test-jar</type>
          <scope>provided</scope>
        </dependency>
        <dependency>
          <groupId>eu.qualimaster</groupId>
          <artifactId>QualiMaster.Events</artifactId>
-         <version>0.5.0-SNAPSHOT</version>
+         <version>${project.version}</version>
          <type>test-jar</type>
          <scope>provided</scope>
        </dependency>
