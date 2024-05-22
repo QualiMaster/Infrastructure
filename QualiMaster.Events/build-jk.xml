@@ -1,119 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="eu.qualiMaster.events" default="all" basedir="." xmlns:jacoco="antlib:org.jacoco.ant" 
-    xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+<project name="eu.qualiMaster.events" default="all" basedir=".">
 
-  <property file="${user.home}/migration.properties"/>
-  <property file="${user.home}/global-build.properties"/>
-	
-	<taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
-	    <classpath path="${jacoco.path}/jacocoant.jar"/>
-	</taskdef>
-	
-  <property file="${user.home}/qualimaster-build.properties"/>
-    
-  <include file="${user.home}/macros.xml"/>
-		
-	<!-- Einstellungen fuer dieses Projekt -->
-	<property name="src.dir" value="src"/>
-	<property name="javacSource" value="1.7"/>
-	<property name="javacTarget" value="1.7"/>
-	
-	<!-- Check - no typedef shall be required as installed in ANT/lib -->
-	<path id="maven-ant-tasks.classpath" path="${ant-maven.lib}" />
-    <typedef resource="org/apache/maven/artifact/ant/antlib.xml"
-       uri="antlib:org.apache.maven.artifact.ant"
-       classpathref="maven-ant-tasks.classpath" />
-	
-	<path id ="includes">
-        <!-- all taken from maven -->
-    </path>
-
-    <!-- force snapshot update - does not work in macros.xml  -->
-	<artifact:remoteRepository id="qm.repository" url="${maven.repository}">
-        <snapshots updatePolicy="always" />
-    </artifact:remoteRepository>
-		
-	<!-- Targets  -->
-	<target name="init">
-		<!-- Delete generated folders -->
-		<delete dir="${build.base.dir}"/>
-		
-		<!-- Create folders -->
-        <mkdir dir="${build.base.dir}"/>
-		<mkdir dir="${build.classes.dir}"/>
-		<mkdir dir="${build.jar.dir}"/>
-		
-        <artifact:dependencies pathId="maven.compile.classpath">
-            <pom file="pom.xml" id="pom"/>
-            <remoteRepository refid="qm.repository" />
-        </artifact:dependencies>
-	</target>
-	
-	<!-- Compile all files without test classes -->
-	<target name="compile" depends="init">
-		<javac srcdir="${src.dir}" debug="on" destdir="${build.classes.dir}" includeAntRuntime="no" failonerror="true" source="${javacSource}" target="${javacTarget}" encoding="${javac.encoding}">
-            <classpath refid="maven.compile.classpath" />
-            <classpath refid="includes" />	
-		</javac>
-    </target>
-    
-	<!--  Tests -->
-	<target name="test" depends="compile">
-		<echoproperties/>  
-		<jacoco:coverage output="file" destfile="jacoco.exec">
-        <junit printsummary="withOutAndErr" dir="${build.base.dir}" fork="true" timeout="300000" forkmode="once">
-        	<classpath path="${jacoco.path}/jacocoant.jar"/>  
-        	<classpath>
-                <path refid="maven.compile.classpath" />
-                <path refid="includes" />
-                <pathelement location="${build.classes.dir}" />
-            </classpath>
-            <test name="tests.eu.qualimaster.AllTests" haltonfailure="no" outfile="result">
-                <formatter type="xml" />
-            </test>
-            <jvmarg value="-Dqm.base.dir=${libs.qualimaster.events.core.dir}"/>
-        </junit>
-      </jacoco:coverage>
-    </target>
-	
-	    <!-- Javadoc -->
-    <target name="javadoc" depends="compile">
-        <javadoc access="public" author="true" destdir="${doc.dir}" doctitle="QualiMaster EventBus" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="1.7" sourcepath="src" splitindex="true" use="true" version="true">
-          <classpath refid="maven.compile.classpath" />
-          <classpath refid="includes" />
-          <packageset dir="src" defaultexcludes="yes">
-            <include name="eu/qualimaster/**"/>
-          </packageset>
-        </javadoc>
-    </target>
-	
-	<!-- Creates a jar file -->
-	<target name="jar" depends="test, javadoc">
-		<jar destfile="${build.jar.dir}/${ant.project.name}.jar" 
-		    basedir="${build.classes.dir}" excludes="tests/** testdata/**"/>
-        <jar destfile="${build.jar.dir}/${ant.project.name}-tests.jar" 
-            basedir="${build.classes.dir}" includes="tests/** testdata/**"/>
-        <jar destfile="${build.jar.dir}/${ant.project.name}-sources.jar" 
-            basedir="${src.dir}"/>
-
-		<artifact:install file="${build.jar.dir}/${ant.project.name}.jar">
-            <pom refid="pom"/>
-        </artifact:install>
-        
-		<property name="deploy.path" value="${build.classes.dir}/deploy}"/>
-		<property name="deploy.path.abs" location="${deploy.path}"/>
-        <mkdir dir="${deploy.path}"/>
-		
-		<!-- <artifact:deploy file="${build.jar.dir}/${ant.project.name}.jar">
-            <remoteRepository url="file:///${deploy.path.abs}"/>
-            <pom refid="pom"/>
-        </artifact:deploy>-->
-        
-		<mvnDeploy folderName="${ant.project.name}" jarFolder="${build.jar.dir}" jarFile="${ant.project.name}.jar"/>
-    </target>
+    <property file="${user.home}/migration.properties"/>
+    <property file="${user.home}/global-build.properties"/>
+    <property file="${user.home}/qualimaster-build.properties"/>
+    <include file="${user.home}/macros.xml"/>
 	
 	<target name="all">
-		<echo file="testdata.dir" append="false">${projects.QualiMaster.Events.dir}/testdata</echo>
+		<echo file="testdata.dir" append="false">${absolute.basedir}/testdata</echo>
 		<maven pomFile="pom.xml" goal="deploy"/>
 		<delete failonerror="false" dir="target"/>
     </target>
