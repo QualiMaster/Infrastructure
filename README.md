@@ -7,7 +7,7 @@ The layers and components of the infrastructure will be released incrementally. 
 
 ![QualiMaster infrastructure architecture](Overview.png)
 
-The Event Bus, the Data Management Layer and Storm Commons are already released. The other components will follow successively.
+In May 2024, the QualiMaster infrastructure was upgraded to EASy-Producer 1.3.10 and, thereby, to JDK 17 and maven builds.
 
 The QualiMaster infrastructure is open source under the Apache 2.0 license.
 
