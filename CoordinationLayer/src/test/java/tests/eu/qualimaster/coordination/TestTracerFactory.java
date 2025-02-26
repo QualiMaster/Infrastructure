@@ -28,6 +28,7 @@ import net.ssehub.easy.instantiation.core.model.execution.TracerFactory;
 import net.ssehub.easy.instantiation.core.model.expressions.AbstractTracerBase;
 import net.ssehub.easy.instantiation.core.model.expressions.CallExpression.CallType;
 import net.ssehub.easy.instantiation.core.model.expressions.Expression;
+import net.ssehub.easy.instantiation.core.model.templateModel.BuilderBlockExpression;
 import net.ssehub.easy.instantiation.core.model.templateModel.Def;
 import net.ssehub.easy.instantiation.core.model.templateModel.ITemplateLangElement;
 import net.ssehub.easy.instantiation.core.model.templateModel.Template;
@@ -229,6 +230,11 @@ public class TestTracerFactory extends TracerFactory {
 
         @Override
         public void visitedFlush() {
+        }
+
+        @Override
+        public void visitedBuilderBlock(BuilderBlockExpression ex, RuntimeEnvironment<?, ?> environment,
+            Object result) {
         }
 
         @Override
